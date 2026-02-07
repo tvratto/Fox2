@@ -1,8 +1,27 @@
-<!DOCTYPE html>
-<html>
-<head>
+<!DOCTYPE html><html><head>
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
-
+* { box-sizing: border-box; }
+body { 
+  background:#000; color:#fff; margin:0; padding:0; 
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  overflow-x:hidden;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.container { 
+  max-width:480px; margin:0 auto; padding:20px; 
+  min-height:100vh; display:flex; flex-direction:column;
+}
+.screen { display:none; flex:1; flex-direction:column; }
+.screen.active { display:flex; }
+.welcome { text-align:center; justify-content:center; }
+.logo { font-size:48px; font-weight:700; margin-bottom:12px; 
+  background:linear-gradient(135deg,#00ffff,#ff6b00);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.tagline { font-size:16px; opacity:.7; margin-bottom:40px; }
 /* PAGE */
 body{
   margin:0;min-height:100vh;display:flex;
@@ -88,24 +107,291 @@ box-shadow:
   z-index:5
 }
 
+
+
+.title { font-size:24px; font-weight:700; text-align:center; margin-bottom:8px; }
+.subtitle { font-size:15px; opacity:.7; text-align:center; margin-bottom:24px; 
+  line-height:1.4; padding:0 10px;
+}
+.dots { display:flex; gap:8px; justify-content:center; margin:24px 0; }
+.dot {
+  width:8px; height:8px; border-radius:50%;
+  background:#333; transition:all .3s;
+}
+.dot.active { background:#00ffff; width:24px; }
+.btn-row { display:flex; gap:12px; margin-top:auto; padding-top:24px; }
+.btn {
+  flex:1; padding:16px; border-radius:12px; border:none;
+  font-size:16px; font-weight:600; cursor:pointer;
+  transition:all .2s;
+  touch-action: manipulation;
+  user-select: none;
+}
+.btn:active { transform: scale(0.95); }
+.btn-primary { background:#00ffff; color:#000; }
+.btn-secondary { background:#222; color:#fff; }
+.btn-full { width:100%; }
+.form-group { margin-bottom:20px; }
+.form-label { 
+  display:block; margin-bottom:6px; font-size:14px; 
+  font-weight:500; opacity:.9;
+}
+.form-input {
+  width:100%; padding:14px; border-radius:12px; border:2px solid #333;
+  background:#111; color:#fff; font-size:16px;
+}
+.form-input:focus { outline:none; border-color:#00ffff; }
+.level-grid {
+  display:grid; grid-template-columns:repeat(4,1fr);
+  gap:12px; margin-top:12px;
+}
+.level-btn {
+  aspect-ratio:1; border-radius:12px;
+  border:3px solid transparent; cursor:pointer;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  font-size:24px; font-weight:700;
+  transition:all .2s;
+  touch-action: manipulation;
+  user-select: none;
+}
+.level-btn:active { transform: scale(0.95); }
+.level-btn.selected {
+  border-color:#00ffff;
+  box-shadow:0 0 20px 4px rgba(0,255,255,0.6);
+}
+.level-1 { background:#2196F3; color:#000; }
+.level-2 { background:#4CAF50; color:#000; }
+.level-3 { background:#9C27B0; color:#fff; }
+.level-4 { background:#E91E63; color:#fff; }
+.level-hint {
+  text-align:center; margin-top:12px;
+  font-size:16px; font-weight:600; color:#00ffff;
+  min-height:24px;
+}
+@keyframes fadeIn {
+  from { opacity:0; transform:translateY(20px); }
+  to { opacity:1; transform:translateY(0); }
+}
+.screen.active { animation:fadeIn .4s ease-out; }
+.info-box {
+  background:#111; border:1px solid #333; border-radius:12px;
+  padding:16px; margin:16px 0;
+}
+.info-title { 
+  font-size:14px; font-weight:600; color:#00ffff; 
+  margin-bottom:8px;
+}
+.info-text { font-size:14px; line-height:1.5; opacity:.8; }
+.button-guide { display:flex; gap:20px; justify-content:center; margin-top:20px; }
+.button-demo { text-align:center; }
+.button-triangle {
+  width:40px; height:40px; margin:0 auto;
+  border:3px solid #FF9800;
+  clip-path:polygon(0% 0%,100% 0%,50% 100%);
+  background:#FF9800;
+}
+
+.button-circle {
+  width:40px; height:40px; margin:0 auto;
+  border:3px solid #00ffff;
+  border-radius:50%;
+  background:#00ffff;
+}
+.button-label { margin-top:8px; font-size:12px; font-weight:600; }
 </style>
-</head>
-
-<body>
-<div class="device-frame">
-  <div class="device-body">
-
-    <div class="device-seam"></div>
-    <div class="device-screen">Screen</div>
-
-    <div class="device-buttons">
-      <div class="device-btn-triangle"></div>
-      <div class="device-btn-circle"></div>
-    </div>
-
-    <div class="device-mouthpiece"></div>
-
-  </div>
+</head><body>
+<div class="container">
+  <div id="content" style="flex:1;display:flex;flex-direction:column"></div>
+  <div class="dots" id="dots"></div>
+  <div class="btn-row" id="buttons"></div>
 </div>
-</body>
-</html>
+<input type="hidden" id="saved-email" value=")rawliteral");
+    
+    server.sendContent(savedEmail);
+    server.sendContent(R"rawliteral(">
+<input type="hidden" id="saved-phone" value=")rawliteral");
+    server.sendContent(savedPhone);
+    server.sendContent(R"rawliteral(">
+<input type="hidden" id="current-level" value=")rawliteral");
+    server.sendContent(String(currentLevel));
+    server.sendContent(R"rawliteral(">
+<input type="hidden" id="target2" value=")rawliteral");
+    server.sendContent(String((int)aucTarget2));
+    server.sendContent(R"rawliteral(">
+<input type="hidden" id="target3" value=")rawliteral");
+    server.sendContent(String((int)aucTarget3));
+    server.sendContent(R"rawliteral(">
+<script>
+var state = 0;
+var selectedLevel = parseInt(document.getElementById('current-level').value);
+var target2 = document.getElementById('target2').value;
+var target3 = document.getElementById('target3').value;
+var hints = ['no target', 'total = ' + target2, 'total = ' + target3, 'custom'];
+
+function getMenuSVG() {
+  return '<svg viewBox="0 0 184 184" xmlns="http://www.w3.org/2000/svg">' +
+    '<rect x="158" y="15" width="18" height="10" rx="2" stroke="#0ff" stroke-width="1" fill="none"/>' +
+    '<rect x="176" y="17" width="2" height="6" fill="#0ff"/>' +
+    '<rect x="160" y="17" width="14" height="6" fill="#0f0"/>' +
+    '<text x="30" y="22" font-size="11" fill="#0ff">2/6/26</text>' +
+    '<rect x="14" y="55" width="156" height="32" rx="16" fill="#00ffff"/>' +
+    '<text x="92" y="76" font-size="24" font-weight="700" fill="#000" text-anchor="middle">Measure</text>' +
+    '<text x="92" y="108" font-size="24" fill="#fff" text-anchor="middle">Data</text>' +
+    '<text x="92" y="138" font-size="24" fill="#fff" text-anchor="middle">About</text>' +
+    '<text x="92" y="168" font-size="24" fill="#fff" text-anchor="middle">Off</text></svg>';
+}
+
+function getWarmupSVG() {
+  return '<svg viewBox="0 0 184 184" xmlns="http://www.w3.org/2000/svg">' +
+    '<rect x="158" y="15" width="18" height="10" rx="2" stroke="#0ff" stroke-width="1" fill="none"/>' +
+    '<rect x="176" y="17" width="2" height="6" fill="#0ff"/>' +
+    '<rect x="160" y="17" width="14" height="6" fill="#0f0"/>' +
+    '<text x="92" y="120" font-size="72" font-weight="700" fill="#0ff" text-anchor="middle">37</text>' +
+    '<circle cx="92" cy="92" r="70" fill="none" stroke="#004444" stroke-width="12"/>' +
+    '<circle cx="92" cy="92" r="70" fill="none" stroke="#00ffff" stroke-width="12" ' +
+    'stroke-dasharray="440" stroke-dashoffset="110" transform="rotate(-90 92 92)" stroke-linecap="round"/></svg>';
+}
+)rawliteral");
+
+    // Send zone SVG function
+    server.sendContent(R"rawliteral(
+function getZoneSVG() {
+  return '<svg viewBox="0 0 184 184" xmlns="http://www.w3.org/2000/svg"><rect x="55" y="7" width="74" height="16" rx="8" fill="#FF9800"/><text x="92" y="18" font-size="11" font-weight="700" fill="#1a1a2e" text-anchor="middle">ZONE</text><rect x="158" y="15" width="18" height="10" rx="2" stroke="#0ff" stroke-width="1" fill="none"/><rect x="176" y="17" width="2" height="6" fill="#0ff"/><rect x="160" y="17" width="14" height="6" fill="#0f0"/><path d="M 32.0,105.0 A 60,60 0 0,1 34.3,88.5" fill="none" stroke="#00ffff" stroke-width="18"/><path d="M 34.9,86.5 A 60,60 0 0,1 42.3,71.4" fill="none" stroke="#00ffff" stroke-width="18"/><path d="M 43.5,69.7 A 60,60 0 0,1 55.1,57.7" fill="none" stroke="#004444" stroke-width="18"/><path d="M 56.7,56.5 A 60,60 0 0,1 71.5,48.6" fill="none" stroke="#004444" stroke-width="18"/><path d="M 73.5,47.9 A 60,60 0 0,1 89.9,45.0" fill="none" stroke="#443300" stroke-width="18"/><path d="M 92.0,45.0 A 60,60 0 0,1 108.5,47.3" fill="none" stroke="#443300" stroke-width="18"/><path d="M 110.5,47.9 A 60,60 0 0,1 125.6,55.3" fill="none" stroke="#443300" stroke-width="18"/><path d="M 127.3,56.5 A 60,60 0 0,1 139.3,68.1" fill="none" stroke="#443300" stroke-width="18"/><path d="M 140.5,69.7 A 60,60 0 0,1 148.4,84.5" fill="none" stroke="#443300" stroke-width="18"/><path d="M 149.1,86.5 A 60,60 0 0,1 152.0,102.9" fill="none" stroke="#443300" stroke-width="18"/><path d="M 38,108 A 54,54 0 0,1 146,108" fill="none" stroke="#ffffff" stroke-width="2"/><line x1="92" y1="50" x2="92" y2="55" stroke="#ffffff" stroke-width="2"/><line x1="38" y1="108" x2="43" y2="108" stroke="#ffffff" stroke-width="2"/><line x1="146" y1="108" x2="141" y2="108" stroke="#ffffff" stroke-width="2"/><text x="92" y="125" font-size="60" font-weight="700" fill="#00ffff" text-anchor="middle">2</text><text x="92" y="165" font-size="24" font-weight="700" fill="#00ffff" text-anchor="middle">Good!</text></svg>';
+}
+)rawliteral");
+
+    // Send total SVG function
+    server.sendContent(R"rawliteral(
+function getTotalSVG() {
+  return '<svg viewBox="0 0 184 184" xmlns="http://www.w3.org/2000/svg"><rect x="42" y="5" width="100" height="20" rx="10" fill="#00ff00"/><text x="92" y="19" font-size="12" font-weight="700" fill="#1a1a2e" text-anchor="middle">TOTAL</text><rect x="158" y="15" width="18" height="10" rx="2" stroke="#0ff" stroke-width="1" fill="none"/><rect x="176" y="17" width="2" height="6" fill="#0ff"/><rect x="160" y="17" width="14" height="6" fill="#0f0"/><path d="M 92,55 A 50,50 0 1,1 92,155" fill="none" stroke="#444" stroke-width="16" stroke-linecap="round"/><circle cx="92" cy="105" r="50" fill="none" stroke="#00ff00" stroke-width="16" stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="69" transform="rotate(-90 92 105)"/><path d="M 62,51 C 54,47 48,51 48,58 C 48,65 62,73 62,73 C 62,73 76,65 76,58 C 76,51 70,47 62,51 Z" fill="none" stroke="#ffffff" stroke-width="2"/><rect x="25" y="95" width="20" height="20" rx="3" fill="#ffffff"/><text x="35" y="110" font-size="14" font-weight="700" fill="#000000" text-anchor="middle">6</text><text x="92" y="115" font-size="36" font-weight="700" fill="#00ff00" text-anchor="middle">47</text><text x="92" y="132" font-size="21" fill="#888" text-anchor="middle">/60</text></svg>';
+}
+)rawliteral");
+
+    // Send streaks SVG function
+    server.sendContent(R"rawliteral(
+function getStreaksSVG() {
+  return '<svg viewBox="0 0 184 184" xmlns="http://www.w3.org/2000/svg"><rect x="42" y="5" width="100" height="20" rx="10" fill="#9C27B0"/><text x="92" y="19" font-size="12" font-weight="700" fill="#1a1a2e" text-anchor="middle">STREAKS</text><rect x="158" y="15" width="18" height="10" rx="2" stroke="#0ff" stroke-width="1" fill="none"/><rect x="176" y="17" width="2" height="6" fill="#0ff"/><rect x="160" y="17" width="14" height="6" fill="#0f0"/><g transform="translate(22,50)"><line x1="0" y1="30" x2="140" y2="30" stroke="#ffffff" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.8"/><rect x="4" y="8" width="24" height="42" rx="4" fill="#FF9800"/><text x="16" y="30" font-size="10" font-weight="700" fill="#1a1a2e" text-anchor="middle">102</text><text x="16" y="60" font-size="11" fill="#00ffff" text-anchor="middle">s</text><rect x="32" y="12" width="24" height="38" rx="4" fill="#FF9800"/><text x="44" y="34" font-size="10" font-weight="700" fill="#1a1a2e" text-anchor="middle">94</text><text x="44" y="60" font-size="11" fill="#00ffff" text-anchor="middle">m</text><rect x="60" y="4" width="24" height="46" rx="4" fill="#FF9800"/><text x="72" y="30" font-size="10" font-weight="700" fill="#1a1a2e" text-anchor="middle">114</text><text x="72" y="60" font-size="11" fill="#00ffff" text-anchor="middle">t</text><rect x="88" y="10" width="24" height="40" rx="4" fill="#FF9800"/><text x="100" y="33" font-size="10" font-weight="700" fill="#1a1a2e" text-anchor="middle">97</text><text x="100" y="60" font-size="11" fill="#00ffff" text-anchor="middle">w</text><rect x="116" y="24" width="24" height="26" rx="4" fill="#FFEB3B"/><text x="128" y="40" font-size="10" font-weight="700" fill="#1a1a2e" text-anchor="middle">67</text><text x="128" y="60" font-size="12" font-weight="700" fill="#FFEB3B" text-anchor="middle">t</text><line x1="0" y1="50" x2="140" y2="50" stroke="#ffffff" stroke-width="1.5"/></g><g transform="translate(0,130)"><circle cx="50" cy="20" r="18" fill="#9C27B0" stroke="#555" stroke-width="2"/><text x="50" y="28" font-size="20" font-weight="700" fill="#FFEB3B" text-anchor="middle">8</text><text x="50" y="45" font-size="11" fill="#00ffff" text-anchor="middle">best</text><circle cx="134" cy="20" r="18" fill="#FFEB3B" stroke="#555" stroke-width="2"/><text x="134" y="28" font-size="20" font-weight="700" fill="#1a1a2e" text-anchor="middle">5</text><text x="134" y="45" font-size="11" fill="#00ffff" text-anchor="middle">now</text></g></svg>';
+}
+)rawliteral");
+
+    // Send render function and rest of JavaScript
+    server.sendContent(R"rawliteral(
+var render = function() {
+  var content = '';
+  var buttons = '';
+  
+  if (state === 0) {
+    content = '<div class="welcome"><div class="logo">FOX2</div><div class="tagline">Track your metabolism</div><div class="info-box"><div class="info-text">FOX2 measures acetone in your breath to show when your body is using fat for energy.</div></div></div>';
+    buttons = '<button class="btn btn-secondary" onclick="cancel()">Skip</button><button class="btn btn-primary" onclick="next()">Next</button>';
+  } else if (state === 1) {
+    content = '<div class="title">Navigate the Menu</div>' +
+      '<div class="subtitle">Use the buttons to move through options</div>' +
+      '<div class="device-frame"><div class="device-body">' +
+        '<div class="device-screen">' + getMenuSVG() + '</div>' +
+        '<div class="device-buttons">' +
+          '<div class="device-btn-triangle"></div>' +
+          '<div class="device-btn-circle"></div>' +
+        '</div>' +
+        '<div class="device-mouthpiece"><div class="device-mouthpiece-hole"></div></div>' +
+      '</div></div>' +
+      '<div class="info-box">' +
+        '<div class="info-text">On your FOX2, press the <strong style="color:#FF9800">triangle button</strong> ' +
+        'to navigate down the menu. Press the <strong style="color:#00ffff">round button</strong> to select.</div>' +
+        '<div class="button-guide">' +
+          '<div class="button-demo"><div class="button-triangle"></div><div class="button-label">▼ Navigate</div></div>' +
+          '<div class="button-demo"><div class="button-circle"></div><div class="button-label">Select</div></div>' +
+        '</div></div>';
+    buttons = '<button class="btn btn-secondary" onclick="back()">Back</button><button class="btn btn-primary" onclick="next()">Next</button>';
+  } else if (state === 2) {
+    content = '<div class="title">Take Your First Measurement</div>' +
+      '<div class="subtitle">Select "Measure" to begin the 40-second warmup</div>' +
+      '<div class="device-frame"><div class="device-body">' +
+        '<div class="device-screen">' + getWarmupSVG() + '</div>' +
+        '<div class="device-buttons">' +
+          '<div class="device-btn-triangle"></div>' +
+          '<div class="device-btn-circle"></div>' +
+        '</div>' +
+        '<div class="device-mouthpiece"><div class="device-mouthpiece-hole"></div></div>' +
+      '</div></div>' +
+      '<div class="info-box">' +
+        '<div class="info-text">When the countdown finishes, you\'ll see <strong style="color:#00ffff">"blow"</strong> on screen. ' +
+        'Take a gentle breath and blow steadily into the device until it vibrates.</div></div>';
+    buttons = '<button class="btn btn-secondary" onclick="back()">Back</button><button class="btn btn-primary" onclick="next()">Next</button>';
+  } else if (state === 3) {
+    content = '<div class="title">Zone Display</div><div class="subtitle">Your measurement shows your current metabolic state</div>' +
+      '<div class="device-frame"><div class="device-body">' +
+        '<div class="device-screen">' + getZoneSVG() + '</div>' +
+        '<div class="device-buttons">' +
+          '<div class="device-btn-triangle"></div>' +
+          '<div class="device-btn-circle"></div>' +
+        '</div>' +
+        '<div class="device-mouthpiece"><div class="device-mouthpiece-hole"></div></div>' +
+      '</div></div>' +
+      '<div class="info-box"><div class="info-title">Zone 1-4</div><div class="info-text">Primarily glucose metabolism</div></div>' +
+      '<div class="info-box"><div class="info-title">Zone 5-20</div><div class="info-text">Increased fat metabolism</div></div>';
+    buttons = '<button class="btn btn-secondary" onclick="back()">Back</button><button class="btn btn-primary" onclick="next()">Next</button>';
+  } else if (state === 4) {
+    content = '<div class="title">Daily Total</div><div class="subtitle">Each measurement adds to your daily progress ring</div>' +
+      '<div class="device-frame"><div class="device-body">' +
+        '<div class="device-screen">' + getTotalSVG() + '</div>' +
+        '<div class="device-buttons">' +
+          '<div class="device-btn-triangle"></div>' +
+          '<div class="device-btn-circle"></div>' +
+        '</div>' +
+        '<div class="device-mouthpiece"><div class="device-mouthpiece-hole"></div></div>' +
+      '</div></div>' +
+      '<div class="info-box"><div class="info-text">Multiple measurements throughout the day accumulate into a total score. Fill the ring to hit your daily target!</div></div>';
+    buttons = '<button class="btn btn-secondary" onclick="back()">Back</button><button class="btn btn-primary" onclick="next()">Next</button>';
+  } else if (state === 5) {
+    content = '<div class="title">Build Streaks</div><div class="subtitle">Hit your daily target to build a streak. Miss it and restart from zero.</div>' +
+      '<div class="device-frame"><div class="device-body">' +
+        '<div class="device-screen">' + getStreaksSVG() + '</div>' +
+        '<div class="device-buttons">' +
+          '<div class="device-btn-triangle"></div>' +
+          '<div class="device-btn-circle"></div>' +
+        '</div>' +
+        '<div class="device-mouthpiece"><div class="device-mouthpiece-hole"></div></div>' +
+      '</div></div>' +
+      '<div class="info-box"><div class="info-text"><strong style="color:#00ffff">Best:</strong> Your longest streak ever<br><strong style="color:#00ffff">Now:</strong> Your current streak</div></div>';
+    buttons = '<button class="btn btn-secondary" onclick="back()">Back</button><button class="btn btn-primary" onclick="next()">Setup</button>';
+  } else if (state === 6) {
+    var sel1 = selectedLevel === 1 ? ' selected' : '';
+    var sel2 = selectedLevel === 2 ? ' selected' : '';
+    var sel3 = selectedLevel === 3 ? ' selected' : '';
+    var sel4 = selectedLevel === 4 ? ' selected' : '';
+    content = '<div class="title">Setup FOX2</div><div class="subtitle">Configure your device preferences</div><form id="f" onsubmit="save(event)"><div class="form-group"><label class="form-label">Email</label><input class="form-input" name="email" type="email" value="' + document.getElementById('saved-email').value + '" required></div><div class="form-group"><label class="form-label">Phone</label><input class="form-input" name="phone" type="tel" value="' + document.getElementById('saved-phone').value + '" required></div><div class="form-group"><label class="form-label">Target Level</label><div class="level-grid"><div class="level-btn level-1' + sel1 + '" onclick="selectLevel(1)">1</div><div class="level-btn level-2' + sel2 + '" onclick="selectLevel(2)">2</div><div class="level-btn level-3' + sel3 + '" onclick="selectLevel(3)">3</div><div class="level-btn level-4' + sel4 + '" onclick="selectLevel(4)">C</div></div><div class="level-hint" id="hint">' + hints[selectedLevel - 1] + '</div></div><input type="hidden" name="level" value="' + selectedLevel + '"><input type="hidden" name="epoch" value="' + Math.floor(Date.now() / 1000) + '"><input type="hidden" name="tzoffset" value="' + new Date().getTimezoneOffset() + '"><button type="submit" class="btn btn-primary btn-full" style="margin-top:20px">Save &amp; Continue</button><button type="button" class="btn btn-secondary btn-full" onclick="cancel()" style="margin-top:12px">Cancel</button></form>';
+    buttons = '';
+  }
+  
+  document.getElementById('content').innerHTML = content;
+  document.getElementById('buttons').innerHTML = buttons;
+  
+  var dotsHtml = '';
+  for (var i = 0; i < 7; i++) {
+    dotsHtml += '<div class="dot' + (i === state ? ' active' : '') + '"></div>';
+  }
+  document.getElementById('dots').innerHTML = dotsHtml;
+};
+
+var next = function() { if (state < 6) { state++; render(); } };
+var back = function() { if (state > 0) { state--; render(); } };
+var cancel = function() {
+  fetch('/exit').then(function() {
+    document.body.innerHTML = '<div style="text-align:center;padding:40px;font-size:18px;color:#fff">Setup cancelled</div>';
+  });
+};
+var selectLevel = function(l) { selectedLevel = l; render(); };
+var save = function(e) {
+  e.preventDefault();
+  var form = e.target;
+  var formData = new FormData(form);
+  fetch('/save', { method: 'POST', body: new URLSearchParams(formData) }).then(function(resp) {
+    if (resp.ok) {
+      document.body.innerHTML = '<div style="text-align:center;padding:40px;font-size:20px;color:#0ff">✓ Setup complete!</div>';
+      setTimeout(function() { window.location.href = '/close'; }, 1000);
+    }
+  });
+};
+render();
+</script></body></html>
