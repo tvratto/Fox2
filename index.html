@@ -21,22 +21,22 @@ body {
 
 .welcome { text-align:center; justify-content:center; }
 .logo { 
-  font-size:42px; font-weight:700; margin-bottom:10px; 
+  font-size:52px; font-weight:700; margin-bottom:12px; 
   background:linear-gradient(135deg,#00ffff,#ff6b00);
   -webkit-background-clip:text; -webkit-text-fill-color:transparent;
   background-clip:text;
 }
-.tagline { font-size:15px; opacity:.7; margin-bottom:20px; }
+.tagline { font-size:18px; opacity:.7; margin-bottom:24px; }
 
 .content-text {
   flex: 1;
   overflow-y: auto;
   padding: 0 4px;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 .content-text p {
-  margin: 0 0 12px 0;
-  font-size: 14px;
+  margin: 0 0 16px 0;
+  font-size: 15px;
   opacity: 0.9;
 }
 .content-text strong {
@@ -158,33 +158,37 @@ body {
   background: #111;
   border: 1px solid #333;
   border-radius: 8px;
-  padding: 10px;
+  padding: 12px;
+  height: 160px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 .step-title {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
   color: #00ffff;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 .step-text {
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: 14px;
+  line-height: 1.5;
   opacity: .85;
 }
 
 .title { 
-  font-size: 22px; 
+  font-size: 26px; 
   font-weight: 700; 
   text-align: center; 
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   line-height: 1.2;
 }
 .subtitle { 
-  font-size: 14px; 
+  font-size: 16px; 
   opacity: .7; 
   text-align: center; 
-  margin-bottom: 12px; 
-  line-height: 1.3; 
+  margin-bottom: 16px; 
+  line-height: 1.4; 
   padding: 0 10px;
 }
 
@@ -195,7 +199,7 @@ body {
 }
 .dot.active { background:#00ffff; width:24px; }
 
-.btn-row { display:flex; gap:12px; margin-top:auto; padding-top:16px; }
+.btn-row { display:flex; gap:12px; padding-top:16px; }
 .btn {
   flex:1; padding:16px; border-radius:12px; border:none;
   font-size:16px; font-weight:600; cursor:pointer;
@@ -254,15 +258,38 @@ body {
 }
 .screen.active { animation:fadeIn .4s ease-out; }
 
+.spacer { flex: 0 0 20px; }
+
 .info-box {
   background:#111; border:1px solid #333; border-radius:12px;
-  padding:12px; margin:12px 0;
+  padding:14px; margin:14px 0;
 }
 .info-title { 
-  font-size:13px; font-weight:600; color:#00ffff; 
-  margin-bottom:6px;
+  font-size:14px; font-weight:600; color:#00ffff; 
+  margin-bottom:7px;
 }
-.info-text { font-size:13px; line-height:1.4; opacity:.8; }
+.info-text { font-size:14px; line-height:1.5; opacity:.8; }
+
+.info-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.info-list li {
+  position: relative;
+  padding-left: 16px;
+  margin-bottom: 8px;
+}
+.info-list li:last-child {
+  margin-bottom: 0;
+}
+.info-list li:before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: #00ffff;
+  font-weight: bold;
+}
 </style>
 </head>
 <body>
@@ -479,9 +506,11 @@ var render = function() {
       '<div class="info-box">' +
         '<div class="info-title">Helpful Tips</div>' +
         '<div class="info-text">' +
-          '• Avoid blowing too forcefully or too quickly<br>' +
-          '• Do not hyperventilate before measuring<br>' +
-          '• Avoid measuring immediately after mouthwash or gum' +
+          '<ul class="info-list">' +
+            '<li>Avoid blowing too forcefully or too quickly</li>' +
+            '<li>Do not hyperventilate before measuring</li>' +
+            '<li>Avoid measuring immediately after mouthwash or gum</li>' +
+          '</ul>' +
         '</div>' +
       '</div>';
     buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
@@ -565,20 +594,24 @@ var render = function() {
           '<div class="info-text">' +
             'There is no single "correct" time to measure, but consistency helps make patterns easier to see.<br><br>' +
             'Many people find it helpful to measure:<br>' +
-            '• In the morning<br>' +
-            '• At similar times each day<br>' +
-            '• Before or after meals<br>' +
-            '• On both active and rest days' +
+            '<ul class="info-list">' +
+              '<li>In the morning</li>' +
+              '<li>At similar times each day</li>' +
+              '<li>Before or after meals</li>' +
+              '<li>On both active and rest days</li>' +
+            '</ul>' +
           '</div>' +
         '</div>' +
         '<div class="info-box">' +
           '<div class="info-title">What to Watch For</div>' +
           '<div class="info-text">' +
             'Over days and weeks, you may begin to notice:<br>' +
-            '• Daily rhythms<br>' +
-            '• Differences between weekdays and weekends<br>' +
-            '• How meals, activity, or rest affect readings<br>' +
-            '• Gradual changes over time' +
+            '<ul class="info-list">' +
+              '<li>Daily rhythms</li>' +
+              '<li>Differences between weekdays and weekends</li>' +
+              '<li>How meals, activity, or rest affect readings</li>' +
+              '<li>Gradual changes over time</li>' +
+            '</ul>' +
           '</div>' +
         '</div>' +
         '<p>Daily totals help you compare days to yourself and reveal longer-term trends.</p>' +
@@ -603,10 +636,12 @@ var render = function() {
         '<div class="info-box">' +
           '<div class="info-title">Using FOX2 Safely</div>' +
           '<div class="info-text">' +
-            '• Follow the instructions provided<br>' +
-            '• Avoid forced or excessive breathing<br>' +
-            '• Take breaks if you feel lightheaded<br><br>' +
-            'If anything feels uncomfortable, stop and resume later.' +
+            '<ul class="info-list">' +
+              '<li>Follow the instructions provided</li>' +
+              '<li>Avoid forced or excessive breathing</li>' +
+              '<li>Take breaks if you feel lightheaded</li>' +
+            '</ul>' +
+            '<br>If anything feels uncomfortable, stop and resume later.' +
           '</div>' +
         '</div>' +
         '<p>We are here to help you use FOX2 with confidence.</p>' +
@@ -648,6 +683,18 @@ var render = function() {
   
   document.getElementById('content').innerHTML = content;
   document.getElementById('buttons').innerHTML = buttons;
+  
+  // Add spacer between content and dots
+  var container = document.querySelector('.container');
+  var existingSpacer = document.getElementById('spacer');
+  if (existingSpacer) {
+    existingSpacer.remove();
+  }
+  var spacerDiv = document.createElement('div');
+  spacerDiv.id = 'spacer';
+  spacerDiv.className = 'spacer';
+  var dotsElement = document.getElementById('dots');
+  container.insertBefore(spacerDiv, dotsElement);
   
   var dotsContainer = document.getElementById('dots');
   if (showOnboarding) {
