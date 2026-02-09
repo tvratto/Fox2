@@ -1,134 +1,268 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>FOX2 Provisioning (Browser-safe mock)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FOX2 Onboarding Test</title>
 <style>
-*{box-sizing:border-box}
-body{
-  margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
-  background:#111;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  overflow-x:hidden;touch-action:manipulation;-webkit-tap-highlight-color:transparent
+* { box-sizing: border-box; }
+body { 
+  background:#000; color:#fff; margin:0; padding:0; 
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  overflow-x:hidden;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
-.container{
-  width:min(480px,100%);margin:0 auto;padding:20px;min-height:100vh;
-  display:flex;flex-direction:column
+.container { 
+  max-width:480px; margin:0 auto; padding:20px; 
+  min-height:100vh; display:flex; flex-direction:column;
 }
+.screen { display:none; flex:1; flex-direction:column; }
+.screen.active { display:flex; }
 
-/* Onboarding shell */
-.welcome{text-align:center;justify-content:center}
-.logo{font-size:48px;font-weight:700;margin-bottom:12px;
+.welcome { text-align:center; justify-content:center; }
+.logo { 
+  font-size:48px; font-weight:700; margin-bottom:12px; 
   background:linear-gradient(135deg,#00ffff,#ff6b00);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  background-clip:text;
 }
-.tagline{font-size:16px;opacity:.7;margin-bottom:40px}
-.title{font-size:24px;font-weight:700;text-align:center;margin-bottom:8px}
-.subtitle{font-size:15px;opacity:.7;text-align:center;margin-bottom:24px;line-height:1.4;padding:0 10px}
+.tagline { font-size:16px; opacity:.7; margin-bottom:24px; }
 
-.dots{display:flex;gap:8px;justify-content:center;margin:24px 0}
-.dot{width:8px;height:8px;border-radius:50%;background:#333;transition:all .3s}
-.dot.active{background:#00ffff;width:24px}
-
-.btn-row{display:flex;gap:12px;margin-top:auto;padding-top:24px}
-.btn{
-  flex:1;padding:16px;border-radius:12px;border:none;font-size:16px;font-weight:600;cursor:pointer;
-  transition:all .2s;user-select:none;touch-action:manipulation
+.content-text {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 4px;
+  line-height: 1.6;
 }
-.btn:active{transform:scale(.95)}
-.btn-primary{background:#00ffff;color:#000}
-.btn-secondary{background:#222;color:#fff}
-.btn-full{width:100%}
-
-.info-box{background:#111;border:1px solid #333;border-radius:12px;padding:16px;margin:16px 0}
-.info-title{font-size:14px;font-weight:600;color:#00ffff;margin-bottom:8px}
-.info-text{font-size:14px;line-height:1.5;opacity:.85}
-
-.form-group{margin-bottom:20px}
-.form-label{display:block;margin-bottom:6px;font-size:14px;font-weight:500;opacity:.9}
-.form-input{
-  width:100%;padding:14px;border-radius:12px;border:2px solid #333;
-  background:#111;color:#fff;font-size:16px
+.content-text p {
+  margin: 0 0 16px 0;
+  font-size: 15px;
+  opacity: 0.9;
 }
-.form-input:focus{outline:none;border-color:#00ffff}
-
-.level-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:12px}
-.level-btn{
-  aspect-ratio:1;border-radius:12px;border:3px solid transparent;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;
-  transition:all .2s;user-select:none;touch-action:manipulation
-}
-.level-btn:active{transform:scale(.95)}
-.level-btn.selected{border-color:#00ffff;box-shadow:0 0 20px 4px rgba(0,255,255,.6)}
-.level-1{background:#2196F3;color:#000}
-.level-2{background:#4CAF50;color:#000}
-.level-3{background:#9C27B0;color:#fff}
-.level-4{background:#E91E63;color:#fff}
-.level-hint{text-align:center;margin-top:12px;font-size:16px;font-weight:600;color:#00ffff;min-height:24px}
-
-@keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-.screen.active{animation:fadeIn .4s ease-out}
-
-/* =========================
-   FOX2 device mock (CSS)
-   ========================= */
-.device-frame{width:200px;height:320px;position:relative;margin:18px auto}
-.device-body{
-  position:absolute;inset:0;background:#232347;border-radius:100px/140px;
-  box-shadow:0 10px 30px rgba(0,0,0,.85), inset 0 2px 4px rgba(255,255,255,.10);
-  z-index:1
-}
-/* top & bottom flats (cut egg) */
-.device-body::before,.device-body::after{
-  content:"";position:absolute;left:0;width:100%;height:26px;background:#111;z-index:2
-}
-.device-body::before{top:-20px}
-.device-body::after{bottom:0}
-
-/* seam line */
-.device-seam{
-  position:absolute;left:10%;width:80%;height:2px;top:18%;
-  background:linear-gradient(to bottom, rgba(255,255,255,.18), rgba(0,0,0,.45));
-  z-index:4
+.content-text strong {
+  color: #00ffff;
+  font-weight: 600;
 }
 
-/* screen */
-.device-screen{
-  position:absolute;top:22%;left:50%;transform:translateX(-50%);
-  width:140px;height:140px;background:#000;border-radius:14px;
-  box-shadow:inset 0 2px 10px rgba(0,0,0,.7), 0 0 0 3px #333;
-  display:flex;align-items:center;justify-content:center;z-index:3;overflow:hidden
+.how-to-measure {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
 }
-.device-screen svg{width:100%;height:100%}
+.device-column {
+  flex: 0 0 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.text-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.mini-device {
+  width: 120px;
+  height: 192px;
+  position: relative;
+}
+.mini-device-body {
+  position: absolute;
+  inset: 0;
+  background: #232347;
+  border-radius: 60px/84px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.85), inset 0 1px 3px rgba(255,255,255,.08);
+}
+.mini-device-body::before,
+.mini-device-body::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 16px;
+  background: #111;
+  z-index: 2;
+}
+.mini-device-body::before { top: -12px; }
+.mini-device-body::after { bottom: 0; }
+.mini-device-seam {
+  position: absolute;
+  left: 10%;
+  width: 80%;
+  height: 1px;
+  top: 18%;
+  background: linear-gradient(to bottom, rgba(255,255,255,.18), rgba(0,0,0,.45));
+  z-index: 4;
+}
+.mini-device-screen {
+  position: absolute;
+  top: 22%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 84px;
+  height: 84px;
+  background: #000;
+  border-radius: 8px;
+  box-shadow: inset 0 1px 6px rgba(0,0,0,.7), 0 0 0 2px #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+}
+.mini-device-screen svg {
+  width: 100%;
+  height: 100%;
+}
+.mini-device-buttons {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 72px;
+  height: 24px;
+  z-index: 3;
+}
+.mini-device-btn-circle {
+  position: absolute;
+  left: 50%;
+  bottom: 7px;
+  transform: translateX(-50%);
+  width: 28px;
+  height: 28px;
+  background: #0ff;
+  border-radius: 50%;
+}
+.mini-device-btn-triangle {
+  position: absolute;
+  left: 0;
+  bottom: 20px;
+  width: 17px;
+  height: 17px;
+  background: #ff9800;
+  clip-path: polygon(50% 100%, 0 0, 100% 0);
+}
+.mini-device-mouthpiece {
+  position: absolute;
+  top: 7px;
+  right: -7px;
+  width: 36px;
+  height: 20px;
+  background: #fff;
+  border-radius: 5px;
+  transform-origin: left center;
+  transform: rotate(-45deg);
+  box-shadow: 0 1px 4px rgba(0,0,0,.4);
+  z-index: 5;
+}
+.step-block {
+  background: #111;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 12px;
+}
+.step-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #00ffff;
+  margin-bottom: 6px;
+}
+.step-text {
+  font-size: 14px;
+  line-height: 1.5;
+  opacity: .85;
+}
 
-/* buttons */
-.device-buttons{
-  position:absolute;bottom:30px;left:50%;transform:translateX(-50%);
-  width:120px;height:40px;z-index:3
+.title { 
+  font-size: 24px; 
+  font-weight: 700; 
+  text-align: center; 
+  margin-bottom: 8px;
+  line-height: 1.3;
 }
-.device-btn-circle{
-  position:absolute;left:50%;transform:translateX(-50%);
-  bottom:11px;width:46px;height:46px;background:#0ff;border-radius:50%;
-  box-shadow:0 2px 10px rgba(0,255,255,.35)
-}
-.device-btn-triangle{
-  position:absolute;left:0;bottom:34px;width:29px;height:29px;background:#ff9800;
-  clip-path:polygon(50% 100%,0 0,100% 0);
-  box-shadow:0 2px 10px rgba(255,152,0,.35)
-}
-
-/* mouthpiece tube (on top of flat) */
-.device-mouthpiece{
-  position:absolute;top:11px;right:-11px;width:60px;height:34px;background:#fff;border-radius:8px;
-  transform-origin:left center;transform:rotate(-45deg);
-  box-shadow:0 2px 6px rgba(0,0,0,.4);
-  z-index:6 /* above the top flat */
+.subtitle { 
+  font-size: 15px; 
+  opacity: .7; 
+  text-align: center; 
+  margin-bottom: 20px; 
+  line-height: 1.4; 
+  padding: 0 10px;
 }
 
-/* tiny debug footer */
-.debug{
-  font-size:12px;opacity:.65;text-align:center;margin-top:10px
+.dots { display:flex; gap:8px; justify-content:center; margin:24px 0; }
+.dot {
+  width:8px; height:8px; border-radius:50%;
+  background:#333; transition:all .3s;
 }
+.dot.active { background:#00ffff; width:24px; }
+
+.btn-row { display:flex; gap:12px; margin-top:auto; padding-top:24px; }
+.btn {
+  flex:1; padding:16px; border-radius:12px; border:none;
+  font-size:16px; font-weight:600; cursor:pointer;
+  transition:all .2s;
+  touch-action: manipulation;
+  user-select: none;
+}
+.btn:active { transform: scale(0.95); }
+.btn-primary { background:#00ffff; color:#000; }
+.btn-secondary { background:#222; color:#fff; }
+.btn-full { width:100%; }
+
+.form-group { margin-bottom:20px; }
+.form-label { 
+  display:block; margin-bottom:6px; font-size:14px; 
+  font-weight:500; opacity:.9;
+}
+.form-input {
+  width:100%; padding:14px; border-radius:12px; border:2px solid #333;
+  background:#111; color:#fff; font-size:16px;
+}
+.form-input:focus { outline:none; border-color:#00ffff; }
+
+.level-grid {
+  display:grid; grid-template-columns:repeat(4,1fr);
+  gap:12px; margin-top:12px;
+}
+.level-btn {
+  aspect-ratio:1; border-radius:12px;
+  border:3px solid transparent; cursor:pointer;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  font-size:24px; font-weight:700;
+  transition:all .2s;
+  touch-action: manipulation;
+  user-select: none;
+}
+.level-btn:active { transform: scale(0.95); }
+.level-btn.selected {
+  border-color:#00ffff;
+  box-shadow:0 0 20px 4px rgba(0,255,255,0.6);
+}
+.level-1 { background:#2196F3; color:#000; }
+.level-2 { background:#4CAF50; color:#000; }
+.level-3 { background:#9C27B0; color:#fff; }
+.level-4 { background:#E91E63; color:#fff; }
+.level-hint {
+  text-align:center; margin-top:12px;
+  font-size:16px; font-weight:600; color:#00ffff;
+  min-height:24px;
+}
+
+@keyframes fadeIn {
+  from { opacity:0; transform:translateY(20px); }
+  to { opacity:1; transform:translateY(0); }
+}
+.screen.active { animation:fadeIn .4s ease-out; }
+
+.info-box {
+  background:#111; border:1px solid #333; border-radius:12px;
+  padding:16px; margin:16px 0;
+}
+.info-title { 
+  font-size:14px; font-weight:600; color:#00ffff; 
+  margin-bottom:8px;
+}
+.info-text { font-size:14px; line-height:1.5; opacity:.8; }
 </style>
 </head>
 <body>
@@ -136,62 +270,17 @@ body{
   <div id="content" style="flex:1;display:flex;flex-direction:column"></div>
   <div class="dots" id="dots"></div>
   <div class="btn-row" id="buttons"></div>
-  <div class="debug" id="debug"></div>
 </div>
 
-<!-- fake “ESP32-injected” values -->
-<input type="hidden" id="saved-email" value="tim@example.com">
-<input type="hidden" id="saved-phone" value="+1 (555) 123-4567">
-<input type="hidden" id="current-level" value="1">
-<input type="hidden" id="target2" value="60">
-<input type="hidden" id="target3" value="90">
-
 <script>
-/* =========================
-   Fake endpoints (browser-safe)
-   ========================= */
-const FakeAPI = (() => {
-  const store = { saved:false, cancelled:false, payload:null };
-  const sleep = (ms)=>new Promise(r=>setTimeout(r,ms));
-  const ok = (body="OK", status=200)=>({ ok:true, status, text: async()=>body });
-  return {
-    async fetch(url, opts){
-      await sleep(200);
-      if(url === "/exit"){ store.cancelled=true; return ok("OK"); }
-      if(url === "/close"){ return ok("<html><body>Done</body></html>"); }
-      if(url === "/save"){
-        store.saved=true;
-        if(opts && opts.body){
-          // URLSearchParams expected
-          try{
-            const p = new URLSearchParams(opts.body);
-            store.payload = Object.fromEntries(p.entries());
-          }catch(e){}
-        }
-        return ok("OK");
-      }
-      // default
-      return { ok:false, status:404, text: async()=> "Not Found" };
-    },
-    getStore(){ return store; }
-  };
-})();
-
-// replace fetch calls used in your ESP32 page
-const fetch = (url, opts) => FakeAPI.fetch(url, opts);
-
-/* =========================
-   State + values
-   ========================= */
-var state = 0;
-var selectedLevel = parseInt(document.getElementById('current-level').value, 10);
-var target2 = document.getElementById('target2').value;
-var target3 = document.getElementById('target3').value;
+var selectedLevel = 1;
+var target2 = 60;
+var target3 = 90;
 var hints = ['no target', 'total = ' + target2, 'total = ' + target3, 'custom'];
+var showOnboarding = true;
 
-/* =========================
-   SVG screens (copied from your code)
-   ========================= */
+var state = 0;
+
 function getMenuSVG() {
   return '<svg viewBox="0 0 184 184" xmlns="http://www.w3.org/2000/svg">' +
     '<rect x="158" y="15" width="18" height="10" rx="2" stroke="#0ff" stroke-width="1" fill="none"/>' +
@@ -204,6 +293,7 @@ function getMenuSVG() {
     '<text x="92" y="138" font-size="24" fill="#fff" text-anchor="middle">About</text>' +
     '<text x="92" y="168" font-size="24" fill="#fff" text-anchor="middle">Off</text></svg>';
 }
+
 function getWarmupSVG() {
   return '<svg viewBox="0 0 184 184" xmlns="http://www.w3.org/2000/svg">' +
     '<rect x="158" y="15" width="18" height="10" rx="2" stroke="#0ff" stroke-width="1" fill="none"/>' +
@@ -214,163 +304,392 @@ function getWarmupSVG() {
     '<circle cx="92" cy="92" r="70" fill="none" stroke="#00ffff" stroke-width="12" ' +
     'stroke-dasharray="440" stroke-dashoffset="110" transform="rotate(-90 92 92)" stroke-linecap="round"/></svg>';
 }
+
+function getBlowSVG() {
+  return '<svg viewBox="0 0 184 184" xmlns="http://www.w3.org/2000/svg">' +
+    '<rect x="158" y="15" width="18" height="10" rx="2" stroke="#0ff" stroke-width="1" fill="none"/>' +
+    '<rect x="176" y="17" width="2" height="6" fill="#0ff"/>' +
+    '<rect x="160" y="17" width="14" height="6" fill="#0f0"/>' +
+    '<text x="92" y="110" font-size="48" font-weight="700" fill="#0ff" text-anchor="middle">blow</text></svg>';
+}
+
 function getZoneSVG() {
-  return '<svg viewBox="0 0 184 184" xmlns="http://www.w3.org/2000/svg"><rect x="55" y="7" width="74" height="16" rx="8" fill="#FF9800"/><text x="92" y="18" font-size="11" font-weight="700" fill="#1a1a2e" text-anchor="middle">ZONE</text><rect x="158" y="15" width="18" height="10" rx="2" stroke="#0ff" stroke-width="1" fill="none"/><rect x="176" y="17" width="2" height="6" fill="#0ff"/><rect x="160" y="17" width="14" height="6" fill="#0f0"/><path d="M 32.0,105.0 A 60,60 0 0,1 34.3,88.5" fill="none" stroke="#00ffff" stroke-width="18"/><path d="M 34.9,86.5 A 60,60 0 0,1 42.3,71.4" fill="none" stroke="#00ffff" stroke-width="18"/><path d="M 43.5,69.7 A 60,60 0 0,1 55.1,57.7" fill="none" stroke="#004444" stroke-width="18"/><path d="M 56.7,56.5 A 60,60 0 0,1 71.5,48.6" fill="none" stroke="#004444" stroke-width="18"/><path d="M 73.5,47.9 A 60,60 0 0,1 89.9,45.0" fill="none" stroke="#443300" stroke-width="18"/><path d="M 92.0,45.0 A 60,60 0 0,1 108.5,47.3" fill="none" stroke="#443300" stroke-width="18"/><path d="M 110.5,47.9 A 60,60 0 0,1 125.6,55.3" fill="none" stroke="#443300" stroke-width="18"/><path d="M 127.3,56.5 A 60,60 0 0,1 139.3,68.1" fill="none" stroke="#443300" stroke-width="18"/><path d="M 140.5,69.7 A 60,60 0 0,1 148.4,84.5" fill="none" stroke="#443300" stroke-width="18"/><path d="M 149.1,86.5 A 60,60 0 0,1 152.0,102.9" fill="none" stroke="#443300" stroke-width="18"/><path d="M 38,108 A 54,54 0 0,1 146,108" fill="none" stroke="#ffffff" stroke-width="2"/><line x1="92" y1="50" x2="92" y2="55" stroke="#ffffff" stroke-width="2"/><line x1="38" y1="108" x2="43" y2="108" stroke="#ffffff" stroke-width="2"/><line x1="146" y1="108" x2="141" y2="108" stroke="#ffffff" stroke-width="2"/><text x="92" y="125" font-size="60" font-weight="700" fill="#00ffff" text-anchor="middle">2</text><text x="92" y="165" font-size="24" font-weight="700" fill="#00ffff" text-anchor="middle">Good!</text></svg>';
+  return '<svg viewBox="0 0 184 184" xmlns="http://www.w3.org/2000/svg">' +
+    '<rect x="55" y="7" width="74" height="16" rx="8" fill="#FF9800"/>' +
+    '<text x="92" y="18" font-size="11" font-weight="700" fill="#1a1a2e" text-anchor="middle">ZONE</text>' +
+    '<rect x="158" y="15" width="18" height="10" rx="2" stroke="#0ff" stroke-width="1" fill="none"/>' +
+    '<rect x="176" y="17" width="2" height="6" fill="#0ff"/>' +
+    '<rect x="160" y="17" width="14" height="6" fill="#0f0"/>' +
+    '<path d="M 32.0,105.0 A 60,60 0 0,1 34.3,88.5" fill="none" stroke="#00ffff" stroke-width="18"/>' +
+    '<path d="M 34.9,86.5 A 60,60 0 0,1 42.3,71.4" fill="none" stroke="#00ffff" stroke-width="18"/>' +
+    '<path d="M 43.5,69.7 A 60,60 0 0,1 55.1,57.7" fill="none" stroke="#004444" stroke-width="18"/>' +
+    '<path d="M 56.7,56.5 A 60,60 0 0,1 71.5,48.6" fill="none" stroke="#004444" stroke-width="18"/>' +
+    '<path d="M 73.5,47.9 A 60,60 0 0,1 89.9,45.0" fill="none" stroke="#443300" stroke-width="18"/>' +
+    '<path d="M 92.0,45.0 A 60,60 0 0,1 108.5,47.3" fill="none" stroke="#443300" stroke-width="18"/>' +
+    '<path d="M 110.5,47.9 A 60,60 0 0,1 125.6,55.3" fill="none" stroke="#443300" stroke-width="18"/>' +
+    '<path d="M 127.3,56.5 A 60,60 0 0,1 139.3,68.1" fill="none" stroke="#443300" stroke-width="18"/>' +
+    '<path d="M 140.5,69.7 A 60,60 0 0,1 148.4,84.5" fill="none" stroke="#443300" stroke-width="18"/>' +
+    '<path d="M 149.1,86.5 A 60,60 0 0,1 152.0,102.9" fill="none" stroke="#443300" stroke-width="18"/>' +
+    '<path d="M 38,108 A 54,54 0 0,1 146,108" fill="none" stroke="#ffffff" stroke-width="2"/>' +
+    '<line x1="92" y1="50" x2="92" y2="55" stroke="#ffffff" stroke-width="2"/>' +
+    '<line x1="38" y1="108" x2="43" y2="108" stroke="#ffffff" stroke-width="2"/>' +
+    '<line x1="146" y1="108" x2="141" y2="108" stroke="#ffffff" stroke-width="2"/>' +
+    '<text x="92" y="125" font-size="60" font-weight="700" fill="#00ffff" text-anchor="middle">2</text>' +
+    '<text x="92" y="165" font-size="24" font-weight="700" fill="#00ffff" text-anchor="middle">Good!</text></svg>';
 }
+
 function getTotalSVG() {
-  return '<svg viewBox="0 0 184 184" xmlns="http://www.w3.org/2000/svg"><rect x="42" y="5" width="100" height="20" rx="10" fill="#00ff00"/><text x="92" y="19" font-size="12" font-weight="700" fill="#1a1a2e" text-anchor="middle">TOTAL</text><rect x="158" y="15" width="18" height="10" rx="2" stroke="#0ff" stroke-width="1" fill="none"/><rect x="176" y="17" width="2" height="6" fill="#0ff"/><rect x="160" y="17" width="14" height="6" fill="#0f0"/><path d="M 92,55 A 50,50 0 1,1 92,155" fill="none" stroke="#444" stroke-width="16" stroke-linecap="round"/><circle cx="92" cy="105" r="50" fill="none" stroke="#00ff00" stroke-width="16" stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="69" transform="rotate(-90 92 105)"/><path d="M 62,51 C 54,47 48,51 48,58 C 48,65 62,73 62,73 C 62,73 76,65 76,58 C 76,51 70,47 62,51 Z" fill="none" stroke="#ffffff" stroke-width="2"/><rect x="25" y="95" width="20" height="20" rx="3" fill="#ffffff"/><text x="35" y="110" font-size="14" font-weight="700" fill="#000000" text-anchor="middle">6</text><text x="92" y="115" font-size="36" font-weight="700" fill="#00ff00" text-anchor="middle">47</text><text x="92" y="132" font-size="21" fill="#888" text-anchor="middle">/60</text></svg>';
+  return '<svg viewBox="0 0 184 184" xmlns="http://www.w3.org/2000/svg">' +
+    '<rect x="42" y="5" width="100" height="20" rx="10" fill="#00ff00"/>' +
+    '<text x="92" y="19" font-size="12" font-weight="700" fill="#1a1a2e" text-anchor="middle">TOTAL</text>' +
+    '<rect x="158" y="15" width="18" height="10" rx="2" stroke="#0ff" stroke-width="1" fill="none"/>' +
+    '<rect x="176" y="17" width="2" height="6" fill="#0ff"/>' +
+    '<rect x="160" y="17" width="14" height="6" fill="#0f0"/>' +
+    '<path d="M 92,55 A 50,50 0 1,1 92,155" fill="none" stroke="#444" stroke-width="16" stroke-linecap="round"/>' +
+    '<circle cx="92" cy="105" r="50" fill="none" stroke="#00ff00" stroke-width="16" stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="69" transform="rotate(-90 92 105)"/>' +
+    '<path d="M 62,51 C 54,47 48,51 48,58 C 48,65 62,73 62,73 C 62,73 76,65 76,58 C 76,51 70,47 62,51 Z" fill="none" stroke="#ffffff" stroke-width="2"/>' +
+    '<rect x="25" y="95" width="20" height="20" rx="3" fill="#ffffff"/>' +
+    '<text x="35" y="110" font-size="14" font-weight="700" fill="#000000" text-anchor="middle">6</text>' +
+    '<text x="92" y="115" font-size="36" font-weight="700" fill="#00ff00" text-anchor="middle">47</text>' +
+    '<text x="92" y="132" font-size="21" fill="#888" text-anchor="middle">/60</text></svg>';
 }
+
 function getStreaksSVG() {
-  return '<svg viewBox="0 0 184 184" xmlns="http://www.w3.org/2000/svg"><rect x="42" y="5" width="100" height="20" rx="10" fill="#9C27B0"/><text x="92" y="19" font-size="12" font-weight="700" fill="#1a1a2e" text-anchor="middle">STREAKS</text><rect x="158" y="15" width="18" height="10" rx="2" stroke="#0ff" stroke-width="1" fill="none"/><rect x="176" y="17" width="2" height="6" fill="#0ff"/><rect x="160" y="17" width="14" height="6" fill="#0f0"/><g transform="translate(22,50)"><line x1="0" y1="30" x2="140" y2="30" stroke="#ffffff" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.8"/><rect x="4" y="8" width="24" height="42" rx="4" fill="#FF9800"/><text x="16" y="30" font-size="10" font-weight="700" fill="#1a1a2e" text-anchor="middle">102</text><text x="16" y="60" font-size="11" fill="#00ffff" text-anchor="middle">s</text><rect x="32" y="12" width="24" height="38" rx="4" fill="#FF9800"/><text x="44" y="34" font-size="10" font-weight="700" fill="#1a1a2e" text-anchor="middle">94</text><text x="44" y="60" font-size="11" fill="#00ffff" text-anchor="middle">m</text><rect x="60" y="4" width="24" height="46" rx="4" fill="#FF9800"/><text x="72" y="30" font-size="10" font-weight="700" fill="#1a1a2e" text-anchor="middle">114</text><text x="72" y="60" font-size="11" fill="#00ffff" text-anchor="middle">t</text><rect x="88" y="10" width="24" height="40" rx="4" fill="#FF9800"/><text x="100" y="33" font-size="10" font-weight="700" fill="#1a1a2e" text-anchor="middle">97</text><text x="100" y="60" font-size="11" fill="#00ffff" text-anchor="middle">w</text><rect x="116" y="24" width="24" height="26" rx="4" fill="#FFEB3B"/><text x="128" y="40" font-size="10" font-weight="700" fill="#1a1a2e" text-anchor="middle">67</text><text x="128" y="60" font-size="12" font-weight="700" fill="#FFEB3B" text-anchor="middle">t</text><line x1="0" y1="50" x2="140" y2="50" stroke="#ffffff" stroke-width="1.5"/></g><g transform="translate(0,130)"><circle cx="50" cy="20" r="18" fill="#9C27B0" stroke="#555" stroke-width="2"/><text x="50" y="28" font-size="20" font-weight="700" fill="#FFEB3B" text-anchor="middle">8</text><text x="50" y="45" font-size="11" fill="#00ffff" text-anchor="middle">best</text><circle cx="134" cy="20" r="18" fill="#FFEB3B" stroke="#555" stroke-width="2"/><text x="134" y="28" font-size="20" font-weight="700" fill="#1a1a2e" text-anchor="middle">5</text><text x="134" y="45" font-size="11" fill="#00ffff" text-anchor="middle">now</text></g></svg>';
+  return '<svg viewBox="0 0 184 184" xmlns="http://www.w3.org/2000/svg">' +
+    '<rect x="42" y="5" width="100" height="20" rx="10" fill="#9C27B0"/>' +
+    '<text x="92" y="19" font-size="12" font-weight="700" fill="#1a1a2e" text-anchor="middle">STREAKS</text>' +
+    '<rect x="158" y="15" width="18" height="10" rx="2" stroke="#0ff" stroke-width="1" fill="none"/>' +
+    '<rect x="176" y="17" width="2" height="6" fill="#0ff"/>' +
+    '<rect x="160" y="17" width="14" height="6" fill="#0f0"/>' +
+    '<g transform="translate(22,50)">' +
+      '<line x1="0" y1="30" x2="140" y2="30" stroke="#ffffff" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.8"/>' +
+      '<rect x="4" y="8" width="24" height="42" rx="4" fill="#FF9800"/>' +
+      '<text x="16" y="30" font-size="10" font-weight="700" fill="#1a1a2e" text-anchor="middle">102</text>' +
+      '<text x="16" y="60" font-size="11" fill="#00ffff" text-anchor="middle">s</text>' +
+      '<rect x="32" y="12" width="24" height="38" rx="4" fill="#FF9800"/>' +
+      '<text x="44" y="34" font-size="10" font-weight="700" fill="#1a1a2e" text-anchor="middle">94</text>' +
+      '<text x="44" y="60" font-size="11" fill="#00ffff" text-anchor="middle">m</text>' +
+      '<rect x="60" y="4" width="24" height="46" rx="4" fill="#FF9800"/>' +
+      '<text x="72" y="30" font-size="10" font-weight="700" fill="#1a1a2e" text-anchor="middle">114</text>' +
+      '<text x="72" y="60" font-size="11" fill="#00ffff" text-anchor="middle">t</text>' +
+      '<rect x="88" y="10" width="24" height="40" rx="4" fill="#FF9800"/>' +
+      '<text x="100" y="33" font-size="10" font-weight="700" fill="#1a1a2e" text-anchor="middle">97</text>' +
+      '<text x="100" y="60" font-size="11" fill="#00ffff" text-anchor="middle">w</text>' +
+      '<rect x="116" y="24" width="24" height="26" rx="4" fill="#FFEB3B"/>' +
+      '<text x="128" y="40" font-size="10" font-weight="700" fill="#1a1a2e" text-anchor="middle">67</text>' +
+      '<text x="128" y="60" font-size="12" font-weight="700" fill="#FFEB3B" text-anchor="middle">t</text>' +
+      '<line x1="0" y1="50" x2="140" y2="50" stroke="#ffffff" stroke-width="1.5"/>' +
+    '</g>' +
+    '<g transform="translate(0,130)">' +
+      '<circle cx="50" cy="20" r="18" fill="#9C27B0" stroke="#555" stroke-width="2"/>' +
+      '<text x="50" y="28" font-size="20" font-weight="700" fill="#FFEB3B" text-anchor="middle">8</text>' +
+      '<text x="50" y="45" font-size="11" fill="#00ffff" text-anchor="middle">best</text>' +
+      '<circle cx="134" cy="20" r="18" fill="#FFEB3B" stroke="#555" stroke-width="2"/>' +
+      '<text x="134" y="28" font-size="20" font-weight="700" fill="#1a1a2e" text-anchor="middle">5</text>' +
+      '<text x="134" y="45" font-size="11" fill="#00ffff" text-anchor="middle">now</text>' +
+    '</g></svg>';
 }
 
-/* =========================
-   Render helpers
-   ========================= */
-function deviceShell(innerSvg){
-  return '<div class="device-frame"><div class="device-body">' +
-    '<div class="device-seam"></div>' +
-    '<div class="device-screen">' + innerSvg + '</div>' +
-    '<div class="device-buttons"><div class="device-btn-triangle"></div><div class="device-btn-circle"></div></div>' +
-    '<div class="device-mouthpiece"></div>' +
-  '</div></div>';
-}
-
-function setDebug(){
-  const s = FakeAPI.getStore();
-  const p = s.payload ? JSON.stringify(s.payload) : "";
-  document.getElementById("debug").textContent =
-    "fake endpoints: /save /exit /close | saved=" + s.saved + " cancelled=" + s.cancelled + (p ? (" | payload=" + p) : "");
-}
-
-/* =========================
-   Main render()
-   ========================= */
 var render = function() {
+  console.log('render() called, state:', state);
   var content = '';
   var buttons = '';
-
+  
   if (state === 0) {
-    content =
-      '<div class="welcome">' +
-        '<div class="logo">FOX2</div>' +
-        '<div class="tagline">Track your metabolism</div>' +
-        '<div class="info-box"><div class="info-text">FOX2 measures acetone in your breath to show when your body is using fat for energy.</div></div>' +
-      '</div>';
-    buttons = '<button class="btn btn-secondary" onclick="cancel()">Skip</button><button class="btn btn-primary" onclick="next()">Next</button>';
+    // 1. WELCOME / ORIENTATION
+    content = '<div class="welcome">' +
+      '<div class="logo">FOX2</div>' +
+      '<div class="tagline">Understand your metabolic health</div>' +
+      '<div class="content-text">' +
+        '<p>FOX2 provides insight into how your body is using energy by measuring a natural signal in your breath.</p>' +
+        '<p>It is designed to be simple, non-invasive, and easy to use as part of your daily routine.</p>' +
+        '<p><strong>No needles. No lab tests.</strong><br>Just a normal breath.</p>' +
+        '<p style="opacity:0.6; font-size:13px; margin-top:24px">FOX2 provides informational insight and is not a medical diagnostic device.</p>' +
+      '</div></div>';
+    buttons = '<button class="btn btn-secondary" onclick="cancel()">Skip</button>' +
+              '<button class="btn btn-primary" onclick="next()">Next</button>';
+              
   } else if (state === 1) {
-    content =
-      '<div class="title">Navigate the Menu</div>' +
-      '<div class="subtitle">Use the buttons to move through options</div>' +
-      deviceShell(getMenuSVG()) +
-      '<div class="info-box"><div class="info-text">Press the <strong style="color:#FF9800">triangle</strong> to move. Press the <strong style="color:#00ffff">round</strong> button to select.</div></div>';
-    buttons = '<button class="btn btn-secondary" onclick="back()">Back</button><button class="btn btn-primary" onclick="next()">Next</button>';
+    // 2. WHAT FOX2 MEASURES
+    content = '<div class="title">What FOX2 Measures</div>' +
+      '<div class="content-text">' +
+        '<p>Your body is constantly using energy to keep you going. Sometimes that energy comes more from glucose, and sometimes it comes more from fat. This balance naturally changes throughout the day.</p>' +
+        '<p>When your body relies more on fat as part of this process, small amounts of <strong>acetone</strong> are naturally released into your breath. FOX2 measures this breath signal to give insight into your current metabolic state.</p>' +
+        '<p>Think of it like a window into how your body is fueling itself at that moment.</p>' +
+        '<p>Breath acetone levels naturally rise and fall based on factors such as meals, activity, rest, and timing. FOX2 is designed to help translate these natural changes into a clearer overall picture.</p>' +
+      '</div>';
+    buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
+              '<button class="btn btn-primary" onclick="next()">Next</button>';
+              
   } else if (state === 2) {
-    content =
-      '<div class="title">Take Your First Measurement</div>' +
-      '<div class="subtitle">Select “Measure” to begin the 40-second warmup</div>' +
-      deviceShell(getWarmupSVG()) +
-      '<div class="info-box"><div class="info-text">When the countdown finishes, you’ll see <strong style="color:#00ffff">“blow”</strong>. Blow steadily until it vibrates.</div></div>';
-    buttons = '<button class="btn btn-secondary" onclick="back()">Back</button><button class="btn btn-primary" onclick="next()">Next</button>';
+    // 3. HOW TO TAKE A MEASUREMENT
+    content = '<div class="title">How to Take a Measurement</div>' +
+      '<div class="subtitle">Simple and designed to feel natural</div>' +
+      '<div class="how-to-measure">' +
+        '<div class="device-column">' +
+          '<div class="mini-device">' +
+            '<div class="mini-device-body">' +
+              '<div class="mini-device-seam"></div>' +
+              '<div class="mini-device-screen">' + getMenuSVG() + '</div>' +
+              '<div class="mini-device-buttons">' +
+                '<div class="mini-device-btn-triangle"></div>' +
+                '<div class="mini-device-btn-circle"></div>' +
+              '</div>' +
+              '<div class="mini-device-mouthpiece"></div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="mini-device">' +
+            '<div class="mini-device-body">' +
+              '<div class="mini-device-seam"></div>' +
+              '<div class="mini-device-screen">' + getWarmupSVG() + '</div>' +
+              '<div class="mini-device-buttons">' +
+                '<div class="mini-device-btn-triangle"></div>' +
+                '<div class="mini-device-btn-circle"></div>' +
+              '</div>' +
+              '<div class="mini-device-mouthpiece"></div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="mini-device">' +
+            '<div class="mini-device-body">' +
+              '<div class="mini-device-seam"></div>' +
+              '<div class="mini-device-screen">' + getBlowSVG() + '</div>' +
+              '<div class="mini-device-buttons">' +
+                '<div class="mini-device-btn-triangle"></div>' +
+                '<div class="mini-device-btn-circle"></div>' +
+              '</div>' +
+              '<div class="mini-device-mouthpiece"></div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="text-column">' +
+          '<div class="step-block">' +
+            '<div class="step-title">STEP 1 — Start</div>' +
+            '<div class="step-text">Select "Measure" to begin the warm-up.</div>' +
+          '</div>' +
+          '<div class="step-block">' +
+            '<div class="step-title">STEP 2 — Wait</div>' +
+            '<div class="step-text">Breathe normally during the countdown.</div>' +
+          '</div>' +
+          '<div class="step-block">' +
+            '<div class="step-title">STEP 3 — Blow</div>' +
+            '<div class="step-text">When you see "Blow," exhale slowly and steadily until FOX2 vibrates.</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="info-box">' +
+        '<div class="info-title">Helpful Tips</div>' +
+        '<div class="info-text">' +
+          '• Avoid blowing too forcefully or too quickly<br>' +
+          '• Do not hyperventilate before measuring<br>' +
+          '• Avoid measuring immediately after mouthwash or gum' +
+        '</div>' +
+      '</div>';
+    buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
+              '<button class="btn btn-primary" onclick="next()">Next</button>';
+              
   } else if (state === 3) {
-    content =
-      '<div class="title">Zone Display</div>' +
-      '<div class="subtitle">Your measurement shows your current metabolic state</div>' +
-      deviceShell(getZoneSVG()) +
-      '<div class="info-box"><div class="info-title">Zone 1–4</div><div class="info-text">Primarily glucose metabolism</div></div>' +
-      '<div class="info-box"><div class="info-title">Zone 5–20</div><div class="info-text">Increased fat metabolism</div></div>';
-    buttons = '<button class="btn btn-secondary" onclick="back()">Back</button><button class="btn btn-primary" onclick="next()">Next</button>';
+    // 4. UNDERSTANDING YOUR RESULTS
+    content = '<div class="title">Understanding Your Results</div>' +
+      '<div class="content-text">' +
+        '<p>After you take a measurement, FOX2 displays a number and a visual indicator. This reflects your body\'s metabolic state at that moment.</p>' +
+        '<p><strong>There is no single "right" number.</strong> Your metabolism is dynamic and naturally changes throughout the day.</p>' +
+      '</div>' +
+      '<div class="how-to-measure">' +
+        '<div class="device-column">' +
+          '<div class="mini-device">' +
+            '<div class="mini-device-body">' +
+              '<div class="mini-device-seam"></div>' +
+              '<div class="mini-device-screen">' + getZoneSVG() + '</div>' +
+              '<div class="mini-device-buttons">' +
+                '<div class="mini-device-btn-triangle"></div>' +
+                '<div class="mini-device-btn-circle"></div>' +
+              '</div>' +
+              '<div class="mini-device-mouthpiece"></div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="mini-device">' +
+            '<div class="mini-device-body">' +
+              '<div class="mini-device-seam"></div>' +
+              '<div class="mini-device-screen">' + getTotalSVG() + '</div>' +
+              '<div class="mini-device-buttons">' +
+                '<div class="mini-device-btn-triangle"></div>' +
+                '<div class="mini-device-btn-circle"></div>' +
+              '</div>' +
+              '<div class="mini-device-mouthpiece"></div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="mini-device">' +
+            '<div class="mini-device-body">' +
+              '<div class="mini-device-seam"></div>' +
+              '<div class="mini-device-screen">' + getStreaksSVG() + '</div>' +
+              '<div class="mini-device-buttons">' +
+                '<div class="mini-device-btn-triangle"></div>' +
+                '<div class="mini-device-btn-circle"></div>' +
+              '</div>' +
+              '<div class="mini-device-mouthpiece"></div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="text-column">' +
+          '<div class="step-block">' +
+            '<div class="step-title">Single Measurement</div>' +
+            '<div class="step-text">A snapshot showing your current metabolic state. Higher readings indicate more fat metabolism, lower readings more glucose metabolism. Both are normal.</div>' +
+          '</div>' +
+          '<div class="step-block">' +
+            '<div class="step-title">Daily Total</div>' +
+            '<div class="step-text">Multiple measurements throughout the day accumulate into a total score. This helps translate moment-to-moment changes into a clearer daily summary.</div>' +
+          '</div>' +
+          '<div class="step-block">' +
+            '<div class="step-title">Build Streaks</div>' +
+            '<div class="step-text">Hit your daily target to build a streak. Your "best" shows your longest ever, "now" shows your current streak.</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="info-box" style="margin-top:16px;">' +
+        '<div class="info-title">Important to Remember</div>' +
+        '<div class="info-text">' +
+          'Focus on patterns over time rather than individual readings. Readings naturally change based on meals, activity, sleep, stress, and timing.' +
+        '</div>' +
+      '</div>';
+    buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
+              '<button class="btn btn-primary" onclick="next()">Next</button>';
+              
   } else if (state === 4) {
-    content =
-      '<div class="title">Daily Total</div>' +
-      '<div class="subtitle">Each measurement adds to your daily progress ring</div>' +
-      deviceShell(getTotalSVG()) +
-      '<div class="info-box"><div class="info-text">Multiple measurements accumulate into a total score. Fill the ring to hit your daily target.</div></div>';
-    buttons = '<button class="btn btn-secondary" onclick="back()">Back</button><button class="btn btn-primary" onclick="next()">Next</button>';
+    // 5. USING FOX2 OVER TIME
+    content = '<div class="title">Using FOX2 Over Time</div>' +
+      '<div class="content-text">' +
+        '<p>FOX2 works best when it is used as a tool for observation, not evaluation.</p>' +
+        '<p>Rather than focusing on any single reading, the most useful insights come from noticing how measurements change and repeat over time.</p>' +
+        '<div class="info-box">' +
+          '<div class="info-title">When to Measure</div>' +
+          '<div class="info-text">' +
+            'There is no single "correct" time to measure, but consistency helps make patterns easier to see.<br><br>' +
+            'Many people find it helpful to measure:<br>' +
+            '• In the morning<br>' +
+            '• At similar times each day<br>' +
+            '• Before or after meals<br>' +
+            '• On both active and rest days' +
+          '</div>' +
+        '</div>' +
+        '<div class="info-box">' +
+          '<div class="info-title">What to Watch For</div>' +
+          '<div class="info-text">' +
+            'Over days and weeks, you may begin to notice:<br>' +
+            '• Daily rhythms<br>' +
+            '• Differences between weekdays and weekends<br>' +
+            '• How meals, activity, or rest affect readings<br>' +
+            '• Gradual changes over time' +
+          '</div>' +
+        '</div>' +
+        '<p>Daily totals help you compare days to yourself and reveal longer-term trends.</p>' +
+        '<p><strong>A steady approach</strong> — measuring regularly and staying curious — is often the most helpful.</p>' +
+      '</div>';
+    buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
+              '<button class="btn btn-primary" onclick="next()">Next</button>';
+              
   } else if (state === 5) {
-    content =
-      '<div class="title">Build Streaks</div>' +
-      '<div class="subtitle">Hit your daily target to build a streak</div>' +
-      deviceShell(getStreaksSVG()) +
-      '<div class="info-box"><div class="info-text"><strong style="color:#00ffff">Best:</strong> longest streak<br><strong style="color:#00ffff">Now:</strong> current streak</div></div>';
-    buttons = '<button class="btn btn-secondary" onclick="back()">Back</button><button class="btn btn-primary" onclick="next()">Setup</button>';
+    // 6. SAFETY & SUPPORT
+    content = '<div class="title">Safety & Support</div>' +
+      '<div class="content-text">' +
+        '<p>FOX2 is designed to provide insight into metabolic patterns using a non-invasive breath measurement.</p>' +
+        '<p style="opacity:0.6; font-size:13px">It is not a medical diagnostic device and is not intended to diagnose, treat, cure, or prevent any disease.</p>' +
+        '<div class="info-box">' +
+          '<div class="info-title">When to Talk to a Clinician</div>' +
+          '<div class="info-text">' +
+            'If you have a medical condition, are pregnant, or have concerns about your metabolic health, ' +
+            'it is appropriate to discuss your results with a qualified healthcare professional.' +
+          '</div>' +
+        '</div>' +
+        '<div class="info-box">' +
+          '<div class="info-title">Using FOX2 Safely</div>' +
+          '<div class="info-text">' +
+            '• Follow the instructions provided<br>' +
+            '• Avoid forced or excessive breathing<br>' +
+            '• Take breaks if you feel lightheaded<br><br>' +
+            'If anything feels uncomfortable, stop and resume later.' +
+          '</div>' +
+        '</div>' +
+        '<p>We are here to help you use FOX2 with confidence.</p>' +
+      '</div>';
+    buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
+              '<button class="btn btn-primary" onclick="next()">Setup</button>';
+              
   } else if (state === 6) {
+    // SETUP PAGE
     var sel1 = selectedLevel === 1 ? ' selected' : '';
     var sel2 = selectedLevel === 2 ? ' selected' : '';
     var sel3 = selectedLevel === 3 ? ' selected' : '';
     var sel4 = selectedLevel === 4 ? ' selected' : '';
-    content =
-      '<div class="title">Setup FOX2</div>' +
+    content = '<div class="title">Setup FOX2</div>' +
       '<div class="subtitle">Configure your device preferences</div>' +
       '<form id="f" onsubmit="save(event)">' +
-        '<div class="form-group"><label class="form-label">Email</label>' +
-          '<input class="form-input" name="email" type="email" value="' + document.getElementById("saved-email").value + '" required></div>' +
-        '<div class="form-group"><label class="form-label">Phone</label>' +
-          '<input class="form-input" name="phone" type="tel" value="' + document.getElementById("saved-phone").value + '" required></div>' +
-        '<div class="form-group"><label class="form-label">Target Level</label>' +
+        '<div class="form-group">' +
+          '<label class="form-label">Email</label>' +
+          '<input class="form-input" name="email" type="email" placeholder="your@email.com" required>' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label class="form-label">Phone</label>' +
+          '<input class="form-input" name="phone" type="tel" placeholder="555-123-4567" required>' +
+        '</div>' +
+        '<div class="form-group">' +
+          '<label class="form-label">Target Level</label>' +
           '<div class="level-grid">' +
-            '<div class="level-btn level-1' + sel1 + '" onclick="selectLevel(1);return false;">1</div>' +
-            '<div class="level-btn level-2' + sel2 + '" onclick="selectLevel(2);return false;">2</div>' +
-            '<div class="level-btn level-3' + sel3 + '" onclick="selectLevel(3);return false;">3</div>' +
-            '<div class="level-btn level-4' + sel4 + '" onclick="selectLevel(4);return false;">C</div>' +
+            '<div class="level-btn level-1' + sel1 + '" onclick="selectLevel(1)">1</div>' +
+            '<div class="level-btn level-2' + sel2 + '" onclick="selectLevel(2)">2</div>' +
+            '<div class="level-btn level-3' + sel3 + '" onclick="selectLevel(3)">3</div>' +
+            '<div class="level-btn level-4' + sel4 + '" onclick="selectLevel(4)">C</div>' +
           '</div>' +
           '<div class="level-hint" id="hint">' + hints[selectedLevel - 1] + '</div>' +
         '</div>' +
-        '<input type="hidden" name="level" value="' + selectedLevel + '">' +
-        '<input type="hidden" name="epoch" value="' + Math.floor(Date.now() / 1000) + '">' +
-        '<input type="hidden" name="tzoffset" value="' + new Date().getTimezoneOffset() + '">' +
-        '<button type="submit" class="btn btn-primary btn-full" style="margin-top:20px">Save &amp; Continue</button>' +
-        '<button type="button" class="btn btn-secondary btn-full" onclick="cancel()" style="margin-top:12px">Cancel</button>' +
+        '<button type="submit" class="btn btn-primary btn-full" style="margin-top:20px">Save and Exit</button>' +
       '</form>';
-    buttons = '';
+    buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>';
   }
-
+  
   document.getElementById('content').innerHTML = content;
   document.getElementById('buttons').innerHTML = buttons;
-
-  var dotsHtml = '';
-  for (var i = 0; i < 7; i++) dotsHtml += '<div class="dot' + (i === state ? ' active' : '') + '"></div>';
-  document.getElementById('dots').innerHTML = dotsHtml;
-
-  setDebug();
+  
+  var dotsContainer = document.getElementById('dots');
+  if (showOnboarding) {
+    var dotsHtml = '';
+    for (var i = 0; i < 7; i++) {
+      dotsHtml += '<div class="dot' + (i === state ? ' active' : '') + '"></div>';
+    }
+    dotsContainer.innerHTML = dotsHtml;
+    dotsContainer.style.display = 'flex';
+  } else {
+    dotsContainer.innerHTML = '';
+    dotsContainer.style.display = 'none';
+  }
 };
 
-/* =========================
-   Controls
-   ========================= */
-var next = function(){ if(state < 6){ state++; render(); } };
-var back = function(){ if(state > 0){ state--; render(); } };
-
-var cancel = function(){
-  fetch('/exit').then(function(){
-    document.getElementById('content').innerHTML =
-      '<div class="title">Setup cancelled</div><div class="subtitle">Fake endpoint /exit returned OK</div>';
-    document.getElementById('buttons').innerHTML =
-      '<button class="btn btn-primary btn-full" onclick="state=0;render()">Restart</button>';
-    document.getElementById('dots').innerHTML = '';
-    setDebug();
-  });
+var next = function() { 
+  if (state < 6) { 
+    state++; 
+    render(); 
+  } 
 };
 
-var selectLevel = function(l){ selectedLevel = l; render(); };
+var back = function() { 
+  if (state > 0) { 
+    state--; 
+    render(); 
+  } 
+};
 
-var save = function(e){
+var cancel = function() {
+  alert('Setup cancelled');
+};
+
+var selectLevel = function(l) { 
+  selectedLevel = l; 
+  document.getElementById('hint').textContent = hints[l - 1];
+  render(); 
+};
+
+var save = function(e) {
   e.preventDefault();
-  var form = e.target;
-  var formData = new FormData(form);
-  fetch('/save', { method:'POST', body:new URLSearchParams(formData) })
-    .then(function(resp){
-      if(resp.ok){
-        document.getElementById('content').innerHTML =
-          '<div class="title" style="color:#0ff">✓ Setup complete!</div>' +
-          '<div class="subtitle">Fake endpoint /save returned OK</div>' +
-          '<div class="info-box"><div class="info-text">This is a browser-safe mock. On-device, you’d now set RTC + persist preferences.</div></div>' +
-          '<button class="btn btn-primary btn-full" onclick="fetch(\'/close\').then(()=>alert(\'/close called (fake)\'))">Call /close (fake)</button>';
-        document.getElementById('buttons').innerHTML = '';
-        document.getElementById('dots').innerHTML = '';
-        setDebug();
-      }
-    });
+  alert('Setup complete! (This is just a test - no data is saved)');
 };
 
 render();
