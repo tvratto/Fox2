@@ -154,6 +154,52 @@ body {
   box-shadow: 0 1px 4px rgba(0,0,0,.4);
   z-index: 5;
 }
+
+/* Full-size device styles */
+.device-frame{width:200px;height:320px;position:relative;margin:0 auto}
+.device-body{
+  position:absolute;inset:0;background:#232347;border-radius:100px/140px;
+  box-shadow:0 10px 30px rgba(0,0,0,.85), inset 0 2px 4px rgba(255,255,255,.10);
+  z-index:1
+}
+.device-body::before,.device-body::after{
+  content:"";position:absolute;left:0;width:100%;height:26px;background:#111;z-index:2
+}
+.device-body::before{top:-20px}
+.device-body::after{bottom:0}
+.device-seam{
+  position:absolute;left:10%;width:80%;height:2px;top:18%;
+  background:linear-gradient(to bottom, rgba(255,255,255,.18), rgba(0,0,0,.45));
+  z-index:4
+}
+.device-screen{
+  position:absolute;top:22%;left:50%;transform:translateX(-50%);
+  width:140px;height:140px;background:#000;border-radius:14px;
+  box-shadow:inset 0 2px 10px rgba(0,0,0,.7), 0 0 0 3px #333;
+  display:flex;align-items:center;justify-content:center;z-index:3;overflow:hidden
+}
+.device-screen svg{width:100%;height:100%}
+.device-buttons{
+  position:absolute;bottom:30px;left:50%;transform:translateX(-50%);
+  width:120px;height:40px;z-index:3
+}
+.device-btn-circle{
+  position:absolute;left:50%;transform:translateX(-50%);
+  bottom:11px;width:46px;height:46px;background:#0ff;border-radius:50%;
+  box-shadow:0 2px 10px rgba(0,255,255,.35)
+}
+.device-btn-triangle{
+  position:absolute;left:0;bottom:34px;width:29px;height:29px;background:#ff9800;
+  clip-path:polygon(50% 100%,0 0,100% 0);
+  box-shadow:0 2px 10px rgba(255,152,0,.35)
+}
+.device-mouthpiece{
+  position:absolute;top:11px;right:-11px;width:60px;height:34px;background:#fff;border-radius:8px;
+  transform-origin:left center;transform:rotate(-45deg);
+  box-shadow:0 2px 6px rgba(0,0,0,.4);
+  z-index:6
+}
+
 .step-block {
   background: #111;
   border: 1px solid #333;
@@ -284,7 +330,7 @@ body {
   margin-bottom: 0;
 }
 .info-list li:before {
-  content: "•";
+  content: "â€¢";
   position: absolute;
   left: 0;
   color: #00ffff;
@@ -417,6 +463,31 @@ function getStreaksSVG() {
     '</g></svg>';
 }
 
+function getBackPanelSVG() {
+  return '<svg viewBox="0 0 184 184" xmlns="http://www.w3.org/2000/svg">' +
+    '<defs><pattern id="texture" x="0" y="0" width="4" height="4" patternUnits="userSpaceOnUse">' +
+      '<circle cx="2" cy="2" r="0.5" fill="#333" opacity="0.6"/>' +
+    '</pattern></defs>' +
+    '<rect x="0" y="0" width="184" height="184" fill="url(#texture)"/>' +
+    '<circle cx="92" cy="30" r="12.75" fill="#1a1a1a"/>' +
+    '<rect x="25.5" y="58" width="25.5" height="25.5" fill="#000"/>' +
+    '<rect x="131" y="58" width="25.5" height="25.5" fill="#000"/>' +
+    '<rect x="57" y="99" width="70" height="70" rx="9" fill="#1a1a1a" stroke="#333" stroke-width="1"/>' +
+    '<g transform="translate(92, 134)">' +
+      '<circle cx="0" cy="0" r="31.5" fill="#0a0a0a" stroke="#333" stroke-width="1"/>' +
+      '<line x1="0" y1="-24.75" x2="0" y2="-9" stroke="#666" stroke-width="3.4" stroke-linecap="round"/>' +
+      '<line x1="0" y1="9" x2="0" y2="24.75" stroke="#666" stroke-width="3.4" stroke-linecap="round"/>' +
+      '<line x1="-24.75" y1="0" x2="-9" y2="0" stroke="#666" stroke-width="3.4" stroke-linecap="round"/>' +
+      '<line x1="9" y1="0" x2="24.75" y2="0" stroke="#666" stroke-width="3.4" stroke-linecap="round"/>' +
+      '<line x1="-17.44" y1="-17.44" x2="-6.19" y2="-6.19" stroke="#555" stroke-width="2.25" stroke-linecap="round"/>' +
+      '<line x1="6.19" y1="6.19" x2="17.44" y2="17.44" stroke="#555" stroke-width="2.25" stroke-linecap="round"/>' +
+      '<line x1="17.44" y1="-17.44" x2="6.19" y2="-6.19" stroke="#555" stroke-width="2.25" stroke-linecap="round"/>' +
+      '<line x1="-6.19" y1="6.19" x2="-17.44" y2="17.44" stroke="#555" stroke-width="2.25" stroke-linecap="round"/>' +
+      '<circle cx="0" cy="0" r="2.25" fill="#888"/>' +
+    '</g>' +
+  '</svg>';
+}
+
 var render = function() {
   console.log('render() called, state:', state);
   var content = '';
@@ -429,7 +500,6 @@ var render = function() {
       '<div class="tagline">Understand your metabolic health</div>' +
       '<div class="content-text">' +
         '<p>FOX2 provides insight into how your body is using energy by measuring a natural signal in your breath.</p>' +
-        '<p>It is designed to be simple, non-invasive, and easy to use as part of your daily routine.</p>' +
         '<p><strong>No needles. No lab tests.</strong><br>Just a normal breath.</p>' +
         '<p style="opacity:0.6; font-size:13px; margin-top:24px">FOX2 provides informational insight and is not a medical diagnostic device.</p>' +
       '</div></div>';
@@ -442,14 +512,65 @@ var render = function() {
       '<div class="content-text">' +
         '<p>Your body is constantly using energy to keep you going. Sometimes that energy comes more from glucose, and sometimes it comes more from fat. This balance naturally changes throughout the day.</p>' +
         '<p>When your body relies more on fat as part of this process, small amounts of <strong>acetone</strong> are naturally released into your breath. FOX2 measures this breath signal to give insight into your current metabolic state.</p>' +
-        '<p>Think of it like a window into how your body is fueling itself at that moment.</p>' +
         '<p>Breath acetone levels naturally rise and fall based on factors such as meals, activity, rest, and timing. FOX2 is designed to help translate these natural changes into a clearer overall picture.</p>' +
       '</div>';
     buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
               '<button class="btn btn-primary" onclick="next()">Next</button>';
               
   } else if (state === 2) {
-    // 3. HOW TO TAKE A MEASUREMENT
+    // 3. HOW IT WORKS - Device overview
+    content = '<div class="title">How It Works</div>' +
+      '<div class="subtitle">Get to know your FOX2</div>' +
+      '<div style="display: flex; gap: 20px; margin-bottom: 24px; align-items: flex-start;">' +
+        '<div style="flex: 0 0 auto;">' +
+          '<div class="device-frame">' +
+            '<div class="device-body"></div>' +
+            '<div class="device-seam"></div>' +
+            '<div class="device-screen">' + getMenuSVG() + '</div>' +
+            '<div class="device-buttons">' +
+              '<div class="device-btn-triangle"></div>' +
+              '<div class="device-btn-circle"></div>' +
+            '</div>' +
+            '<div class="device-mouthpiece"></div>' +
+          '</div>' +
+        '</div>' +
+        '<div style="flex: 1; padding-top: 20px;">' +
+          '<ul style="list-style: none; padding: 0; margin: 0;">' +
+            '<li style="display: flex; align-items: center; margin-bottom: 16px;">' +
+              '<span style="color: #00ffff; font-weight: 700; margin-right: 12px;">●</span>' +
+              '<span>Removable mouthpiece</span>' +
+            '</li>' +
+            '<li style="display: flex; align-items: center; margin-bottom: 16px;">' +
+              '<span style="color: #00ffff; font-weight: 700; margin-right: 12px;">●</span>' +
+              '<span>Standalone app</span>' +
+            '</li>' +
+            '<li style="display: flex; align-items: center;">' +
+              '<span style="color: #00ffff; font-weight: 700; margin-right: 12px;">●</span>' +
+              '<span>Rechargeable battery</span>' +
+            '</li>' +
+          '</ul>' +
+        '</div>' +
+      '</div>' +
+      '<div class="info-box">' +
+        '<div class="info-title">Meet Your FOX2</div>' +
+        '<div class="info-text">' +
+          'This is where you navigate the menu and see your measurement results. The screen displays your readings, daily progress, and key information.' +
+        '</div>' +
+      '</div>' +
+      '<div class="info-box">' +
+        '<div class="info-title">Your Controls</div>' +
+        '<div class="info-text" style="display: flex; align-items: center; gap: 12px;">' +
+          '<div style="flex: 1;">' +
+            '<div style="margin-bottom: 8px;"><span style="color: #ff9800; font-weight: 600;">▼ Triangle:</span> Moves selection down the menu</div>' +
+            '<div><span style="color: #00ffff; font-weight: 600;">● Circle:</span> Selects the highlighted item</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
+              '<button class="btn btn-primary" onclick="next()">Next</button>';
+              
+  } else if (state === 3) {
+    // 4. HOW TO TAKE A MEASUREMENT
     content = '<div class="title">How to Take a Measurement</div>' +
       '<div class="subtitle">Simple and designed to feel natural</div>' +
       '<div class="how-to-measure">' +
@@ -490,15 +611,15 @@ var render = function() {
         '</div>' +
         '<div class="text-column">' +
           '<div class="step-block">' +
-            '<div class="step-title">STEP 1 — Start</div>' +
+            '<div class="step-title">STEP 1 â€” Start</div>' +
             '<div class="step-text">Select "Measure" to begin the warm-up.</div>' +
           '</div>' +
           '<div class="step-block">' +
-            '<div class="step-title">STEP 2 — Wait</div>' +
+            '<div class="step-title">STEP 2 â€” Wait</div>' +
             '<div class="step-text">Breathe normally during the countdown.</div>' +
           '</div>' +
           '<div class="step-block">' +
-            '<div class="step-title">STEP 3 — Blow</div>' +
+            '<div class="step-title">STEP 3 â€” Blow</div>' +
             '<div class="step-text">When you see "Blow," exhale slowly and steadily until FOX2 vibrates.</div>' +
           '</div>' +
         '</div>' +
@@ -516,8 +637,8 @@ var render = function() {
     buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
               '<button class="btn btn-primary" onclick="next()">Next</button>';
               
-  } else if (state === 3) {
-    // 4. UNDERSTANDING YOUR RESULTS
+  } else if (state === 4) {
+    // 5. UNDERSTANDING YOUR RESULTS
     content = '<div class="title">Understanding Your Results</div>' +
       '<div class="content-text">' +
         '<p>After you take a measurement, FOX2 displays a number and a visual indicator. This reflects your body\'s metabolic state at that moment.</p>' +
@@ -583,8 +704,8 @@ var render = function() {
     buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
               '<button class="btn btn-primary" onclick="next()">Next</button>';
               
-  } else if (state === 4) {
-    // 5. USING FOX2 OVER TIME
+  } else if (state === 5) {
+    // 6. USING FOX2 OVER TIME
     content = '<div class="title">Using FOX2 Over Time</div>' +
       '<div class="content-text">' +
         '<p>FOX2 works best when it is used as a tool for observation, not evaluation.</p>' +
@@ -615,13 +736,13 @@ var render = function() {
           '</div>' +
         '</div>' +
         '<p>Daily totals help you compare days to yourself and reveal longer-term trends.</p>' +
-        '<p><strong>A steady approach</strong> — measuring regularly and staying curious — is often the most helpful.</p>' +
+        '<p><strong>A steady approach</strong> â€” measuring regularly and staying curious â€” is often the most helpful.</p>' +
       '</div>';
     buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
               '<button class="btn btn-primary" onclick="next()">Next</button>';
               
-  } else if (state === 5) {
-    // 6. SAFETY & SUPPORT
+  } else if (state === 6) {
+    // 7. SAFETY & SUPPORT
     content = '<div class="title">Safety & Support</div>' +
       '<div class="content-text">' +
         '<p>FOX2 is designed to provide insight into metabolic patterns using a non-invasive breath measurement.</p>' +
@@ -649,7 +770,7 @@ var render = function() {
     buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
               '<button class="btn btn-primary" onclick="next()">Setup</button>';
               
-  } else if (state === 6) {
+  } else if (state === 7) {
     // SETUP PAGE
     var sel1 = selectedLevel === 1 ? ' selected' : '';
     var sel2 = selectedLevel === 2 ? ' selected' : '';
@@ -699,7 +820,7 @@ var render = function() {
   var dotsContainer = document.getElementById('dots');
   if (showOnboarding) {
     var dotsHtml = '';
-    for (var i = 0; i < 7; i++) {
+    for (var i = 0; i < 8; i++) {
       dotsHtml += '<div class="dot' + (i === state ? ' active' : '') + '"></div>';
     }
     dotsContainer.innerHTML = dotsHtml;
@@ -711,7 +832,7 @@ var render = function() {
 };
 
 var next = function() { 
-  if (state < 6) { 
+  if (state < 7) { 
     state++; 
     render(); 
   } 
