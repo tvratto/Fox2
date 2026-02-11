@@ -297,7 +297,7 @@ body {
   margin: 24px auto;
   font-size: 18px;
   font-weight: 600;
-  padding: 16px 32px;
+  padding: 16px 64px;
   border-radius: 40px;
   display: inline-block;
   width: fit-content;
@@ -599,6 +599,12 @@ var render = function() {
         '<div class="info-title">Meet Your FOX2</div>' +
         '<div class="info-text">' +
           'Turn on Fox2 by pressing and briefly holding the circle button. After showing the boot screens you can navigate the menu using the buttons as shown below.' +
+          '<div style="margin-top: 12px; display: flex; justify-content: center;">' +
+            '<div style="text-align: left;">' +
+              '<div style="margin-bottom: 8px;"><span style="color: #ff9800; font-weight: 600;">▼ Triangle:</span> Moves selection down the menu</div>' +
+              '<div><span style="color: #00ffff; font-weight: 600;">● Circle:</span> Selects the highlighted item</div>' +
+            '</div>' +
+          '</div>' +
         '</div>' +
       '</div>' +
       '<div style="display: flex; gap: 20px; margin-bottom: 24px; align-items: center; justify-content: center;">' +
@@ -633,15 +639,6 @@ var render = function() {
               '<div><span style="font-weight: 600; color: #00ffff;">Off</span> - Turn device off</div>' +
             '</li>' +
           '</ul>' +
-        '</div>' +
-      '</div>' +
-      '<div class="info-box">' +
-        '<div class="info-title">Your Controls</div>' +
-        '<div class="info-text" style="display: flex; align-items: center; gap: 12px;">' +
-          '<div style="flex: 1;">' +
-            '<div style="margin-bottom: 8px;"><span style="color: #ff9800; font-weight: 600;">▼ Triangle:</span> Moves selection down the menu</div>' +
-            '<div><span style="color: #00ffff; font-weight: 600;">● Circle:</span> Selects the highlighted item</div>' +
-          '</div>' +
         '</div>' +
       '</div>';
     buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
@@ -690,11 +687,11 @@ var render = function() {
         '<div class="text-column">' +
           '<div class="step-block">' +
             '<div class="step-title">Step 1</div>' +
-            '<div class="step-text">Click the round button to select "Measure" and start the warm up.</div>' +
+            '<div class="step-text">With Measure selected, click the round button to start the warm up.</div>' +
           '</div>' +
           '<div class="step-block">' +
             '<div class="step-title">Step 2</div>' +
-            '<div class="step-text">Breathe normally during the countdown.</div>' +
+            '<div class="step-text">Relax and breathe normally during the countdown.</div>' +
           '</div>' +
           '<div class="step-block">' +
             '<div class="step-title">Step 3</div>' +
@@ -784,6 +781,12 @@ var render = function() {
   } else if (state === 5) {
     // 6. USING FOX2 OVER TIME
     content = '<div class="title">Using FOX2 Over Time</div>' +
+      '<div class="info-box">' +
+        '<div style="color: #00ffff; font-size: 14px; font-weight: 600; margin-bottom: 8px;">Summary Screen</div>' +
+        '<div class="info-text">' +
+          'If you have taken at least one measurement today, when you start up your device it will initially show you a summary screen. This shows your last three measurements (in the circles) and your daily total so far along with your target if you have set one.' +
+        '</div>' +
+      '</div>' +
       '<div style="display: flex; gap: 20px; margin-bottom: 24px; align-items: center; justify-content: center;">' +
         '<div style="flex: 0 0 auto; margin-top: 32px;">' +
           '<div class="device-frame">' +
@@ -799,7 +802,7 @@ var render = function() {
         '</div>' +
       '</div>' +
       '<div class="content-text">' +
-        '<p>FOX2 works best when it is used as a tool for observation, not evaluation.</p>' +
+        '<p>The SUMMARY screen is a quick way to see your progress so far today. This data screen as well as your daily TOTAL and STREAKS screens can always be accessed from the DATA menu. Other data screens can also be accessed from there including your TODAY GRAPH screen (useful for seeing daily trends in zone measurements) and your 21 DAY screen (useful for seeing weekly trends in your daily totals.</p>' +
         '<p>Rather than focusing on any single reading, the most useful insights come from noticing how measurements change and repeat over time.</p>' +
         '<div class="info-box">' +
           '<div class="info-title">When to Measure</div>' +
@@ -871,34 +874,30 @@ var render = function() {
       '<div class="subtitle">Configure your device preferences</div>' +
       '<form id="f" onsubmit="save(event)">' +
         '<div class="form-group">' +
-          '<label class="form-label">Email</label>' +
-          '<input class="form-input" name="email" type="email" placeholder="your@email.com" required>' +
-        '</div>' +
-        '<div class="form-group">' +
           '<label class="form-label">Target Level</label>' +
           '<div style="display: flex; gap: 16px; flex-direction: column; row-gap: 16px;">' +
-            '<div style="display: flex; gap: 12px; align-items: flex-start;">' +
+            '<div style="display: flex; gap: 12px; align-items: center;">' +
               '<div class="level-btn level-1' + sel1 + '" onclick="selectLevel(1)" style="width: 60px; height: 60px; margin: 0; aspect-ratio: auto; flex-shrink: 0;">1</div>' +
               '<div style="background: #111; border: 1px solid #333; border-radius: 8px; padding: 10px; flex: 1;">' +
                 '<strong style="color: #2196F3; font-size: 14px;">Level 1</strong>' +
-                '<div style="font-size: 12px; color: #aaa; margin-top: 4px; line-height: 1.4;">Select this level if you would like no daily target or streaks saved.</div>' +
+                '<div style="font-size: 12px; color: #aaa; margin-top: 4px; line-height: 1.4;">Select this level if you would like no daily target or streaks displayed. This is a great place to start just to get an idea of where you are!</div>' +
               '</div>' +
             '</div>' +
-            '<div style="display: flex; gap: 12px; align-items: flex-start;">' +
+            '<div style="display: flex; gap: 12px; align-items: center;">' +
               '<div class="level-btn level-2' + sel2 + '" onclick="selectLevel(2)" style="width: 60px; height: 60px; margin: 0; aspect-ratio: auto; flex-shrink: 0;">2</div>' +
               '<div style="background: #111; border: 1px solid #333; border-radius: 8px; padding: 10px; flex: 1;">' +
                 '<strong style="color: #4CAF50; font-size: 14px;">Level 2</strong>' +
                 '<div style="font-size: 12px; color: #aaa; margin-top: 4px; line-height: 1.4;">This is a great maintenance or starting level. Achieving this target means you have increased fat metabolism.</div>' +
               '</div>' +
             '</div>' +
-            '<div style="display: flex; gap: 12px; align-items: flex-start;">' +
+            '<div style="display: flex; gap: 12px; align-items: center;">' +
               '<div class="level-btn level-3' + sel3 + '" onclick="selectLevel(3)" style="width: 60px; height: 60px; margin: 0; aspect-ratio: auto; flex-shrink: 0;">3</div>' +
               '<div style="background: #111; border: 1px solid #333; border-radius: 8px; padding: 10px; flex: 1;">' +
                 '<strong style="color: #9C27B0; font-size: 14px;">Level 3</strong>' +
                 '<div style="font-size: 12px; color: #aaa; margin-top: 4px; line-height: 1.4;">This is a good level for losing weight, hitting this target will likely require changing both diet and exercise.</div>' +
               '</div>' +
             '</div>' +
-            '<div style="display: flex; gap: 12px; align-items: flex-start;">' +
+            '<div style="display: flex; gap: 12px; align-items: center;">' +
               '<div class="level-btn level-4' + sel4 + '" onclick="selectLevel(4)" style="width: 60px; height: 60px; margin: 0; aspect-ratio: auto; flex-shrink: 0;">C</div>' +
               '<div style="background: #111; border: 1px solid #333; border-radius: 8px; padding: 10px; flex: 1;">' +
                 '<strong style="color: #E91E63; font-size: 14px;">Level C</strong>' +
@@ -914,9 +913,19 @@ var render = function() {
             '<div class="level-hint" id="hint">' + hints[selectedLevel - 1] + '</div>' +
           '</div>' +
         '</div>' +
-        '<button type="submit" class="btn btn-primary btn-full" style="margin-top:20px">Save and Exit</button>' +
+        '<div class="form-group">' +
+          '<div style="font-size: 12px; color: #aaa; margin-bottom: 12px; line-height: 1.4;">Check this box and type in an email address to send the data email after saving and exiting this page.</div>' +
+          '<div style="display: flex; gap: 12px; align-items: center;">' +
+            '<input type="checkbox" id="email-check" name="email-check" style="width: 27px; height: 27px; cursor: pointer; flex-shrink: 0;">' +
+            '<input class="form-input" name="email" type="email" placeholder="your@email.com" style="margin: 0;">' +
+          '</div>' +
+        '</div>' +
+        '<input type="hidden" name="level" value="' + selectedLevel + '">' +
+        '<input type="hidden" name="epoch" value="' + Math.floor(Date.now() / 1000) + '">' +
+        '<input type="hidden" name="tzoffset" value="' + new Date().getTimezoneOffset() + '">' +
       '</form>';
-    buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>';
+    buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
+              '<button class="btn btn-primary" onclick="document.getElementById(\'f\').dispatchEvent(new Event(\'submit\'))">Save and Exit</button>';
   }
   
   document.getElementById('content').innerHTML = content;
