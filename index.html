@@ -286,16 +286,22 @@ body {
 .level-btn:active { transform: scale(0.95); }
 .level-btn.selected {
   border-color:#00ffff;
-  box-shadow:0 0 20px 4px rgba(0,255,255,0.6);
+  box-shadow:0 0 20px 8px rgba(0,255,255,0.6);
 }
 .level-1 { background:#2196F3; color:#000; }
 .level-2 { background:#4CAF50; color:#000; }
 .level-3 { background:#9C27B0; color:#fff; }
 .level-4 { background:#E91E63; color:#fff; }
 .level-hint {
-  text-align:center; margin-top:12px;
-  font-size:16px; font-weight:600; color:#00ffff;
-  min-height:24px;
+  text-align: center;
+  margin: 24px auto;
+  font-size: 18px;
+  font-weight: 600;
+  padding: 16px 32px;
+  border-radius: 40px;
+  display: inline-block;
+  width: fit-content;
+  color: #000;
 }
 
 @keyframes fadeIn {
@@ -349,7 +355,8 @@ body {
 var selectedLevel = 1;
 var target2 = 60;
 var target3 = 90;
-var hints = ['no target', 'total = ' + target2, 'total = ' + target3, 'custom'];
+var customLevelValue = target3 + 10;
+var hints = ['no target', 'total = ' + target2, 'total = ' + target3, 'custom: ' + customLevelValue];
 var showOnboarding = true;
 
 var state = 0;
@@ -422,9 +429,73 @@ function getTotalSVG() {
     '<circle cx="92" cy="105" r="50" fill="none" stroke="#00ff00" stroke-width="16" stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="69" transform="rotate(-90 92 105)"/>' +
     '<path d="M 62,51 C 54,47 48,51 48,58 C 48,65 62,73 62,73 C 62,73 76,65 76,58 C 76,51 70,47 62,51 Z" fill="none" stroke="#ffffff" stroke-width="2"/>' +
     '<rect x="25" y="95" width="20" height="20" rx="3" fill="#ffffff"/>' +
-    '<text x="35" y="110" font-size="14" font-weight="700" fill="#000000" text-anchor="middle">6</text>' +
+    '<text x="35" y="110" font-size="14" font-weight="700" fill="#000000" text-anchor="middle">2</text>' +
+    '<rect x="139" y="145" width="20" height="20" rx="3" fill="#ffffff"/>' +
+    '<text x="149" y="160" font-size="14" font-weight="700" fill="#000000" text-anchor="middle">5</text>' +
     '<text x="92" y="115" font-size="36" font-weight="700" fill="#00ff00" text-anchor="middle">47</text>' +
     '<text x="92" y="132" font-size="21" fill="#888" text-anchor="middle">/60</text></svg>';
+}
+
+function getStreaksSVG() {
+  return '<svg viewBox="0 0 184 184" xmlns="http://www.w3.org/2000/svg">' +
+    '<rect x="42" y="5" width="100" height="20" rx="10" fill="#9C27B0"/>' +
+    '<text x="92" y="19" font-size="12" font-weight="700" fill="#1a1a2e" text-anchor="middle">STREAKS</text>' +
+    '<rect x="158" y="15" width="18" height="10" rx="2" stroke="#0ff" stroke-width="1" fill="none"/>' +
+    '<rect x="176" y="17" width="2" height="6" fill="#0ff"/>' +
+    '<rect x="160" y="17" width="14" height="6" fill="#0f0"/>' +
+    '<g transform="translate(22,50)">' +
+      '<line x1="0" y1="30" x2="140" y2="30" stroke="#ffffff" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.8"/>' +
+      '<rect x="4" y="8" width="24" height="42" rx="4" fill="#FF9800"/>' +
+      '<text x="16" y="30" font-size="10" font-weight="700" fill="#1a1a2e" text-anchor="middle">102</text>' +
+      '<text x="16" y="60" font-size="11" fill="#00ffff" text-anchor="middle">s</text>' +
+      '<rect x="32" y="12" width="24" height="38" rx="4" fill="#FF9800"/>' +
+      '<text x="44" y="34" font-size="10" font-weight="700" fill="#1a1a2e" text-anchor="middle">94</text>' +
+      '<text x="44" y="60" font-size="11" fill="#00ffff" text-anchor="middle">m</text>' +
+      '<rect x="60" y="4" width="24" height="46" rx="4" fill="#FF9800"/>' +
+      '<text x="72" y="30" font-size="10" font-weight="700" fill="#1a1a2e" text-anchor="middle">114</text>' +
+      '<text x="72" y="60" font-size="11" fill="#00ffff" text-anchor="middle">t</text>' +
+      '<rect x="88" y="10" width="24" height="40" rx="4" fill="#FF9800"/>' +
+      '<text x="100" y="33" font-size="10" font-weight="700" fill="#1a1a2e" text-anchor="middle">97</text>' +
+      '<text x="100" y="60" font-size="11" fill="#00ffff" text-anchor="middle">w</text>' +
+      '<rect x="116" y="24" width="24" height="26" rx="4" fill="#FFEB3B"/>' +
+      '<text x="128" y="40" font-size="10" font-weight="700" fill="#1a1a2e" text-anchor="middle">67</text>' +
+      '<text x="128" y="60" font-size="12" font-weight="700" fill="#FFEB3B" text-anchor="middle">t</text>' +
+      '<line x1="0" y1="50" x2="140" y2="50" stroke="#ffffff" stroke-width="1.5"/>' +
+    '</g>' +
+    '<g transform="translate(0,130)">' +
+      '<circle cx="50" cy="20" r="18" fill="#9C27B0" stroke="#555" stroke-width="2"/>' +
+      '<text x="50" y="28" font-size="20" font-weight="700" fill="#FFEB3B" text-anchor="middle">8</text>' +
+      '<text x="50" y="45" font-size="11" fill="#00ffff" text-anchor="middle">best</text>' +
+      '<circle cx="134" cy="20" r="18" fill="#FFEB3B" stroke="#555" stroke-width="2"/>' +
+      '<text x="134" y="28" font-size="20" font-weight="700" fill="#1a1a2e" text-anchor="middle">5</text>' +
+      '<text x="134" y="45" font-size="11" fill="#00ffff" text-anchor="middle">now</text>' +
+    '</g></svg>';
+}
+
+function getSummaryScreenSVG() {
+  return '<svg viewBox="0 0 184 184" xmlns="http://www.w3.org/2000/svg">' +
+    '<rect x="0" y="0" width="184" height="30" fill="#001a2e"/>' +
+    '<rect x="16" y="6" width="136" height="18" rx="9" fill="#00ffff"/>' +
+    '<text x="84" y="17" font-size="12" font-weight="700" fill="#1a1a2e" text-anchor="middle">SUMMARY</text>' +
+    '<rect x="158" y="8" width="18" height="14" rx="2" stroke="#00ffff" stroke-width="1" fill="none"/>' +
+    '<rect x="176" y="11" width="2" height="6" fill="#00ffff"/>' +
+    '<rect x="160" y="10" width="12" height="10" fill="#0f0"/>' +
+    '<rect x="0" y="30" width="184" height="154" fill="#001a2e"/>' +
+    '<circle cx="38" cy="65" r="22" fill="#4444ff" stroke="#0088ff" stroke-width="2"/>' +
+    '<text x="38" y="71" font-size="20" font-weight="700" fill="#fff" text-anchor="middle">3</text>' +
+    '<circle cx="92" cy="65" r="22" fill="#666666" stroke="#ffffff" stroke-width="2" stroke-dasharray="4,4"/>' +
+    '<text x="92" y="71" font-size="20" font-weight="700" fill="#ffffff" text-anchor="middle">?</text>' +
+    '<circle cx="146" cy="65" r="22" fill="#666666" stroke="#ffffff" stroke-width="2" stroke-dasharray="4,4"/>' +
+    '<text x="146" y="71" font-size="20" font-weight="700" fill="#ffffff" text-anchor="middle">?</text>' +
+    '<text x="38" y="110" font-size="13" fill="#00ffff" text-anchor="start">Total today</text>' +
+    '<line x1="38" y1="115" x2="146" y2="115" stroke="#00ffff" stroke-width="1"/>' +
+    '<text x="92" y="160" font-size="46" font-weight="700" fill="#00ff00" text-anchor="middle">29</text>' +
+    '<g transform="translate(148, 134)">' +
+      '<path d="M 0,-2 C -3,-5 -8,-5 -8,-1 C -8,3 0,9 0,9 C 0,9 8,3 8,-1 C 8,-5 3,-5 0,-2 Z" fill="none" stroke="#ffffff" stroke-width="1"/>' +
+    '</g>' +
+    '<text x="123" y="163" font-size="16" fill="#ff6b6b" text-anchor="start">/</text>' +
+    '<text x="135" y="163" font-size="16" fill="#fff" text-anchor="start">60</text>' +
+    '<text x="92" y="176" font-size="10" fill="#00ffff" text-anchor="middle">Press to continue</text></svg>';
 }
 
 function getStreaksSVG() {
@@ -520,9 +591,14 @@ var render = function() {
   } else if (state === 2) {
     // 3. HOW IT WORKS - Device overview
     content = '<div class="title">How It Works</div>' +
-      '<div class="subtitle">Get to know your FOX2</div>' +
-      '<div style="display: flex; gap: 20px; margin-bottom: 24px; align-items: flex-start;">' +
-        '<div style="flex: 0 0 auto;">' +
+      '<div class="info-box">' +
+        '<div class="info-title">Meet Your FOX2</div>' +
+        '<div class="info-text">' +
+          'Turn on Fox2 by pressing and briefly holding the circle button. After showing the boot screens you can navigate the menu using the buttons as shown below.' +
+        '</div>' +
+      '</div>' +
+      '<div style="display: flex; gap: 20px; margin-bottom: 24px; align-items: center; justify-content: center;">' +
+        '<div style="flex: 0 0 auto; margin-top: 32px;">' +
           '<div class="device-frame">' +
             '<div class="device-body"></div>' +
             '<div class="device-seam"></div>' +
@@ -534,27 +610,25 @@ var render = function() {
             '<div class="device-mouthpiece"></div>' +
           '</div>' +
         '</div>' +
-        '<div style="flex: 1; padding-top: 20px;">' +
-          '<ul style="list-style: none; padding: 0; margin: 0;">' +
-            '<li style="display: flex; align-items: center; margin-bottom: 16px;">' +
-              '<span style="color: #00ffff; font-weight: 700; margin-right: 12px;">●</span>' +
-              '<span>Removable mouthpiece</span>' +
+        '<div style="flex: 0 0 auto;">' +
+          '<ul style="list-style: none; padding: 0; margin: 0; max-width: 250px;">' +
+            '<li style="display: flex; align-items: flex-start; margin-bottom: 12px;">' +
+              '<span style="color: #00ffff; font-weight: 700; margin-right: 12px; flex-shrink: 0;">●</span>' +
+              '<div><span style="font-weight: 600; color: #00ffff;">Measure</span> - Start a measurement</div>' +
             '</li>' +
-            '<li style="display: flex; align-items: center; margin-bottom: 16px;">' +
-              '<span style="color: #00ffff; font-weight: 700; margin-right: 12px;">●</span>' +
-              '<span>Standalone app</span>' +
+            '<li style="display: flex; align-items: flex-start; margin-bottom: 12px;">' +
+              '<span style="color: #00ffff; font-weight: 700; margin-right: 12px; flex-shrink: 0;">●</span>' +
+              '<div><span style="font-weight: 600; color: #00ffff;">Data</span> - View your data</div>' +
             '</li>' +
-            '<li style="display: flex; align-items: center;">' +
-              '<span style="color: #00ffff; font-weight: 700; margin-right: 12px;">●</span>' +
-              '<span>Rechargeable battery</span>' +
+            '<li style="display: flex; align-items: flex-start; margin-bottom: 12px;">' +
+              '<span style="color: #00ffff; font-weight: 700; margin-right: 12px; flex-shrink: 0;">●</span>' +
+              '<div><span style="font-weight: 600; color: #00ffff;">About</span> - See this document again and change your settings</div>' +
+            '</li>' +
+            '<li style="display: flex; align-items: flex-start;">' +
+              '<span style="color: #00ffff; font-weight: 700; margin-right: 12px; flex-shrink: 0;">●</span>' +
+              '<div><span style="font-weight: 600; color: #00ffff;">Off</span> - Turn device off</div>' +
             '</li>' +
           '</ul>' +
-        '</div>' +
-      '</div>' +
-      '<div class="info-box">' +
-        '<div class="info-title">Meet Your FOX2</div>' +
-        '<div class="info-text">' +
-          'This is where you navigate the menu and see your measurement results. The screen displays your readings, daily progress, and key information.' +
         '</div>' +
       '</div>' +
       '<div class="info-box">' +
@@ -572,7 +646,7 @@ var render = function() {
   } else if (state === 3) {
     // 4. HOW TO TAKE A MEASUREMENT
     content = '<div class="title">How to Take a Measurement</div>' +
-      '<div class="subtitle">Simple and designed to feel natural</div>' +
+      '<div style="height: 16px;"></div>' +
       '<div class="how-to-measure">' +
         '<div class="device-column">' +
           '<div class="mini-device">' +
@@ -611,16 +685,16 @@ var render = function() {
         '</div>' +
         '<div class="text-column">' +
           '<div class="step-block">' +
-            '<div class="step-title">STEP 1 â€” Start</div>' +
-            '<div class="step-text">Select "Measure" to begin the warm-up.</div>' +
+            '<div class="step-title">Step 1</div>' +
+            '<div class="step-text">Click the round button to select "Measure" and start the warm up.</div>' +
           '</div>' +
           '<div class="step-block">' +
-            '<div class="step-title">STEP 2 â€” Wait</div>' +
+            '<div class="step-title">Step 2</div>' +
             '<div class="step-text">Breathe normally during the countdown.</div>' +
           '</div>' +
           '<div class="step-block">' +
-            '<div class="step-title">STEP 3 â€” Blow</div>' +
-            '<div class="step-text">When you see "Blow," exhale slowly and steadily until FOX2 vibrates.</div>' +
+            '<div class="step-title">Step 3</div>' +
+            '<div class="step-text">When you see "Blow," take a breath in and then blow steadily into the mouthpiece like you are filling a balloon. Blow until Fox2 buzzes or you run out of breath. Fox2 will take a breath sample and begin measuring.</div>' +
           '</div>' +
         '</div>' +
       '</div>' +
@@ -628,9 +702,9 @@ var render = function() {
         '<div class="info-title">Helpful Tips</div>' +
         '<div class="info-text">' +
           '<ul class="info-list">' +
-            '<li>Avoid blowing too forcefully or too quickly</li>' +
-            '<li>Do not hyperventilate before measuring</li>' +
-            '<li>Avoid measuring immediately after mouthwash or gum</li>' +
+            '<li>Try not to cover the side and back vents while blowing</li>' +
+            '<li>Wait an hour after eating before measuring</li>' +
+            '<li>Alcohol can cause artificially high readings so don\'t measure after drinking alcohol or using products that contain alcohol (like mouthwash.)</li>' +
           '</ul>' +
         '</div>' +
       '</div>';
@@ -641,8 +715,7 @@ var render = function() {
     // 5. UNDERSTANDING YOUR RESULTS
     content = '<div class="title">Understanding Your Results</div>' +
       '<div class="content-text">' +
-        '<p>After you take a measurement, FOX2 displays a number and a visual indicator. This reflects your body\'s metabolic state at that moment.</p>' +
-        '<p><strong>There is no single "right" number.</strong> Your metabolism is dynamic and naturally changes throughout the day.</p>' +
+        '<p>After you take a measurement, Fox2 will cycle through the results screens and will turn itself off after clearing the sensor.</p>' +
       '</div>' +
       '<div class="how-to-measure">' +
         '<div class="device-column">' +
@@ -682,23 +755,23 @@ var render = function() {
         '</div>' +
         '<div class="text-column">' +
           '<div class="step-block">' +
-            '<div class="step-title">Single Measurement</div>' +
+            '<div class="step-title">Zone</div>' +
             '<div class="step-text">A snapshot showing your current metabolic state. Higher readings indicate more fat metabolism, lower readings more glucose metabolism. Both are normal.</div>' +
           '</div>' +
           '<div class="step-block">' +
             '<div class="step-title">Daily Total</div>' +
-            '<div class="step-text">Multiple measurements throughout the day accumulate into a total score. This helps translate moment-to-moment changes into a clearer daily summary.</div>' +
+            '<div class="step-text">Multiple measurements throughout the day accumulate into a total score. This helps translate moment-to-moment changes into a clearer daily summary. If you have set a daily target it will be shown under the total.</div>' +
           '</div>' +
           '<div class="step-block">' +
             '<div class="step-title">Build Streaks</div>' +
-            '<div class="step-text">Hit your daily target to build a streak. Your "best" shows your longest ever, "now" shows your current streak.</div>' +
+            '<div class="step-text">If you have set a daily target the streaks screen will also be shown. You can hit your daily target to build a streak. Your "best" shows your longest ever, "now" shows your current streak.</div>' +
           '</div>' +
         '</div>' +
       '</div>' +
       '<div class="info-box" style="margin-top:16px;">' +
         '<div class="info-title">Important to Remember</div>' +
         '<div class="info-text">' +
-          'Focus on patterns over time rather than individual readings. Readings naturally change based on meals, activity, sleep, stress, and timing.' +
+          'Your zone measurements can change naturally based on meals, activity, sleep, stress, and timing. Focus on your daily totals and patterns over time rather than individual readings. After making a lifestyle change it can a few days to a week to see a change in your totals, stick with it!' +
         '</div>' +
       '</div>';
     buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
@@ -707,6 +780,20 @@ var render = function() {
   } else if (state === 5) {
     // 6. USING FOX2 OVER TIME
     content = '<div class="title">Using FOX2 Over Time</div>' +
+      '<div style="display: flex; gap: 20px; margin-bottom: 24px; align-items: center; justify-content: center;">' +
+        '<div style="flex: 0 0 auto; margin-top: 32px;">' +
+          '<div class="device-frame">' +
+            '<div class="device-body"></div>' +
+            '<div class="device-seam"></div>' +
+            '<div class="device-screen">' + getSummaryScreenSVG() + '</div>' +
+            '<div class="device-buttons">' +
+              '<div class="device-btn-triangle"></div>' +
+              '<div class="device-btn-circle"></div>' +
+            '</div>' +
+            '<div class="device-mouthpiece"></div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
       '<div class="content-text">' +
         '<p>FOX2 works best when it is used as a tool for observation, not evaluation.</p>' +
         '<p>Rather than focusing on any single reading, the most useful insights come from noticing how measurements change and repeat over time.</p>' +
@@ -784,18 +871,44 @@ var render = function() {
           '<input class="form-input" name="email" type="email" placeholder="your@email.com" required>' +
         '</div>' +
         '<div class="form-group">' +
-          '<label class="form-label">Phone</label>' +
-          '<input class="form-input" name="phone" type="tel" placeholder="555-123-4567" required>' +
-        '</div>' +
-        '<div class="form-group">' +
           '<label class="form-label">Target Level</label>' +
-          '<div class="level-grid">' +
-            '<div class="level-btn level-1' + sel1 + '" onclick="selectLevel(1)">1</div>' +
-            '<div class="level-btn level-2' + sel2 + '" onclick="selectLevel(2)">2</div>' +
-            '<div class="level-btn level-3' + sel3 + '" onclick="selectLevel(3)">3</div>' +
-            '<div class="level-btn level-4' + sel4 + '" onclick="selectLevel(4)">C</div>' +
+          '<div style="display: flex; gap: 16px; flex-direction: column; row-gap: 16px;">' +
+            '<div style="display: flex; gap: 12px; align-items: flex-start;">' +
+              '<div class="level-btn level-1' + sel1 + '" onclick="selectLevel(1)" style="width: 60px; height: 60px; margin: 0; aspect-ratio: auto; flex-shrink: 0;">1</div>' +
+              '<div style="background: #111; border: 1px solid #333; border-radius: 8px; padding: 10px; flex: 1;">' +
+                '<strong style="color: #2196F3; font-size: 14px;">Level 1</strong>' +
+                '<div style="font-size: 12px; color: #aaa; margin-top: 4px; line-height: 1.4;">Select this level if you would like no daily target or streaks saved.</div>' +
+              '</div>' +
+            '</div>' +
+            '<div style="display: flex; gap: 12px; align-items: flex-start;">' +
+              '<div class="level-btn level-2' + sel2 + '" onclick="selectLevel(2)" style="width: 60px; height: 60px; margin: 0; aspect-ratio: auto; flex-shrink: 0;">2</div>' +
+              '<div style="background: #111; border: 1px solid #333; border-radius: 8px; padding: 10px; flex: 1;">' +
+                '<strong style="color: #4CAF50; font-size: 14px;">Level 2</strong>' +
+                '<div style="font-size: 12px; color: #aaa; margin-top: 4px; line-height: 1.4;">This is the starting or maintenance level.</div>' +
+              '</div>' +
+            '</div>' +
+            '<div style="display: flex; gap: 12px; align-items: flex-start;">' +
+              '<div class="level-btn level-3' + sel3 + '" onclick="selectLevel(3)" style="width: 60px; height: 60px; margin: 0; aspect-ratio: auto; flex-shrink: 0;">3</div>' +
+              '<div style="background: #111; border: 1px solid #333; border-radius: 8px; padding: 10px; flex: 1;">' +
+                '<strong style="color: #9C27B0; font-size: 14px;">Level 3</strong>' +
+                '<div style="font-size: 12px; color: #aaa; margin-top: 4px; line-height: 1.4;"></div>' +
+              '</div>' +
+            '</div>' +
+            '<div style="display: flex; gap: 12px; align-items: flex-start;">' +
+              '<div class="level-btn level-4' + sel4 + '" onclick="selectLevel(4)" style="width: 60px; height: 60px; margin: 0; aspect-ratio: auto; flex-shrink: 0;">C</div>' +
+              '<div style="background: #111; border: 1px solid #333; border-radius: 8px; padding: 10px; flex: 1;">' +
+                '<strong style="color: #E91E63; font-size: 14px;">Level C</strong>' +
+                '<div style="font-size: 12px; color: #aaa; margin-top: 4px; line-height: 1.4;"></div>' +
+              '</div>' +
+              '<div style="display: flex; flex-direction: column; gap: 6px;">' +
+                '<button type="button" onclick="incrementCustomLevel()" style="background: #E91E63; color: #fff; border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 16px; font-weight: bold;">▲</button>' +
+                '<button type="button" onclick="decrementCustomLevel()" style="background: #E91E63; color: #fff; border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 16px; font-weight: bold;">▼</button>' +
+              '</div>' +
+            '</div>' +
           '</div>' +
-          '<div class="level-hint" id="hint">' + hints[selectedLevel - 1] + '</div>' +
+          '<div style="text-align: center;">' +
+            '<div class="level-hint" id="hint">' + hints[selectedLevel - 1] + '</div>' +
+          '</div>' +
         '</div>' +
         '<button type="submit" class="btn btn-primary btn-full" style="margin-top:20px">Save and Exit</button>' +
       '</form>';
@@ -850,9 +963,33 @@ var cancel = function() {
 };
 
 var selectLevel = function(l) { 
-  selectedLevel = l; 
-  document.getElementById('hint').textContent = hints[l - 1];
+  selectedLevel = l;
+  var hintElement = document.getElementById('hint');
+  hintElement.textContent = hints[l - 1];
+  
+  // Set color based on selected level
+  var colors = ['#2196F3', '#4CAF50', '#9C27B0', '#E91E63'];
+  hintElement.style.backgroundColor = colors[l - 1];
+  
   render(); 
+};
+
+var incrementCustomLevel = function() {
+  customLevelValue += 10;
+  hints[3] = 'custom: ' + customLevelValue;
+  var hintElement = document.getElementById('hint');
+  hintElement.textContent = hints[3];
+  hintElement.style.backgroundColor = '#E91E63';
+};
+
+var decrementCustomLevel = function() {
+  if (customLevelValue > 10) {
+    customLevelValue -= 10;
+  }
+  hints[3] = 'custom: ' + customLevelValue;
+  var hintElement = document.getElementById('hint');
+  hintElement.textContent = hints[3];
+  hintElement.style.backgroundColor = '#E91E63';
 };
 
 var save = function(e) {
