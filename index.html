@@ -354,7 +354,7 @@ body {
 <script>
 var selectedLevel = 1;
 var target2 = 60;
-var target3 = 90;
+var target3 = 120;
 var customLevelValue = target3 + 10;
 var hints = ['no target', 'total = ' + target2, 'total = ' + target3, 'custom: ' + customLevelValue];
 var showOnboarding = true;
@@ -561,6 +561,10 @@ function getBackPanelSVG() {
 
 var render = function() {
   console.log('render() called, state:', state);
+  
+  // Scroll to top of page
+  window.scrollTo(0, 0);
+  
   var content = '';
   var buttons = '';
   
@@ -574,7 +578,7 @@ var render = function() {
         '<p><strong>No needles. No lab tests.</strong><br>Just a normal breath.</p>' +
         '<p style="opacity:0.6; font-size:13px; margin-top:24px">FOX2 provides informational insight and is not a medical diagnostic device.</p>' +
       '</div></div>';
-    buttons = '<button class="btn btn-secondary" onclick="cancel()">Skip</button>' +
+    buttons = '<button class="btn btn-secondary" onclick="skipToSetup()">Skip to Setup</button>' +
               '<button class="btn btn-primary" onclick="next()">Next</button>';
               
   } else if (state === 1) {
@@ -884,21 +888,21 @@ var render = function() {
               '<div class="level-btn level-2' + sel2 + '" onclick="selectLevel(2)" style="width: 60px; height: 60px; margin: 0; aspect-ratio: auto; flex-shrink: 0;">2</div>' +
               '<div style="background: #111; border: 1px solid #333; border-radius: 8px; padding: 10px; flex: 1;">' +
                 '<strong style="color: #4CAF50; font-size: 14px;">Level 2</strong>' +
-                '<div style="font-size: 12px; color: #aaa; margin-top: 4px; line-height: 1.4;">This is the starting or maintenance level.</div>' +
+                '<div style="font-size: 12px; color: #aaa; margin-top: 4px; line-height: 1.4;">This is a great maintenance or starting level. Achieving this target means you have increased fat metabolism.</div>' +
               '</div>' +
             '</div>' +
             '<div style="display: flex; gap: 12px; align-items: flex-start;">' +
               '<div class="level-btn level-3' + sel3 + '" onclick="selectLevel(3)" style="width: 60px; height: 60px; margin: 0; aspect-ratio: auto; flex-shrink: 0;">3</div>' +
               '<div style="background: #111; border: 1px solid #333; border-radius: 8px; padding: 10px; flex: 1;">' +
                 '<strong style="color: #9C27B0; font-size: 14px;">Level 3</strong>' +
-                '<div style="font-size: 12px; color: #aaa; margin-top: 4px; line-height: 1.4;"></div>' +
+                '<div style="font-size: 12px; color: #aaa; margin-top: 4px; line-height: 1.4;">This is a good level for losing weight, hitting this target will likely require changing both diet and exercise.</div>' +
               '</div>' +
             '</div>' +
             '<div style="display: flex; gap: 12px; align-items: flex-start;">' +
               '<div class="level-btn level-4' + sel4 + '" onclick="selectLevel(4)" style="width: 60px; height: 60px; margin: 0; aspect-ratio: auto; flex-shrink: 0;">C</div>' +
               '<div style="background: #111; border: 1px solid #333; border-radius: 8px; padding: 10px; flex: 1;">' +
                 '<strong style="color: #E91E63; font-size: 14px;">Level C</strong>' +
-                '<div style="font-size: 12px; color: #aaa; margin-top: 4px; line-height: 1.4;"></div>' +
+                '<div style="font-size: 12px; color: #aaa; margin-top: 4px; line-height: 1.4;">You can adjust a custom target here.</div>' +
               '</div>' +
               '<div style="display: flex; flex-direction: column; gap: 6px;">' +
                 '<button type="button" onclick="incrementCustomLevel()" style="background: #E91E63; color: #fff; border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 16px; font-weight: bold;">▲</button>' +
@@ -942,6 +946,17 @@ var render = function() {
     dotsContainer.innerHTML = '';
     dotsContainer.style.display = 'none';
   }
+  
+  // Initialize hint color if on Setup page
+  if (state === 7) {
+    setTimeout(function() {
+      var hintElement = document.getElementById('hint');
+      if (hintElement) {
+        var colors = ['#2196F3', '#4CAF50', '#9C27B0', '#E91E63'];
+        hintElement.style.backgroundColor = colors[selectedLevel - 1];
+      }
+    }, 0);
+  }
 };
 
 var next = function() { 
@@ -962,6 +977,11 @@ var cancel = function() {
   alert('Setup cancelled');
 };
 
+var skipToSetup = function() {
+  state = 7;
+  render();
+};
+
 var selectLevel = function(l) { 
   selectedLevel = l;
   var hintElement = document.getElementById('hint');
@@ -971,7 +991,22 @@ var selectLevel = function(l) {
   var colors = ['#2196F3', '#4CAF50', '#9C27B0', '#E91E63'];
   hintElement.style.backgroundColor = colors[l - 1];
   
-  render(); 
+  // Update visual selection for all level buttons
+  for (var i = 1; i <= 4; i++) {
+    var buttons = document.querySelectorAll('.level-btn');
+    if (buttons[i - 1]) {
+      if (i === l) {
+        buttons[i - 1].classList.add('selected');
+      } else {
+        buttons[i - 1].classList.remove('selected');
+      }
+    }
+  }
+  
+  // Only full render if NOT Level C (4) - Level C requires arrow clicks to change target
+  if (l !== 4) {
+    render();
+  }
 };
 
 var incrementCustomLevel = function() {
@@ -998,6 +1033,15 @@ var save = function(e) {
 };
 
 render();
+
+// Initialize hint color on page load
+setTimeout(function() {
+  var hintElement = document.getElementById('hint');
+  if (hintElement) {
+    var colors = ['#2196F3', '#4CAF50', '#9C27B0', '#E91E63'];
+    hintElement.style.backgroundColor = colors[selectedLevel - 1];
+  }
+}, 100);
 </script>
 </body>
 </html>
