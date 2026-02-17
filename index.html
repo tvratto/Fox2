@@ -93,6 +93,8 @@ body {
   justify-content: center;
   padding: 6px 10px;
   gap: 10px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 @media (min-height: 800px) {
@@ -1244,8 +1246,14 @@ function initCardSwipe(wrapperId, dotsId, cardCount) {
   var dots = document.getElementById(dotsId);
   if (!wrapper || !dots) return;
   
-  // Set wrapper height to accommodate all cards
-  wrapper.style.height = (cardCount * 100) + '%';
+  var container = wrapper.parentElement;
+  var containerHeight = container.offsetHeight;
+  
+  // Set each card to exact container height
+  var cards = wrapper.querySelectorAll('.step-card');
+  cards.forEach(function(card) {
+    card.style.height = containerHeight + 'px';
+  });
   
   var currentCard = 0;
   var startY = 0;
@@ -1254,8 +1262,6 @@ function initCardSwipe(wrapperId, dotsId, cardCount) {
   
   function updateCard(index) {
     currentCard = Math.max(0, Math.min(index, cardCount - 1));
-    var container = wrapper.parentElement;
-    var containerHeight = container.offsetHeight;
     wrapper.style.transform = 'translateY(-' + (currentCard * containerHeight) + 'px)';
     
     // Update dots
@@ -1279,8 +1285,6 @@ function initCardSwipe(wrapperId, dotsId, cardCount) {
     if (!isDragging) return;
     currentY = e.touches[0].clientY;
     var diff = currentY - startY;
-    var container = wrapper.parentElement;
-    var containerHeight = container.offsetHeight;
     var offset = -(currentCard * containerHeight) + diff;
     wrapper.style.transform = 'translateY(' + offset + 'px)';
   });
