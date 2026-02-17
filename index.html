@@ -32,11 +32,11 @@ body {
   flex: 1;
   overflow-y: auto;
   padding: 0 4px;
-  line-height: 1.6;
+  line-height: 1.5;
 }
 .content-text p {
   margin: 0 0 16px 0;
-  font-size: 15px;
+  font-size: 18px;
   opacity: 0.9;
 }
 .content-text strong {
@@ -204,36 +204,36 @@ body {
   background: #111;
   border: 1px solid #333;
   border-radius: 8px;
-  padding: 12px;
+  padding: 14px;
   height: 160px;
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
 .step-title {
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 600;
   color: #00ffff;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 .step-text {
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.5;
   opacity: .85;
 }
 
 .title { 
-  font-size: 26px; 
+  font-size: 32px; 
   font-weight: 700; 
   text-align: center; 
-  margin-bottom: 8px;
+  margin-bottom: 12px;
   line-height: 1.2;
 }
 .subtitle { 
-  font-size: 16px; 
+  font-size: 18px; 
   opacity: .7; 
   text-align: center; 
-  margin-bottom: 16px; 
+  margin-bottom: 20px; 
   line-height: 1.4; 
   padding: 0 10px;
 }
@@ -314,13 +314,13 @@ body {
 
 .info-box {
   background:#111; border:1px solid #333; border-radius:12px;
-  padding:14px; margin:14px 0;
+  padding:16px; margin:16px 0;
 }
 .info-title { 
-  font-size:14px; font-weight:600; color:#00ffff; 
-  margin-bottom:7px;
+  font-size:18px; font-weight:600; color:#00ffff; 
+  margin-bottom:10px;
 }
-.info-text { font-size:14px; line-height:1.5; opacity:.8; }
+.info-text { font-size:17px; line-height:1.5; opacity:.85; }
 
 .info-list {
   list-style: none;
@@ -638,9 +638,9 @@ var render = function() {
     // 2. WHAT FOX2 MEASURES
     content = '<div class="title">What FOX2 Measures</div>' +
       '<div class="content-text">' +
-        '<p>Your body is constantly using energy to keep you going. Sometimes that energy comes more from glucose, and sometimes it comes more from fat. This balance naturally changes throughout the day.</p>' +
-        '<p>When your body relies more on fat as part of this process, small amounts of <strong>acetone</strong> are naturally released into your breath. FOX2 measures this breath signal to give insight into your current metabolic state.</p>' +
-        '<p>Breath acetone levels naturally rise and fall based on factors such as meals, activity, rest, and timing. FOX2 is designed to help translate these natural changes into a clearer overall picture.</p>' +
+        '<p>Your body uses energy from <strong>glucose</strong> or <strong>fat</strong>. This balance shifts throughout the day.</p>' +
+        '<p>When burning fat, your breath contains <strong>acetone</strong>. FOX2 measures this signal to show your metabolic state.</p>' +
+        '<p>Levels change based on meals, activity, and timing.</p>' +
       '</div>';
     buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
               '<button class="btn btn-primary" onclick="next()">Next</button>';
@@ -649,13 +649,13 @@ var render = function() {
     // 3. HOW IT WORKS - Device overview
     content = '<div class="title">How It Works</div>' +
       '<div class="info-box">' +
-        '<div class="info-title">Meet Your FOX2</div>' +
+        '<div class="info-title">Controls</div>' +
         '<div class="info-text">' +
-          'Turn on Fox2 by pressing and briefly holding the circle button. After showing the boot screens you can navigate the menu using the buttons as shown below.' +
+          'Press and hold <span style="color: #00ffff; font-weight: 600;">● Circle</span> to power on.' +
           '<div style="margin-top: 12px; display: flex; justify-content: center;">' +
             '<div style="text-align: left;">' +
-              '<div style="margin-bottom: 8px;"><span style="color: #ff9800; font-weight: 600;">▼ Triangle:</span> Moves selection down the menu</div>' +
-              '<div><span style="color: #00ffff; font-weight: 600;">● Circle:</span> Selects the highlighted item</div>' +
+              '<div style="margin-bottom: 8px;"><span style="color: #ff9800; font-weight: 600;">▼ Triangle:</span> Move down menu</div>' +
+              '<div><span style="color: #00ffff; font-weight: 600;">● Circle:</span> Select</div>' +
             '</div>' +
           '</div>' +
         '</div>' +
@@ -674,22 +674,22 @@ var render = function() {
           '</div>' +
         '</div>' +
         '<div style="flex: 0 0 auto;">' +
-          '<ul style="list-style: none; padding: 0; margin: 0; max-width: 250px;">' +
-            '<li style="display: flex; align-items: flex-start; margin-bottom: 12px;">' +
+          '<ul style="list-style: none; padding: 0; margin: 0; max-width: 250px; font-size: 17px;">' +
+            '<li style="display: flex; align-items: flex-start; margin-bottom: 14px;">' +
               '<span style="color: #00ffff; font-weight: 700; margin-right: 12px; flex-shrink: 0;">●</span>' +
-              '<div><span style="font-weight: 600; color: #00ffff;">Measure</span> - Start a measurement</div>' +
+              '<div><span style="font-weight: 600; color: #00ffff;">Measure</span> - Take reading</div>' +
             '</li>' +
-            '<li style="display: flex; align-items: flex-start; margin-bottom: 12px;">' +
+            '<li style="display: flex; align-items: flex-start; margin-bottom: 14px;">' +
               '<span style="color: #00ffff; font-weight: 700; margin-right: 12px; flex-shrink: 0;">●</span>' +
-              '<div><span style="font-weight: 600; color: #00ffff;">Data</span> - View your data</div>' +
+              '<div><span style="font-weight: 600; color: #00ffff;">Data</span> - View results</div>' +
             '</li>' +
-            '<li style="display: flex; align-items: flex-start; margin-bottom: 12px;">' +
+            '<li style="display: flex; align-items: flex-start; margin-bottom: 14px;">' +
               '<span style="color: #00ffff; font-weight: 700; margin-right: 12px; flex-shrink: 0;">●</span>' +
-              '<div><span style="font-weight: 600; color: #00ffff;">About</span> - See this document again and change your settings</div>' +
+              '<div><span style="font-weight: 600; color: #00ffff;">About</span> - Settings</div>' +
             '</li>' +
             '<li style="display: flex; align-items: flex-start;">' +
               '<span style="color: #00ffff; font-weight: 700; margin-right: 12px; flex-shrink: 0;">●</span>' +
-              '<div><span style="font-weight: 600; color: #00ffff;">Off</span> - Turn device off</div>' +
+              '<div><span style="font-weight: 600; color: #00ffff;">Off</span> - Power off</div>' +
             '</li>' +
           '</ul>' +
         '</div>' +
@@ -699,7 +699,7 @@ var render = function() {
               
   } else if (state === 3) {
     // 4. HOW TO TAKE A MEASUREMENT
-    content = '<div class="title">How to Take a Measurement</div>' +
+    content = '<div class="title">Taking a Measurement</div>' +
       '<div style="height: 16px;"></div>' +
       '<div class="how-to-measure">' +
         '<div class="device-column">' +
@@ -740,25 +740,25 @@ var render = function() {
         '<div class="text-column">' +
           '<div class="step-block">' +
             '<div class="step-title">Step 1</div>' +
-            '<div class="step-text">With Measure selected, click the round button to start the warm up.</div>' +
+            '<div class="step-text">Select Measure and press circle button.</div>' +
           '</div>' +
           '<div class="step-block">' +
             '<div class="step-title">Step 2</div>' +
-            '<div class="step-text">Relax and breathe normally during the countdown.</div>' +
+            '<div class="step-text">Breathe normally during countdown.</div>' +
           '</div>' +
           '<div class="step-block">' +
             '<div class="step-title">Step 3</div>' +
-            '<div class="step-text">When you see "Blow," take a breath in and then blow steadily into the mouthpiece like you are filling a balloon. Blow until Fox2 buzzes or you run out of breath. Fox2 will take a breath sample and begin measuring.</div>' +
+            '<div class="step-text">When it says "Blow," breathe in then blow steadily into mouthpiece until it buzzes.</div>' +
           '</div>' +
         '</div>' +
       '</div>' +
       '<div class="info-box">' +
-        '<div class="info-title">Helpful Tips</div>' +
+        '<div class="info-title">Tips</div>' +
         '<div class="info-text">' +
           '<ul class="info-list">' +
-            '<li>Try not to cover the side and back vents while blowing</li>' +
-            '<li>Wait an hour after eating before measuring</li>' +
-            '<li>Alcohol can cause artificially high readings so don\'t measure after drinking alcohol or using products that contain alcohol (like mouthwash.)</li>' +
+            '<li>Don\'t cover the vents while blowing</li>' +
+            '<li>Wait 1 hour after eating</li>' +
+            '<li>Avoid alcohol beforehand</li>' +
           '</ul>' +
         '</div>' +
       '</div>';
@@ -767,9 +767,9 @@ var render = function() {
               
   } else if (state === 4) {
     // 5. UNDERSTANDING YOUR RESULTS
-    content = '<div class="title">Understanding Your Results</div>' +
+    content = '<div class="title">Understanding Results</div>' +
       '<div class="content-text">' +
-        '<p>After you take a measurement, Fox2 will cycle through the results screens and will turn itself off after clearing the sensor.</p>' +
+        '<p>After measuring, FOX2 shows results and powers off.</p>' +
       '</div>' +
       '<div class="how-to-measure">' +
         '<div class="device-column">' +
@@ -810,22 +810,22 @@ var render = function() {
         '<div class="text-column">' +
           '<div class="step-block">' +
             '<div class="step-title">Zone</div>' +
-            '<div class="step-text">A snapshot showing your current metabolic state. Higher readings indicate more fat metabolism, lower readings more glucose metabolism. Both are normal.</div>' +
+            '<div class="step-text">Current metabolic state. Higher = more fat burning, lower = more glucose burning.</div>' +
           '</div>' +
           '<div class="step-block">' +
             '<div class="step-title">Daily Total</div>' +
-            '<div class="step-text">Multiple measurements throughout the day accumulate into a total score. This helps translate moment-to-moment changes into a clearer daily summary. If you have set a daily target it will be shown under the total.</div>' +
+            '<div class="step-text">Your measurements add up during the day. Target shown below if set.</div>' +
           '</div>' +
           '<div class="step-block">' +
-            '<div class="step-title">Build Streaks</div>' +
-            '<div class="step-text">If you have set a daily target the streaks screen will also be shown. You can hit your daily target to build a streak. Your "best" shows your longest ever, "now" shows your current streak.</div>' +
+            '<div class="step-title">Streaks</div>' +
+            '<div class="step-text">Hit your daily target to build streaks. "Best" is longest ever, "Now" is current.</div>' +
           '</div>' +
         '</div>' +
       '</div>' +
       '<div class="info-box" style="margin-top:16px;">' +
-        '<div class="info-title">Important to Remember</div>' +
+        '<div class="info-title">Remember</div>' +
         '<div class="info-text">' +
-          'Your zone measurements can change naturally based on meals, activity, sleep, stress, and timing. Focus on your daily totals and patterns over time rather than individual readings. After making a lifestyle change it can a few days to a week to see a change in your totals, stick with it!' +
+          'Readings change naturally with meals, activity, and sleep. Focus on daily totals and patterns over time. Changes take a few days to show - stick with it!' +
         '</div>' +
       '</div>';
     buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
@@ -833,11 +833,11 @@ var render = function() {
               
   } else if (state === 5) {
     // 6. USING FOX2 OVER TIME
-    content = '<div class="title">Using FOX2 Over Time</div>' +
+    content = '<div class="title">Daily Use</div>' +
       '<div class="info-box">' +
-        '<div style="color: #00ffff; font-size: 14px; font-weight: 600; margin-bottom: 8px;">Summary Screen</div>' +
+        '<div style="color: #00ffff; font-size: 18px; font-weight: 600; margin-bottom: 8px;">Summary Screen</div>' +
         '<div class="info-text">' +
-          'If you have taken at least one measurement today, when you start up your device it will initially show you a summary screen. This shows your last three measurements (in the circles) and your daily total so far along with your target if you have set one.' +
+          'When you power on after taking measurements, you\'ll see a summary of your last three readings and daily total.' +
         '</div>' +
       '</div>' +
       '<div style="display: flex; gap: 20px; margin-bottom: 24px; align-items: center; justify-content: center;">' +
@@ -1105,7 +1105,5 @@ setTimeout(function() {
   }
 }, 100);
 </script>
-</body>
-</html>
 </body>
 </html>
