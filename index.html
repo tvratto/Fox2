@@ -44,6 +44,80 @@ body {
   font-weight: 600;
 }
 
+/* Swipeable card system */
+.card-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.card-wrapper {
+  display: flex;
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  flex: 1;
+  min-height: 0;
+}
+.step-card {
+  flex: 0 0 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 16px;
+  gap: 20px;
+}
+.step-card-device {
+  flex-shrink: 0;
+}
+.step-card-content {
+  text-align: center;
+  max-width: 400px;
+}
+.step-card-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #00ffff;
+  margin-bottom: 12px;
+}
+.step-card-text {
+  font-size: 18px;
+  line-height: 1.5;
+  opacity: 0.9;
+}
+.card-dots {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  padding: 16px 0 8px;
+}
+.card-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #333;
+  transition: all 0.3s;
+}
+.card-dot.active {
+  background: #00ffff;
+  width: 24px;
+  border-radius: 4px;
+}
+.swipe-hint {
+  text-align: center;
+  font-size: 14px;
+  opacity: 0.5;
+  padding: 8px 0;
+  animation: fadeInOut 3s ease-in-out infinite;
+}
+@keyframes fadeInOut {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+
 .how-to-measure {
   display: flex;
   gap: 12px;
@@ -698,134 +772,168 @@ var render = function() {
               '<button class="btn btn-primary" onclick="next()">Next</button>';
               
   } else if (state === 3) {
-    // 4. HOW TO TAKE A MEASUREMENT
+    // 4. HOW TO TAKE A MEASUREMENT - Swipeable cards
     content = '<div class="title">Taking a Measurement</div>' +
-      '<div style="height: 16px;"></div>' +
-      '<div class="how-to-measure">' +
-        '<div class="device-column">' +
-          '<div class="mini-device">' +
-            '<div class="mini-device-body">' +
-              '<div class="mini-device-seam"></div>' +
-              '<div class="mini-device-screen">' + getMenuSVG() + '</div>' +
-              '<div class="mini-device-buttons">' +
-                '<div class="mini-device-btn-triangle"></div>' +
-                '<div class="mini-device-btn-circle"></div>' +
+      '<div class="card-container">' +
+        '<div class="card-wrapper" id="cardWrapper3">' +
+          // Card 1
+          '<div class="step-card">' +
+            '<div class="step-card-device">' +
+              '<div class="device-frame">' +
+                '<div class="device-body"></div>' +
+                '<div class="device-seam"></div>' +
+                '<div class="device-screen">' + getMenuSVG() + '</div>' +
+                '<div class="device-buttons">' +
+                  '<div class="device-btn-triangle"></div>' +
+                  '<div class="device-btn-circle"></div>' +
+                '</div>' +
+                '<div class="device-mouthpiece"></div>' +
               '</div>' +
-              '<div class="mini-device-mouthpiece"></div>' +
+            '</div>' +
+            '<div class="step-card-content">' +
+              '<div class="step-card-title">Step 1: Select Measure</div>' +
+              '<div class="step-card-text">Navigate to Measure and press the circle button to start.</div>' +
             '</div>' +
           '</div>' +
-          '<div class="mini-device">' +
-            '<div class="mini-device-body">' +
-              '<div class="mini-device-seam"></div>' +
-              '<div class="mini-device-screen">' + getWarmupSVG() + '</div>' +
-              '<div class="mini-device-buttons">' +
-                '<div class="mini-device-btn-triangle"></div>' +
-                '<div class="mini-device-btn-circle"></div>' +
+          // Card 2
+          '<div class="step-card">' +
+            '<div class="step-card-device">' +
+              '<div class="device-frame">' +
+                '<div class="device-body"></div>' +
+                '<div class="device-seam"></div>' +
+                '<div class="device-screen">' + getWarmupSVG() + '</div>' +
+                '<div class="device-buttons">' +
+                  '<div class="device-btn-triangle"></div>' +
+                  '<div class="device-btn-circle"></div>' +
+                '</div>' +
+                '<div class="device-mouthpiece"></div>' +
               '</div>' +
-              '<div class="mini-device-mouthpiece"></div>' +
+            '</div>' +
+            '<div class="step-card-content">' +
+              '<div class="step-card-title">Step 2: Wait for Warmup</div>' +
+              '<div class="step-card-text">Breathe normally during the countdown.</div>' +
             '</div>' +
           '</div>' +
-          '<div class="mini-device">' +
-            '<div class="mini-device-body">' +
-              '<div class="mini-device-seam"></div>' +
-              '<div class="mini-device-screen">' + getBlowSVG() + '</div>' +
-              '<div class="mini-device-buttons">' +
-                '<div class="mini-device-btn-triangle"></div>' +
-                '<div class="mini-device-btn-circle"></div>' +
+          // Card 3
+          '<div class="step-card">' +
+            '<div class="step-card-device">' +
+              '<div class="device-frame">' +
+                '<div class="device-body"></div>' +
+                '<div class="device-seam"></div>' +
+                '<div class="device-screen">' + getBlowSVG() + '</div>' +
+                '<div class="device-buttons">' +
+                  '<div class="device-btn-triangle"></div>' +
+                  '<div class="device-btn-circle"></div>' +
+                '</div>' +
+                '<div class="device-mouthpiece"></div>' +
               '</div>' +
-              '<div class="mini-device-mouthpiece"></div>' +
+            '</div>' +
+            '<div class="step-card-content">' +
+              '<div class="step-card-title">Step 3: Blow</div>' +
+              '<div class="step-card-text">When it says "Blow," breathe in then blow steadily into the mouthpiece until it buzzes.</div>' +
+            '</div>' +
+          '</div>' +
+          // Card 4 - Tips
+          '<div class="step-card">' +
+            '<div class="step-card-content" style="max-width: 350px;">' +
+              '<div class="step-card-title">Quick Tips</div>' +
+              '<div style="text-align: left; font-size: 17px; line-height: 1.6;">' +
+                '<div style="margin-bottom: 12px;">• Don\'t cover the vents</div>' +
+                '<div style="margin-bottom: 12px;">• Wait 1 hour after eating</div>' +
+                '<div>• Avoid alcohol beforehand</div>' +
+              '</div>' +
             '</div>' +
           '</div>' +
         '</div>' +
-        '<div class="text-column">' +
-          '<div class="step-block">' +
-            '<div class="step-title">Step 1</div>' +
-            '<div class="step-text">Select Measure and press circle button.</div>' +
-          '</div>' +
-          '<div class="step-block">' +
-            '<div class="step-title">Step 2</div>' +
-            '<div class="step-text">Breathe normally during countdown.</div>' +
-          '</div>' +
-          '<div class="step-block">' +
-            '<div class="step-title">Step 3</div>' +
-            '<div class="step-text">When it says "Blow," breathe in then blow steadily into mouthpiece until it buzzes.</div>' +
-          '</div>' +
+        '<div class="card-dots" id="cardDots3">' +
+          '<div class="card-dot active"></div>' +
+          '<div class="card-dot"></div>' +
+          '<div class="card-dot"></div>' +
+          '<div class="card-dot"></div>' +
         '</div>' +
-      '</div>' +
-      '<div class="info-box">' +
-        '<div class="info-title">Tips</div>' +
-        '<div class="info-text">' +
-          '<ul class="info-list">' +
-            '<li>Don\'t cover the vents while blowing</li>' +
-            '<li>Wait 1 hour after eating</li>' +
-            '<li>Avoid alcohol beforehand</li>' +
-          '</ul>' +
-        '</div>' +
+        '<div class="swipe-hint">← Swipe to see more →</div>' +
       '</div>';
     buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
               '<button class="btn btn-primary" onclick="next()">Next</button>';
               
+              '<button class="btn btn-primary" onclick="next()">Next</button>';
+              
   } else if (state === 4) {
-    // 5. UNDERSTANDING YOUR RESULTS
+    // 5. UNDERSTANDING YOUR RESULTS - Swipeable cards
     content = '<div class="title">Understanding Results</div>' +
-      '<div class="content-text">' +
-        '<p>After measuring, FOX2 shows results and powers off.</p>' +
-      '</div>' +
-      '<div class="how-to-measure">' +
-        '<div class="device-column">' +
-          '<div class="mini-device">' +
-            '<div class="mini-device-body">' +
-              '<div class="mini-device-seam"></div>' +
-              '<div class="mini-device-screen">' + getZoneSVG() + '</div>' +
-              '<div class="mini-device-buttons">' +
-                '<div class="mini-device-btn-triangle"></div>' +
-                '<div class="mini-device-btn-circle"></div>' +
+      '<div class="card-container">' +
+        '<div class="card-wrapper" id="cardWrapper4">' +
+          // Card 1 - Zone
+          '<div class="step-card">' +
+            '<div class="step-card-device">' +
+              '<div class="device-frame">' +
+                '<div class="device-body"></div>' +
+                '<div class="device-seam"></div>' +
+                '<div class="device-screen">' + getZoneSVG() + '</div>' +
+                '<div class="device-buttons">' +
+                  '<div class="device-btn-triangle"></div>' +
+                  '<div class="device-btn-circle"></div>' +
+                '</div>' +
+                '<div class="device-mouthpiece"></div>' +
               '</div>' +
-              '<div class="mini-device-mouthpiece"></div>' +
+            '</div>' +
+            '<div class="step-card-content">' +
+              '<div class="step-card-title">Zone Reading</div>' +
+              '<div class="step-card-text">Shows your current metabolic state. Higher numbers mean more fat burning, lower means more glucose burning.</div>' +
             '</div>' +
           '</div>' +
-          '<div class="mini-device">' +
-            '<div class="mini-device-body">' +
-              '<div class="mini-device-seam"></div>' +
-              '<div class="mini-device-screen">' + getTotalSVG() + '</div>' +
-              '<div class="mini-device-buttons">' +
-                '<div class="mini-device-btn-triangle"></div>' +
-                '<div class="mini-device-btn-circle"></div>' +
+          // Card 2 - Total
+          '<div class="step-card">' +
+            '<div class="step-card-device">' +
+              '<div class="device-frame">' +
+                '<div class="device-body"></div>' +
+                '<div class="device-seam"></div>' +
+                '<div class="device-screen">' + getTotalSVG() + '</div>' +
+                '<div class="device-buttons">' +
+                  '<div class="device-btn-triangle"></div>' +
+                  '<div class="device-btn-circle"></div>' +
+                '</div>' +
+                '<div class="device-mouthpiece"></div>' +
               '</div>' +
-              '<div class="mini-device-mouthpiece"></div>' +
+            '</div>' +
+            '<div class="step-card-content">' +
+              '<div class="step-card-title">Daily Total</div>' +
+              '<div class="step-card-text">Your measurements accumulate throughout the day. Your target is shown below if you\'ve set one.</div>' +
             '</div>' +
           '</div>' +
-          '<div class="mini-device">' +
-            '<div class="mini-device-body">' +
-              '<div class="mini-device-seam"></div>' +
-              '<div class="mini-device-screen">' + getStreaksSVG() + '</div>' +
-              '<div class="mini-device-buttons">' +
-                '<div class="mini-device-btn-triangle"></div>' +
-                '<div class="mini-device-btn-circle"></div>' +
+          // Card 3 - Streaks
+          '<div class="step-card">' +
+            '<div class="step-card-device">' +
+              '<div class="device-frame">' +
+                '<div class="device-body"></div>' +
+                '<div class="device-seam"></div>' +
+                '<div class="device-screen">' + getStreaksSVG() + '</div>' +
+                '<div class="device-buttons">' +
+                  '<div class="device-btn-triangle"></div>' +
+                  '<div class="device-btn-circle"></div>' +
+                '</div>' +
+                '<div class="device-mouthpiece"></div>' +
               '</div>' +
-              '<div class="mini-device-mouthpiece"></div>' +
+            '</div>' +
+            '<div class="step-card-content">' +
+              '<div class="step-card-title">Streaks</div>' +
+              '<div class="step-card-text">Hit your daily target to build streaks. "Best" shows your longest ever, "Now" shows your current streak.</div>' +
             '</div>' +
           '</div>' +
         '</div>' +
-        '<div class="text-column">' +
-          '<div class="step-block">' +
-            '<div class="step-title">Zone</div>' +
-            '<div class="step-text">Current metabolic state. Higher = more fat burning, lower = more glucose burning.</div>' +
-          '</div>' +
-          '<div class="step-block">' +
-            '<div class="step-title">Daily Total</div>' +
-            '<div class="step-text">Your measurements add up during the day. Target shown below if set.</div>' +
-          '</div>' +
-          '<div class="step-block">' +
-            '<div class="step-title">Streaks</div>' +
-            '<div class="step-text">Hit your daily target to build streaks. "Best" is longest ever, "Now" is current.</div>' +
-          '</div>' +
+        '<div class="card-dots" id="cardDots4">' +
+          '<div class="card-dot active"></div>' +
+          '<div class="card-dot"></div>' +
+          '<div class="card-dot"></div>' +
         '</div>' +
+        '<div class="swipe-hint">← Swipe to see more →</div>' +
       '</div>' +
-      '<div class="info-box" style="margin-top:16px;">' +
-        '<div class="info-title">Remember</div>' +
-        '<div class="info-text">' +
-          'Readings change naturally with meals, activity, and sleep. Focus on daily totals and patterns over time. Changes take a few days to show - stick with it!' +
+      '<div style="padding: 0 16px; margin-top: 12px;">' +
+        '<div class="info-box">' +
+          '<div class="info-title">Remember</div>' +
+          '<div class="info-text">' +
+            'Focus on daily totals and patterns over time. Changes take a few days to show - stick with it!' +
+          '</div>' +
         '</div>' +
       '</div>';
     buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
@@ -1019,7 +1127,82 @@ var render = function() {
       }
     }, 0);
   }
+  
+  // Initialize swipe handlers for card-based screens
+  if (state === 3) {
+    initCardSwipe('cardWrapper3', 'cardDots3', 4);
+  } else if (state === 4) {
+    initCardSwipe('cardWrapper4', 'cardDots4', 3);
+  }
 };
+
+// Card swipe functionality
+function initCardSwipe(wrapperId, dotsId, cardCount) {
+  var wrapper = document.getElementById(wrapperId);
+  var dots = document.getElementById(dotsId);
+  if (!wrapper || !dots) return;
+  
+  var currentCard = 0;
+  var startX = 0;
+  var currentX = 0;
+  var isDragging = false;
+  
+  function updateCard(index) {
+    currentCard = Math.max(0, Math.min(index, cardCount - 1));
+    wrapper.style.transform = 'translateX(-' + (currentCard * 100) + '%)';
+    
+    // Update dots
+    var dotElements = dots.querySelectorAll('.card-dot');
+    dotElements.forEach(function(dot, i) {
+      if (i === currentCard) {
+        dot.classList.add('active');
+      } else {
+        dot.classList.remove('active');
+      }
+    });
+  }
+  
+  wrapper.addEventListener('touchstart', function(e) {
+    startX = e.touches[0].clientX;
+    isDragging = true;
+    wrapper.style.transition = 'none';
+  });
+  
+  wrapper.addEventListener('touchmove', function(e) {
+    if (!isDragging) return;
+    currentX = e.touches[0].clientX;
+    var diff = currentX - startX;
+    var offset = -(currentCard * 100) + (diff / wrapper.offsetWidth * 100);
+    wrapper.style.transform = 'translateX(' + offset + '%)';
+  });
+  
+  wrapper.addEventListener('touchend', function(e) {
+    if (!isDragging) return;
+    isDragging = false;
+    wrapper.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+    
+    var diff = currentX - startX;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0 && currentCard > 0) {
+        updateCard(currentCard - 1);
+      } else if (diff < 0 && currentCard < cardCount - 1) {
+        updateCard(currentCard + 1);
+      } else {
+        updateCard(currentCard);
+      }
+    } else {
+      updateCard(currentCard);
+    }
+  });
+  
+  // Click on dots to navigate
+  var dotElements = dots.querySelectorAll('.card-dot');
+  dotElements.forEach(function(dot, index) {
+    dot.addEventListener('click', function() {
+      updateCard(index);
+    });
+  });
+}
 
 var next = function() { 
   if (state < 7) { 
