@@ -17,11 +17,11 @@ body {
 .container { 
   max-width:480px; 
   margin:0 auto; 
-  padding:10px; 
+  padding:12px; 
   height:100%;
   display:flex; 
   flex-direction:column;
-  gap: 6px;
+  gap: 8px;
 }
 .screen { 
   display:none; 
@@ -41,12 +41,12 @@ body {
   overflow:auto;
 }
 .logo { 
-  font-size:52px; font-weight:700; margin-bottom:12px; 
+  font-size:56px; font-weight:700; margin-bottom:12px; 
   background:linear-gradient(135deg,#00ffff,#ff6b00);
   -webkit-background-clip:text; -webkit-text-fill-color:transparent;
   background-clip:text;
 }
-.tagline { font-size:18px; opacity:.7; margin-bottom:24px; }
+.tagline { font-size:20px; opacity:.7; margin-bottom:24px; }
 
 .content-text {
   flex: 1;
@@ -56,7 +56,7 @@ body {
 }
 .content-text p {
   margin: 0 0 16px 0;
-  font-size: 18px;
+  font-size: 19px;
   opacity: 0.9;
 }
 .content-text strong {
@@ -91,16 +91,16 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 6px 10px;
-  gap: 10px;
+  padding: 8px 12px;
+  gap: 12px;
   overflow-y: auto;
   overflow-x: hidden;
 }
 
 @media (min-height: 800px) {
   .step-card {
-    padding: 8px 12px;
-    gap: 12px;
+    padding: 10px 14px;
+    gap: 14px;
   }
 }
 .step-card-device {
@@ -116,24 +116,24 @@ body {
   padding: 0 10px;
 }
 .step-card-title {
-  font-size: 17px;
+  font-size: 19px;
   font-weight: 700;
   color: #00ffff;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 .step-card-text {
-  font-size: 15px;
+  font-size: 17px;
   line-height: 1.4;
   opacity: 0.9;
 }
 
 @media (min-height: 800px) {
   .step-card-title {
-    font-size: 19px;
-    margin-bottom: 8px;
+    font-size: 21px;
+    margin-bottom: 10px;
   }
   .step-card-text {
-    font-size: 16px;
+    font-size: 18px;
   }
 }
 .card-dots {
@@ -296,19 +296,19 @@ body {
   position:relative;
   margin:0 auto;
   flex-shrink: 1;
-  transform: scale(0.6);
+  transform: scale(0.75);
 }
 
-/* Scale down device on shorter screens */
-@media (min-height: 850px) {
+/* Scale up device on taller screens */
+@media (min-height: 750px) {
   .device-frame {
-    transform: scale(0.75);
+    transform: scale(0.85);
   }
 }
 
-@media (min-height: 950px) {
+@media (min-height: 900px) {
   .device-frame {
-    transform: scale(0.85);
+    transform: scale(0.95);
   }
 }
 
@@ -383,18 +383,18 @@ body {
 }
 
 .title { 
-  font-size: 24px; 
+  font-size: 26px; 
   font-weight: 700; 
   text-align: center; 
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   line-height: 1.2;
   flex-shrink: 0;
 }
 
 @media (min-height: 800px) {
   .title {
-    font-size: 28px;
-    margin-bottom: 8px;
+    font-size: 30px;
+    margin-bottom: 10px;
   }
 }
 .subtitle { 
@@ -416,8 +416,8 @@ body {
 
 .btn-row { display:flex; gap:10px; padding-top:6px; flex-shrink:0; }
 .btn {
-  flex:1; padding:10px; border-radius:10px; border:none;
-  font-size:15px; font-weight:600; cursor:pointer;
+  flex:1; padding:12px; border-radius:10px; border:none;
+  font-size:16px; font-weight:600; cursor:pointer;
   transition:all .2s;
   touch-action: manipulation;
   user-select: none;
@@ -426,8 +426,8 @@ body {
 
 @media (min-height: 800px) {
   .btn {
-    padding: 12px;
-    font-size: 16px;
+    padding: 14px;
+    font-size: 17px;
   }
 }
 .btn-primary { background:#00ffff; color:#000; }
@@ -493,10 +493,10 @@ body {
   padding:16px; margin:16px 0;
 }
 .info-title { 
-  font-size:18px; font-weight:600; color:#00ffff; 
+  font-size:19px; font-weight:600; color:#00ffff; 
   margin-bottom:10px;
 }
-.info-text { font-size:17px; line-height:1.5; opacity:.85; }
+.info-text { font-size:18px; line-height:1.5; opacity:.85; }
 
 .info-list {
   list-style: none;
