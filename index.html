@@ -11,16 +11,17 @@ body {
   overflow:hidden;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  height: 100dvh;
-  height: 100vh;
-  width: 100vw;
   position: fixed;
+  inset: 0;
 }
 .container { 
-  max-width:480px; margin:0 auto; padding:12px; 
+  max-width:480px; 
+  margin:0 auto; 
+  padding:10px; 
   height:100%;
   display:flex; 
   flex-direction:column;
+  gap: 6px;
 }
 .screen { 
   display:none; 
@@ -90,14 +91,14 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 8px 12px;
-  gap: 12px;
+  padding: 6px 10px;
+  gap: 10px;
 }
 
-@media (max-height: 700px) {
+@media (min-height: 800px) {
   .step-card {
-    padding: 6px 10px;
-    gap: 10px;
+    padding: 8px 12px;
+    gap: 12px;
   }
 }
 .step-card-device {
@@ -113,24 +114,24 @@ body {
   padding: 0 10px;
 }
 .step-card-title {
-  font-size: 19px;
+  font-size: 17px;
   font-weight: 700;
   color: #00ffff;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 .step-card-text {
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1.4;
   opacity: 0.9;
 }
 
-@media (max-height: 700px) {
+@media (min-height: 800px) {
   .step-card-title {
-    font-size: 17px;
-    margin-bottom: 6px;
+    font-size: 19px;
+    margin-bottom: 8px;
   }
   .step-card-text {
-    font-size: 15px;
+    font-size: 16px;
   }
 }
 .card-dots {
@@ -293,24 +294,25 @@ body {
   position:relative;
   margin:0 auto;
   flex-shrink: 1;
+  transform: scale(0.6);
 }
 
 /* Scale down device on shorter screens */
-@media (max-height: 800px) {
+@media (min-height: 850px) {
   .device-frame {
-    transform: scale(0.8);
+    transform: scale(0.75);
   }
 }
 
-@media (max-height: 700px) {
+@media (min-height: 950px) {
   .device-frame {
-    transform: scale(0.7);
+    transform: scale(0.85);
   }
 }
 
-@media (max-height: 650px) {
+@media (min-height: 1100px) {
   .device-frame {
-    transform: scale(0.65);
+    transform: scale(1.0);
   }
 }
 .device-body{
@@ -379,18 +381,18 @@ body {
 }
 
 .title { 
-  font-size: 28px; 
+  font-size: 24px; 
   font-weight: 700; 
   text-align: center; 
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   line-height: 1.2;
   flex-shrink: 0;
 }
 
-@media (max-height: 700px) {
+@media (min-height: 800px) {
   .title {
-    font-size: 24px;
-    margin-bottom: 6px;
+    font-size: 28px;
+    margin-bottom: 8px;
   }
 }
 .subtitle { 
@@ -403,27 +405,27 @@ body {
   flex-shrink: 0;
 }
 
-.dots { display:flex; gap:8px; justify-content:center; margin:8px 0; flex-shrink:0; }
+.dots { display:flex; gap:8px; justify-content:center; margin:6px 0; flex-shrink:0; }
 .dot {
   width:8px; height:8px; border-radius:50%;
   background:#333; transition:all .3s;
 }
 .dot.active { background:#00ffff; width:24px; }
 
-.btn-row { display:flex; gap:12px; padding-top:8px; flex-shrink:0; }
+.btn-row { display:flex; gap:10px; padding-top:6px; flex-shrink:0; }
 .btn {
-  flex:1; padding:12px; border-radius:12px; border:none;
-  font-size:16px; font-weight:600; cursor:pointer;
+  flex:1; padding:10px; border-radius:10px; border:none;
+  font-size:15px; font-weight:600; cursor:pointer;
   transition:all .2s;
   touch-action: manipulation;
   user-select: none;
 }
 .btn:active { transform: scale(0.95); }
 
-@media (max-height: 700px) {
+@media (min-height: 800px) {
   .btn {
-    padding: 10px;
-    font-size: 15px;
+    padding: 12px;
+    font-size: 16px;
   }
 }
 .btn-primary { background:#00ffff; color:#000; }
@@ -518,7 +520,7 @@ body {
 </head>
 <body>
 <div class="container">
-  <div id="content" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;max-height:calc(100vh - 140px)"></div>
+  <div id="content" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden"></div>
   <div class="dots" id="dots"></div>
   <div class="btn-row" id="buttons"></div>
 </div>
@@ -1190,7 +1192,8 @@ var render = function() {
   document.getElementById('content').innerHTML = content;
   document.getElementById('buttons').innerHTML = buttons;
   
-  // Add spacer between content and dots
+  // Spacer removed to save space on mobile
+  /*
   var container = document.querySelector('.container');
   var existingSpacer = document.getElementById('spacer');
   if (existingSpacer) {
@@ -1201,6 +1204,7 @@ var render = function() {
   spacerDiv.className = 'spacer';
   var dotsElement = document.getElementById('dots');
   container.insertBefore(spacerDiv, dotsElement);
+  */
   
   var dotsContainer = document.getElementById('dots');
   if (showOnboarding) {
