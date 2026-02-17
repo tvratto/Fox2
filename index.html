@@ -420,20 +420,53 @@ function getZoneSVG() {
 
 function getTotalSVG() {
   return '<svg viewBox="0 0 184 184" xmlns="http://www.w3.org/2000/svg">' +
-    '<rect x="42" y="5" width="100" height="20" rx="10" fill="#00ff00"/>' +
-    '<text x="92" y="19" font-size="12" font-weight="700" fill="#1a1a2e" text-anchor="middle">TOTAL</text>' +
-    '<rect x="158" y="15" width="18" height="10" rx="2" stroke="#0ff" stroke-width="1" fill="none"/>' +
-    '<rect x="176" y="17" width="2" height="6" fill="#0ff"/>' +
-    '<rect x="160" y="17" width="14" height="6" fill="#0f0"/>' +
-    '<path d="M 92,55 A 50,50 0 1,1 92,155" fill="none" stroke="#444" stroke-width="16" stroke-linecap="round"/>' +
-    '<circle cx="92" cy="105" r="50" fill="none" stroke="#00ff00" stroke-width="16" stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="69" transform="rotate(-90 92 105)"/>' +
-    '<path d="M 62,51 C 54,47 48,51 48,58 C 48,65 62,73 62,73 C 62,73 76,65 76,58 C 76,51 70,47 62,51 Z" fill="none" stroke="#ffffff" stroke-width="2"/>' +
-    '<rect x="25" y="95" width="20" height="20" rx="3" fill="#ffffff"/>' +
-    '<text x="35" y="110" font-size="14" font-weight="700" fill="#000000" text-anchor="middle">2</text>' +
-    '<rect x="139" y="145" width="20" height="20" rx="3" fill="#ffffff"/>' +
-    '<text x="149" y="160" font-size="14" font-weight="700" fill="#000000" text-anchor="middle">5</text>' +
-    '<text x="92" y="115" font-size="36" font-weight="700" fill="#00ff00" text-anchor="middle">47</text>' +
-    '<text x="92" y="132" font-size="21" fill="#888" text-anchor="middle">/60</text></svg>';
+    // TODAY header with rounded yellow background
+    '<rect x="66" y="5" width="52" height="16" rx="8" fill="#f5c842"/>' +
+    '<text x="92" y="17" font-size="11" font-weight="700" fill="#1a1a2e" text-anchor="middle">TODAY</text>' +
+    
+    // Battery indicator (top right)
+    '<rect x="158" y="10" width="18" height="10" rx="2" stroke="#0ff" stroke-width="1" fill="none"/>' +
+    '<rect x="176" y="12" width="2" height="6" fill="#0ff"/>' +
+    '<rect x="160" y="12" width="14" height="6" fill="#0f0"/>' +
+    
+    // Graph area - yellow filled area with inverted curve
+    '<path d="M 8,100 L 8,30 Q 35,65 62,70 L 80,80 L 80,100 Z" fill="#f5c842"/>' +
+    
+    // Data point dots (white circles with values)
+    '<circle cx="62" cy="70" r="3" fill="#fff"/>' +
+    '<circle cx="80" cy="80" r="3" fill="#fff"/>' +
+    
+    // Dashed dark grey line below the 3 measurement point
+    '<line x1="80" y1="80" x2="170" y2="80" stroke="#666" stroke-width="1" stroke-dasharray="4,4"/>' +
+    
+    // Data point values (white text)
+    '<text x="62" y="62" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">4</text>' +
+    '<text x="80" y="72" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">3</text>' +
+    
+    // X-axis baseline
+    '<line x1="8" y1="100" x2="170" y2="100" stroke="#fff" stroke-width="1"/>' +
+    
+    // Time labels below graph (white)
+    '<text x="8" y="115" font-size="12" fill="#fff" text-anchor="start">0a</text>' +
+    '<text x="92" y="115" font-size="12" fill="#fff" text-anchor="middle">12p</text>' +
+    '<text x="170" y="115" font-size="12" fill="#fff" text-anchor="end">12a</text>' +
+    
+    // Large value display (centered group)
+    '<text x="68" y="160" font-size="40" font-weight="700" fill="#ff9800" text-anchor="middle">47</text>' +
+    '<text x="101" y="155" font-size="40" font-weight="700" fill="#fff" text-anchor="middle">/</text>' +
+    
+    // Heart icon (centered with group) - outline only
+    '<path d="M 128,123 C 123,119 119,121 119,126 C 119,131 128,137 128,137 C 128,137 137,131 137,126 C 137,121 133,119 128,123 Z" fill="none" stroke="#ff4444" stroke-width="2"/>' +
+    
+    // Target value (20px, dark grey)
+    '<text x="111" y="160" font-size="20" font-weight="700" fill="#666" text-anchor="start">60</text>' +
+    
+    // Status dots at bottom
+    '<circle cx="75" cy="170" r="4" fill="#fff"/>' +
+    '<circle cx="92" cy="170" r="4" fill="none" stroke="#888" stroke-width="2"/>' +
+    '<circle cx="109" cy="170" r="4" fill="none" stroke="#888" stroke-width="2"/>' +
+    
+    '</svg>';
 }
 
 function getStreaksSVG() {
@@ -474,28 +507,48 @@ function getStreaksSVG() {
 
 function getSummaryScreenSVG() {
   return '<svg viewBox="0 0 184 184" xmlns="http://www.w3.org/2000/svg">' +
-    '<rect x="0" y="0" width="184" height="30" fill="#001a2e"/>' +
-    '<rect x="16" y="6" width="136" height="18" rx="9" fill="#00ffff"/>' +
-    '<text x="84" y="17" font-size="12" font-weight="700" fill="#1a1a2e" text-anchor="middle">SUMMARY</text>' +
-    '<rect x="158" y="8" width="18" height="14" rx="2" stroke="#00ffff" stroke-width="1" fill="none"/>' +
-    '<rect x="176" y="11" width="2" height="6" fill="#00ffff"/>' +
-    '<rect x="160" y="10" width="12" height="10" fill="#0f0"/>' +
-    '<rect x="0" y="30" width="184" height="154" fill="#001a2e"/>' +
-    '<circle cx="38" cy="65" r="22" fill="#4444ff" stroke="#0088ff" stroke-width="2"/>' +
-    '<text x="38" y="71" font-size="20" font-weight="700" fill="#fff" text-anchor="middle">3</text>' +
-    '<circle cx="92" cy="65" r="22" fill="#666666" stroke="#ffffff" stroke-width="2" stroke-dasharray="4,4"/>' +
-    '<text x="92" y="71" font-size="20" font-weight="700" fill="#ffffff" text-anchor="middle">?</text>' +
-    '<circle cx="146" cy="65" r="22" fill="#666666" stroke="#ffffff" stroke-width="2" stroke-dasharray="4,4"/>' +
-    '<text x="146" y="71" font-size="20" font-weight="700" fill="#ffffff" text-anchor="middle">?</text>' +
-    '<text x="38" y="110" font-size="13" fill="#00ffff" text-anchor="start">Total today</text>' +
-    '<line x1="38" y1="115" x2="146" y2="115" stroke="#00ffff" stroke-width="1"/>' +
-    '<text x="92" y="160" font-size="46" font-weight="700" fill="#00ff00" text-anchor="middle">29</text>' +
-    '<g transform="translate(148, 134)">' +
-      '<path d="M 0,-2 C -3,-5 -8,-5 -8,-1 C -8,3 0,9 0,9 C 0,9 8,3 8,-1 C 8,-5 3,-5 0,-2 Z" fill="none" stroke="#ffffff" stroke-width="1"/>' +
-    '</g>' +
-    '<text x="123" y="163" font-size="16" fill="#ff6b6b" text-anchor="start">/</text>' +
-    '<text x="135" y="163" font-size="16" fill="#fff" text-anchor="start">60</text>' +
-    '<text x="92" y="176" font-size="10" fill="#00ffff" text-anchor="middle">Press to continue</text></svg>';
+    // TODAY header with rounded yellow background (larger)
+    '<rect x="56" y="8" width="72" height="22" rx="11" fill="#f5c842"/>' +
+    '<text x="92" y="23" font-size="15" font-weight="700" fill="#1a1a2e" text-anchor="middle">TODAY</text>' +
+    
+    // Battery indicator (top right)
+    '<rect x="158" y="12" width="18" height="10" rx="2" stroke="#0ff" stroke-width="1" fill="none"/>' +
+    '<rect x="176" y="14" width="2" height="6" fill="#0ff"/>' +
+    '<rect x="160" y="14" width="14" height="6" fill="#0f0"/>' +
+    
+    // Graph area - yellow filled area with inverted curve (scaled up)
+    '<path d="M 12,110 L 12,40 Q 42,80 72,85 L 100,97 L 100,110 Z" fill="#f5c842"/>' +
+    
+    // Data point dots (white circles with values)
+    '<circle cx="72" cy="85" r="4" fill="#fff"/>' +
+    '<circle cx="100" cy="97" r="4" fill="#fff"/>' +
+    
+    // Dashed dark grey line below the 3 measurement point
+    '<line x1="100" y1="97" x2="172" y2="97" stroke="#666" stroke-width="1.5" stroke-dasharray="4,4"/>' +
+    
+    // Data point values (white text)
+    '<text x="72" y="76" font-size="18" font-weight="700" fill="#fff" text-anchor="middle">4</text>' +
+    '<text x="100" y="88" font-size="18" font-weight="700" fill="#fff" text-anchor="middle">3</text>' +
+    
+    // X-axis baseline
+    '<line x1="12" y1="110" x2="172" y2="110" stroke="#fff" stroke-width="1.5"/>' +
+    
+    // Time labels below graph (white)
+    '<text x="12" y="125" font-size="14" fill="#fff" text-anchor="start">0a</text>' +
+    '<text x="92" y="125" font-size="14" fill="#fff" text-anchor="middle">12p</text>' +
+    '<text x="172" y="125" font-size="14" fill="#fff" text-anchor="end">12a</text>' +
+    
+    // Large value display (centered group) - scaled up
+    '<text x="60" y="172" font-size="48" font-weight="700" fill="#ff9800" text-anchor="middle">47</text>' +
+    '<text x="99" y="166" font-size="48" font-weight="700" fill="#fff" text-anchor="middle">/</text>' +
+    
+    // Heart icon (centered with group) - outline only, scaled up, moved up and centered over 60
+    '<path d="M 130,132 C 124,127 119,130 119,136 C 119,142 130,150 130,150 C 130,150 141,142 141,136 C 141,130 136,127 130,132 Z" fill="none" stroke="#ff4444" stroke-width="2.5"/>' +
+    
+    // Target value (24px, dark grey) - scaled up
+    '<text x="118" y="172" font-size="24" font-weight="700" fill="#666" text-anchor="start">60</text>' +
+    
+    '</svg>';
 }
 
 function getStreaksSVG() {
@@ -1052,5 +1105,7 @@ setTimeout(function() {
   }
 }, 100);
 </script>
+</body>
+</html>
 </body>
 </html>
