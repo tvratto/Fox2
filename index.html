@@ -8,15 +8,25 @@
 body { 
   background:#000; color:#fff; margin:0; padding:0; 
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  overflow-x:hidden;
+  overflow:hidden;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+  height: 100vh;
+  width: 100vw;
 }
 .container { 
   max-width:480px; margin:0 auto; padding:16px; 
-  min-height:100vh; display:flex; flex-direction:column;
+  height:100vh; 
+  display:flex; 
+  flex-direction:column;
 }
-.screen { display:none; flex:1; flex-direction:column; }
+.screen { 
+  display:none; 
+  flex:1; 
+  flex-direction:column;
+  min-height: 0;
+  overflow: hidden;
+}
 .screen.active { display:flex; }
 
 .welcome { text-align:center; justify-content:center; }
@@ -71,27 +81,48 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 20px 16px 20px 16px;
-  gap: 20px;
+  padding: 10px 16px;
+  gap: 16px;
+}
+
+@media (max-height: 700px) {
+  .step-card {
+    padding: 8px 12px;
+    gap: 12px;
+  }
 }
 .step-card-device {
-  flex-shrink: 0;
+  flex-shrink: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .step-card-content {
   text-align: center;
   max-width: 400px;
   flex-shrink: 0;
+  padding: 0 10px;
 }
 .step-card-title {
-  font-size: 20px;
+  font-size: 19px;
   font-weight: 700;
   color: #00ffff;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 .step-card-text {
-  font-size: 18px;
-  line-height: 1.5;
+  font-size: 16px;
+  line-height: 1.4;
   opacity: 0.9;
+}
+
+@media (max-height: 700px) {
+  .step-card-title {
+    font-size: 17px;
+    margin-bottom: 6px;
+  }
+  .step-card-text {
+    font-size: 15px;
+  }
 }
 .card-dots {
   position: absolute;
@@ -120,12 +151,12 @@ body {
 }
 .swipe-hint {
   text-align: center;
-  font-size: 14px;
+  font-size: 13px;
   opacity: 0.5;
-  padding: 8px 0;
+  padding: 6px 0;
   animation: fadeInOut 3s ease-in-out infinite;
   position: absolute;
-  bottom: 8px;
+  bottom: 4px;
   left: 0;
   right: 0;
   pointer-events: none;
@@ -247,7 +278,26 @@ body {
 }
 
 /* Full-size device styles */
-.device-frame{width:200px;height:320px;position:relative;margin:0 auto}
+.device-frame{
+  width:200px;
+  height:320px;
+  position:relative;
+  margin:0 auto;
+  flex-shrink: 1;
+}
+
+/* Scale down device on shorter screens */
+@media (max-height: 750px) {
+  .device-frame {
+    transform: scale(0.85);
+  }
+}
+
+@media (max-height: 650px) {
+  .device-frame {
+    transform: scale(0.75);
+  }
+}
 .device-body{
   position:absolute;inset:0;background:#232347;border-radius:100px/140px;
   box-shadow:0 10px 30px rgba(0,0,0,.85), inset 0 2px 4px rgba(255,255,255,.10);
@@ -314,11 +364,19 @@ body {
 }
 
 .title { 
-  font-size: 32px; 
+  font-size: 28px; 
   font-weight: 700; 
   text-align: center; 
   margin-bottom: 12px;
   line-height: 1.2;
+  flex-shrink: 0;
+}
+
+@media (max-height: 700px) {
+  .title {
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
 }
 .subtitle { 
   font-size: 18px; 
@@ -327,18 +385,19 @@ body {
   margin-bottom: 20px; 
   line-height: 1.4; 
   padding: 0 10px;
+  flex-shrink: 0;
 }
 
-.dots { display:flex; gap:8px; justify-content:center; margin:16px 0; }
+.dots { display:flex; gap:8px; justify-content:center; margin:12px 0; flex-shrink:0; }
 .dot {
   width:8px; height:8px; border-radius:50%;
   background:#333; transition:all .3s;
 }
 .dot.active { background:#00ffff; width:24px; }
 
-.btn-row { display:flex; gap:12px; padding-top:16px; }
+.btn-row { display:flex; gap:12px; padding-top:12px; flex-shrink:0; }
 .btn {
-  flex:1; padding:16px; border-radius:12px; border:none;
+  flex:1; padding:14px; border-radius:12px; border:none;
   font-size:16px; font-weight:600; cursor:pointer;
   transition:all .2s;
   touch-action: manipulation;
@@ -437,7 +496,7 @@ body {
 </head>
 <body>
 <div class="container">
-  <div id="content" style="flex:1;display:flex;flex-direction:column"></div>
+  <div id="content" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden"></div>
   <div class="dots" id="dots"></div>
   <div class="btn-row" id="buttons"></div>
 </div>
