@@ -11,12 +11,14 @@ body {
   overflow:hidden;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+  height: 100dvh;
   height: 100vh;
   width: 100vw;
+  position: fixed;
 }
 .container { 
-  max-width:480px; margin:0 auto; padding:16px; 
-  height:100vh; 
+  max-width:480px; margin:0 auto; padding:12px; 
+  height:100%;
   display:flex; 
   flex-direction:column;
 }
@@ -29,7 +31,14 @@ body {
 }
 .screen.active { display:flex; }
 
-.welcome { text-align:center; justify-content:center; }
+.welcome { 
+  text-align:center; 
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  flex:1;
+  overflow:auto;
+}
 .logo { 
   font-size:52px; font-weight:700; margin-bottom:12px; 
   background:linear-gradient(135deg,#00ffff,#ff6b00);
@@ -81,14 +90,14 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 10px 16px;
-  gap: 16px;
+  padding: 8px 12px;
+  gap: 12px;
 }
 
 @media (max-height: 700px) {
   .step-card {
-    padding: 8px 12px;
-    gap: 12px;
+    padding: 6px 10px;
+    gap: 10px;
   }
 }
 .step-card-device {
@@ -287,15 +296,21 @@ body {
 }
 
 /* Scale down device on shorter screens */
-@media (max-height: 750px) {
+@media (max-height: 800px) {
   .device-frame {
-    transform: scale(0.85);
+    transform: scale(0.8);
+  }
+}
+
+@media (max-height: 700px) {
+  .device-frame {
+    transform: scale(0.7);
   }
 }
 
 @media (max-height: 650px) {
   .device-frame {
-    transform: scale(0.75);
+    transform: scale(0.65);
   }
 }
 .device-body{
@@ -367,7 +382,7 @@ body {
   font-size: 28px; 
   font-weight: 700; 
   text-align: center; 
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   line-height: 1.2;
   flex-shrink: 0;
 }
@@ -375,7 +390,7 @@ body {
 @media (max-height: 700px) {
   .title {
     font-size: 24px;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
 }
 .subtitle { 
@@ -388,22 +403,29 @@ body {
   flex-shrink: 0;
 }
 
-.dots { display:flex; gap:8px; justify-content:center; margin:12px 0; flex-shrink:0; }
+.dots { display:flex; gap:8px; justify-content:center; margin:8px 0; flex-shrink:0; }
 .dot {
   width:8px; height:8px; border-radius:50%;
   background:#333; transition:all .3s;
 }
 .dot.active { background:#00ffff; width:24px; }
 
-.btn-row { display:flex; gap:12px; padding-top:12px; flex-shrink:0; }
+.btn-row { display:flex; gap:12px; padding-top:8px; flex-shrink:0; }
 .btn {
-  flex:1; padding:14px; border-radius:12px; border:none;
+  flex:1; padding:12px; border-radius:12px; border:none;
   font-size:16px; font-weight:600; cursor:pointer;
   transition:all .2s;
   touch-action: manipulation;
   user-select: none;
 }
 .btn:active { transform: scale(0.95); }
+
+@media (max-height: 700px) {
+  .btn {
+    padding: 10px;
+    font-size: 15px;
+  }
+}
 .btn-primary { background:#00ffff; color:#000; }
 .btn-secondary { background:#222; color:#fff; }
 .btn-full { width:100%; }
@@ -460,7 +482,7 @@ body {
 }
 .screen.active { animation:fadeIn .4s ease-out; }
 
-.spacer { flex: 0 0 20px; }
+.spacer { flex: 0 0 8px; }
 
 .info-box {
   background:#111; border:1px solid #333; border-radius:12px;
@@ -496,7 +518,7 @@ body {
 </head>
 <body>
 <div class="container">
-  <div id="content" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden"></div>
+  <div id="content" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;max-height:calc(100vh - 140px)"></div>
   <div class="dots" id="dots"></div>
   <div class="btn-row" id="buttons"></div>
 </div>
