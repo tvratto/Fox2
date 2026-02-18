@@ -112,17 +112,18 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+  z-index: 1;
 }
 .step-card-title {
   font-size: 19px;
   font-weight: 700;
   color: #00ffff;
-  margin-bottom: 8px;
-  padding-bottom: 8px;
+  margin-bottom: 6px;
   text-align: center;
   flex-shrink: 0;
-  border-bottom: 1px solid rgba(0, 255, 255, 0.3);
-  width: 100%;
+  position: relative;
+  z-index: 10;
 }
 .step-card-text {
   font-size: 17px;
@@ -135,13 +136,14 @@ body {
   background: rgba(17, 17, 17, 0.6);
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  z-index: 10;
 }
 
 @media (min-height: 800px) {
   .step-card-title {
     font-size: 21px;
-    margin-bottom: 10px;
-    padding-bottom: 10px;
+    margin-bottom: 8px;
   }
   .step-card-text {
     font-size: 18px;
@@ -226,7 +228,7 @@ body {
   left: 0;
   width: 100%;
   height: 16px;
-  background: #111;
+  background: #000;
   z-index: 2;
 }
 .mini-device-body::before { top: -12px; }
@@ -335,7 +337,7 @@ body {
   z-index:1
 }
 .device-body::before,.device-body::after{
-  content:"";position:absolute;left:0;width:100%;height:26px;background:#111;z-index:2
+  content:"";position:absolute;left:0;width:100%;height:26px;background:#000;z-index:2
 }
 .device-body::before{top:-20px}
 .device-body::after{bottom:0}
@@ -395,18 +397,23 @@ body {
 }
 
 .title { 
-  font-size: 26px; 
+  font-size: 30px; 
   font-weight: 700; 
   text-align: center; 
-  margin-bottom: 8px;
+  margin-top: 16px;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
   line-height: 1.2;
   flex-shrink: 0;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.3);
 }
 
 @media (min-height: 800px) {
   .title {
-    font-size: 30px;
-    margin-bottom: 10px;
+    font-size: 34px;
+    margin-top: 20px;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
   }
 }
 .subtitle { 
@@ -892,7 +899,10 @@ var render = function() {
         '<div class="card-wrapper" id="cardWrapper3">' +
           // Card 1
           '<div class="step-card">' +
-            '<div class="step-card-title">Step 1: Select Measure</div>' +
+            '<div class="step-card-text">' +
+              '<div class="step-card-title">Step 1: Select Measure</div>' +
+              'Navigate to Measure and press the circle button to start.' +
+            '</div>' +
             '<div class="step-card-device">' +
               '<div class="device-frame">' +
                 '<div class="device-body"></div>' +
@@ -905,11 +915,13 @@ var render = function() {
                 '<div class="device-mouthpiece"></div>' +
               '</div>' +
             '</div>' +
-            '<div class="step-card-text">Navigate to Measure and press the circle button to start.</div>' +
           '</div>' +
           // Card 2
           '<div class="step-card">' +
-            '<div class="step-card-title">Step 2: Wait for Warmup</div>' +
+            '<div class="step-card-text">' +
+              '<div class="step-card-title">Step 2: Wait for Warmup</div>' +
+              'Breathe normally during the countdown.' +
+            '</div>' +
             '<div class="step-card-device">' +
               '<div class="device-frame">' +
                 '<div class="device-body"></div>' +
@@ -922,11 +934,13 @@ var render = function() {
                 '<div class="device-mouthpiece"></div>' +
               '</div>' +
             '</div>' +
-            '<div class="step-card-text">Breathe normally during the countdown.</div>' +
           '</div>' +
           // Card 3
           '<div class="step-card">' +
-            '<div class="step-card-title">Step 3: Blow</div>' +
+            '<div class="step-card-text">' +
+              '<div class="step-card-title">Step 3: Blow</div>' +
+              'When it says "Blow," breathe in then blow steadily into the mouthpiece until it buzzes.' +
+            '</div>' +
             '<div class="step-card-device">' +
               '<div class="device-frame">' +
                 '<div class="device-body"></div>' +
@@ -939,7 +953,6 @@ var render = function() {
                 '<div class="device-mouthpiece"></div>' +
               '</div>' +
             '</div>' +
-            '<div class="step-card-text">When it says "Blow," breathe in then blow steadily into the mouthpiece until it buzzes.</div>' +
           '</div>' +
           // Card 4 - Tips
           '<div class="step-card">' +
@@ -971,7 +984,10 @@ var render = function() {
         '<div class="card-wrapper" id="cardWrapper4">' +
           // Card 1 - Zone
           '<div class="step-card">' +
-            '<div class="step-card-title">Zone Reading</div>' +
+            '<div class="step-card-text">' +
+              '<div class="step-card-title">Zone Reading</div>' +
+              'Shows your current metabolic state. Higher numbers mean more fat burning, lower means more glucose burning.' +
+            '</div>' +
             '<div class="step-card-device">' +
               '<div class="device-frame">' +
                 '<div class="device-body"></div>' +
@@ -984,11 +1000,13 @@ var render = function() {
                 '<div class="device-mouthpiece"></div>' +
               '</div>' +
             '</div>' +
-            '<div class="step-card-text">Shows your current metabolic state. Higher numbers mean more fat burning, lower means more glucose burning.</div>' +
           '</div>' +
           // Card 2 - Total
           '<div class="step-card">' +
-            '<div class="step-card-title">Daily Total</div>' +
+            '<div class="step-card-text">' +
+              '<div class="step-card-title">Daily Total</div>' +
+              'Your measurements accumulate throughout the day. Your target is shown below if you\'ve set one.' +
+            '</div>' +
             '<div class="step-card-device">' +
               '<div class="device-frame">' +
                 '<div class="device-body"></div>' +
@@ -1001,11 +1019,13 @@ var render = function() {
                 '<div class="device-mouthpiece"></div>' +
               '</div>' +
             '</div>' +
-            '<div class="step-card-text">Your measurements accumulate throughout the day. Your target is shown below if you\'ve set one.</div>' +
           '</div>' +
           // Card 3 - Streaks
           '<div class="step-card">' +
-            '<div class="step-card-title">Streaks</div>' +
+            '<div class="step-card-text">' +
+              '<div class="step-card-title">Streaks</div>' +
+              'Hit your daily target to build streaks. "Best" shows your longest ever, "Now" shows your current streak.' +
+            '</div>' +
             '<div class="step-card-device">' +
               '<div class="device-frame">' +
                 '<div class="device-body"></div>' +
@@ -1018,7 +1038,6 @@ var render = function() {
                 '<div class="device-mouthpiece"></div>' +
               '</div>' +
             '</div>' +
-            '<div class="step-card-text">Hit your daily target to build streaks. "Best" shows your longest ever, "Now" shows your current streak.</div>' +
           '</div>' +
         '</div>' +
         '<div class="card-dots" id="cardDots4">' +
