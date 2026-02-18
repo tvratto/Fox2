@@ -296,25 +296,25 @@ body {
   position:relative;
   margin:0 auto;
   flex-shrink: 1;
-  transform: scale(0.75);
+  transform: scale(1.1);
 }
 
 /* Scale up device on taller screens */
 @media (min-height: 750px) {
   .device-frame {
-    transform: scale(0.85);
+    transform: scale(1.2);
   }
 }
 
 @media (min-height: 900px) {
   .device-frame {
-    transform: scale(0.95);
+    transform: scale(1.3);
   }
 }
 
 @media (min-height: 1100px) {
   .device-frame {
-    transform: scale(1.0);
+    transform: scale(1.4);
   }
 }
 .device-body{
@@ -1029,14 +1029,6 @@ var render = function() {
           '<div class="card-dot"></div>' +
         '</div>' +
         '<div class="swipe-hint">↑ Swipe up/down ↓</div>' +
-      '</div>' +
-      '<div style="padding: 0 16px; margin-top: 12px;">' +
-        '<div class="info-box">' +
-          '<div class="info-title">Remember</div>' +
-          '<div class="info-text">' +
-            'Focus on daily totals and patterns over time. Changes take a few days to show - stick with it!' +
-          '</div>' +
-        '</div>' +
       '</div>';
     buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
               '<button class="btn btn-primary" onclick="next()">Next</button>';
