@@ -87,6 +87,10 @@ body {
   flex-direction: column;
   transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   width: 100%;
+  cursor: grab;
+}
+.card-wrapper:active {
+  cursor: grabbing;
 }
 .step-card {
   flex: 0 0 auto;
@@ -401,7 +405,7 @@ body {
   font-weight: 700; 
   text-align: center; 
   margin-top: 16px;
-  margin-bottom: 10px;
+  margin-bottom: 0;
   padding-bottom: 10px;
   line-height: 1.2;
   flex-shrink: 0;
@@ -412,7 +416,7 @@ body {
   .title {
     font-size: 34px;
     margin-top: 20px;
-    margin-bottom: 12px;
+    margin-bottom: 0;
     padding-bottom: 12px;
   }
 }
@@ -1317,6 +1321,51 @@ function initCardSwipe(wrapperId, dotsId, cardCount) {
     } else {
       updateCard(currentCard);
     }
+  });
+  
+  // Mouse event handlers for desktop/laptop
+  wrapper.addEventListener('mousedown', function(e) {
+    startY = e.clientY;
+    isDragging = true;
+    wrapper.style.transition = 'none';
+    e.preventDefault(); // Prevent text selection
+  });
+  
+  wrapper.addEventListener('mousemove', function(e) {
+    if (!isDragging) return;
+    currentY = e.clientY;
+    var diff = currentY - startY;
+    var offset = -(currentCard * containerHeight) + diff;
+    wrapper.style.transform = 'translateY(' + offset + 'px)';
+  });
+  
+  wrapper.addEventListener('mouseup', function(e) {
+    if (!isDragging) return;
+    isDragging = false;
+    wrapper.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+    
+    var diff = currentY - startY;
+    if (Math.abs(diff) > 50) {
+      // Swipe down (positive diff) = go to previous card
+      // Swipe up (negative diff) = go to next card
+      if (diff > 0 && currentCard > 0) {
+        updateCard(currentCard - 1);
+      } else if (diff < 0 && currentCard < cardCount - 1) {
+        updateCard(currentCard + 1);
+      } else {
+        updateCard(currentCard);
+      }
+    } else {
+      updateCard(currentCard);
+    }
+  });
+  
+  // Handle mouse leaving the wrapper while dragging
+  wrapper.addEventListener('mouseleave', function(e) {
+    if (!isDragging) return;
+    isDragging = false;
+    wrapper.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+    updateCard(currentCard); // Snap back to current card
   });
   
   // Click on dots to navigate
