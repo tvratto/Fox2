@@ -77,6 +77,11 @@ body {
   flex-direction: column;
   overflow: hidden;
   min-height: 0;
+  margin-top: 12px;
+  background: rgba(40, 40, 40, 0.5);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 8px;
 }
 .card-wrapper {
   position: absolute;
@@ -98,7 +103,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   padding: 8px 12px;
   gap: 12px;
   overflow-y: auto;
@@ -181,19 +186,20 @@ body {
 }
 .swipe-hint {
   text-align: center;
-  font-size: 13px;
-  opacity: 0.5;
+  font-size: 12px;
+  opacity: 0.6;
   padding: 6px 0;
   animation: fadeInOut 3s ease-in-out infinite;
   position: absolute;
-  bottom: 4px;
+  bottom: 8px;
   left: 0;
   right: 0;
   pointer-events: none;
+  color: #00ffff;
 }
 @keyframes fadeInOut {
   0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.6; }
+  50% { opacity: 0.7; }
 }
 
 .how-to-measure {
@@ -406,7 +412,7 @@ body {
   text-align: center; 
   margin-top: 16px;
   margin-bottom: 0;
-  padding-bottom: 10px;
+  padding-bottom: 4px;
   line-height: 1.2;
   flex-shrink: 0;
   border-bottom: 1px solid rgba(0, 255, 255, 0.3);
@@ -417,7 +423,7 @@ body {
     font-size: 34px;
     margin-top: 20px;
     margin-bottom: 0;
-    padding-bottom: 12px;
+    padding-bottom: 6px;
   }
 }
 .subtitle { 
@@ -601,7 +607,7 @@ function getZoneSVG() {
     '<rect x="160" y="17" width="14" height="6" fill="#0f0"/>' +
     '<path d="M 32.0,105.0 A 60,60 0 0,1 34.3,88.5" fill="none" stroke="#00ffff" stroke-width="18"/>' +
     '<path d="M 34.9,86.5 A 60,60 0 0,1 42.3,71.4" fill="none" stroke="#00ffff" stroke-width="18"/>' +
-    '<path d="M 43.5,69.7 A 60,60 0 0,1 55.1,57.7" fill="none" stroke="#004444" stroke-width="18"/>' +
+    '<path d="M 43.5,69.7 A 60,60 0 0,1 55.1,57.7" fill="none" stroke="#00ffff" stroke-width="18"/>' +
     '<path d="M 56.7,56.5 A 60,60 0 0,1 71.5,48.6" fill="none" stroke="#004444" stroke-width="18"/>' +
     '<path d="M 73.5,47.9 A 60,60 0 0,1 89.9,45.0" fill="none" stroke="#443300" stroke-width="18"/>' +
     '<path d="M 92.0,45.0 A 60,60 0 0,1 108.5,47.3" fill="none" stroke="#443300" stroke-width="18"/>' +
@@ -613,7 +619,7 @@ function getZoneSVG() {
     '<line x1="92" y1="50" x2="92" y2="55" stroke="#ffffff" stroke-width="2"/>' +
     '<line x1="38" y1="108" x2="43" y2="108" stroke="#ffffff" stroke-width="2"/>' +
     '<line x1="146" y1="108" x2="141" y2="108" stroke="#ffffff" stroke-width="2"/>' +
-    '<text x="92" y="125" font-size="60" font-weight="700" fill="#00ffff" text-anchor="middle">2</text>' +
+    '<text x="92" y="125" font-size="60" font-weight="700" fill="#00ffff" text-anchor="middle">3</text>' +
     '<text x="92" y="165" font-size="24" font-weight="700" fill="#00ffff" text-anchor="middle">Good!</text></svg>';
 }
 
@@ -629,7 +635,7 @@ function getTotalSVG() {
     '<rect x="160" y="12" width="14" height="6" fill="#0f0"/>' +
     
     // Graph area - yellow filled area with inverted curve
-    '<path d="M 8,100 L 8,30 Q 35,65 62,70 L 80,80 L 80,100 Z" fill="#f5c842"/>' +
+    '<path d="M 8,100 L 8,44 Q 35,65 62,70 L 80,80 L 80,100 Z" fill="#f5c842"/>' +
     
     // Data point dots (white circles with values)
     '<circle cx="62" cy="70" r="3" fill="#fff"/>' +
@@ -716,7 +722,7 @@ function getSummaryScreenSVG() {
     '<rect x="160" y="14" width="14" height="6" fill="#0f0"/>' +
     
     // Graph area - yellow filled area with inverted curve (scaled up)
-    '<path d="M 12,110 L 12,40 Q 42,80 72,85 L 100,97 L 100,110 Z" fill="#f5c842"/>' +
+    '<path d="M 12,110 L 12,54 Q 42,80 72,85 L 100,97 L 100,110 Z" fill="#f5c842"/>' +
     
     // Data point dots (white circles with values)
     '<circle cx="72" cy="85" r="4" fill="#fff"/>' +
@@ -847,50 +853,52 @@ var render = function() {
   } else if (state === 2) {
     // 3. HOW IT WORKS - Device overview
     content = '<div class="title">How It Works</div>' +
-      '<div class="info-box">' +
-        '<div class="info-title">Controls</div>' +
-        '<div class="info-text">' +
-          'Press and hold <span style="color: #00ffff; font-weight: 600;">● Circle</span> to power on.' +
-          '<div style="margin-top: 12px; display: flex; justify-content: center;">' +
-            '<div style="text-align: left;">' +
-              '<div style="margin-bottom: 8px;"><span style="color: #ff9800; font-weight: 600;">▼ Triangle:</span> Move down menu</div>' +
-              '<div><span style="color: #00ffff; font-weight: 600;">● Circle:</span> Select</div>' +
+      '<div class="card-container" style="overflow-y: auto;">' +
+        '<div class="info-box">' +
+          '<div class="info-title">Controls</div>' +
+          '<div class="info-text">' +
+            'Press and hold <span style="color: #00ffff; font-weight: 600;">● Circle</span> to power on.' +
+            '<div style="margin-top: 12px; display: flex; justify-content: center;">' +
+              '<div style="text-align: left;">' +
+                '<div style="margin-bottom: 8px;"><span style="color: #ff9800; font-weight: 600;">▼ Triangle:</span> Move down menu</div>' +
+                '<div><span style="color: #00ffff; font-weight: 600;">● Circle:</span> Select</div>' +
+              '</div>' +
             '</div>' +
           '</div>' +
         '</div>' +
-      '</div>' +
-      '<div style="display: flex; gap: 20px; margin-bottom: 24px; align-items: center; justify-content: center;">' +
-        '<div style="flex: 0 0 auto; margin-top: 32px;">' +
-          '<div class="device-frame">' +
-            '<div class="device-body"></div>' +
-            '<div class="device-seam"></div>' +
-            '<div class="device-screen">' + getMenuSVG() + '</div>' +
-            '<div class="device-buttons">' +
-              '<div class="device-btn-triangle"></div>' +
-              '<div class="device-btn-circle"></div>' +
+        '<div style="display: flex; gap: 20px; margin-bottom: 24px; align-items: center; justify-content: center;">' +
+          '<div style="flex: 0 0 auto; margin-top: 32px;">' +
+            '<div class="device-frame">' +
+              '<div class="device-body"></div>' +
+              '<div class="device-seam"></div>' +
+              '<div class="device-screen">' + getMenuSVG() + '</div>' +
+              '<div class="device-buttons">' +
+                '<div class="device-btn-triangle"></div>' +
+                '<div class="device-btn-circle"></div>' +
+              '</div>' +
+              '<div class="device-mouthpiece"></div>' +
             '</div>' +
-            '<div class="device-mouthpiece"></div>' +
           '</div>' +
-        '</div>' +
-        '<div style="flex: 0 0 auto;">' +
-          '<ul style="list-style: none; padding: 0; margin: 0; max-width: 250px; font-size: 17px;">' +
-            '<li style="display: flex; align-items: flex-start; margin-bottom: 14px;">' +
-              '<span style="color: #00ffff; font-weight: 700; margin-right: 12px; flex-shrink: 0;">●</span>' +
-              '<div><span style="font-weight: 600; color: #00ffff;">Measure</span> - Take reading</div>' +
-            '</li>' +
-            '<li style="display: flex; align-items: flex-start; margin-bottom: 14px;">' +
-              '<span style="color: #00ffff; font-weight: 700; margin-right: 12px; flex-shrink: 0;">●</span>' +
-              '<div><span style="font-weight: 600; color: #00ffff;">Data</span> - View results</div>' +
-            '</li>' +
-            '<li style="display: flex; align-items: flex-start; margin-bottom: 14px;">' +
-              '<span style="color: #00ffff; font-weight: 700; margin-right: 12px; flex-shrink: 0;">●</span>' +
-              '<div><span style="font-weight: 600; color: #00ffff;">About</span> - Settings</div>' +
-            '</li>' +
-            '<li style="display: flex; align-items: flex-start;">' +
-              '<span style="color: #00ffff; font-weight: 700; margin-right: 12px; flex-shrink: 0;">●</span>' +
-              '<div><span style="font-weight: 600; color: #00ffff;">Off</span> - Power off</div>' +
-            '</li>' +
-          '</ul>' +
+          '<div style="flex: 0 0 auto;">' +
+            '<ul style="list-style: none; padding: 0; margin: 0; max-width: 250px; font-size: 17px;">' +
+              '<li style="display: flex; align-items: flex-start; margin-bottom: 14px;">' +
+                '<span style="color: #00ffff; font-weight: 700; margin-right: 12px; flex-shrink: 0;">●</span>' +
+                '<div><span style="font-weight: 600; color: #00ffff;">Measure</span> - Take reading</div>' +
+              '</li>' +
+              '<li style="display: flex; align-items: flex-start; margin-bottom: 14px;">' +
+                '<span style="color: #00ffff; font-weight: 700; margin-right: 12px; flex-shrink: 0;">●</span>' +
+                '<div><span style="font-weight: 600; color: #00ffff;">Data</span> - View results</div>' +
+              '</li>' +
+              '<li style="display: flex; align-items: flex-start; margin-bottom: 14px;">' +
+                '<span style="color: #00ffff; font-weight: 700; margin-right: 12px; flex-shrink: 0;">●</span>' +
+                '<div><span style="font-weight: 600; color: #00ffff;">About</span> - Settings</div>' +
+              '</li>' +
+              '<li style="display: flex; align-items: flex-start;">' +
+                '<span style="color: #00ffff; font-weight: 700; margin-right: 12px; flex-shrink: 0;">●</span>' +
+                '<div><span style="font-weight: 600; color: #00ffff;">Off</span> - Power off</div>' +
+              '</li>' +
+            '</ul>' +
+          '</div>' +
         '</div>' +
       '</div>';
     buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
