@@ -1122,28 +1122,30 @@ var render = function() {
   } else if (state === 6) {
     // 7. SAFETY & SUPPORT
     content = '<div class="title">Safety & Support</div>' +
-      '<div class="content-text">' +
-        '<p>FOX2 is designed to provide insight into metabolic patterns using a non-invasive breath measurement.</p>' +
-        '<p style="opacity:0.6; font-size:13px">It is not a medical diagnostic device and is not intended to diagnose, treat, cure, or prevent any disease.</p>' +
-        '<div class="info-box">' +
-          '<div class="info-title">When to Talk to a Clinician</div>' +
-          '<div class="info-text">' +
-            'If you have a medical condition, are pregnant, or have concerns about your metabolic health, ' +
-            'it is appropriate to discuss your results with a qualified healthcare professional.' +
+      '<div class="card-container" style="overflow-y: auto;">' +
+        '<div class="content-text">' +
+          '<p>FOX2 is designed to provide insight into metabolic patterns using a non-invasive breath measurement.</p>' +
+          '<p style="opacity:0.6; font-size:13px">It is not a medical diagnostic device and is not intended to diagnose, treat, cure, or prevent any disease.</p>' +
+          '<div class="info-box">' +
+            '<div class="info-title">When to Talk to a Clinician</div>' +
+            '<div class="info-text">' +
+              'If you have a medical condition, are pregnant, or have concerns about your metabolic health, ' +
+              'it is appropriate to discuss your results with a qualified healthcare professional.' +
+            '</div>' +
           '</div>' +
-        '</div>' +
-        '<div class="info-box">' +
-          '<div class="info-title">Using FOX2 Safely</div>' +
-          '<div class="info-text">' +
-            '<ul class="info-list">' +
-              '<li>Follow the instructions provided</li>' +
-              '<li>Avoid forced or excessive breathing</li>' +
-              '<li>Take breaks if you feel lightheaded</li>' +
-            '</ul>' +
-            '<br>If anything feels uncomfortable, stop and resume later.' +
+          '<div class="info-box">' +
+            '<div class="info-title">Using FOX2 Safely</div>' +
+            '<div class="info-text">' +
+              '<ul class="info-list">' +
+                '<li>Follow the instructions provided</li>' +
+                '<li>Avoid forced or excessive breathing</li>' +
+                '<li>Take breaks if you feel lightheaded</li>' +
+              '</ul>' +
+              '<br>If anything feels uncomfortable, stop and resume later.' +
+            '</div>' +
           '</div>' +
+          '<p>We are here to help you use FOX2 with confidence.</p>' +
         '</div>' +
-        '<p>We are here to help you use FOX2 with confidence.</p>' +
       '</div>';
     buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
               '<button class="btn btn-primary" onclick="next()">Setup</button>';
