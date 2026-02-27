@@ -936,13 +936,36 @@ var render = function() {
               '</div>' +
             '</div>' +
           '</div>' +
-          // Card 4 - Tips
+          // Card 4 - View Results
           '<div class="step-card">' +
-            '<div class="step-card-title">Quick Tips</div>' +
-            '<div style="text-align: left; font-size: 17px; line-height: 1.6; max-width: 350px; background: rgba(17, 17, 17, 0.6); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); padding: 14px 18px;">' +
-              '<div style="margin-bottom: 12px;">• Don\'t cover the vents</div>' +
-              '<div style="margin-bottom: 12px;">• Wait 1 hour after eating</div>' +
-              '<div>• Avoid alcohol beforehand</div>' +
+            '<div class="step-card-text">' +
+              '<div class="step-card-title">Step 4: View Results</div>' +
+              'The device will now step through your result screens as it clears. It will shut off automatically at the end of clearing.' +
+            '</div>' +
+            '<div style="display: flex; gap: 12px; justify-content: center; margin-top: 8px;">' +
+              '<div style="width: 120px; background: #000; border: 2px solid #333; border-radius: 8px; padding: 3px;">' +
+                getZoneSVG() +
+              '</div>' +
+              '<div style="width: 120px; background: #000; border: 2px solid #333; border-radius: 8px; padding: 3px;">' +
+                getTotalSVG() +
+              '</div>' +
+              '<div style="width: 120px; background: #000; border: 2px solid #333; border-radius: 8px; padding: 3px;">' +
+                getStreaksSVG() +
+              '</div>' +
+            '</div>' +
+            '<div style="margin-top: 10px; text-align: left; font-size: 15px; line-height: 1.5;">' +
+              '<div style="margin-bottom: 12px;">' +
+                '<span style="color: #00ffff; font-weight: 700;">NOW:</span> ' +
+                'The NOW screen shows your current metabolic state, higher numbers indicate a shift to more fat metabolism.' +
+              '</div>' +
+              '<div style="margin-bottom: 12px;">' +
+                '<span style="color: #f5c842; font-weight: 700;">TODAY:</span> ' +
+                'Shows your measurements throughout the day. Your daily total (measurements × time) appears below with your target (if set).' +
+              '</div>' +
+              '<div>' +
+                '<span style="color: #9C27B0; font-weight: 700;">5 DAY:</span> ' +
+                'Hit your daily target to build streaks. "Best" shows your longest streak ever. "Now" shows your current streak.' +
+              '</div>' +
             '</div>' +
           '</div>' +
         '</div>' +
