@@ -129,16 +129,17 @@ body {
   font-weight: 700;
   color: #00ffff;
   margin-bottom: 6px;
-  text-align: center;
+  text-align: left;
   flex-shrink: 0;
   position: relative;
   z-index: 10;
+  text-indent: 0;
 }
 .step-card-text {
   font-size: 17px;
   line-height: 1.4;
   opacity: 0.9;
-  text-align: center;
+  text-align: left;
   max-width: 400px;
   padding: 12px 16px;
   flex-shrink: 0;
@@ -147,6 +148,7 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.1);
   position: relative;
   z-index: 10;
+  text-indent: 24px;
 }
 
 @media (min-height: 800px) {
@@ -675,11 +677,6 @@ function getTotalSVG() {
     // Target value (20px, dark grey)
     '<text x="111" y="160" font-size="20" font-weight="700" fill="#666" text-anchor="start">60</text>' +
     
-    // Status dots at bottom
-    '<circle cx="75" cy="170" r="4" fill="#fff"/>' +
-    '<circle cx="92" cy="170" r="4" fill="none" stroke="#888" stroke-width="2"/>' +
-    '<circle cx="109" cy="170" r="4" fill="none" stroke="#888" stroke-width="2"/>' +
-    
     '</svg>';
 }
 
@@ -970,8 +967,8 @@ var render = function() {
           // Card 1 - Zone
           '<div class="step-card">' +
             '<div class="step-card-text">' +
-              '<div class="step-card-title">Zone Reading</div>' +
-              'Shows your current metabolic state. Higher numbers mean more fat burning, lower means more glucose burning.' +
+              '<div class="step-card-title">NOW Reading</div>' +
+              'The NOW screen shows your current metabolic state, higher numbers indicate a shift to more fat metabolism.' +
             '</div>' +
             '<div class="step-card-device">' +
               '<div class="device-frame">' +
@@ -989,8 +986,8 @@ var render = function() {
           // Card 2 - Total
           '<div class="step-card">' +
             '<div class="step-card-text">' +
-              '<div class="step-card-title">Daily Total</div>' +
-              'Your measurements accumulate throughout the day. Your target is shown below if you\'ve set one.' +
+              '<div class="step-card-title">TODAY</div>' +
+              'Shows your measurements throughout the day. Your daily total (measurements × time) appears below with your target (if set).' +
             '</div>' +
             '<div class="step-card-device">' +
               '<div class="device-frame">' +
@@ -1009,7 +1006,7 @@ var render = function() {
           '<div class="step-card">' +
             '<div class="step-card-text">' +
               '<div class="step-card-title">Streaks</div>' +
-              'Hit your daily target to build streaks. "Best" shows your longest ever, "Now" shows your current streak.' +
+              'Hit your daily target to build streaks. \"Best\" shows your longest streak ever. \"Now\" shows your current streak.' +
             '</div>' +
             '<div class="step-card-device">' +
               '<div class="device-frame">' +
@@ -1037,57 +1034,54 @@ var render = function() {
               
   } else if (state === 5) {
     // 6. USING FOX2 OVER TIME
-    content = '<div class="title">Daily Use</div>' +
-      '<div class="info-box">' +
-        '<div style="color: #00ffff; font-size: 18px; font-weight: 600; margin-bottom: 8px;">Summary Screen</div>' +
-        '<div class="info-text">' +
-          'When you power on after taking measurements, you\'ll see a summary of your last three readings and daily total.' +
-        '</div>' +
-      '</div>' +
-      '<div style="display: flex; gap: 20px; margin-bottom: 24px; align-items: center; justify-content: center;">' +
-        '<div style="flex: 0 0 auto; margin-top: 32px;">' +
-          '<div class="device-frame">' +
-            '<div class="device-body"></div>' +
-            '<div class="device-seam"></div>' +
-            '<div class="device-screen">' + getSummaryScreenSVG() + '</div>' +
-            '<div class="device-buttons">' +
-              '<div class="device-btn-triangle"></div>' +
-              '<div class="device-btn-circle"></div>' +
+    content = '<div class="title">Suggestions for Use</div>' +
+      '<div class="card-container">' +
+        '<div class="card-wrapper" id="cardWrapper5">' +
+          // Card 1 - Introduction
+          '<div class="step-card">' +
+            '<div class="step-card-text">' +
+              '<div class="step-card-title">Using FOX2</div>' +
+              'Your TODAY screen allows you to see how your body is using different fuels over the day, and try different approaches to optimize for your goals. Here are a couple of ways that I (Tim) sometimes use to increase my use of fat for energy.' +
             '</div>' +
-            '<div class="device-mouthpiece"></div>' +
+          '</div>' +
+          // Card 2
+          '<div class="step-card">' +
+            '<div class="step-card-text">' +
+              '<div class="step-card-title">Card 2 Title</div>' +
+              'Placeholder text for card 2. We will update this next.' +
+            '</div>' +
+            '<div style="width: 184px; margin: 0 auto; background: #000; border: 3px solid #333; border-radius: 12px; padding: 4px;">' +
+              getTotalSVG() +
+            '</div>' +
+          '</div>' +
+          // Card 3
+          '<div class="step-card">' +
+            '<div class="step-card-text">' +
+              '<div class="step-card-title">Card 3 Title</div>' +
+              'Placeholder text for card 3. We will update this next.' +
+            '</div>' +
+            '<div style="width: 184px; margin: 0 auto; background: #000; border: 3px solid #333; border-radius: 12px; padding: 4px;">' +
+              getTotalSVG() +
+            '</div>' +
+          '</div>' +
+          // Card 4
+          '<div class="step-card">' +
+            '<div class="step-card-text">' +
+              '<div class="step-card-title">Card 4 Title</div>' +
+              'Placeholder text for card 4. We will update this next.' +
+            '</div>' +
+            '<div style="width: 184px; margin: 0 auto; background: #000; border: 3px solid #333; border-radius: 12px; padding: 4px;">' +
+              getTotalSVG() +
+            '</div>' +
           '</div>' +
         '</div>' +
-      '</div>' +
-      '<div class="content-text">' +
-        '<p>The SUMMARY screen is a quick way to see your progress so far today. This data screen as well as your daily TOTAL and STREAKS screens can always be accessed from the DATA menu. Other data screens can also be accessed from there including your TODAY GRAPH screen (useful for seeing daily trends in zone measurements) and your 21 DAY screen (useful for seeing weekly trends in your daily totals.</p>' +
-        '<p>Rather than focusing on any single reading, the most useful insights come from noticing how measurements change and repeat over time.</p>' +
-        '<div class="info-box">' +
-          '<div class="info-title">When to Measure</div>' +
-          '<div class="info-text">' +
-            'There is no single "correct" time to measure, but consistency helps make patterns easier to see.<br><br>' +
-            'Many people find it helpful to measure:<br>' +
-            '<ul class="info-list">' +
-              '<li>In the morning</li>' +
-              '<li>At similar times each day</li>' +
-              '<li>Before or after meals</li>' +
-              '<li>On both active and rest days</li>' +
-            '</ul>' +
-          '</div>' +
+        '<div class="card-dots" id="cardDots5">' +
+          '<div class="card-dot active"></div>' +
+          '<div class="card-dot"></div>' +
+          '<div class="card-dot"></div>' +
+          '<div class="card-dot"></div>' +
         '</div>' +
-        '<div class="info-box">' +
-          '<div class="info-title">What to Watch For</div>' +
-          '<div class="info-text">' +
-            'Over days and weeks, you may begin to notice:<br>' +
-            '<ul class="info-list">' +
-              '<li>Daily rhythms</li>' +
-              '<li>Differences between weekdays and weekends</li>' +
-              '<li>How meals, activity, or rest affect readings</li>' +
-              '<li>Gradual changes over time</li>' +
-            '</ul>' +
-          '</div>' +
-        '</div>' +
-        '<p>Daily totals help you compare days to yourself and reveal longer-term trends.</p>' +
-        '<p><strong>A steady approach</strong> â€” measuring regularly and staying curious â€” is often the most helpful.</p>' +
+        '<div class="swipe-hint">↑ Swipe up/down ↓</div>' +
       '</div>';
     buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
               '<button class="btn btn-primary" onclick="next()">Next</button>';
@@ -1233,6 +1227,8 @@ var render = function() {
     initCardSwipe('cardWrapper3', 'cardDots3', 4);
   } else if (state === 4) {
     initCardSwipe('cardWrapper4', 'cardDots4', 3);
+  } else if (state === 5) {
+    initCardSwipe('cardWrapper5', 'cardDots5', 4);
   }
 };
 
