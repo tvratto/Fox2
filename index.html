@@ -822,7 +822,7 @@ var render = function() {
               
   } else if (state === 2) {
     // 3. HOW IT WORKS - Device overview
-    content = '<div class="title">How It Works</div>' +
+    content = '<div class="title">First Things First</div>' +
       '<div class="card-container" style="overflow-y: auto;">' +
         '<div class="info-box" style="margin-bottom: 12px; padding: 10px 14px;">' +
           '<div class="info-text">' +
@@ -953,7 +953,7 @@ var render = function() {
               '</div>' +
             '</div>' +
             '<div style="margin-top: 12px; text-align: left; font-size: 16px; line-height: 1.5;">' +
-              'Each result screen shows your data over a different time scale in order to help you see how your metabolism is changing. Let\'s dig into what this all means in the next section.' +
+              'The results screens shows you your fat/glucose metabolism over three different timescales, right <span style="color: #00ffff; font-weight: 600;">NOW</span>, all of your measurements <span style="color: #f5c842; font-weight: 600;">TODAY</span> (and their total) and the totals for your last <span style="color: #9C27B0; font-weight: 600;">5 DAYs</span>. Let\'s talk about what these numbers mean next.' +
             '</div>' +
           '</div>' +
         '</div>' +
@@ -981,17 +981,8 @@ var render = function() {
               '<div class="step-card-title">NOW Reading</div>' +
               'The NOW screen shows your current metabolic state, higher numbers indicate a shift to more fat metabolism.' +
             '</div>' +
-            '<div class="step-card-device">' +
-              '<div class="device-frame">' +
-                '<div class="device-body"></div>' +
-                '<div class="device-seam"></div>' +
-                '<div class="device-screen">' + getZoneSVG() + '</div>' +
-                '<div class="device-buttons">' +
-                  '<div class="device-btn-triangle"></div>' +
-                  '<div class="device-btn-circle"></div>' +
-                '</div>' +
-                '<div class="device-mouthpiece"></div>' +
-              '</div>' +
+            '<div style="width: 184px; margin: 0 auto; background: #000; border: 3px solid #333; border-radius: 12px; padding: 4px;">' +
+              getZoneSVG() +
             '</div>' +
           '</div>' +
           // Card 2 - Total
@@ -1000,17 +991,8 @@ var render = function() {
               '<div class="step-card-title">TODAY</div>' +
               'Shows your measurements throughout the day. Your daily total (measurements × time) appears below with your target (if set).' +
             '</div>' +
-            '<div class="step-card-device">' +
-              '<div class="device-frame">' +
-                '<div class="device-body"></div>' +
-                '<div class="device-seam"></div>' +
-                '<div class="device-screen">' + getTotalSVG() + '</div>' +
-                '<div class="device-buttons">' +
-                  '<div class="device-btn-triangle"></div>' +
-                  '<div class="device-btn-circle"></div>' +
-                '</div>' +
-                '<div class="device-mouthpiece"></div>' +
-              '</div>' +
+            '<div style="width: 184px; margin: 0 auto; background: #000; border: 3px solid #333; border-radius: 12px; padding: 4px;">' +
+              getTotalSVG() +
             '</div>' +
           '</div>' +
           // Card 3 - Streaks
@@ -1019,17 +1001,8 @@ var render = function() {
               '<div class="step-card-title">Streaks</div>' +
               'Hit your daily target to build streaks. \"Best\" shows your longest streak ever. \"Now\" shows your current streak.' +
             '</div>' +
-            '<div class="step-card-device">' +
-              '<div class="device-frame">' +
-                '<div class="device-body"></div>' +
-                '<div class="device-seam"></div>' +
-                '<div class="device-screen">' + getStreaksSVG() + '</div>' +
-                '<div class="device-buttons">' +
-                  '<div class="device-btn-triangle"></div>' +
-                  '<div class="device-btn-circle"></div>' +
-                '</div>' +
-                '<div class="device-mouthpiece"></div>' +
-              '</div>' +
+            '<div style="width: 184px; margin: 0 auto; background: #000; border: 3px solid #333; border-radius: 12px; padding: 4px;">' +
+              getStreaksSVG() +
             '</div>' +
           '</div>' +
         '</div>' +
