@@ -333,7 +333,6 @@ body {
   transform: scale(1.1);
 }
 
-/* Scale up device on taller screens */
 @media (min-height: 750px) {
   .device-frame {
     transform: scale(1.2);
@@ -552,7 +551,7 @@ body {
   margin-bottom: 0;
 }
 .info-list li:before {
-  content: "â€¢";
+  content: "•";
   position: absolute;
   left: 0;
   color: #00ffff;
@@ -636,93 +635,49 @@ function getZoneSVG() {
 
 function getTotalSVG() {
   return '<svg viewBox="0 0 184 184" xmlns="http://www.w3.org/2000/svg">' +
-    // TODAY header with rounded yellow background
     '<rect x="66" y="5" width="52" height="16" rx="8" fill="#f5c842"/>' +
     '<text x="92" y="17" font-size="11" font-weight="700" fill="#1a1a2e" text-anchor="middle">TODAY</text>' +
-    
-    // Battery indicator (top right)
     '<rect x="158" y="10" width="18" height="10" rx="2" stroke="#0ff" stroke-width="1" fill="none"/>' +
     '<rect x="176" y="12" width="2" height="6" fill="#0ff"/>' +
     '<rect x="160" y="12" width="14" height="6" fill="#0f0"/>' +
-    
-    // Graph area - yellow filled area with inverted curve
     '<path d="M 8,100 L 8,44 Q 35,65 62,70 L 80,80 L 80,100 Z" fill="#f5c842"/>' +
-    
-    // Data point dots (white circles with values)
     '<circle cx="62" cy="70" r="3" fill="#fff"/>' +
     '<circle cx="80" cy="80" r="3" fill="#fff"/>' +
-    
-    // Dashed dark grey line below the 3 measurement point
     '<line x1="80" y1="80" x2="170" y2="80" stroke="#666" stroke-width="1" stroke-dasharray="4,4"/>' +
-    
-    // Data point values (white text)
     '<text x="62" y="62" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">4</text>' +
     '<text x="80" y="72" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">3</text>' +
-    
-    // X-axis baseline
     '<line x1="8" y1="100" x2="170" y2="100" stroke="#fff" stroke-width="1"/>' +
-    
-    // Time labels below graph (white)
     '<text x="8" y="115" font-size="12" fill="#fff" text-anchor="start">0a</text>' +
     '<text x="92" y="115" font-size="12" fill="#fff" text-anchor="middle">12p</text>' +
     '<text x="170" y="115" font-size="12" fill="#fff" text-anchor="end">12a</text>' +
-    
-    // Large value display (centered group)
     '<text x="68" y="160" font-size="40" font-weight="700" fill="#ff9800" text-anchor="middle">47</text>' +
     '<text x="101" y="155" font-size="40" font-weight="700" fill="#fff" text-anchor="middle">/</text>' +
-    
-    // Heart icon (centered with group) - outline only
     '<path d="M 128,123 C 123,119 119,121 119,126 C 119,131 128,137 128,137 C 128,137 137,131 137,126 C 137,121 133,119 128,123 Z" fill="none" stroke="#ff4444" stroke-width="2"/>' +
-    
-    // Target value (20px, dark grey)
     '<text x="111" y="160" font-size="20" font-weight="700" fill="#666" text-anchor="start">60</text>' +
-    
     '</svg>';
 }
 
 function getSummaryScreenSVG() {
   return '<svg viewBox="0 0 184 184" xmlns="http://www.w3.org/2000/svg">' +
-    // TODAY header with rounded yellow background (larger)
     '<rect x="56" y="8" width="72" height="22" rx="11" fill="#f5c842"/>' +
     '<text x="92" y="23" font-size="15" font-weight="700" fill="#1a1a2e" text-anchor="middle">TODAY</text>' +
-    
-    // Battery indicator (top right)
     '<rect x="158" y="12" width="18" height="10" rx="2" stroke="#0ff" stroke-width="1" fill="none"/>' +
     '<rect x="176" y="14" width="2" height="6" fill="#0ff"/>' +
     '<rect x="160" y="14" width="14" height="6" fill="#0f0"/>' +
-    
-    // Graph area - yellow filled area with inverted curve (scaled up)
     '<path d="M 12,110 L 12,54 Q 42,80 72,85 L 100,97 L 100,110 Z" fill="#f5c842"/>' +
-    
-    // Data point dots (white circles with values)
     '<circle cx="72" cy="85" r="4" fill="#fff"/>' +
     '<circle cx="100" cy="97" r="4" fill="#fff"/>' +
-    
-    // Dashed dark grey line below the 3 measurement point
     '<line x1="100" y1="97" x2="172" y2="97" stroke="#666" stroke-width="1.5" stroke-dasharray="4,4"/>' +
-    
-    // Data point values (white text)
     '<text x="72" y="76" font-size="18" font-weight="700" fill="#fff" text-anchor="middle">4</text>' +
     '<text x="100" y="88" font-size="18" font-weight="700" fill="#fff" text-anchor="middle">3</text>' +
-    
-    // X-axis baseline
     '<line x1="12" y1="110" x2="172" y2="110" stroke="#fff" stroke-width="1.5"/>' +
-    
-    // Time labels below graph (white)
     '<text x="12" y="125" font-size="14" fill="#fff" text-anchor="start">0a</text>' +
     '<text x="92" y="125" font-size="14" fill="#fff" text-anchor="middle">12p</text>' +
     '<text x="172" y="125" font-size="14" fill="#fff" text-anchor="end">12a</text>' +
-    
-    // Large value display (centered group) - scaled up
     '<text x="60" y="172" font-size="48" font-weight="700" fill="#ff9800" text-anchor="middle">47</text>' +
     '<text x="99" y="166" font-size="48" font-weight="700" fill="#fff" text-anchor="middle">/</text>' +
-    
-    // Heart icon (centered with group) - outline only, scaled up, moved up and centered over 60
     '<path d="M 130,132 C 124,127 119,130 119,136 C 119,142 130,150 130,150 C 130,150 141,142 141,136 C 141,130 136,127 130,132 Z" fill="none" stroke="#ff4444" stroke-width="2.5"/>' +
-    
-    // Target value (24px, dark grey) - scaled up
     '<text x="118" y="172" font-size="24" font-weight="700" fill="#666" text-anchor="start">60</text>' +
-    
     '</svg>';
 }
 
@@ -790,14 +745,12 @@ function getBackPanelSVG() {
 var render = function() {
   console.log('render() called, state:', state);
   
-  // Scroll to top of page
   window.scrollTo(0, 0);
   
   var content = '';
   var buttons = '';
   
   if (state === 0) {
-    // 1. WELCOME / ORIENTATION
     content = '<div class="welcome">' +
       '<div class="logo">FOX2</div>' +
       '<div class="tagline">Understand your metabolic health</div>' +
@@ -810,7 +763,6 @@ var render = function() {
               '<button class="btn btn-primary" onclick="next()">Next</button>';
               
   } else if (state === 1) {
-    // 2. WHAT FOX2 MEASURES
     content = '<div class="title">What FOX2 Measures</div>' +
       '<div class="content-text">' +
         '<p>Your body draws its energy from glucose when available and from stored fat when glucose runs low. The balance between these two fuels shifts dynamically - hour to hour and day to day.</p>' +
@@ -821,7 +773,6 @@ var render = function() {
               '<button class="btn btn-primary" onclick="next()">Next</button>';
               
   } else if (state === 2) {
-    // 3. HOW IT WORKS - Device overview
     content = '<div class="title">First Things First</div>' +
       '<div class="card-container" style="overflow-y: auto;">' +
         '<div class="info-box" style="margin-bottom: 12px; padding: 10px 14px;">' +
@@ -874,11 +825,9 @@ var render = function() {
               '<button class="btn btn-primary" onclick="next()">Next</button>';
               
   } else if (state === 3) {
-    // 4. HOW TO TAKE A MEASUREMENT - Swipeable cards
     content = '<div class="title">Taking a Measurement</div>' +
       '<div class="card-container">' +
         '<div class="card-wrapper" id="cardWrapper3">' +
-          // Card 1
           '<div class="step-card">' +
             '<div class="step-card-text">' +
               '<div class="step-card-title">Step 1: Select Measure</div>' +
@@ -897,7 +846,6 @@ var render = function() {
               '</div>' +
             '</div>' +
           '</div>' +
-          // Card 2
           '<div class="step-card">' +
             '<div class="step-card-text">' +
               '<div class="step-card-title">Step 2: Wait for Warmup</div>' +
@@ -916,7 +864,6 @@ var render = function() {
               '</div>' +
             '</div>' +
           '</div>' +
-          // Card 3
           '<div class="step-card">' +
             '<div class="step-card-text">' +
               '<div class="step-card-title">Step 3: Blow</div>' +
@@ -935,25 +882,22 @@ var render = function() {
               '</div>' +
             '</div>' +
           '</div>' +
-          // Card 4 - View Results
           '<div class="step-card">' +
             '<div class="step-card-text">' +
               '<div class="step-card-title">Step 4: View Results</div>' +
-              'The device will now step through your result screens as it clears. It will shut off automatically at the end of clearing.' +
+              'Your NOW result appears first, showing your current metabolic state. The device will then step through more result screens before shutting off automatically.' +
             '</div>' +
-            '<div style="display: flex; gap: 12px; justify-content: center; margin-top: 8px;">' +
-              '<div style="width: 120px; background: #000; border: 2px solid #333; border-radius: 8px; padding: 3px;">' +
-                getZoneSVG() +
+            '<div class="step-card-device">' +
+              '<div class="device-frame">' +
+                '<div class="device-body"></div>' +
+                '<div class="device-seam"></div>' +
+                '<div class="device-screen">' + getZoneSVG() + '</div>' +
+                '<div class="device-buttons">' +
+                  '<div class="device-btn-triangle"></div>' +
+                  '<div class="device-btn-circle"></div>' +
+                '</div>' +
+                '<div class="device-mouthpiece"></div>' +
               '</div>' +
-              '<div style="width: 120px; background: #000; border: 2px solid #333; border-radius: 8px; padding: 3px;">' +
-                getTotalSVG() +
-              '</div>' +
-              '<div style="width: 120px; background: #000; border: 2px solid #333; border-radius: 8px; padding: 3px;">' +
-                getStreaksSVG() +
-              '</div>' +
-            '</div>' +
-            '<div style="margin-top: 12px; text-align: left; font-size: 16px; line-height: 1.5;">' +
-              'The results screens shows you your fat/glucose metabolism over three different timescales, right <span style="color: #00ffff; font-weight: 600;">NOW</span>, all of your measurements <span style="color: #f5c842; font-weight: 600;">TODAY</span> (and their total) and the totals for your last <span style="color: #9C27B0; font-weight: 600;">5 DAYs</span>. Let\'s talk about what these numbers mean next.' +
             '</div>' +
           '</div>' +
         '</div>' +
@@ -968,14 +912,10 @@ var render = function() {
     buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
               '<button class="btn btn-primary" onclick="next()">Next</button>';
               
-              '<button class="btn btn-primary" onclick="next()">Next</button>';
-              
   } else if (state === 4) {
-    // 5. UNDERSTANDING YOUR RESULTS - Swipeable cards
     content = '<div class="title">Understanding Results</div>' +
       '<div class="card-container">' +
         '<div class="card-wrapper" id="cardWrapper4">' +
-          // Card 1 - Zone
           '<div class="step-card">' +
             '<div class="step-card-text">' +
               '<div class="step-card-title">NOW Reading</div>' +
@@ -985,7 +925,6 @@ var render = function() {
               getZoneSVG() +
             '</div>' +
           '</div>' +
-          // Card 2 - Total
           '<div class="step-card">' +
             '<div class="step-card-text">' +
               '<div class="step-card-title">TODAY</div>' +
@@ -995,7 +934,6 @@ var render = function() {
               getTotalSVG() +
             '</div>' +
           '</div>' +
-          // Card 3 - Streaks
           '<div class="step-card">' +
             '<div class="step-card-text">' +
               '<div class="step-card-title">Streaks</div>' +
@@ -1017,18 +955,15 @@ var render = function() {
               '<button class="btn btn-primary" onclick="next()">Next</button>';
               
   } else if (state === 5) {
-    // 6. USING FOX2 OVER TIME
     content = '<div class="title">Suggestions for Use</div>' +
       '<div class="card-container">' +
         '<div class="card-wrapper" id="cardWrapper5">' +
-          // Card 1 - Introduction
           '<div class="step-card">' +
             '<div class="step-card-text">' +
               '<div class="step-card-title">Using FOX2</div>' +
               'Your TODAY screen allows you to see how your body is using different fuels over the day, and try different approaches to optimize for your goals. Here are a couple of ways that I (Tim) sometimes use to increase my use of fat for energy.' +
             '</div>' +
           '</div>' +
-          // Card 2
           '<div class="step-card">' +
             '<div class="step-card-text">' +
               '<div class="step-card-title">Card 2 Title</div>' +
@@ -1038,7 +973,6 @@ var render = function() {
               getTotalSVG() +
             '</div>' +
           '</div>' +
-          // Card 3
           '<div class="step-card">' +
             '<div class="step-card-text">' +
               '<div class="step-card-title">Card 3 Title</div>' +
@@ -1048,7 +982,6 @@ var render = function() {
               getTotalSVG() +
             '</div>' +
           '</div>' +
-          // Card 4
           '<div class="step-card">' +
             '<div class="step-card-text">' +
               '<div class="step-card-title">Card 4 Title</div>' +
@@ -1071,7 +1004,6 @@ var render = function() {
               '<button class="btn btn-primary" onclick="next()">Next</button>';
               
   } else if (state === 6) {
-    // 7. SAFETY & SUPPORT
     content = '<div class="title">Safety & Support</div>' +
       '<div class="card-container" style="overflow-y: auto;">' +
         '<div class="content-text">' +
@@ -1102,42 +1034,39 @@ var render = function() {
               '<button class="btn btn-primary" onclick="next()">Setup</button>';
               
   } else if (state === 7) {
-    // SETUP PAGE
     var sel1 = selectedLevel === 1 ? ' selected' : '';
     var sel2 = selectedLevel === 2 ? ' selected' : '';
     var sel3 = selectedLevel === 3 ? ' selected' : '';
     var sel4 = selectedLevel === 4 ? ' selected' : '';
-    content = '<div class="title">Setup FOX2</div>' +
-      '<div class="subtitle">Configure your device preferences</div>' +
+    content = '<div class="title">Goals</div>' +
       '<form id="f" onsubmit="save(event)">' +
         '<div class="form-group">' +
-          '<label class="form-label">Target Level</label>' +
           '<div style="display: flex; gap: 16px; flex-direction: column; row-gap: 16px;">' +
             '<div style="display: flex; gap: 12px; align-items: center;">' +
               '<div class="level-btn level-1' + sel1 + '" onclick="selectLevel(1)" style="width: 60px; height: 60px; margin: 0; aspect-ratio: auto; flex-shrink: 0;">1</div>' +
               '<div style="background: #111; border: 1px solid #333; border-radius: 8px; padding: 10px; flex: 1;">' +
-                '<strong style="color: #2196F3; font-size: 14px;">Level 1</strong>' +
+                '<strong style="color: #2196F3; font-size: 14px;">Level 1 = no target</strong>' +
                 '<div style="font-size: 12px; color: #aaa; margin-top: 4px; line-height: 1.4;">Select this level if you would like no daily target or streaks displayed. This is a great place to start just to get an idea of where you are!</div>' +
               '</div>' +
             '</div>' +
             '<div style="display: flex; gap: 12px; align-items: center;">' +
               '<div class="level-btn level-2' + sel2 + '" onclick="selectLevel(2)" style="width: 60px; height: 60px; margin: 0; aspect-ratio: auto; flex-shrink: 0;">2</div>' +
               '<div style="background: #111; border: 1px solid #333; border-radius: 8px; padding: 10px; flex: 1;">' +
-                '<strong style="color: #4CAF50; font-size: 14px;">Level 2</strong>' +
+                '<strong style="color: #4CAF50; font-size: 14px;">Level 2 = ' + target2 + '</strong>' +
                 '<div style="font-size: 12px; color: #aaa; margin-top: 4px; line-height: 1.4;">This is a great maintenance or starting level. Achieving this target means you have increased fat metabolism.</div>' +
               '</div>' +
             '</div>' +
             '<div style="display: flex; gap: 12px; align-items: center;">' +
               '<div class="level-btn level-3' + sel3 + '" onclick="selectLevel(3)" style="width: 60px; height: 60px; margin: 0; aspect-ratio: auto; flex-shrink: 0;">3</div>' +
               '<div style="background: #111; border: 1px solid #333; border-radius: 8px; padding: 10px; flex: 1;">' +
-                '<strong style="color: #9C27B0; font-size: 14px;">Level 3</strong>' +
+                '<strong style="color: #9C27B0; font-size: 14px;">Level 3 = ' + target3 + '</strong>' +
                 '<div style="font-size: 12px; color: #aaa; margin-top: 4px; line-height: 1.4;">This is a good level for losing weight, hitting this target will likely require changing both diet and exercise.</div>' +
               '</div>' +
             '</div>' +
             '<div style="display: flex; gap: 12px; align-items: center;">' +
               '<div class="level-btn level-4' + sel4 + '" onclick="selectLevel(4)" style="width: 60px; height: 60px; margin: 0; aspect-ratio: auto; flex-shrink: 0;">C</div>' +
               '<div style="background: #111; border: 1px solid #333; border-radius: 8px; padding: 10px; flex: 1;">' +
-                '<strong style="color: #E91E63; font-size: 14px;">Level C</strong>' +
+                '<strong style="color: #E91E63; font-size: 14px;" id="customLevelTitle">Level C = ' + customLevelValue + '</strong>' +
                 '<div style="font-size: 12px; color: #aaa; margin-top: 4px; line-height: 1.4;">You can adjust a custom target here.</div>' +
               '</div>' +
               '<div style="display: flex; flex-direction: column; gap: 6px;">' +
@@ -1145,9 +1074,6 @@ var render = function() {
                 '<button type="button" onclick="decrementCustomLevel()" style="background: #E91E63; color: #fff; border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 16px; font-weight: bold;">▼</button>' +
               '</div>' +
             '</div>' +
-          '</div>' +
-          '<div style="text-align: center;">' +
-            '<div class="level-hint" id="hint">' + hints[selectedLevel - 1] + '</div>' +
           '</div>' +
         '</div>' +
         '<div class="form-group">' +
@@ -1168,20 +1094,6 @@ var render = function() {
   document.getElementById('content').innerHTML = content;
   document.getElementById('buttons').innerHTML = buttons;
   
-  // Spacer removed to save space on mobile
-  /*
-  var container = document.querySelector('.container');
-  var existingSpacer = document.getElementById('spacer');
-  if (existingSpacer) {
-    existingSpacer.remove();
-  }
-  var spacerDiv = document.createElement('div');
-  spacerDiv.id = 'spacer';
-  spacerDiv.className = 'spacer';
-  var dotsElement = document.getElementById('dots');
-  container.insertBefore(spacerDiv, dotsElement);
-  */
-  
   var dotsContainer = document.getElementById('dots');
   if (showOnboarding) {
     var dotsHtml = '';
@@ -1195,18 +1107,6 @@ var render = function() {
     dotsContainer.style.display = 'none';
   }
   
-  // Initialize hint color if on Setup page
-  if (state === 7) {
-    setTimeout(function() {
-      var hintElement = document.getElementById('hint');
-      if (hintElement) {
-        var colors = ['#2196F3', '#4CAF50', '#9C27B0', '#E91E63'];
-        hintElement.style.backgroundColor = colors[selectedLevel - 1];
-      }
-    }, 0);
-  }
-  
-  // Initialize swipe handlers for card-based screens
   if (state === 3) {
     initCardSwipe('cardWrapper3', 'cardDots3', 4);
   } else if (state === 4) {
@@ -1216,7 +1116,6 @@ var render = function() {
   }
 };
 
-// Card swipe functionality
 function initCardSwipe(wrapperId, dotsId, cardCount) {
   var wrapper = document.getElementById(wrapperId);
   var dots = document.getElementById(dotsId);
@@ -1225,7 +1124,6 @@ function initCardSwipe(wrapperId, dotsId, cardCount) {
   var container = wrapper.parentElement;
   var containerHeight = container.offsetHeight;
   
-  // Set each card to exact container height
   var cards = wrapper.querySelectorAll('.step-card');
   cards.forEach(function(card) {
     card.style.height = containerHeight + 'px';
@@ -1240,7 +1138,6 @@ function initCardSwipe(wrapperId, dotsId, cardCount) {
     currentCard = Math.max(0, Math.min(index, cardCount - 1));
     wrapper.style.transform = 'translateY(-' + (currentCard * containerHeight) + 'px)';
     
-    // Update dots
     var dotElements = dots.querySelectorAll('.card-dot');
     dotElements.forEach(function(dot, i) {
       if (i === currentCard) {
@@ -1272,8 +1169,6 @@ function initCardSwipe(wrapperId, dotsId, cardCount) {
     
     var diff = currentY - startY;
     if (Math.abs(diff) > 50) {
-      // Swipe down (positive diff) = go to previous card
-      // Swipe up (negative diff) = go to next card
       if (diff > 0 && currentCard > 0) {
         updateCard(currentCard - 1);
       } else if (diff < 0 && currentCard < cardCount - 1) {
@@ -1286,12 +1181,11 @@ function initCardSwipe(wrapperId, dotsId, cardCount) {
     }
   });
   
-  // Mouse event handlers for desktop/laptop
   wrapper.addEventListener('mousedown', function(e) {
     startY = e.clientY;
     isDragging = true;
     wrapper.style.transition = 'none';
-    e.preventDefault(); // Prevent text selection
+    e.preventDefault();
   });
   
   wrapper.addEventListener('mousemove', function(e) {
@@ -1309,8 +1203,6 @@ function initCardSwipe(wrapperId, dotsId, cardCount) {
     
     var diff = currentY - startY;
     if (Math.abs(diff) > 50) {
-      // Swipe down (positive diff) = go to previous card
-      // Swipe up (negative diff) = go to next card
       if (diff > 0 && currentCard > 0) {
         updateCard(currentCard - 1);
       } else if (diff < 0 && currentCard < cardCount - 1) {
@@ -1323,15 +1215,13 @@ function initCardSwipe(wrapperId, dotsId, cardCount) {
     }
   });
   
-  // Handle mouse leaving the wrapper while dragging
   wrapper.addEventListener('mouseleave', function(e) {
     if (!isDragging) return;
     isDragging = false;
     wrapper.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-    updateCard(currentCard); // Snap back to current card
+    updateCard(currentCard);
   });
   
-  // Click on dots to navigate
   var dotElements = dots.querySelectorAll('.card-dot');
   dotElements.forEach(function(dot, index) {
     dot.addEventListener('click', function() {
@@ -1339,7 +1229,6 @@ function initCardSwipe(wrapperId, dotsId, cardCount) {
     });
   });
   
-  // Initialize first card
   updateCard(0);
 }
 
@@ -1368,14 +1257,7 @@ var skipToSetup = function() {
 
 var selectLevel = function(l) { 
   selectedLevel = l;
-  var hintElement = document.getElementById('hint');
-  hintElement.textContent = hints[l - 1];
   
-  // Set color based on selected level
-  var colors = ['#2196F3', '#4CAF50', '#9C27B0', '#E91E63'];
-  hintElement.style.backgroundColor = colors[l - 1];
-  
-  // Update visual selection for all level buttons
   for (var i = 1; i <= 4; i++) {
     var buttons = document.querySelectorAll('.level-btn');
     if (buttons[i - 1]) {
@@ -1387,7 +1269,6 @@ var selectLevel = function(l) {
     }
   }
   
-  // Only full render if NOT Level C (4) - Level C requires arrow clicks to change target
   if (l !== 4) {
     render();
   }
@@ -1395,20 +1276,16 @@ var selectLevel = function(l) {
 
 var incrementCustomLevel = function() {
   customLevelValue += 10;
-  hints[3] = 'custom: ' + customLevelValue;
-  var hintElement = document.getElementById('hint');
-  hintElement.textContent = hints[3];
-  hintElement.style.backgroundColor = '#E91E63';
+  var titleElement = document.getElementById('customLevelTitle');
+  if (titleElement) titleElement.textContent = 'Level C = ' + customLevelValue;
 };
 
 var decrementCustomLevel = function() {
   if (customLevelValue > 10) {
     customLevelValue -= 10;
   }
-  hints[3] = 'custom: ' + customLevelValue;
-  var hintElement = document.getElementById('hint');
-  hintElement.textContent = hints[3];
-  hintElement.style.backgroundColor = '#E91E63';
+  var titleElement = document.getElementById('customLevelTitle');
+  if (titleElement) titleElement.textContent = 'Level C = ' + customLevelValue;
 };
 
 var save = function(e) {
@@ -1417,15 +1294,6 @@ var save = function(e) {
 };
 
 render();
-
-// Initialize hint color on page load
-setTimeout(function() {
-  var hintElement = document.getElementById('hint');
-  if (hintElement) {
-    var colors = ['#2196F3', '#4CAF50', '#9C27B0', '#E91E63'];
-    hintElement.style.backgroundColor = colors[selectedLevel - 1];
-  }
-}, 100);
 </script>
 </body>
 </html>
