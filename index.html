@@ -1,9 +1,15 @@
-<!DOCTYPE html>
 <html>
 <head>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="dark">
 <title>FOX2 Onboarding Test</title>
+<script id="runtime-vars">
+var RUNTIME_CURRENT_LEVEL = 1;
+var RUNTIME_TARGET2 = 60;
+var RUNTIME_TARGET3 = 120;
+var RUNTIME_SHOW = true;
+var RUNTIME_EMAIL = '';
+</script>
 <style>
 :root {
   color-scheme: dark;
@@ -567,14 +573,22 @@ body {
 </div>
 
 <script>
-var selectedLevel = 1;
-var target2 = 60;
-var target3 = 120;
-var customLevelValue = target3 + 10;
-var hints = ['no target', 'total = ' + target2, 'total = ' + target3, 'custom: ' + customLevelValue];
-var showOnboarding = true;
 
-var state = 0;
+
+var selectedLevel = typeof RUNTIME_CURRENT_LEVEL !== 'undefined' ? RUNTIME_CURRENT_LEVEL : 1;
+var target2 = typeof RUNTIME_TARGET2 !== 'undefined' ? RUNTIME_TARGET2 : 60;
+var target3 = typeof RUNTIME_TARGET3 !== 'undefined' ? RUNTIME_TARGET3 : 120;
+var showOnboarding = typeof RUNTIME_SHOW !== 'undefined' ? RUNTIME_SHOW : true;
+var state = showOnboarding ? 0 : 7;   // ← ADD THIS
+var customLevelValue = target3 + 10;
+
+var hints = [
+  'no target',
+  'total = ' + target2,
+  'total = ' + target3,
+  'custom: ' + customLevelValue
+];
+
 
 function getMenuSVG() {
   return '<svg viewBox="0 0 184 184" xmlns="http://www.w3.org/2000/svg">' +
@@ -774,52 +788,60 @@ var render = function() {
               
   } else if (state === 2) {
     content = '<div class="title">First Things First</div>' +
-      '<div class="card-container" style="overflow-y: auto;">' +
-        '<div class="info-box" style="margin-bottom: 12px; padding: 10px 14px;">' +
-          '<div class="info-text">' +
-            'Press and hold <span style="color: #00ffff; font-weight: 600;">● Circle</span> to power on.' +
-            '<div style="margin-top: 6px; display: flex; justify-content: center;">' +
-              '<div style="text-align: left; font-size: 14px;">' +
-                '<div style="margin-bottom: 4px;"><span style="color: #ff9800; font-weight: 600;">▼ Triangle:</span> Move down menu</div>' +
-                '<div><span style="color: #00ffff; font-weight: 600;">● Circle:</span> Select</div>' +
+      '<div class="card-container">' +
+        '<div class="card-wrapper" id="cardWrapper2">' +
+          '<div class="step-card">' +
+            '<div class="step-card-text">' +
+              '<div class="step-card-title">Important</div>' +
+              '<ul class="info-list" style="text-indent: 0;">' +
+                '<li style="margin-bottom: 12px;">FOX2 is sensitive to <strong style="color:#ff9800;">alcohol</strong>. If you drink alcoholic drinks, please wait until the next day to measure.</li>' +
+                '<li style="margin-bottom: 12px;">Some flavorings in food and drinks can also interfere. For best results, wait at least an hour after eating or drinking anything other than clear water before measuring — or rinse thoroughly with clear water before measuring.</li>' +
+                '<li>Because FOX2 measures what\'s in the bottom of your lungs, try to blow out all of your breath when you take a measurement.</li>' +
+              '</ul>' +
+            '</div>' +
+          '</div>' +
+          '<div class="step-card">' +
+            '<div class="step-card-text">' +
+              '<div class="step-card-title">Your Device</div>' +
+              'Press and hold <span style="color: #00ffff; font-weight: 600;"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#00ffff;vertical-align:middle;margin-right:3px;"></span> Circle</span> to power on.' +
+              '<div style="margin-top: 6px; display: flex; justify-content: center;">' +
+                '<div style="text-align: left; font-size: 14px;">' +
+                  '<div style="margin-bottom: 4px;"><span style="color: #ff9800; font-weight: 600;"><span style="display:inline-block;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:8px solid #ff9800;vertical-align:middle;margin-right:3px;"></span> Triangle:</span> Move down menu</div>' +
+                  '<div><span style="color: #00ffff; font-weight: 600;"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#00ffff;vertical-align:middle;margin-right:3px;"></span> Circle:</span> Select</div>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="step-card-device">' +
+              '<div class="device-frame">' +
+                '<div class="device-body"></div>' +
+                '<div class="device-seam"></div>' +
+                '<div class="device-screen">' + getMenuSVG() + '</div>' +
+                '<div class="device-buttons">' +
+                  '<div class="device-btn-triangle"></div>' +
+                  '<div class="device-btn-circle"></div>' +
+                '</div>' +
+                '<div class="device-mouthpiece"></div>' +
               '</div>' +
             '</div>' +
           '</div>' +
-        '</div>' +
-        '<div style="display: flex; gap: 16px; align-items: center; justify-content: center; margin-top: 28px;">' +
-          '<div style="flex: 0 0 auto;">' +
-            '<div class="device-frame">' +
-              '<div class="device-body"></div>' +
-              '<div class="device-seam"></div>' +
-              '<div class="device-screen">' + getMenuSVG() + '</div>' +
-              '<div class="device-buttons">' +
-                '<div class="device-btn-triangle"></div>' +
-                '<div class="device-btn-circle"></div>' +
-              '</div>' +
-              '<div class="device-mouthpiece"></div>' +
+          '<div class="step-card">' +
+            '<div class="step-card-text">' +
+              '<div class="step-card-title">Menu Options</div>' +
+              '<ul class="info-list" style="text-indent: 0;">' +
+                '<li style="margin-bottom: 12px;"><span style="font-weight: 600; color: #00ffff;">Measure</span> - Take a reading</li>' +
+                '<li style="margin-bottom: 12px;"><span style="font-weight: 600; color: #00ffff;">Data</span> - View results</li>' +
+                '<li style="margin-bottom: 12px;"><span style="font-weight: 600; color: #00ffff;">About</span> - Settings</li>' +
+                '<li><span style="font-weight: 600; color: #00ffff;">Off</span> - Power off</li>' +
+              '</ul>' +
             '</div>' +
           '</div>' +
-          '<div style="flex: 0 0 auto;">' +
-            '<ul style="list-style: none; padding: 0; margin: 0; max-width: 220px; font-size: 15px;">' +
-              '<li style="display: flex; align-items: flex-start; margin-bottom: 10px;">' +
-                '<span style="color: #00ffff; font-weight: 700; margin-right: 10px; flex-shrink: 0;">●</span>' +
-                '<div><span style="font-weight: 600; color: #00ffff;">Measure</span> - Take reading</div>' +
-              '</li>' +
-              '<li style="display: flex; align-items: flex-start; margin-bottom: 10px;">' +
-                '<span style="color: #00ffff; font-weight: 700; margin-right: 10px; flex-shrink: 0;">●</span>' +
-                '<div><span style="font-weight: 600; color: #00ffff;">Data</span> - View results</div>' +
-              '</li>' +
-              '<li style="display: flex; align-items: flex-start; margin-bottom: 10px;">' +
-                '<span style="color: #00ffff; font-weight: 700; margin-right: 10px; flex-shrink: 0;">●</span>' +
-                '<div><span style="font-weight: 600; color: #00ffff;">About</span> - Settings</div>' +
-              '</li>' +
-              '<li style="display: flex; align-items: flex-start;">' +
-                '<span style="color: #00ffff; font-weight: 700; margin-right: 10px; flex-shrink: 0;">●</span>' +
-                '<div><span style="font-weight: 600; color: #00ffff;">Off</span> - Power off</div>' +
-              '</li>' +
-            '</ul>' +
-          '</div>' +
         '</div>' +
+        '<div class="card-dots" id="cardDots2">' +
+          '<div class="card-dot active"></div>' +
+          '<div class="card-dot"></div>' +
+          '<div class="card-dot"></div>' +
+        '</div>' +
+        '<div class="swipe-hint"><span style="display:inline-block;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:8px solid #00ffff;vertical-align:middle;"></span> Swipe up/down <span style="display:inline-block;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:8px solid #00ffff;vertical-align:middle;"></span></div>' +
       '</div>';
     buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
               '<button class="btn btn-primary" onclick="next()">Next</button>';
@@ -831,7 +853,7 @@ var render = function() {
           '<div class="step-card">' +
             '<div class="step-card-text">' +
               '<div class="step-card-title">Step 1: Select Measure</div>' +
-              'Navigate to Measure and press the circle button to start.' +
+              'With Measure highlighted, press the circle button to select and begin the warmup.' +
             '</div>' +
             '<div class="step-card-device">' +
               '<div class="device-frame">' +
@@ -867,7 +889,7 @@ var render = function() {
           '<div class="step-card">' +
             '<div class="step-card-text">' +
               '<div class="step-card-title">Step 3: Blow</div>' +
-              'When it says "Blow," breathe in then blow steadily into the mouthpiece until it buzzes.' +
+              'When the device says "Blow," take a breath in and then blow into the mouthpiece like you are blowing up a balloon. Blow steadily until FOX2 buzzes or you run out of breath.' +
             '</div>' +
             '<div class="step-card-device">' +
               '<div class="device-frame">' +
@@ -885,7 +907,7 @@ var render = function() {
           '<div class="step-card">' +
             '<div class="step-card-text">' +
               '<div class="step-card-title">Step 4: View Results</div>' +
-              'Your NOW result appears first, showing your current metabolic state. The device will then step through more result screens before shutting off automatically.' +
+              'While FOX2 is measuring, your number will blink as the arc segments light up. The measurement is complete when the number stops blinking. The device will then slide through the other results screens while clearing, before shutting off automatically.' +
             '</div>' +
             '<div class="step-card-device">' +
               '<div class="device-frame">' +
@@ -907,7 +929,7 @@ var render = function() {
           '<div class="card-dot"></div>' +
           '<div class="card-dot"></div>' +
         '</div>' +
-        '<div class="swipe-hint">↑ Swipe up/down ↓</div>' +
+        '<div class="swipe-hint"><span style="display:inline-block;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:8px solid #00ffff;vertical-align:middle;"></span> Swipe up/down <span style="display:inline-block;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:8px solid #00ffff;vertical-align:middle;"></span></div>' +
       '</div>';
     buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
               '<button class="btn btn-primary" onclick="next()">Next</button>';
@@ -937,7 +959,7 @@ var render = function() {
           '<div class="step-card">' +
             '<div class="step-card-text">' +
               '<div class="step-card-title">Streaks</div>' +
-              'Hit your daily target to build streaks. \"Best\" shows your longest streak ever. \"Now\" shows your current streak.' +
+              'Hit your daily target to build streaks. "Best" shows your longest streak ever. "Now" shows your current streak.' +
             '</div>' +
             '<div style="width: 184px; margin: 0 auto; background: #000; border: 3px solid #333; border-radius: 12px; padding: 4px;">' +
               getStreaksSVG() +
@@ -949,7 +971,7 @@ var render = function() {
           '<div class="card-dot"></div>' +
           '<div class="card-dot"></div>' +
         '</div>' +
-        '<div class="swipe-hint">↑ Swipe up/down ↓</div>' +
+        '<div class="swipe-hint"><span style="display:inline-block;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:8px solid #00ffff;vertical-align:middle;"></span> Swipe up/down <span style="display:inline-block;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:8px solid #00ffff;vertical-align:middle;"></span></div>' +
       '</div>';
     buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
               '<button class="btn btn-primary" onclick="next()">Next</button>';
@@ -998,7 +1020,7 @@ var render = function() {
           '<div class="card-dot"></div>' +
           '<div class="card-dot"></div>' +
         '</div>' +
-        '<div class="swipe-hint">↑ Swipe up/down ↓</div>' +
+        '<div class="swipe-hint"><span style="display:inline-block;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:8px solid #00ffff;vertical-align:middle;"></span> Swipe up/down <span style="display:inline-block;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:8px solid #00ffff;vertical-align:middle;"></span></div>' +
       '</div>';
     buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
               '<button class="btn btn-primary" onclick="next()">Next</button>';
@@ -1039,7 +1061,7 @@ var render = function() {
     var sel3 = selectedLevel === 3 ? ' selected' : '';
     var sel4 = selectedLevel === 4 ? ' selected' : '';
     content = '<div class="title">Goals</div>' +
-      '<form id="f" onsubmit="save(event)">' +
+     '<form id="f" action="/save" method="POST" onsubmit="prepareSubmit(event)">' +
         '<div class="form-group">' +
           '<div style="display: flex; gap: 16px; flex-direction: column; row-gap: 16px;">' +
             '<div style="display: flex; gap: 12px; align-items: center;">' +
@@ -1070,8 +1092,8 @@ var render = function() {
                 '<div style="font-size: 12px; color: #aaa; margin-top: 4px; line-height: 1.4;">You can adjust a custom target here.</div>' +
               '</div>' +
               '<div style="display: flex; flex-direction: column; gap: 6px;">' +
-                '<button type="button" onclick="incrementCustomLevel()" style="background: #E91E63; color: #fff; border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 16px; font-weight: bold;">▲</button>' +
-                '<button type="button" onclick="decrementCustomLevel()" style="background: #E91E63; color: #fff; border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 16px; font-weight: bold;">▼</button>' +
+                '<button type="button" onclick="incrementCustomLevel()" style="background: #E91E63; color: #fff; border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 16px; font-weight: bold; display:flex; align-items:center; justify-content:center;"><span style="display:inline-block;width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:10px solid #fff;"></span></button>' +
+                '<button type="button" onclick="decrementCustomLevel()" style="background: #E91E63; color: #fff; border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 16px; font-weight: bold; display:flex; align-items:center; justify-content:center;"><span style="display:inline-block;width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:10px solid #fff;"></span></button>' +
               '</div>' +
             '</div>' +
           '</div>' +
@@ -1087,8 +1109,12 @@ var render = function() {
         '<input type="hidden" name="epoch" value="' + Math.floor(Date.now() / 1000) + '">' +
         '<input type="hidden" name="tzoffset" value="' + new Date().getTimezoneOffset() + '">' +
       '</form>';
-    buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
-              '<button class="btn btn-primary" onclick="document.getElementById(\'f\').dispatchEvent(new Event(\'submit\'))">Save and Exit</button>';
+      
+buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
+          '<button type="submit" form="f" class="btn btn-primary">Save and Exit</button>';
+      
+//buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
+//          '<button class="btn btn-primary" onclick="document.getElementById(\'f\').dispatchEvent(new Event(\'submit\'))">Save and Exit</button>';
   }
   
   document.getElementById('content').innerHTML = content;
@@ -1107,7 +1133,9 @@ var render = function() {
     dotsContainer.style.display = 'none';
   }
   
-  if (state === 3) {
+  if (state === 2) {
+    initCardSwipe('cardWrapper2', 'cardDots2', 3);
+  } else if (state === 3) {
     initCardSwipe('cardWrapper3', 'cardDots3', 4);
   } else if (state === 4) {
     initCardSwipe('cardWrapper4', 'cardDots4', 3);
@@ -1150,17 +1178,19 @@ function initCardSwipe(wrapperId, dotsId, cardCount) {
   
   wrapper.addEventListener('touchstart', function(e) {
     startY = e.touches[0].clientY;
+    currentY = startY;
     isDragging = true;
     wrapper.style.transition = 'none';
-  });
+  }, { passive: true });
   
   wrapper.addEventListener('touchmove', function(e) {
     if (!isDragging) return;
+    e.preventDefault();
     currentY = e.touches[0].clientY;
     var diff = currentY - startY;
     var offset = -(currentCard * containerHeight) + diff;
     wrapper.style.transform = 'translateY(' + offset + 'px)';
-  });
+  }, { passive: false });
   
   wrapper.addEventListener('touchend', function(e) {
     if (!isDragging) return;
@@ -1183,6 +1213,7 @@ function initCardSwipe(wrapperId, dotsId, cardCount) {
   
   wrapper.addEventListener('mousedown', function(e) {
     startY = e.clientY;
+    currentY = startY;
     isDragging = true;
     wrapper.style.transition = 'none';
     e.preventDefault();
@@ -1290,8 +1321,31 @@ var decrementCustomLevel = function() {
 
 var save = function(e) {
   e.preventDefault();
-  alert('Setup complete! (This is just a test - no data is saved)');
+
+  // Update hidden level field before submit
+  document.querySelector('input[name="level"]').value = selectedLevel;
+
+  // Update epoch & timezone just before submit
+  document.querySelector('input[name="epoch"]').value = Math.floor(Date.now() / 1000);
+  document.querySelector('input[name="tzoffset"]').value = new Date().getTimezoneOffset();
+
+  // Actually submit to ESP32
+  fetch('/save', {
+    method: 'POST',
+    body: new FormData(document.getElementById('f'))
+  })
+  .then(function() {
+    window.location.href = '/close';
+  });
 };
+
+function prepareSubmit(e) {
+  e.preventDefault();
+  document.querySelector('input[name="level"]').value = selectedLevel;
+  document.querySelector('input[name="epoch"]').value = Math.floor(Date.now() / 1000);
+  document.querySelector('input[name="tzoffset"]').value = new Date().getTimezoneOffset();
+  alert('Setup complete! Level: ' + selectedLevel);
+}
 
 render();
 </script>
