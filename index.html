@@ -648,28 +648,107 @@ function getZoneSVG() {
     '<text x="92" y="165" font-size="24" font-weight="700" fill="#00ffff" text-anchor="middle">Good!</text></svg>';
 }
 
-function getTotalSVG() {
-  return '<svg viewBox="0 0 184 184" xmlns="http://www.w3.org/2000/svg">' +
+function generateTodaySVG(measurements, dailyTotal, target, midnightValue) {
+  // measurements: array of {hour: 0-24, value: 1-20} (visible dots)
+  // dailyTotal: number shown as the total, or 0/null to auto-calculate
+  // target: number shown as the target (or 0 for no target)
+  // midnightValue: invisible anchor point at hour 0 to control spline entry
+  var xMin = 8, xMax = 170, yBase = 100, yTop = 30;
+  var maxVal = 10;
+  
+  function hourToX(h) { return xMin + (h / 24) * (xMax - xMin); }
+  function valToY(v) { return yBase - (v / maxVal) * (yBase - yTop); }
+  
+  // Calculate area under curve (triangle method) if not provided
+  if (!dailyTotal && measurements.length > 0) {
+    var midVal = typeof midnightValue !== 'undefined' ? midnightValue : 0;
+    var allMeas = [{hour:0, value:midVal}];
+    for (var i = 0; i < measurements.length; i++) {
+      allMeas.push(measurements[i]);
+    }
+    var area = 0;
+    for (var i = 0; i < allMeas.length - 1; i++) {
+      var dt = allMeas[i+1].hour - allMeas[i].hour;
+      var minVal = Math.min(allMeas[i].value, allMeas[i+1].value);
+      var maxV = Math.max(allMeas[i].value, allMeas[i+1].value);
+      // Rectangle of min height + triangle for the difference
+      area += dt * minVal + dt * (maxV - minVal) / 2;
+    }
+    dailyTotal = Math.round(area);
+  }
+  
+  function hourToX(h) { return xMin + (h / 24) * (xMax - xMin); }
+  function valToY(v) { return yBase - (v / maxVal) * (yBase - yTop); }
+  
+  var svg = '<svg viewBox="0 0 184 184" xmlns="http://www.w3.org/2000/svg">' +
     '<rect x="66" y="5" width="52" height="16" rx="8" fill="#f5c842"/>' +
     '<text x="92" y="17" font-size="11" font-weight="700" fill="#1a1a2e" text-anchor="middle">TODAY</text>' +
     '<rect x="158" y="10" width="18" height="10" rx="2" stroke="#0ff" stroke-width="1" fill="none"/>' +
     '<rect x="176" y="12" width="2" height="6" fill="#0ff"/>' +
-    '<rect x="160" y="12" width="14" height="6" fill="#0f0"/>' +
-    '<path d="M 8,100 L 8,44 Q 35,65 62,70 L 80,80 L 80,100 Z" fill="#f5c842"/>' +
-    '<circle cx="62" cy="70" r="3" fill="#4CAF50"/>' +
-    '<circle cx="80" cy="80" r="3" fill="#4CAF50"/>' +
-    '<line x1="80" y1="80" x2="170" y2="80" stroke="#666" stroke-width="1" stroke-dasharray="4,4"/>' +
-    '<text x="62" y="62" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">4</text>' +
-    '<text x="80" y="72" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">3</text>' +
-    '<line x1="8" y1="100" x2="170" y2="100" stroke="#fff" stroke-width="1"/>' +
-    '<text x="8" y="115" font-size="12" fill="#fff" text-anchor="start">0a</text>' +
+    '<rect x="160" y="12" width="14" height="6" fill="#0f0"/>';
+  
+  // Build spline fill path
+  if (measurements.length > 0) {
+    // Build all points: midnight anchor (hidden) + visible measurements
+    var allPts = [];
+    var midVal = typeof midnightValue !== 'undefined' ? midnightValue : measurements[0].value;
+    allPts.push({x: hourToX(0), y: valToY(midVal)});
+    for (var i = 0; i < measurements.length; i++) {
+      allPts.push({x: hourToX(measurements[i].hour), y: valToY(measurements[i].value)});
+    }
+    
+    // Start path from baseline at left edge, up to midnight value
+    var path = 'M ' + xMin + ',' + yBase + ' L ' + xMin + ',' + allPts[0].y;
+    
+    // Spline through all points using quadratic curves
+    for (var i = 0; i < allPts.length - 1; i++) {
+      var cx = (allPts[i].x + allPts[i+1].x) / 2;
+      path += ' Q ' + allPts[i].x + ',' + allPts[i].y + ' ' + cx + ',' + ((allPts[i].y + allPts[i+1].y) / 2);
+    }
+    var last = allPts[allPts.length-1];
+    path += ' Q ' + last.x + ',' + last.y + ' ' + last.x + ',' + last.y;
+    
+    // Close back to baseline
+    path += ' L ' + last.x + ',' + yBase + ' Z';
+    svg += '<path d="' + path + '" fill="#f5c842"/>';
+    
+    // Draw dots and labels (skip midnight anchor at index 0)
+    for (var i = 1; i < allPts.length; i++) {
+      var dotColor = measurements[i-1].value >= 5 ? '#4CAF50' : '#00ffff';
+      svg += '<circle cx="' + allPts[i].x + '" cy="' + allPts[i].y + '" r="3" fill="' + dotColor + '"/>';
+      svg += '<text x="' + allPts[i].x + '" y="' + (allPts[i].y - 8) + '" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">' + measurements[i-1].value + '</text>';
+    }
+    
+    // Dashed line from last point to right edge
+    svg += '<line x1="' + last.x + '" y1="' + last.y + '" x2="' + xMax + '" y2="' + last.y + '" stroke="#666" stroke-width="1" stroke-dasharray="4,4"/>';
+  }
+  
+  // Baseline and time labels
+  svg += '<line x1="' + xMin + '" y1="' + yBase + '" x2="' + xMax + '" y2="' + yBase + '" stroke="#fff" stroke-width="1"/>' +
+    '<text x="' + xMin + '" y="115" font-size="12" fill="#fff" text-anchor="start">0a</text>' +
     '<text x="92" y="115" font-size="12" fill="#fff" text-anchor="middle">12p</text>' +
-    '<text x="170" y="115" font-size="12" fill="#fff" text-anchor="end">12a</text>' +
-    '<text x="68" y="160" font-size="40" font-weight="700" fill="#ff9800" text-anchor="middle">47</text>' +
-    '<text x="101" y="155" font-size="40" font-weight="700" fill="#fff" text-anchor="middle">/</text>' +
-    '<path d="M 128,123 C 123,119 119,121 119,126 C 119,131 128,137 128,137 C 128,137 137,131 137,126 C 137,121 133,119 128,123 Z" fill="none" stroke="#ff4444" stroke-width="2"/>' +
-    '<text x="111" y="160" font-size="20" font-weight="700" fill="#666" text-anchor="start">60</text>' +
-    '</svg>';
+    '<text x="' + xMax + '" y="115" font-size="12" fill="#fff" text-anchor="end">12a</text>';
+  
+  // Daily total
+  svg += '<text x="68" y="160" font-size="40" font-weight="700" fill="#ff9800" text-anchor="middle">' + dailyTotal + '</text>';
+  
+  // Target
+  if (target > 0) {
+    svg += '<text x="101" y="155" font-size="40" font-weight="700" fill="#fff" text-anchor="middle">/</text>' +
+      '<path d="M 128,123 C 123,119 119,121 119,126 C 119,131 128,137 128,137 C 128,137 137,131 137,126 C 137,121 133,119 128,123 Z" fill="none" stroke="#ff4444" stroke-width="2"/>' +
+      '<text x="111" y="160" font-size="20" font-weight="700" fill="#666" text-anchor="start">' + target + '</text>';
+  }
+  
+  svg += '</svg>';
+  return svg;
+}
+
+function getTotalSVG() {
+  return generateTodaySVG([{hour:8,value:4},{hour:11,value:3}], 0, 120, 6);
+}
+
+function getTotal3MeasSVG() {
+  return generateTodaySVG([{hour:7,value:4},{hour:14,value:1},{hour:22,value:3}], 0, 120, 5);
 }
 
 function getSummaryScreenSVG() {
@@ -1025,13 +1104,20 @@ var render = function() {
           '<div class="step-card">' +
             '<div class="step-card-text">' +
               '<div class="step-card-title">Shifting the Balance</div>' +
-              'Your body defaults to glucose when it\'s readily available. To shift toward fat, you need to deplete your available glucose — either by not refilling it (eating less frequently or fewer carbs) or by burning through it with exercise.' +
+              'To shift to using more fat, you need to deplete your available glucose — either by not refilling it (eating less frequently or fewer carbs) or by burning through it with exercise.<br><span style="padding-left:24px;">It sounds simple but because our bodies are so good at storing extra glucose it can be a bit tricky to get through it. Here are a couple of things to try.</span>' +
+              '<ul class="info-list" style="text-indent: 0; margin-top: 10px;">' +
+                '<li style="margin-bottom: 12px;">Increase the time between meals. For example, eat a combined breakfast/lunch or eat dinner earlier.</li>' +
+                '<li>Add exercise that uses up the sugar in your big muscles. Walking is great (although it needs to be &gt;30 minutes to make much impact) as are lunges and squats.</li>' +
+              '</ul>' +
             '</div>' +
           '</div>' +
           '<div class="step-card">' +
             '<div class="step-card-text">' +
               '<div class="step-card-title">When to Measure</div>' +
-              'The best time to measure is first thing in the morning before eating — this is when your body has had the longest stretch without glucose intake. Measuring before meals and once before bed is another great way to capture your fuel balance for the entire day.' +
+              'Your <span style="color:#ff9800;font-weight:600;">TODAY</span> screen shows your fuel balance changes for the day. Measuring right when you get up, sometime in the afternoon, and right before bed maps out the entire day for you.' +
+            '</div>' +
+            '<div style="width: 245px; margin: 0 auto; background: #000; border: 3px solid #333; border-radius: 12px; padding: 4px;">' +
+              getTotal3MeasSVG() +
             '</div>' +
           '</div>' +
           '<div class="step-card">' +
