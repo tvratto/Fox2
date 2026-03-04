@@ -431,7 +431,8 @@ body {
   padding-bottom: 4px;
   line-height: 1.2;
   flex-shrink: 0;
-  border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+  color: #f5c842;
+  border-bottom: 1px solid rgba(245, 200, 66, 0.3);
 }
 
 @media (min-height: 800px) {
@@ -655,8 +656,8 @@ function getTotalSVG() {
     '<rect x="176" y="12" width="2" height="6" fill="#0ff"/>' +
     '<rect x="160" y="12" width="14" height="6" fill="#0f0"/>' +
     '<path d="M 8,100 L 8,44 Q 35,65 62,70 L 80,80 L 80,100 Z" fill="#f5c842"/>' +
-    '<circle cx="62" cy="70" r="3" fill="#fff"/>' +
-    '<circle cx="80" cy="80" r="3" fill="#fff"/>' +
+    '<circle cx="62" cy="70" r="3" fill="#4CAF50"/>' +
+    '<circle cx="80" cy="80" r="3" fill="#4CAF50"/>' +
     '<line x1="80" y1="80" x2="170" y2="80" stroke="#666" stroke-width="1" stroke-dasharray="4,4"/>' +
     '<text x="62" y="62" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">4</text>' +
     '<text x="80" y="72" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">3</text>' +
@@ -779,9 +780,50 @@ var render = function() {
   } else if (state === 1) {
     content = '<div class="title">What FOX2 Measures</div>' +
       '<div class="content-text">' +
-        '<p>Your body draws its energy from glucose when available and from stored fat when glucose runs low. The balance between these two fuels shifts dynamically - hour to hour and day to day.</p>' +
-        '<p>When your body shifts to using more fat for energy, small amounts of <strong>acetone</strong> are naturally released into your breath. FOX2 measures this breath signal to give insight into your current metabolic state.</p>' +
-        '<p>Regular measurements help you make strategic choices. Time your meals to extend fat-burning periods, identify which foods keep you in fat metabolism longer, or discover the best timing for exercise to match your goals.</p>' +
+        '<p>Your body runs on two fuels — glucose and fat. The balance between them shifts constantly, hour to hour and day to day.</p>' +
+        '<p>When your fuel balance shifts toward fat, small amounts of <strong>acetone</strong> naturally appear in your breath. FOX2 measures this signal to show where your balance sits in real time.</p>' +
+        '<div style="width: 420px; max-width: 100%; margin: 20px auto 0;">' +
+          '<svg viewBox="0 0 184 115" xmlns="http://www.w3.org/2000/svg">' +
+            '<style>' +
+              '.as0 { animation: a0 6s linear infinite; }' +
+              '.as1 { animation: a1 6s linear infinite; }' +
+              '.as2 { animation: a2 6s linear infinite; }' +
+              '.as3 { animation: a3 6s linear infinite; }' +
+              '.as4 { animation: a4 6s linear infinite; }' +
+              '.as5 { animation: a5 6s linear infinite; }' +
+              '.as6 { animation: a6 6s linear infinite; }' +
+              '.as7 { animation: a7 6s linear infinite; }' +
+              '.as8 { animation: a8 6s linear infinite; }' +
+              '.as9 { animation: a9 6s linear infinite; }' +
+              '@keyframes a0 { 0% { opacity:0.2; } 5% { opacity:1; } 95% { opacity:1; } 100% { opacity:0.2; } }' +
+              '@keyframes a1 { 0% { opacity:0.2; } 5% { opacity:0.2; } 10% { opacity:1; } 90% { opacity:1; } 95% { opacity:0.2; } 100% { opacity:0.2; } }' +
+              '@keyframes a2 { 0% { opacity:0.2; } 10% { opacity:0.2; } 15% { opacity:1; } 85% { opacity:1; } 90% { opacity:0.2; } 100% { opacity:0.2; } }' +
+              '@keyframes a3 { 0% { opacity:0.2; } 15% { opacity:0.2; } 20% { opacity:1; } 80% { opacity:1; } 85% { opacity:0.2; } 100% { opacity:0.2; } }' +
+              '@keyframes a4 { 0% { opacity:0.2; } 20% { opacity:0.2; } 25% { opacity:1; } 75% { opacity:1; } 80% { opacity:0.2; } 100% { opacity:0.2; } }' +
+              '@keyframes a5 { 0% { opacity:0.2; } 25% { opacity:0.2; } 30% { opacity:1; } 70% { opacity:1; } 75% { opacity:0.2; } 100% { opacity:0.2; } }' +
+              '@keyframes a6 { 0% { opacity:0.2; } 30% { opacity:0.2; } 35% { opacity:1; } 65% { opacity:1; } 70% { opacity:0.2; } 100% { opacity:0.2; } }' +
+              '@keyframes a7 { 0% { opacity:0.2; } 35% { opacity:0.2; } 40% { opacity:1; } 60% { opacity:1; } 65% { opacity:0.2; } 100% { opacity:0.2; } }' +
+              '@keyframes a8 { 0% { opacity:0.2; } 40% { opacity:0.2; } 45% { opacity:1; } 55% { opacity:1; } 60% { opacity:0.2; } 100% { opacity:0.2; } }' +
+              '@keyframes a9 { 0% { opacity:0.2; } 45% { opacity:0.2; } 50% { opacity:1; } 50% { opacity:1; } 55% { opacity:0.2; } 100% { opacity:0.2; } }' +
+            '</style>' +
+            '<path class="as0" d="M 32.0,90.0 A 60,60 0 0,1 34.3,73.5" fill="none" stroke="#00ffff" stroke-width="18"/>' +
+            '<path class="as1" d="M 34.9,71.5 A 60,60 0 0,1 42.3,56.4" fill="none" stroke="#00ffff" stroke-width="18"/>' +
+            '<path class="as2" d="M 43.5,54.7 A 60,60 0 0,1 55.1,42.7" fill="none" stroke="#00ffff" stroke-width="18"/>' +
+            '<path class="as3" d="M 56.7,41.5 A 60,60 0 0,1 71.5,33.6" fill="none" stroke="#00ffff" stroke-width="18"/>' +
+            '<path class="as4" d="M 73.5,32.9 A 60,60 0 0,1 89.9,30.0" fill="none" stroke="#4CAF50" stroke-width="18"/>' +
+            '<path class="as5" d="M 92.0,30.0 A 60,60 0 0,1 108.5,32.3" fill="none" stroke="#4CAF50" stroke-width="18"/>' +
+            '<path class="as6" d="M 110.5,32.9 A 60,60 0 0,1 125.6,40.3" fill="none" stroke="#4CAF50" stroke-width="18"/>' +
+            '<path class="as7" d="M 127.3,41.5 A 60,60 0 0,1 139.3,53.1" fill="none" stroke="#4CAF50" stroke-width="18"/>' +
+            '<path class="as8" d="M 140.5,54.7 A 60,60 0 0,1 148.4,69.5" fill="none" stroke="#4CAF50" stroke-width="18"/>' +
+            '<path class="as9" d="M 149.1,71.5 A 60,60 0 0,1 152.0,87.9" fill="none" stroke="#4CAF50" stroke-width="18"/>' +
+            '<path d="M 38,93 A 54,54 0 0,1 146,93" fill="none" stroke="#ffffff" stroke-width="2"/>' +
+            '<line x1="92" y1="35" x2="92" y2="40" stroke="#ffffff" stroke-width="2"/>' +
+            '<line x1="38" y1="93" x2="43" y2="93" stroke="#ffffff" stroke-width="2"/>' +
+            '<line x1="146" y1="93" x2="141" y2="93" stroke="#ffffff" stroke-width="2"/>' +
+            '<text x="32" y="110" font-size="11" font-weight="600" fill="#00ffff" text-anchor="middle">GLUCOSE</text>' +
+            '<text x="152" y="110" font-size="11" font-weight="600" fill="#4CAF50" text-anchor="middle">FAT</text>' +
+          '</svg>' +
+        '</div>' +
       '</div>';
     buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
               '<button class="btn btn-primary" onclick="next()">Next</button>';
@@ -791,7 +833,7 @@ var render = function() {
       '<div class="card-container">' +
         '<div class="card-wrapper" id="cardWrapper2">' +
           '<div class="step-card">' +
-            '<div class="step-card-text">' +
+            '<div class="step-card-text" style="font-size: 19px;">' +
               '<div class="step-card-title">Important</div>' +
               '<ul class="info-list" style="text-indent: 0;">' +
                 '<li style="margin-bottom: 12px;">FOX2 is sensitive to <strong style="color:#ff9800;">alcohol</strong>. If you drink alcoholic drinks, please wait until the next day to measure.</li>' +
@@ -935,33 +977,33 @@ var render = function() {
               '<button class="btn btn-primary" onclick="next()">Next</button>';
               
   } else if (state === 4) {
-    content = '<div class="title">Understanding Results</div>' +
+    content = '<div class="title">Results Screens</div>' +
       '<div class="card-container">' +
         '<div class="card-wrapper" id="cardWrapper4">' +
           '<div class="step-card">' +
             '<div class="step-card-text">' +
-              '<div class="step-card-title">NOW Reading</div>' +
-              'The NOW screen shows your current metabolic state, higher numbers indicate a shift to more fat metabolism.' +
+              '<div class="step-card-title" style="text-align:center;">NOW</div>' +
+              'Your NOW reading shows the balance between your two fuels — glucose and fat — on a scale from 1 to 20. Lower numbers mean glucose is your primary fuel. As the number climbs past 5, fat begins to take over as the dominant fuel source. The scale starts at 1-10 and expands as your readings increase.' +
             '</div>' +
-            '<div style="width: 184px; margin: 0 auto; background: #000; border: 3px solid #333; border-radius: 12px; padding: 4px;">' +
+            '<div style="width: 245px; margin: 0 auto; background: #000; border: 3px solid #333; border-radius: 12px; padding: 4px;">' +
               getZoneSVG() +
             '</div>' +
           '</div>' +
           '<div class="step-card">' +
             '<div class="step-card-text">' +
-              '<div class="step-card-title">TODAY</div>' +
-              'Shows your measurements throughout the day. Your daily total (measurements × time) appears below with your target (if set).' +
+              '<div class="step-card-title" style="text-align:center;color:#ff9800;">TODAY</div>' +
+              'Here, you can see all of your <span style="color:#4CAF50;font-weight:600;">measurements</span> for the day and your <span style="color:#ff9800;font-weight:600;">daily total</span> and target (if set.)<br><br>Your daily total reflects your overall fuel balance for the day, lower if you are using more glucose, higher if using more fat.' +
             '</div>' +
-            '<div style="width: 184px; margin: 0 auto; background: #000; border: 3px solid #333; border-radius: 12px; padding: 4px;">' +
+            '<div style="width: 245px; margin: 0 auto; background: #000; border: 3px solid #333; border-radius: 12px; padding: 4px;">' +
               getTotalSVG() +
             '</div>' +
           '</div>' +
           '<div class="step-card">' +
             '<div class="step-card-text">' +
-              '<div class="step-card-title">Streaks</div>' +
-              'Hit your daily target to build streaks. "Best" shows your longest streak ever. "Now" shows your current streak.' +
+              '<div class="step-card-title" style="text-align:center;color:#9C27B0;">5 DAY</div>' +
+              'This screen shows the daily totals for your past 5 days with your target (if set) as a dashed line. The circles below show the number of days you met your target in a row (streaks.) Best shows your longest streak ever. Now shows your current streak.' +
             '</div>' +
-            '<div style="width: 184px; margin: 0 auto; background: #000; border: 3px solid #333; border-radius: 12px; padding: 4px;">' +
+            '<div style="width: 245px; margin: 0 auto; background: #000; border: 3px solid #333; border-radius: 12px; padding: 4px;">' +
               getStreaksSVG() +
             '</div>' +
           '</div>' +
@@ -982,41 +1024,25 @@ var render = function() {
         '<div class="card-wrapper" id="cardWrapper5">' +
           '<div class="step-card">' +
             '<div class="step-card-text">' +
-              '<div class="step-card-title">Using FOX2</div>' +
-              'Your TODAY screen allows you to see how your body is using different fuels over the day, and try different approaches to optimize for your goals. Here are a couple of ways that I (Tim) sometimes use to increase my use of fat for energy.' +
+              '<div class="step-card-title">When to Measure</div>' +
+              'The best time to measure is first thing in the morning before eating — this is when your body has had the longest stretch without glucose intake. Measuring before meals and once before bed is another great way to capture your fuel balance for the entire day.' +
             '</div>' +
           '</div>' +
           '<div class="step-card">' +
             '<div class="step-card-text">' +
-              '<div class="step-card-title">Card 2 Title</div>' +
-              'Placeholder text for card 2. We will update this next.' +
-            '</div>' +
-            '<div style="width: 184px; margin: 0 auto; background: #000; border: 3px solid #333; border-radius: 12px; padding: 4px;">' +
-              getTotalSVG() +
+              '<div class="step-card-title">Shifting the Balance</div>' +
+              'Your body defaults to glucose when it\'s readily available. To shift toward fat, you need to deplete your available glucose — either by not refilling it (eating less frequently or fewer carbs) or by burning through it with exercise.' +
             '</div>' +
           '</div>' +
           '<div class="step-card">' +
             '<div class="step-card-text">' +
-              '<div class="step-card-title">Card 3 Title</div>' +
-              'Placeholder text for card 3. We will update this next.' +
-            '</div>' +
-            '<div style="width: 184px; margin: 0 auto; background: #000; border: 3px solid #333; border-radius: 12px; padding: 4px;">' +
-              getTotalSVG() +
-            '</div>' +
-          '</div>' +
-          '<div class="step-card">' +
-            '<div class="step-card-text">' +
-              '<div class="step-card-title">Card 4 Title</div>' +
-              'Placeholder text for card 4. We will update this next.' +
-            '</div>' +
-            '<div style="width: 184px; margin: 0 auto; background: #000; border: 3px solid #333; border-radius: 12px; padding: 4px;">' +
-              getTotalSVG() +
+              '<div class="step-card-title">Experimenting</div>' +
+              'Everyone\'s metabolism is different. Use FOX2 to experiment — try different meal timing, food choices, or activity levels and watch how your numbers respond. Over time, you\'ll learn what works best for your body and your goals.' +
             '</div>' +
           '</div>' +
         '</div>' +
         '<div class="card-dots" id="cardDots5">' +
           '<div class="card-dot active"></div>' +
-          '<div class="card-dot"></div>' +
           '<div class="card-dot"></div>' +
           '<div class="card-dot"></div>' +
         '</div>' +
@@ -1140,7 +1166,7 @@ buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
   } else if (state === 4) {
     initCardSwipe('cardWrapper4', 'cardDots4', 3);
   } else if (state === 5) {
-    initCardSwipe('cardWrapper5', 'cardDots5', 4);
+    initCardSwipe('cardWrapper5', 'cardDots5', 3);
   }
 };
 
