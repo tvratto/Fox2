@@ -510,8 +510,8 @@ body {
   border-color:#00ffff;
   box-shadow:0 0 20px 8px rgba(0,255,255,0.6);
 }
-.level-1 { background:#2196F3; color:#000; }
-.level-2 { background:#4CAF50; color:#000; }
+.level-1 { background:#2196F3; color:#fff; }
+.level-2 { background:#4CAF50; color:#fff; }
 .level-3 { background:#9C27B0; color:#fff; }
 .level-4 { background:#E91E63; color:#fff; }
 .level-hint {
@@ -558,7 +558,7 @@ body {
   margin-bottom: 0;
 }
 .info-list li:before {
-  content: "•";
+  content: "\2022";
   position: absolute;
   left: 0;
   color: #00ffff;
@@ -580,7 +580,7 @@ var selectedLevel = typeof RUNTIME_CURRENT_LEVEL !== 'undefined' ? RUNTIME_CURRE
 var target2 = typeof RUNTIME_TARGET2 !== 'undefined' ? RUNTIME_TARGET2 : 60;
 var target3 = typeof RUNTIME_TARGET3 !== 'undefined' ? RUNTIME_TARGET3 : 120;
 var showOnboarding = typeof RUNTIME_SHOW !== 'undefined' ? RUNTIME_SHOW : true;
-var state = showOnboarding ? 0 : 7;   // ← ADD THIS
+var state = showOnboarding ? 0 : 7;   // <- ADD THIS
 var customLevelValue = target3 + 10;
 
 var hints = [
@@ -859,7 +859,7 @@ var render = function() {
   } else if (state === 1) {
     content = '<div class="title">What FOX2 Measures</div>' +
       '<div class="content-text">' +
-        '<p>Your body runs on two fuels — glucose and fat. The balance between them shifts constantly, hour to hour and day to day.</p>' +
+        '<p>Your body runs on two fuels &#8212; glucose and fat. The balance between them shifts constantly, hour to hour and day to day.</p>' +
         '<p>When your fuel balance shifts toward fat, small amounts of <strong>acetone</strong> naturally appear in your breath. FOX2 measures this signal to show where your balance sits in real time.</p>' +
         '<div style="width: 420px; max-width: 100%; margin: 20px auto 0;">' +
           '<svg viewBox="0 0 184 115" xmlns="http://www.w3.org/2000/svg">' +
@@ -909,21 +909,28 @@ var render = function() {
               
   } else if (state === 2) {
     content = '<div class="title">First Things First</div>' +
-      '<div class="card-container">' +
-        '<div class="card-wrapper" id="cardWrapper2">' +
-          '<div class="step-card">' +
-            '<div class="step-card-text" style="font-size: 19px;">' +
-              '<div class="step-card-title">Important</div>' +
-              '<ul class="info-list" style="text-indent: 0;">' +
-                '<li style="margin-bottom: 12px;">FOX2 is sensitive to <strong style="color:#ff9800;">alcohol</strong>. If you drink alcoholic drinks, please wait until the next day to measure.</li>' +
-                '<li style="margin-bottom: 12px;">Some flavorings in food and drinks can also interfere. For best results, wait at least an hour after eating or drinking anything other than clear water before measuring — or rinse thoroughly with clear water before measuring.</li>' +
-                '<li>Because FOX2 measures what\'s in the bottom of your lungs, try to blow out all of your breath when you take a measurement.</li>' +
-              '</ul>' +
-            '</div>' +
+      '<div class="card-container" style="overflow-y: auto;">' +
+        '<div style="padding: 8px;">' +
+          '<div class="step-card-text" style="font-size: 19px;">' +
+            '<div class="step-card-title">Important</div>' +
+            '<ul class="info-list" style="text-indent: 0;">' +
+              '<li style="margin-bottom: 12px;">FOX2 is sensitive to <strong style="color:#ff9800;">alcohol</strong>. If you drink alcoholic drinks, please wait until the next day to measure.</li>' +
+              '<li style="margin-bottom: 12px;">Some flavorings in food and drinks can also interfere. For best results, wait at least an hour after eating or drinking anything other than clear water before measuring &#8212; or rinse thoroughly with clear water before measuring.</li>' +
+              '<li>Because FOX2 measures what\'s in the bottom of your lungs, try to blow out all of your breath when you take a measurement.</li>' +
+            '</ul>' +
           '</div>' +
+        '</div>' +
+      '</div>';
+    buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
+              '<button class="btn btn-primary" onclick="next()">Next</button>';
+              
+  } else if (state === 3) {
+    content = '<div class="title">Taking a Measurement</div>' +
+      '<div class="card-container">' +
+        '<div class="card-wrapper" id="cardWrapper3">' +
           '<div class="step-card">' +
             '<div class="step-card-text">' +
-              '<div class="step-card-title">Your Device</div>' +
+              '<div class="step-card-title">Step 1: Turn on FOX2</div>' +
               'Press and hold <span style="color: #00ffff; font-weight: 600;"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#00ffff;vertical-align:middle;margin-right:3px;"></span> Circle</span> to power on.' +
               '<div style="margin-top: 6px; display: flex; justify-content: center;">' +
                 '<div style="text-align: left; font-size: 14px;">' +
@@ -946,35 +953,9 @@ var render = function() {
             '</div>' +
           '</div>' +
           '<div class="step-card">' +
-            '<div class="step-card-text">' +
-              '<div class="step-card-title">Menu Options</div>' +
-              '<ul class="info-list" style="text-indent: 0;">' +
-                '<li style="margin-bottom: 12px;"><span style="font-weight: 600; color: #00ffff;">Measure</span> - Take a reading</li>' +
-                '<li style="margin-bottom: 12px;"><span style="font-weight: 600; color: #00ffff;">Data</span> - View results</li>' +
-                '<li style="margin-bottom: 12px;"><span style="font-weight: 600; color: #00ffff;">About</span> - Settings</li>' +
-                '<li><span style="font-weight: 600; color: #00ffff;">Off</span> - Power off</li>' +
-              '</ul>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
-        '<div class="card-dots" id="cardDots2">' +
-          '<div class="card-dot active"></div>' +
-          '<div class="card-dot"></div>' +
-          '<div class="card-dot"></div>' +
-        '</div>' +
-        '<div class="swipe-hint"><span style="display:inline-block;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:8px solid #00ffff;vertical-align:middle;"></span> Swipe up/down <span style="display:inline-block;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:8px solid #00ffff;vertical-align:middle;"></span></div>' +
-      '</div>';
-    buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
-              '<button class="btn btn-primary" onclick="next()">Next</button>';
-              
-  } else if (state === 3) {
-    content = '<div class="title">Taking a Measurement</div>' +
-      '<div class="card-container">' +
-        '<div class="card-wrapper" id="cardWrapper3">' +
-          '<div class="step-card">' +
-            '<div class="step-card-text">' +
-              '<div class="step-card-title">Step 1: Select Measure</div>' +
-              'With Measure highlighted, press the circle button to select and begin the warmup.' +
+            '<div class="step-card-text" style="min-height:120px;">' +
+              '<div class="step-card-title">Step 2: Select Measure</div>' +
+              'Press the circle button to begin the warmup.' +
             '</div>' +
             '<div class="step-card-device">' +
               '<div class="device-frame">' +
@@ -990,8 +971,8 @@ var render = function() {
             '</div>' +
           '</div>' +
           '<div class="step-card">' +
-            '<div class="step-card-text">' +
-              '<div class="step-card-title">Step 2: Wait for Warmup</div>' +
+            '<div class="step-card-text" style="min-height:120px;">' +
+              '<div class="step-card-title">Step 3: Wait for Warmup</div>' +
               'Breathe normally during the countdown.' +
             '</div>' +
             '<div class="step-card-device">' +
@@ -1008,8 +989,8 @@ var render = function() {
             '</div>' +
           '</div>' +
           '<div class="step-card">' +
-            '<div class="step-card-text">' +
-              '<div class="step-card-title">Step 3: Blow</div>' +
+            '<div class="step-card-text" style="min-height:120px;">' +
+              '<div class="step-card-title">Step 4: Blow</div>' +
               'When the device says "Blow," take a breath in and then blow into the mouthpiece like you are blowing up a balloon. Blow steadily until FOX2 buzzes or you run out of breath.' +
             '</div>' +
             '<div class="step-card-device">' +
@@ -1026,8 +1007,8 @@ var render = function() {
             '</div>' +
           '</div>' +
           '<div class="step-card">' +
-            '<div class="step-card-text">' +
-              '<div class="step-card-title">Step 4: View Results</div>' +
+            '<div class="step-card-text" style="min-height:120px;">' +
+              '<div class="step-card-title">Step 5: View Results</div>' +
               'While FOX2 is measuring, your number will blink as the arc segments light up. The measurement is complete when the number stops blinking. The device will then slide through the other results screens while clearing, before shutting off automatically.' +
             '</div>' +
             '<div class="step-card-device">' +
@@ -1049,6 +1030,7 @@ var render = function() {
           '<div class="card-dot"></div>' +
           '<div class="card-dot"></div>' +
           '<div class="card-dot"></div>' +
+          '<div class="card-dot"></div>' +
         '</div>' +
         '<div class="swipe-hint"><span style="display:inline-block;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:8px solid #00ffff;vertical-align:middle;"></span> Swipe up/down <span style="display:inline-block;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:8px solid #00ffff;vertical-align:middle;"></span></div>' +
       '</div>';
@@ -1062,7 +1044,7 @@ var render = function() {
           '<div class="step-card">' +
             '<div class="step-card-text">' +
               '<div class="step-card-title" style="text-align:center;">NOW</div>' +
-              'Your NOW reading shows the balance between your two fuels — glucose and fat — on a scale from 1 to 20. Lower numbers mean glucose is your primary fuel. As the number climbs past 5, fat begins to take over as the dominant fuel source. The scale starts at 1-10 and expands as your readings increase.' +
+              'Your NOW reading shows the balance between your two fuels &#8212; glucose and fat &#8212; on a scale from 1 to 20. Lower numbers mean glucose is your primary fuel. As the number climbs past 5, fat begins to take over as the dominant fuel source.' +
             '</div>' +
             '<div style="width: 245px; margin: 0 auto; background: #000; border: 3px solid #333; border-radius: 12px; padding: 4px;">' +
               getZoneSVG() +
@@ -1070,8 +1052,8 @@ var render = function() {
           '</div>' +
           '<div class="step-card">' +
             '<div class="step-card-text">' +
-              '<div class="step-card-title" style="text-align:center;color:#ff9800;">TODAY</div>' +
-              'Here, you can see all of your <span style="color:#4CAF50;font-weight:600;">measurements</span> for the day and your <span style="color:#ff9800;font-weight:600;">daily total</span> and target (if set.)<br><br>Your daily total reflects your overall fuel balance for the day, lower if you are using more glucose, higher if using more fat.' +
+              '<div class="step-card-title" style="text-align:center;color:#f5c842;">TODAY</div>' +
+              'This screen shows your <span style="color:#4CAF50;font-weight:600;">measurements</span> for the day. FOX2 connects them to estimate your fuel balance over time and calculates a <span style="color:#ff9800;font-weight:600;">daily total</span> &#8212; lower numbers mean more glucose use, higher means more fat. Your target (if set) is also shown.' +
             '</div>' +
             '<div style="width: 245px; margin: 0 auto; background: #000; border: 3px solid #333; border-radius: 12px; padding: 4px;">' +
               getTotalSVG() +
@@ -1104,7 +1086,7 @@ var render = function() {
           '<div class="step-card">' +
             '<div class="step-card-text">' +
               '<div class="step-card-title">Shifting the Balance</div>' +
-              'To shift to using more fat, you need to deplete your available glucose — either by not refilling it (eating less frequently or fewer carbs) or by burning through it with exercise.<br><span style="padding-left:24px;">It sounds simple but because our bodies are so good at storing extra glucose it can be a bit tricky to get through it. Here are a couple of things to try.</span>' +
+              'To shift to using more fat, you need to deplete your available glucose &#8212; either by not refilling it (eating less frequently or fewer carbs) or by burning through it with exercise.<br><span style="padding-left:24px;">It sounds simple but because our bodies are so good at storing extra glucose it can be a bit tricky to get through it. Here are a couple of things to try.</span>' +
               '<ul class="info-list" style="text-indent: 0; margin-top: 10px;">' +
                 '<li style="margin-bottom: 12px;">Increase the time between meals. For example, eat a combined breakfast/lunch or eat dinner earlier.</li>' +
                 '<li>Add exercise that uses up the sugar in your big muscles. Walking is great (although it needs to be &gt;30 minutes to make much impact) as are lunges and squats.</li>' +
@@ -1123,7 +1105,7 @@ var render = function() {
           '<div class="step-card">' +
             '<div class="step-card-text">' +
               '<div class="step-card-title">Experimenting</div>' +
-              'Everyone\'s metabolism is different. Use FOX2 to experiment — try different meal timing, food choices, or activity levels and watch how your numbers respond. Over time, you\'ll learn what works best for your body and your goals.' +
+              'Everyone\'s metabolism is different. Use FOX2 to experiment &#8212; try different meal timing, food choices, or activity levels and watch how your numbers respond. Over time, you\'ll learn what works best for your body and your goals.<br><br><span style="padding-left:24px;">Try thinking of your day in three parts &#8212; morning, afternoon, and evening. To raise your numbers in one part, focus on what you do in the two parts before it. For example, to see higher morning numbers, adjust your eating and activity the afternoon and evening before. It might take a few days or a week to see your morning number increase but keep with it.</span>' +
             '</div>' +
           '</div>' +
         '</div>' +
@@ -1172,36 +1154,32 @@ var render = function() {
     var sel2 = selectedLevel === 2 ? ' selected' : '';
     var sel3 = selectedLevel === 3 ? ' selected' : '';
     var sel4 = selectedLevel === 4 ? ' selected' : '';
-    content = '<div class="title">Goals</div>' +
+    content = '<div class="title">Set Goals</div>' +
      '<form id="f" action="/save" method="POST" onsubmit="prepareSubmit(event)">' +
         '<div class="form-group">' +
-          '<div style="display: flex; gap: 16px; flex-direction: column; row-gap: 16px;">' +
-            '<div style="display: flex; gap: 12px; align-items: center;">' +
-              '<div class="level-btn level-1' + sel1 + '" onclick="selectLevel(1)" style="width: 60px; height: 60px; margin: 0; aspect-ratio: auto; flex-shrink: 0;">1</div>' +
+          '<div style="display: flex; gap: 16px; flex-direction: column; row-gap: 12px;">' +
+            '<div onclick="selectLevel(1)" style="display: flex; gap: 12px; align-items: center; cursor: pointer; padding: 4px; border-radius: 12px; border: 2px solid ' + (selectedLevel === 1 ? '#00ffff' : 'transparent') + '; box-shadow: ' + (selectedLevel === 1 ? '0 0 15px rgba(0,255,255,0.4)' : 'none') + ';">' +
+              '<div class="level-btn level-1" style="width: 60px; height: 60px; margin: 0; aspect-ratio: auto; flex-shrink: 0; font-size: 14px; border: none;">OFF</div>' +
               '<div style="background: #111; border: 1px solid #333; border-radius: 8px; padding: 10px; flex: 1;">' +
-                '<strong style="color: #2196F3; font-size: 14px;">Level 1 = no target</strong>' +
-                '<div style="font-size: 12px; color: #aaa; margin-top: 4px; line-height: 1.4;">Select this level if you would like no daily target or streaks displayed. This is a great place to start just to get an idea of where you are!</div>' +
+                '<div style="font-size: 15px; color: ' + (selectedLevel === 1 ? '#fff' : '#aaa') + '; line-height: 1.4;">No daily target or streaks. A great place to start just to get an idea of where you are.</div>' +
               '</div>' +
             '</div>' +
-            '<div style="display: flex; gap: 12px; align-items: center;">' +
-              '<div class="level-btn level-2' + sel2 + '" onclick="selectLevel(2)" style="width: 60px; height: 60px; margin: 0; aspect-ratio: auto; flex-shrink: 0;">2</div>' +
+            '<div onclick="selectLevel(2)" style="display: flex; gap: 12px; align-items: center; cursor: pointer; padding: 4px; border-radius: 12px; border: 2px solid ' + (selectedLevel === 2 ? '#00ffff' : 'transparent') + '; box-shadow: ' + (selectedLevel === 2 ? '0 0 15px rgba(0,255,255,0.4)' : 'none') + ';">' +
+              '<div class="level-btn level-2" style="width: 60px; height: 60px; margin: 0; aspect-ratio: auto; flex-shrink: 0; border: none;">' + target2 + '</div>' +
               '<div style="background: #111; border: 1px solid #333; border-radius: 8px; padding: 10px; flex: 1;">' +
-                '<strong style="color: #4CAF50; font-size: 14px;">Level 2 = ' + target2 + '</strong>' +
-                '<div style="font-size: 12px; color: #aaa; margin-top: 4px; line-height: 1.4;">This is a great maintenance or starting level. Achieving this target means you have increased fat metabolism.</div>' +
+                '<div style="font-size: 15px; color: ' + (selectedLevel === 2 ? '#fff' : '#aaa') + '; line-height: 1.4;">A great maintenance or starting level. Achieving this target means you have increased fat metabolism.</div>' +
               '</div>' +
             '</div>' +
-            '<div style="display: flex; gap: 12px; align-items: center;">' +
-              '<div class="level-btn level-3' + sel3 + '" onclick="selectLevel(3)" style="width: 60px; height: 60px; margin: 0; aspect-ratio: auto; flex-shrink: 0;">3</div>' +
+            '<div onclick="selectLevel(3)" style="display: flex; gap: 12px; align-items: center; cursor: pointer; padding: 4px; border-radius: 12px; border: 2px solid ' + (selectedLevel === 3 ? '#00ffff' : 'transparent') + '; box-shadow: ' + (selectedLevel === 3 ? '0 0 15px rgba(0,255,255,0.4)' : 'none') + ';">' +
+              '<div class="level-btn level-3" style="width: 60px; height: 60px; margin: 0; aspect-ratio: auto; flex-shrink: 0; border: none;">' + target3 + '</div>' +
               '<div style="background: #111; border: 1px solid #333; border-radius: 8px; padding: 10px; flex: 1;">' +
-                '<strong style="color: #9C27B0; font-size: 14px;">Level 3 = ' + target3 + '</strong>' +
-                '<div style="font-size: 12px; color: #aaa; margin-top: 4px; line-height: 1.4;">This is a good level for losing weight, hitting this target will likely require changing both diet and exercise.</div>' +
+                '<div style="font-size: 15px; color: ' + (selectedLevel === 3 ? '#fff' : '#aaa') + '; line-height: 1.4;">A good level for losing weight. Hitting this target will likely require changing both diet and exercise.</div>' +
               '</div>' +
             '</div>' +
-            '<div style="display: flex; gap: 12px; align-items: center;">' +
-              '<div class="level-btn level-4' + sel4 + '" onclick="selectLevel(4)" style="width: 60px; height: 60px; margin: 0; aspect-ratio: auto; flex-shrink: 0;">C</div>' +
+            '<div onclick="selectLevel(4)" style="display: flex; gap: 12px; align-items: center; cursor: pointer; padding: 4px; border-radius: 12px; border: 2px solid ' + (selectedLevel === 4 ? '#00ffff' : 'transparent') + '; box-shadow: ' + (selectedLevel === 4 ? '0 0 15px rgba(0,255,255,0.4)' : 'none') + ';">' +
+              '<div class="level-btn level-4" style="width: 60px; height: 60px; margin: 0; aspect-ratio: auto; flex-shrink: 0; border: none;" id="customLevelBtn">' + customLevelValue + '</div>' +
               '<div style="background: #111; border: 1px solid #333; border-radius: 8px; padding: 10px; flex: 1;">' +
-                '<strong style="color: #E91E63; font-size: 14px;" id="customLevelTitle">Level C = ' + customLevelValue + '</strong>' +
-                '<div style="font-size: 12px; color: #aaa; margin-top: 4px; line-height: 1.4;">You can adjust a custom target here.</div>' +
+                '<div style="font-size: 15px; color: ' + (selectedLevel === 4 ? '#fff' : '#aaa') + '; line-height: 1.4;">Custom target. Use the arrows to adjust.</div>' +
               '</div>' +
               '<div style="display: flex; flex-direction: column; gap: 6px;">' +
                 '<button type="button" onclick="incrementCustomLevel()" style="background: #E91E63; color: #fff; border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 16px; font-weight: bold; display:flex; align-items:center; justify-content:center;"><span style="display:inline-block;width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:10px solid #fff;"></span></button>' +
@@ -1218,6 +1196,7 @@ var render = function() {
           '</div>' +
         '</div>' +
         '<input type="hidden" name="level" value="' + selectedLevel + '">' +
+        '<input type="hidden" name="customTarget" value="' + customLevelValue + '">' +
         '<input type="hidden" name="epoch" value="' + Math.floor(Date.now() / 1000) + '">' +
         '<input type="hidden" name="tzoffset" value="' + new Date().getTimezoneOffset() + '">' +
       '</form>';
@@ -1245,10 +1224,8 @@ buttons = '<button class="btn btn-secondary" onclick="back()">Back</button>' +
     dotsContainer.style.display = 'none';
   }
   
-  if (state === 2) {
-    initCardSwipe('cardWrapper2', 'cardDots2', 3);
-  } else if (state === 3) {
-    initCardSwipe('cardWrapper3', 'cardDots3', 4);
+  if (state === 3) {
+    initCardSwipe('cardWrapper3', 'cardDots3', 5);
   } else if (state === 4) {
     initCardSwipe('cardWrapper4', 'cardDots4', 3);
   } else if (state === 5) {
@@ -1400,35 +1377,21 @@ var skipToSetup = function() {
 
 var selectLevel = function(l) { 
   selectedLevel = l;
-  
-  for (var i = 1; i <= 4; i++) {
-    var buttons = document.querySelectorAll('.level-btn');
-    if (buttons[i - 1]) {
-      if (i === l) {
-        buttons[i - 1].classList.add('selected');
-      } else {
-        buttons[i - 1].classList.remove('selected');
-      }
-    }
-  }
-  
-  if (l !== 4) {
-    render();
-  }
+  render();
 };
 
 var incrementCustomLevel = function() {
   customLevelValue += 10;
-  var titleElement = document.getElementById('customLevelTitle');
-  if (titleElement) titleElement.textContent = 'Level C = ' + customLevelValue;
+  var btnElement = document.getElementById('customLevelBtn');
+  if (btnElement) btnElement.textContent = customLevelValue;
 };
 
 var decrementCustomLevel = function() {
   if (customLevelValue > 10) {
     customLevelValue -= 10;
   }
-  var titleElement = document.getElementById('customLevelTitle');
-  if (titleElement) titleElement.textContent = 'Level C = ' + customLevelValue;
+  var btnElement = document.getElementById('customLevelBtn');
+  if (btnElement) btnElement.textContent = customLevelValue;
 };
 
 var save = function(e) {
