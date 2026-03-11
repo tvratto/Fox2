@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="color-scheme" content="dark">
+<title>FOX2 Results</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%;
+  background: #0a0a0a;
+  font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  color: #fff;
+  overflow: hidden;
+}
+.scroll-y {
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  height: 100vh;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.scroll-y::-webkit-scrollbar { display: none; }
+.page {
+  flex: 0 0 100vh;
+  width: 100vw;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.card-wrap { width: 100%; max-width: 420px; }
+.card-wrap canvas {
+  width: 100%; height: auto;
+  border-radius: 14px; display: block;
+}
+.dots { display: flex; gap: 6px; margin-top: 8px; }
+.dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.25); transition: background 0.2s; }
+.dot.active { background: #fff; }
+.share-btn {
+  margin-top: 12px;
+  display: flex; align-items: center; gap: 7px;
+  padding: 10px 24px;
+  border-radius: 22px;
+  border: none;
+  background: #f5c842;
+  color: #1a1a2e;
+  font: bold 14px -apple-system, sans-serif;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.share-btn:active { opacity: 0.75; }
+.hint { font-size: 11px; color: rgba(255,255,255,0.3); margin-top: 8px; text-align: center; }
+#no-data {
+  display: none;
+  text-align: center;
+  color: rgba(255,255,255,0.4);
+  font-size: 14px;
+  padding: 40px 20px;
+  line-height: 1.6;
+}
+</style>
+</head>
+<body>
+
+<div class="scroll-y" id="scroller">
+  <div class="page">
+    <div class="card-wrap"><canvas id="card-graph"></canvas></div>
+    <div class="dots"><div class="dot active" id="dot0"></div><div class="dot" id="dot1"></div></div>
+    <button class="share-btn" id="btn-share" onclick="shareGraph()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M8 1v9M4 4l4-3 4 3M3 10v4h10v-4" stroke="#1a1a2e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Share
+    </button>
+    <p class="hint">Scroll for streaks</p>
+  </div>
+  <div class="page">
+    <div class="card-wrap"><canvas id="card-streaks"></canvas></div>
+    <div class="dots"><div class="dot" id="dot2"></div><div class="dot active" id="dot3"></div></div>
+    <button class="share-btn" onclick="shareStreaks()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M8 1v9M4 4l4-3 4 3M3 10v4h10v-4" stroke="#1a1a2e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Share
+    </button>
+    <p class="hint">Scroll for graph</p>
+  </div>
+</div>
+
+<div id="no-data">
+  <p>No FOX2 data found.</p>
+  <p style="margin-top:8px;font-size:12px">Scan the QR code on your FOX2 device to view your results.</p>
+</div>
+
+<script>
+
+// ─── Parse URL params ─────────────────────────────────────────────
+var params      = new URLSearchParams(window.location.search);
+var windowStart = parseInt(params.get('w') || '0', 10);
+var targetAUC   = parseInt(params.get('t') || '0', 10);
+var dParam      = params.get('d') || '';
+
+// Parse days from compact format:
+// d = <label>:<m0>:<p0>,<m1>:<p1>|<label>:...|...
+var days = [];
+var totalDays = 0;
+var bestStreak = 0;
+var currentStreak = 0;
+
+if (dParam) {
+  var dayBlocks = dParam.split('|');
+  totalDays = dayBlocks.length;
+
+  for (var d = 0; d < dayBlocks.length; d++) {
+    var block  = dayBlocks[d];
+    var colon1 = block.indexOf(':');
+    var label  = colon1 >= 0 ? block.substring(0, colon1) : '?';
+    var rest   = colon1 >= 0 ? block.substring(colon1 + 1) : '';
+
+    var epochs = [], vals = [];
+    var dayStartEpoch = windowStart + d * 86400;
+
+    if (rest.length > 0) {
+      var meas = rest.split(',');
+      for (var i = 0; i < meas.length; i++) {
+        var parts = meas[i].split(':');
+        if (parts.length === 2) {
+          var minuteOffset = parseInt(parts[0], 10);
+          var ppm          = parseFloat(parts[1]);
+          if (!isNaN(minuteOffset) && !isNaN(ppm)) {
+            epochs.push(dayStartEpoch + minuteOffset * 60);
+            vals.push(ppm);
+          }
+        }
+      }
+    }
+
+    // Compute AUC using trapezoidal rule (ppm × hours)
+    var auc = 0;
+    if (epochs.length >= 2) {
+      for (var i = 1; i < epochs.length; i++) {
+        var dt = (epochs[i] - epochs[i-1]) / 3600; // hours
+        auc += 0.5 * (vals[i-1] + vals[i]) * dt;
+      }
+    }
+
+    days.push({ label: label, epochs: epochs, vals: vals, auc: auc });
+  }
+
+  // Compute streaks (today = last day, hit = auc >= target)
+  var inStreak = false;
+  var streak   = 0;
+  for (var d = totalDays - 1; d >= 0; d--) {
+    var hit = targetAUC > 0 && days[d].auc >= targetAUC;
+    if (hit) {
+      streak++;
+      if (d === totalDays - 1) inStreak = true;
+    } else {
+      if (!inStreak) currentStreak = 0;
+      break;
+    }
+  }
+  if (inStreak) currentStreak = streak;
+
+  // Best streak: scan all days
+  var run = 0;
+  for (var d = 0; d < totalDays; d++) {
+    if (targetAUC > 0 && days[d].auc >= targetAUC) {
+      run++;
+      if (run > bestStreak) bestStreak = run;
+    } else {
+      run = 0;
+    }
+  }
+}
+
+// Show no-data message if URL has no data
+if (!dParam || totalDays === 0) {
+  document.getElementById('scroller').style.display = 'none';
+  document.getElementById('no-data').style.display  = 'block';
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────
+function roundRect(ctx, x, y, w, h, r) {
+  r = Math.min(r, w/2, h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y);
+  ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);
+  ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);
+  ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);
+  ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+}
+
+function pill(ctx, cx, cy, w, h, r, bg, fg, label, fs) {
+  ctx.fillStyle = bg; roundRect(ctx,cx-w/2,cy-h/2,w,h,r); ctx.fill();
+  ctx.fillStyle = fg;
+  ctx.font = 'bold '+fs+'px -apple-system,sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(label, cx, cy+1);
+}
+
+function filledDot(ctx, cx, cy, r, color) {
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fillStyle=color; ctx.fill();
+}
+
+// ─── 5-day continuous graph card ─────────────────────────────────
+function buildGraphCard() {
+  var SCALE = 2, CW = 400, PAD = 14;
+  var PILL_H = 28, PILL_PAD = 10, LABEL_H = 16;
+  var SNAP_H = 36, SNAP_PAD = 6, FOOTER_H = 14, GRAPH_H = 160;
+  var CH = PAD + PILL_H + PILL_PAD + GRAPH_H + LABEL_H + SNAP_PAD + SNAP_H + PAD + FOOTER_H;
+
+  var canvas = document.createElement('canvas');
+  canvas.width  = CW * SCALE;
+  canvas.height = CH * SCALE;
+  var ctx = canvas.getContext('2d');
+  ctx.scale(SCALE, SCALE);
+
+  ctx.fillStyle = '#111';
+  roundRect(ctx,0,0,CW,CH,14); ctx.fill();
+
+  var gLeft = PAD+6, gRight = CW-PAD-4;
+  var gTop  = PAD+PILL_H+PILL_PAD, gBottom = gTop+GRAPH_H;
+  var gW = gRight-gLeft, gH = GRAPH_H;
+  var TOTAL_SECS = totalDays * 86400;
+
+  function ex(epoch) {
+    return gLeft + ((epoch - windowStart) / TOTAL_SECS) * gW;
+  }
+
+  var allPts = [];
+  for (var d = 0; d < totalDays; d++) {
+    for (var i = 0; i < days[d].epochs.length; i++) {
+      allPts.push({ epoch: days[d].epochs[i], val: days[d].vals[i], dayIdx: d });
+    }
+  }
+  allPts.sort(function(a,b){ return a.epoch - b.epoch; });
+
+  var rawMax = 0;
+  for (var i = 0; i < allPts.length; i++) if (allPts[i].val > rawMax) rawMax = allPts[i].val;
+  if (rawMax < 4) rawMax = 4;
+  var step = rawMax <= 4 ? 0.5 : rawMax <= 8 ? 1 : rawMax <= 15 ? 2 : 5;
+  var maxY = Math.ceil(rawMax * 1.15 / step) * step;
+  if (maxY < 2) maxY = 2;
+
+  function gvy(v) {
+    return gBottom - (Math.min(Math.max(v,0), maxY) / maxY) * gH;
+  }
+
+  // Day bands + labels
+  var labelY = gBottom + 3;
+  for (var d = 0; d < totalDays; d++) {
+    var bandX = gLeft + (d / totalDays) * gW;
+    var bandW = gW / totalDays;
+    var midX  = bandX + bandW / 2;
+    var isToday = (d === totalDays - 1);
+
+    if (d % 2 === 1) {
+      ctx.fillStyle = 'rgba(255,255,255,0.04)';
+      ctx.fillRect(bandX, gTop, bandW, gH);
+    }
+    if (d > 0) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+      ctx.lineWidth = 0.75;
+      ctx.beginPath(); ctx.moveTo(bandX, gTop); ctx.lineTo(bandX, gBottom); ctx.stroke();
+    }
+    if (isToday) {
+      ctx.strokeStyle = 'rgba(245,200,66,0.5)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(bandX+0.5, gTop+0.5, bandW-1, gH-1);
+    }
+    ctx.fillStyle = isToday ? '#f5c842' : 'rgba(255,255,255,0.45)';
+    ctx.font = (isToday ? 'bold ' : '') + '11px -apple-system,sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.fillText(days[d].label.toLowerCase(), midX, labelY);
+  }
+
+  // X axis
+  ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+  ctx.lineWidth = 0.75;
+  ctx.beginPath(); ctx.moveTo(gLeft, gBottom); ctx.lineTo(gRight, gBottom); ctx.stroke();
+
+  // Target line
+  if (targetAUC > 0) {
+    var tPPM = targetAUC / 24;
+    if (tPPM <= maxY) {
+      var tY = gvy(tPPM);
+      ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+      ctx.lineWidth = 0.75;
+      ctx.setLineDash([4,3]);
+      ctx.beginPath(); ctx.moveTo(gLeft, tY); ctx.lineTo(gRight, tY); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+
+  if (allPts.length > 0) {
+    var firstDayIdx   = allPts[0].dayIdx;
+    var firstMidnight = windowStart + firstDayIdx * 86400;
+    var pts = [{ x: ex(firstMidnight), y: gvy(0) }];
+    for (var i = 0; i < allPts.length; i++) {
+      pts.push({ x: ex(allPts[i].epoch), y: gvy(allPts[i].val) });
+    }
+    var first = pts[0], last = pts[pts.length-1];
+
+    // Filled gradient area
+    var grad = ctx.createLinearGradient(0, gTop, 0, gBottom);
+    grad.addColorStop(0,   'rgba(255,140,0,0.0)');
+    grad.addColorStop(0.5, 'rgba(255,140,0,0.25)');
+    grad.addColorStop(1,   'rgba(255,140,0,0.55)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.moveTo(first.x, gBottom); ctx.lineTo(first.x, first.y);
+    for (var i = 0; i < pts.length-1; i++) {
+      var mx = (pts[i].x+pts[i+1].x)/2, my = (pts[i].y+pts[i+1].y)/2;
+      ctx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
+    }
+    ctx.lineTo(last.x, last.y); ctx.lineTo(last.x, gBottom);
+    ctx.closePath(); ctx.fill();
+
+    // Spline line
+    ctx.strokeStyle = '#FF8C00'; ctx.lineWidth = 2;
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(first.x, first.y);
+    for (var i = 0; i < pts.length-1; i++) {
+      var mx = (pts[i].x+pts[i+1].x)/2, my = (pts[i].y+pts[i+1].y)/2;
+      ctx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
+    }
+    ctx.lineTo(last.x, last.y); ctx.stroke();
+
+    // Dots
+    var dotR = 3.5, valFS = 9;
+    for (var i = 0; i < allPts.length; i++) {
+      var px = pts[i+1].x, py = pts[i+1].y;
+      var isNewest = (i === allPts.length-1);
+      var dc = allPts[i].val >= 5 ? '#00FF00' : '#00FFFF';
+      if (isNewest) {
+        ctx.globalAlpha=0.3; filledDot(ctx,px,py,dotR*2.2,dc);
+        ctx.globalAlpha=1;   filledDot(ctx,px,py,dotR*1.4,dc);
+      } else {
+        filledDot(ctx,px,py,dotR,dc);
+      }
+    }
+
+    // Labels with collision resolution
+    ctx.font = 'bold '+valFS+'px -apple-system,sans-serif';
+    var PAD_X=2, MAX_SHIFT=gW/totalDays*0.35, ITERS=5;
+    var MIN_CX=gLeft+2, MAX_CX=gRight-2;
+    var labels = [];
+    for (var i = 0; i < allPts.length; i++) {
+      var px=pts[i+1].x, py=pts[i+1].y;
+      var isNewest=(i===allPts.length-1);
+      var dotEdge=isNewest?dotR*1.4:dotR;
+      var s=String(Math.round(allPts[i].val));
+      var w=ctx.measureText(s).width;
+      labels.push({ s:s, baseX:px, x:px, y:py-dotEdge-1, w:w, visible:true, newest:isNewest });
+    }
+    for (var pass=0; pass<ITERS; pass++) {
+      for (var i=0; i<labels.length-1; i++) {
+        var L=labels[i], R=labels[i+1];
+        if (!L.visible||!R.visible) continue;
+        var Lright=L.x+L.w/2+PAD_X, Rleft=R.x-R.w/2-PAD_X;
+        if (Lright<=Rleft) continue;
+        var overlap=Lright-Rleft, push=Math.floor(overlap/2)+1;
+        var newLX=Math.max(L.x-push,MIN_CX), newRX=Math.min(R.x+push,MAX_CX);
+        var Lexc=Math.abs(newLX-L.baseX)>MAX_SHIFT, Rexc=Math.abs(newRX-R.baseX)>MAX_SHIFT;
+        if (L.newest) { L.x=L.baseX; if(Rexc)R.visible=false;else R.x=newRX; }
+        else if (R.newest) { R.x=R.baseX; if(Lexc)L.visible=false;else L.x=newLX; }
+        else {
+          if (!Lexc&&!Rexc)     { L.x=newLX; R.x=newRX; }
+          else if (Lexc&&!Rexc) { L.visible=false; R.x=R.baseX; }
+          else if (!Lexc&&Rexc) { R.visible=false; L.x=L.baseX; }
+          else                  { L.visible=false; R.x=R.baseX; }
+        }
+      }
+    }
+    ctx.font='bold '+valFS+'px -apple-system,sans-serif';
+    ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.textBaseline='bottom';
+    for (var i=0; i<labels.length; i++) {
+      if (labels[i].visible) ctx.fillText(labels[i].s, labels[i].x, labels[i].y);
+    }
+  }
+
+  // TODAY pill
+  pill(ctx, CW/2, PAD+PILL_H/2, 90, PILL_H, PILL_H/2, '#f5c842','#1a1a2e','TODAY',11);
+
+  // Per-day AUC row
+  var rowY=gBottom+LABEL_H+SNAP_PAD+SNAP_H/2, aucFS=13, heartFS=11;
+  for (var d=0; d<totalDays; d++) {
+    var bandW=gW/totalDays, cx=gLeft+(d+0.5)*bandW;
+    var isToday=(d===totalDays-1);
+    var hit=targetAUC>0&&days[d].auc>=targetAUC;
+    var aucStr=days[d].auc>0?String(Math.round(days[d].auc)):'\u2014';
+    var heart=hit?'\u2665':'\u2661';
+    ctx.fillStyle=hit?'#e53935':'rgba(255,255,255,0.3)';
+    ctx.font=heartFS+'px -apple-system,sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+    ctx.fillText(heart, cx, rowY-aucFS*0.15);
+    ctx.fillStyle=isToday?(hit?'#FFFF00':'#FF8C00'):(hit?'#FFA500':'rgba(255,255,255,0.55)');
+    ctx.font=(isToday?'bold ':'')+aucFS+'px -apple-system,sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='top';
+    ctx.fillText(aucStr, cx, rowY+heartFS*0.3);
+  }
+
+  // Watermark
+  ctx.fillStyle='rgba(255,255,255,0.07)';
+  ctx.font='9px -apple-system,sans-serif';
+  ctx.textAlign='right'; ctx.textBaseline='alphabetic';
+  ctx.fillText('fox2.app', CW-PAD, CH-4);
+
+  return canvas;
+}
+
+// ─── 5-bar streak card ────────────────────────────────────────────
+function buildStreakCard() {
+  var SCALE=2, CW=400, PAD=14, PW=CW-PAD*2, PH=PW, CH=PAD+PH+PAD;
+  var canvas=document.createElement('canvas');
+  canvas.width=CW*SCALE; canvas.height=CH*SCALE;
+  var ctx=canvas.getContext('2d'); ctx.scale(SCALE,SCALE);
+
+  ctx.fillStyle='#111'; roundRect(ctx,0,0,CW,CH,14); ctx.fill();
+  var px=PAD, py=PAD, pw=PW, ph=PH;
+  ctx.fillStyle='#000'; roundRect(ctx,px,py,pw,ph,10); ctx.fill();
+  ctx.save(); ctx.beginPath(); roundRect(ctx,px,py,pw,ph,10); ctx.clip();
+
+  var TOTAL=totalDays, sx=pw/128;
+  var circleR=10*sx, subFS=8*sx, dayFS=11*sx;
+  var padB=ph*0.03, subH=subFS*1.4, badgeGapB=3*sx, dayGap=5*sx, dayH=dayFS*1.4;
+  var subBottom=py+ph-padB;
+  var badgesY=subBottom-subH-badgeGapB-circleR;
+  var dayLetterY=badgesY-circleR-dayGap-dayH;
+  var chartBottom=dayLetterY-2*sx, chartH=ph*0.34;
+  var chartLeft=px+8*sx, chartRight=px+pw-8*sx, chartW=chartRight-chartLeft;
+  var gap=2*sx, barW=(chartW-gap*(TOTAL-1))/TOTAL;
+
+  var yMax=targetAUC>0?targetAUC:0;
+  for(var i=0;i<TOTAL;i++) if(days[i].auc>yMax) yMax=days[i].auc;
+  yMax*=1.10; if(yMax<40) yMax=40;
+  function sbh(v){return(Math.max(0,Math.min(v,yMax))/yMax)*chartH;}
+
+  if(targetAUC>0){
+    var tY=chartBottom-sbh(targetAUC);
+    ctx.strokeStyle='#fff'; ctx.lineWidth=1; ctx.setLineDash([3*sx,3*sx]);
+    ctx.beginPath(); ctx.moveTo(chartLeft-2,tY); ctx.lineTo(chartRight,tY); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  ctx.strokeStyle='#fff'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(chartLeft,chartBottom); ctx.lineTo(chartRight,chartBottom); ctx.stroke();
+
+  var curX=chartLeft;
+  for(var i=0;i<TOTAL;i++){
+    var di=TOTAL-1-i;
+    var h=sbh(days[di].auc), yT=chartBottom-h;
+    var hit=targetAUC>0&&days[di].auc>=targetAUC, isToday=(di===TOTAL-1);
+    if(h>0){
+      var r=Math.min(2*sx,h/2);
+      ctx.fillStyle=hit?'#FFA500':'#555';
+      roundRect(ctx,curX,yT,barW,h,r); ctx.fill();
+      var lFS=11*sx;
+      if(h>lFS*1.3){
+        ctx.fillStyle=hit?'#000':'#fff';
+        ctx.font='bold '+lFS+'px -apple-system,sans-serif';
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText(Math.round(days[di].auc),curX+barW/2,yT+h/2);
+      }
+    }
+    ctx.fillStyle=isToday?'#FFFF00':'#fff';
+    ctx.font=(isToday?'bold ':'')+( isToday?13*sx:dayFS)+'px -apple-system,sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='top';
+    ctx.fillText(days[di].label.toLowerCase(),curX+barW/2,dayLetterY);
+    curX+=barW+gap;
+  }
+  ctx.restore();
+
+  var leftX=px+(6+10)*sx, rightX=px+pw-(6+10)*sx;
+  ctx.beginPath(); ctx.arc(leftX,badgesY,circleR,0,Math.PI*2); ctx.fillStyle='#7B00D4'; ctx.fill();
+  ctx.beginPath(); ctx.arc(rightX,badgesY,circleR,0,Math.PI*2); ctx.fillStyle='#FFA500'; ctx.fill();
+  var badgeFS=11*sx;
+  ctx.font='bold '+badgeFS+'px -apple-system,sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillStyle='#fff'; ctx.fillText(bestStreak,leftX,badgesY+1);
+  ctx.fillStyle='#000'; ctx.fillText(currentStreak,rightX,badgesY+1);
+  ctx.fillStyle='#fff'; ctx.font=subFS+'px -apple-system,sans-serif'; ctx.textBaseline='top';
+  ctx.fillText('best',leftX,badgesY+circleR+badgeGapB);
+  ctx.fillText('now',rightX,badgesY+circleR+badgeGapB);
+
+  pill(ctx,px+pw/2,py+ph*0.05,pw*0.48,ph*0.09,ph*0.045,'#6A0DAD','#fff','5 DAY',pw*0.08);
+
+  ctx.fillStyle='rgba(255,255,255,0.07)';
+  ctx.font='9px -apple-system,sans-serif';
+  ctx.textAlign='right'; ctx.textBaseline='alphabetic';
+  ctx.fillText('fox2.app', CW-PAD, CH-4);
+
+  return canvas;
+}
+
+// ─── Render + share ───────────────────────────────────────────────
+var graphCanvas, streakCanvas;
+
+window.addEventListener('load', function() {
+  if (!dParam || totalDays === 0) return;
+
+  setTimeout(function() {
+    graphCanvas  = buildGraphCard();
+    streakCanvas = buildStreakCard();
+
+    function displayCanvas(src, destId) {
+      var dest = document.getElementById(destId);
+      dest.width = src.width; dest.height = src.height;
+      dest.getContext('2d').drawImage(src, 0, 0);
+    }
+    displayCanvas(graphCanvas,  'card-graph');
+    displayCanvas(streakCanvas, 'card-streaks');
+
+    // Auto-trigger share sheet on load (real Safari only)
+    if (navigator.share && navigator.canShare) {
+      doShare(graphCanvas);
+    }
+  }, 100);
+});
+
+function doShare(canvas) {
+  canvas.toBlob(function(blob) {
+    var file = new File([blob], 'fox2-results.png', { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: 'FOX2 Results' })
+        .catch(function() {}); // dismissed — no problem
+    }
+  }, 'image/png');
+}
+
+function shareGraph()   { if (graphCanvas)  doShare(graphCanvas);  }
+function shareStreaks() { if (streakCanvas) doShare(streakCanvas); }
+
+// ─── Dot sync ─────────────────────────────────────────────────────
+document.getElementById('scroller').addEventListener('scroll', function() {
+  var p = Math.round(this.scrollTop / window.innerHeight);
+  document.getElementById('dot0').className = p===0?'dot active':'dot';
+  document.getElementById('dot1').className = p===0?'dot active':'dot';
+  document.getElementById('dot2').className = p===1?'dot active':'dot';
+  document.getElementById('dot3').className = p===1?'dot active':'dot';
+}, { passive: true });
+
+</script>
+</body>
+</html>
