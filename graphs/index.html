@@ -694,11 +694,11 @@ window.addEventListener('load', function() {
 
   function fmtPopupTime(epoch) {
     var d = new Date(epoch * 1000);
-    var h = d.getHours(), m = d.getMinutes();
+    var h = d.getUTCHours(), m = d.getUTCMinutes();
     var ampm = h >= 12 ? 'pm' : 'am';
     h = h % 12 || 12;
     var ms = m < 10 ? '0'+m : String(m);
-    return DAYS_SHORT[d.getDay()] + ' ' + MONTHS[d.getMonth()] + ' ' + d.getDate()
+    return DAYS_SHORT[d.getUTCDay()] + ' ' + MONTHS[d.getUTCMonth()] + ' ' + d.getUTCDate()
          + '  ' + h + ':' + ms + ampm;
   }
 
