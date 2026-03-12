@@ -85,6 +85,10 @@ html, body {
     <div class="card-wrap" style="position:relative;">
       <canvas id="card-graph" style="cursor:pointer;"></canvas>
       <p id="label-hint" style="position:absolute;top:7%;left:0;right:0;text-align:center;font-size:11px;color:rgba(255,255,255,0.3);pointer-events:none;margin:0;z-index:1;">Tap to show/hide labels</p>
+      <div id="dot-popup" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;">
+        <div id="dot-popup-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div>
+        <div id="dot-popup-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div>
+      </div>
     </div>
     <button class="share-btn" id="btn-share" onclick="shareGraph()">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -375,7 +379,7 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
     ctx.stroke();
 
     // Dots
-    var dotR = 3, valFS = 8;
+    var dotR = 3, valFS = 9;
     for (var i = 0; i < allPts.length; i++) {
       var px = pts[i+1].x, py = pts[i+1].y;
       var isNewest = (allPts[i].dayIdx + dayOffset === todayIdx) && (i === allPts.length - 1);
@@ -386,6 +390,7 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
       } else {
         filledDot(ctx,px,py,dotR,dc);
       }
+      dotHits.push({ cx: px, cy: py, val: allPts[i].val, epoch: allPts[i].epoch });
     }
 
     // Labels with collision resolution
@@ -462,7 +467,7 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
 
 // ─── 3-week graph card ────────────────────────────────────────────
 function buildGraphCard() {
-  var SCALE   = 2;
+  var SCALE   = graphScale;
   var CW      = 400;
   var PAD     = 14;
   var PILL_H  = 28;
@@ -615,10 +620,13 @@ function buildGraphCard() {
 
 // ─── Render + share ───────────────────────────────────────────────
 var graphCanvas;
+var dotHits = [];
+var graphScale = 2;
 var labelStep = 1; // 0=all, 1=half, 2=quarter, 3=none
 var HINT_LABELS = 'Tap to show/hide labels';
 
 function renderCard() {
+  dotHits = [];
   graphCanvas = buildGraphCard();
   var dest = document.getElementById('card-graph');
   dest.width = graphCanvas.width; dest.height = graphCanvas.height;
@@ -641,10 +649,73 @@ window.addEventListener('load', function() {
     }
   }, 100);
 
-  // ── Tap to toggle labels (ignore pinch) ───────────────────────
-  var dest = document.getElementById('card-graph');
-  var lastTouch = 0;
+  // ── Tap/click: dot → popup, empty space → cycle labels ───────
+  var dest     = document.getElementById('card-graph');
+  var popup    = document.getElementById('dot-popup');
+  var popupVal = document.getElementById('dot-popup-val');
+  var popupTime= document.getElementById('dot-popup-time');
   var touchStartTime = 0, touchStartX = 0, touchStartY = 0, touchCount = 0;
+  var lastTouch = 0;
+  var HIT_RADIUS = 22;
+
+  var DAYS_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var MONTHS     = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  function fmtPopupTime(epoch) {
+    var d = new Date(epoch * 1000);
+    var h = d.getHours(), m = d.getMinutes();
+    var ampm = h >= 12 ? 'pm' : 'am';
+    h = h % 12 || 12;
+    var ms = m < 10 ? '0'+m : String(m);
+    return DAYS_SHORT[d.getDay()] + ' ' + MONTHS[d.getMonth()] + ' ' + d.getDate()
+         + '  ' + h + ':' + ms + ampm;
+  }
+
+  function canvasCoords(clientX, clientY) {
+    var rect = dest.getBoundingClientRect();
+    var scale = (dest.width / graphScale) / rect.width;
+    return { x: (clientX - rect.left) * scale,
+             y: (clientY - rect.top)  * scale };
+  }
+
+  function findNearestDot(cx, cy) {
+    var best = null, bestD = HIT_RADIUS;
+    for (var i = 0; i < dotHits.length; i++) {
+      var dx = dotHits[i].cx - cx, dy = dotHits[i].cy - cy;
+      var d = Math.sqrt(dx*dx + dy*dy);
+      if (d < bestD) { bestD = d; best = dotHits[i]; }
+    }
+    return best;
+  }
+
+  function showPopup(dot, clientX, clientY) {
+    popupVal.textContent  = 'Zone ' + Math.round(dot.val);
+    popupTime.textContent = fmtPopupTime(dot.epoch);
+    popup.style.display = 'block';
+    var wrap = dest.parentElement.getBoundingClientRect();
+    var px = clientX - wrap.left;
+    var py = clientY - wrap.top - 48;
+    popup.style.left = '0'; popup.style.top = '0';
+    var pw = popup.offsetWidth, ph = popup.offsetHeight;
+    px = Math.max(4, Math.min(px - pw/2, wrap.width - pw - 4));
+    py = Math.max(4, py);
+    popup.style.left = px + 'px';
+    popup.style.top  = py + 'px';
+  }
+
+  function hidePopup() { popup.style.display = 'none'; }
+
+  function handleTap(clientX, clientY) {
+    var c = canvasCoords(clientX, clientY);
+    var dot = findNearestDot(c.x, c.y);
+    if (dot) {
+      showPopup(dot, clientX, clientY);
+    } else {
+      hidePopup();
+      labelStep = (labelStep + 1) % 4;
+      renderCard();
+    }
+  }
 
   dest.addEventListener('touchstart', function(e) {
     touchCount = e.touches.length;
@@ -656,23 +727,20 @@ window.addEventListener('load', function() {
   }, { passive: true });
 
   dest.addEventListener('touchend', function(e) {
-    if (touchCount > 1) { touchCount = 0; return; }
+    if (touchCount > 1) { touchCount = 0; hidePopup(); return; }
     var dt = Date.now() - touchStartTime;
     var dx = Math.abs(e.changedTouches[0].clientX - touchStartX);
     var dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
     if (dt < 250 && dx < 10 && dy < 10) {
       lastTouch = Date.now();
-      labelStep = (labelStep + 1) % 4;
-      renderCard();
+      handleTap(touchStartX, touchStartY);
     }
     touchCount = 0;
   }, { passive: true });
 
-  // Mouse click (desktop) — skip if a touch just fired
-  dest.addEventListener('click', function() {
+  dest.addEventListener('click', function(e) {
     if (Date.now() - lastTouch < 500) return;
-    labelStep = (labelStep + 1) % 4;
-    renderCard();
+    handleTap(e.clientX, e.clientY);
   });
 });
 
