@@ -565,16 +565,17 @@ function buildGraphCard() {
   var LABEL_TOP_PAD = 8;
   var LINE_GAP = 3;
 
-  // Yellow rounded rect (labels + values inside)
-  ctx.fillStyle = '#f5c842';
-  roundRect(ctx, gLeft - sumPad, rectY, gRight - gLeft + sumPad*2, SUMMARY_H, 10); ctx.fill();
+  // Yellow border rounded rect (no fill)
+  ctx.strokeStyle = '#f5c842';
+  ctx.lineWidth = 4;
+  roundRect(ctx, gLeft - sumPad, rectY, gRight - gLeft + sumPad*2, SUMMARY_H, 10); ctx.stroke();
 
   // Dividers, labels, underlines, values
   for (var s = 0; s < sumStats.length; s++) {
     var cx = gLeft + colW * s + colW / 2;
 
     if (s > 0) {
-      ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+      ctx.strokeStyle = 'rgba(255,255,255,0.25)';
       ctx.lineWidth = 0.75;
       ctx.beginPath();
       ctx.moveTo(gLeft + colW * s, rectY + 6);
@@ -588,14 +589,14 @@ function buildGraphCard() {
     var blockTop = rectY + (SUMMARY_H - blockH) / 2;
 
     var labelY = blockTop + LABEL_FS / 2;
-    ctx.fillStyle = 'rgba(26,26,46,0.55)';
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
     ctx.font = LABEL_FS + 'px -apple-system,sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(sumStats[s].label, cx, labelY);
 
     var lw = ctx.measureText(sumStats[s].label).width;
     var lineY = blockTop + LABEL_FS + LINE_GAP;
-    ctx.strokeStyle = 'rgba(26,26,46,0.25)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
     ctx.lineWidth = 0.75;
     ctx.beginPath();
     ctx.moveTo(cx - lw/2, lineY);
@@ -603,7 +604,7 @@ function buildGraphCard() {
     ctx.stroke();
 
     var valueY = lineY + VALUE_GAP + VALUE_FS / 2;
-    ctx.fillStyle = '#1a1a2e';
+    ctx.fillStyle = '#ffffff';
     ctx.font = 'bold ' + VALUE_FS + 'px -apple-system,sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(sumStats[s].value, cx, valueY);
