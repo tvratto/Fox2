@@ -107,13 +107,19 @@ var params      = new URLSearchParams(window.location.search);
 var windowStart = parseInt(params.get('w') || '0', 10);
 var targetAUC   = parseInt(params.get('t') || '0', 10);
 var dParam      = params.get('d') || '';
-var aParam      = params.get('a') || '';  // pre-computed AUCs, comma-separated, oldest first
+var aParam      = params.get('a') || '';
+var sParam      = params.get('s') || '';
 
 // Parse injected AUCs if present
 var injectedAUCs = [];
 if (aParam) {
   injectedAUCs = aParam.split(',').map(function(v) { return parseFloat(v) || 0; });
 }
+
+// Parse streaks
+var sParts     = sParam ? sParam.split(',') : [];
+var currentStreak = sParts.length > 0 ? parseInt(sParts[0], 10) : 0;
+var bestStreak    = sParts.length > 1 ? parseInt(sParts[1], 10) : 0;
 
 // Parse days from compact format:
 // d = <label>:<m0>:<p0>,<m1>:<p1>|<label>:...|...
@@ -162,32 +168,6 @@ if (dParam) {
     }
 
     days.push({ label: label, epochs: epochs, vals: vals, auc: auc });
-  }
-
-  // Compute streaks (today = last day, hit = auc >= target)
-  var inStreak = false;
-  var streak   = 0;
-  for (var d = totalDays - 1; d >= 0; d--) {
-    var hit = targetAUC > 0 && days[d].auc >= targetAUC;
-    if (hit) {
-      streak++;
-      if (d === totalDays - 1) inStreak = true;
-    } else {
-      if (!inStreak) currentStreak = 0;
-      break;
-    }
-  }
-  if (inStreak) currentStreak = streak;
-
-  // Best streak: scan all days
-  var run = 0;
-  for (var d = 0; d < totalDays; d++) {
-    if (targetAUC > 0 && days[d].auc >= targetAUC) {
-      run++;
-      if (run > bestStreak) bestStreak = run;
-    } else {
-      run = 0;
-    }
   }
 }
 
