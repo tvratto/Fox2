@@ -107,6 +107,13 @@ var params      = new URLSearchParams(window.location.search);
 var windowStart = parseInt(params.get('w') || '0', 10);
 var targetAUC   = parseInt(params.get('t') || '0', 10);
 var dParam      = params.get('d') || '';
+var aParam      = params.get('a') || '';  // pre-computed AUCs, comma-separated, oldest first
+
+// Parse injected AUCs if present
+var injectedAUCs = [];
+if (aParam) {
+  injectedAUCs = aParam.split(',').map(function(v) { return parseFloat(v) || 0; });
+}
 
 // Parse days from compact format:
 // d = <label>:<m0>:<p0>,<m1>:<p1>|<label>:...|...
@@ -143,11 +150,13 @@ if (dParam) {
       }
     }
 
-    // Compute AUC using trapezoidal rule (ppm × hours)
+    // Use injected AUC if available, otherwise trapezoid approximation
     var auc = 0;
-    if (epochs.length >= 2) {
+    if (injectedAUCs.length > d) {
+      auc = injectedAUCs[d];
+    } else if (epochs.length >= 2) {
       for (var i = 1; i < epochs.length; i++) {
-        var dt = (epochs[i] - epochs[i-1]) / 3600; // hours
+        var dt = (epochs[i] - epochs[i-1]) / 3600;
         auc += 0.5 * (vals[i-1] + vals[i]) * dt;
       }
     }
@@ -460,7 +469,7 @@ function buildStreakCard() {
 
   var curX=chartLeft;
   for(var i=0;i<TOTAL;i++){
-    var di=TOTAL-1-i;
+    var di=i;
     var h=sbh(days[di].auc), yT=chartBottom-h;
     var hit=targetAUC>0&&days[di].auc>=targetAUC, isToday=(di===TOTAL-1);
     if(h>0){
