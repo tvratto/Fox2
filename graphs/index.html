@@ -539,10 +539,10 @@ function buildGraphCard() {
   var summaryY = rowTop + ROW_GAP;
   var sumCY = summaryY + SUMMARY_H / 2;
   var sumStats = [
-    { label: 'ZONE RANGE', value: minZone + '–' + maxZone, suffix: null },
-    { label: 'AVG ZONE',   value: String(avgZone),          suffix: null },
-    { label: targetAUC > 0 ? 'on target (' + targetAUC + ')' : 'on target',
-                           value: pctOnTarget + '%',        suffix: null }
+    { label: 'Range',  value: minZone + '–' + maxZone },
+    { label: 'Avg',    value: String(avgZone)          },
+    { label: targetAUC > 0 ? 'Target (' + targetAUC + ')' : 'Target',
+                       value: pctOnTarget + '%'         }
   ];
   var colW = (gRight - gLeft) / 3;
   for (var s = 0; s < sumStats.length; s++) {
@@ -555,15 +555,15 @@ function buildGraphCard() {
       ctx.lineTo(gLeft + colW * s, summaryY + SUMMARY_H - 6);
       ctx.stroke();
     }
-    var valueY = sumCY - 7;
+    var valueY = sumCY - 9;
     ctx.fillStyle = '#fff';
-    ctx.font = 'bold 30px -apple-system,sans-serif';
+    ctx.font = 'bold 32px -apple-system,sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(sumStats[s].value, cx, valueY);
     ctx.fillStyle = 'rgba(255,255,255,0.4)';
-    ctx.font = '9px -apple-system,sans-serif';
+    ctx.font = '13px -apple-system,sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(sumStats[s].label, cx, summaryY + SUMMARY_H - 7);
+    ctx.fillText(sumStats[s].label, cx, summaryY + SUMMARY_H - 8);
   }
 
   // ── 3 WEEKS + date range pill ─────────────────────────────────
@@ -579,12 +579,12 @@ function buildGraphCard() {
   ctx.fillStyle = '#1a1a2e';
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'center';
-  ctx.font = 'bold 11px -apple-system,sans-serif';
+  ctx.font = 'bold 15px -apple-system,sans-serif';
   ctx.fillText('3 WEEKS', CW/2 - 36, pillCY + 1);
   ctx.fillStyle = 'rgba(26,26,46,0.35)';
   ctx.fillRect(CW/2 - 8, PAD + 7, 1, pillH - 14);
   ctx.fillStyle = '#1a1a2e';
-  ctx.font = '10px -apple-system,sans-serif';
+  ctx.font = '13px -apple-system,sans-serif';
   ctx.fillText(rangeStr, CW/2 + 46, pillCY + 1);
 
   // ── Watermark ─────────────────────────────────────────────────
