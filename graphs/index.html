@@ -303,6 +303,41 @@ function buildGraphCard() {
     }
     var first = pts[0], last = pts[pts.length-1];
 
+    // Catmull-Rom control point helper
+    // Given 4 points p0..p3, returns cubic bezier control points for segment p1->p2
+    function catmullRomCP(p0, p1, p2, p3, tension) {
+      tension = tension || 0.5;
+      return {
+        cp1x: p1.x + (p2.x - p0.x) * tension / 3,
+        cp1y: p1.y + (p2.y - p0.y) * tension / 3,
+        cp2x: p2.x - (p3.x - p1.x) * tension / 3,
+        cp2y: p2.y - (p3.y - p1.y) * tension / 3
+      };
+    }
+
+    // Build a spline path through pts using Catmull-Rom
+    // Phantom points at each end to handle boundary tangents cleanly
+    function splinePath(ctx, pts, startAtBottom) {
+      if (pts.length < 2) return;
+      // Phantom endpoints mirror the first/last segments
+      var phantom0 = { x: 2*pts[0].x - pts[1].x, y: 2*pts[0].y - pts[1].y };
+      var phantomN = { x: 2*pts[pts.length-1].x - pts[pts.length-2].x,
+                       y: 2*pts[pts.length-1].y - pts[pts.length-2].y };
+      var ext = [phantom0].concat(pts).concat([phantomN]);
+
+      if (startAtBottom) {
+        ctx.moveTo(pts[0].x, gBottom);
+        ctx.lineTo(pts[0].x, pts[0].y);
+      } else {
+        ctx.moveTo(pts[0].x, pts[0].y);
+      }
+
+      for (var i = 0; i < pts.length - 1; i++) {
+        var cp = catmullRomCP(ext[i], ext[i+1], ext[i+2], ext[i+3]);
+        ctx.bezierCurveTo(cp.cp1x, cp.cp1y, cp.cp2x, cp.cp2y, pts[i+1].x, pts[i+1].y);
+      }
+    }
+
     // Filled gradient area
     var grad = ctx.createLinearGradient(0, gTop, 0, gBottom);
     grad.addColorStop(0,   'rgba(255,140,0,0.0)');
@@ -310,23 +345,16 @@ function buildGraphCard() {
     grad.addColorStop(1,   'rgba(255,140,0,0.55)');
     ctx.fillStyle = grad;
     ctx.beginPath();
-    ctx.moveTo(first.x, gBottom); ctx.lineTo(first.x, first.y);
-    for (var i = 0; i < pts.length-1; i++) {
-      var mx = (pts[i].x+pts[i+1].x)/2, my = (pts[i].y+pts[i+1].y)/2;
-      ctx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
-    }
-    ctx.lineTo(last.x, last.y); ctx.lineTo(last.x, gBottom);
+    splinePath(ctx, pts, true);
+    ctx.lineTo(last.x, gBottom);
     ctx.closePath(); ctx.fill();
 
     // Spline line
     ctx.strokeStyle = '#FF8C00'; ctx.lineWidth = 2;
     ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(first.x, first.y);
-    for (var i = 0; i < pts.length-1; i++) {
-      var mx = (pts[i].x+pts[i+1].x)/2, my = (pts[i].y+pts[i+1].y)/2;
-      ctx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
-    }
-    ctx.lineTo(last.x, last.y); ctx.stroke();
+    ctx.beginPath();
+    splinePath(ctx, pts, false);
+    ctx.stroke();
 
     // Dots
     var dotR = 3.5, valFS = 9;
