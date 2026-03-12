@@ -84,7 +84,6 @@ html, body {
   <div class="page">
     <div class="card-wrap" style="position:relative;">
       <canvas id="card-graph" style="cursor:pointer;"></canvas>
-      <p id="label-hint" style="position:absolute;top:7%;left:0;right:0;text-align:center;font-size:11px;color:rgba(255,255,255,0.3);pointer-events:none;margin:0;z-index:1;">Tap to show/hide labels</p>
       <div id="dot-popup" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;">
         <div id="dot-popup-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div>
         <div id="dot-popup-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div>
@@ -379,16 +378,21 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
     ctx.stroke();
 
     // Dots
-    var dotR = 3, valFS = 9;
+    var dotR = 3, valFS = 12;
     for (var i = 0; i < allPts.length; i++) {
       var px = pts[i+1].x, py = pts[i+1].y;
       var isNewest = (allPts[i].dayIdx + dayOffset === todayIdx) && (i === allPts.length - 1);
       var dc = allPts[i].val >= 5 ? '#00FF00' : '#00FFFF';
+      var isSelected = selectedDot && selectedDot.epoch === allPts[i].epoch;
       if (isNewest) {
         ctx.globalAlpha=0.3; filledDot(ctx,px,py,dotR*2.2,dc);
         ctx.globalAlpha=1;   filledDot(ctx,px,py,dotR*1.4,dc);
       } else {
         filledDot(ctx,px,py,dotR,dc);
+      }
+      if (isSelected) {
+        ctx.beginPath(); ctx.arc(px, py, dotR*2.8, 0, Math.PI*2);
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
       }
       dotHits.push({ cx: px, cy: py, val: allPts[i].val, epoch: allPts[i].epoch });
     }
@@ -427,14 +431,12 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
     }
     ctx.font='bold '+valFS+'px -apple-system,sans-serif';
     ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.textBaseline='bottom';
-    // labelStep: 0=all, 1=every 2nd, 2=every 4th, 3=none
-    var skipN = [1, 2, 4, Infinity][labelStep];
     var shown = 0;
     for (var i=0; i<labels.length; i++) {
       if (!labels[i].visible) continue;
       if (labels[i].newest) { ctx.fillText(labels[i].s, labels[i].x, labels[i].y); continue; }
       shown++;
-      if (shown % skipN === 0) ctx.fillText(labels[i].s, labels[i].x, labels[i].y);
+      if (shown % 2 === 0) ctx.fillText(labels[i].s, labels[i].x, labels[i].y);
     }
   }
 
@@ -479,13 +481,14 @@ function buildGraphCard() {
   var AUC_H   = 36;   // heart + AUC number row (doubled)
   var ROW_GAP = 12;   // gap between week rows
   var SUMMARY_H = 60;
+  var LABEL_ABOVE_H = 0;
   var FOOTER_H = 14;
 
   // Total height: pill + 3 rows of (graph + labels + auc) + gaps between + summary + footer
   var CH = PAD + PILL_H + PILL_PAD
          + WEEKS * (GRAPH_H + LABEL_H + AUC_H)
          + (WEEKS - 1) * ROW_GAP
-         + ROW_GAP + SUMMARY_H
+         + ROW_GAP + LABEL_ABOVE_H + SUMMARY_H
          + PAD + FOOTER_H;
 
   var canvas = document.createElement('canvas');
@@ -549,7 +552,8 @@ function buildGraphCard() {
   var pctOnTarget = daysWithData > 0 ? Math.round(daysOnTarget / daysWithData * 100) : 0;
 
   var summaryY = rowTop + ROW_GAP;
-  var sumCY = summaryY + SUMMARY_H / 2;
+  var sumPad = 6;
+  var rectY = summaryY;
   var sumStats = [
     { label: 'Range',  value: minZone + '–' + maxZone },
     { label: 'Avg',    value: String(avgZone)          },
@@ -557,25 +561,52 @@ function buildGraphCard() {
                        value: pctOnTarget + '%'         }
   ];
   var colW = (gRight - gLeft) / 3;
+  var LABEL_FS = 14;
+  var LABEL_TOP_PAD = 8;
+  var LINE_GAP = 3;
+
+  // Yellow rounded rect (labels + values inside)
+  ctx.fillStyle = '#f5c842';
+  roundRect(ctx, gLeft - sumPad, rectY, gRight - gLeft + sumPad*2, SUMMARY_H, 10); ctx.fill();
+
+  // Dividers, labels, underlines, values
   for (var s = 0; s < sumStats.length; s++) {
     var cx = gLeft + colW * s + colW / 2;
+
     if (s > 0) {
-      ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+      ctx.strokeStyle = 'rgba(0,0,0,0.15)';
       ctx.lineWidth = 0.75;
       ctx.beginPath();
-      ctx.moveTo(gLeft + colW * s, summaryY + 6);
-      ctx.lineTo(gLeft + colW * s, summaryY + SUMMARY_H - 6);
+      ctx.moveTo(gLeft + colW * s, rectY + 6);
+      ctx.lineTo(gLeft + colW * s, rectY + SUMMARY_H - 6);
       ctx.stroke();
     }
-    var valueY = sumCY - 9;
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 32px -apple-system,sans-serif';
+
+    var VALUE_FS = 26;
+    var VALUE_GAP = 4;
+    var blockH = LABEL_FS + LINE_GAP + VALUE_GAP + VALUE_FS;
+    var blockTop = rectY + (SUMMARY_H - blockH) / 2;
+
+    var labelY = blockTop + LABEL_FS / 2;
+    ctx.fillStyle = 'rgba(26,26,46,0.55)';
+    ctx.font = LABEL_FS + 'px -apple-system,sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(sumStats[s].label, cx, labelY);
+
+    var lw = ctx.measureText(sumStats[s].label).width;
+    var lineY = blockTop + LABEL_FS + LINE_GAP;
+    ctx.strokeStyle = 'rgba(26,26,46,0.25)';
+    ctx.lineWidth = 0.75;
+    ctx.beginPath();
+    ctx.moveTo(cx - lw/2, lineY);
+    ctx.lineTo(cx + lw/2, lineY);
+    ctx.stroke();
+
+    var valueY = lineY + VALUE_GAP + VALUE_FS / 2;
+    ctx.fillStyle = '#1a1a2e';
+    ctx.font = 'bold ' + VALUE_FS + 'px -apple-system,sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(sumStats[s].value, cx, valueY);
-    ctx.fillStyle = 'rgba(255,255,255,0.4)';
-    ctx.font = '13px -apple-system,sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(sumStats[s].label, cx, summaryY + SUMMARY_H - 8);
   }
 
   // ── 3 WEEKS + date range pill ─────────────────────────────────
@@ -621,9 +652,8 @@ function buildGraphCard() {
 // ─── Render + share ───────────────────────────────────────────────
 var graphCanvas;
 var dotHits = [];
+var selectedDot = null;
 var graphScale = 2;
-var labelStep = 1; // 0=all, 1=half, 2=quarter, 3=none
-var HINT_LABELS = 'Tap to show/hide labels';
 
 function renderCard() {
   dotHits = [];
@@ -692,28 +722,35 @@ window.addEventListener('load', function() {
     popupVal.textContent  = 'Zone ' + Math.round(dot.val);
     popupTime.textContent = fmtPopupTime(dot.epoch);
     popup.style.display = 'block';
+    var rect = dest.getBoundingClientRect();
     var wrap = dest.parentElement.getBoundingClientRect();
-    var px = clientX - wrap.left;
-    var py = clientY - wrap.top - 48;
+    var logicalW = dest.width / graphScale;
+    var cssScale  = rect.width / logicalW;
+    var dotCssX = dot.cx * cssScale + (rect.left - wrap.left);
+    var dotCssY = dot.cy * cssScale + (rect.top  - wrap.top);
     popup.style.left = '0'; popup.style.top = '0';
     var pw = popup.offsetWidth, ph = popup.offsetHeight;
-    px = Math.max(4, Math.min(px - pw/2, wrap.width - pw - 4));
-    py = Math.max(4, py);
+    var GAP = 10;
+    var px = Math.max(4, Math.min(dotCssX - pw/2, wrap.width - pw - 4));
+    var py = Math.max(4, dotCssY - ph - GAP);
     popup.style.left = px + 'px';
     popup.style.top  = py + 'px';
   }
 
-  function hidePopup() { popup.style.display = 'none'; }
+  function hidePopup() {
+    popup.style.display = 'none';
+    if (selectedDot) { selectedDot = null; renderCard(); }
+  }
 
   function handleTap(clientX, clientY) {
     var c = canvasCoords(clientX, clientY);
     var dot = findNearestDot(c.x, c.y);
     if (dot) {
-      showPopup(dot, clientX, clientY);
+      selectedDot = dot;
+      renderCard();
+      showPopup(dot);
     } else {
       hidePopup();
-      labelStep = (labelStep + 1) % 4;
-      renderCard();
     }
   }
 
