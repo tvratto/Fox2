@@ -13,27 +13,24 @@ html, body {
   background: #0a0a0a;
   font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   color: #fff;
-  overflow: hidden;
 }
 .scroll-y {
   display: flex;
   flex-direction: column;
   width: 100vw;
-  height: 100vh;
-  overflow-y: scroll;
-  scroll-snap-type: y mandatory;
+  min-height: 100vh;
+  overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
 .scroll-y::-webkit-scrollbar { display: none; }
 .page {
-  flex: 0 0 100vh;
   width: 100vw;
-  scroll-snap-align: start;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   padding: 16px;
   padding-bottom: 26px;
 }
@@ -578,16 +575,25 @@ function buildGraphCard() {
   var pillLeft = CW/2 - pillW/2, pillRight = CW/2 + pillW/2;
   ctx.fillStyle = '#f5c842';
   roundRect(ctx, pillLeft, PAD, pillW, pillH, pillH/2); ctx.fill();
-  ctx.fillStyle = '#1a1a2e';
-  ctx.textBaseline = 'middle';
-  ctx.textAlign = 'center';
   ctx.font = 'bold 16px -apple-system,sans-serif';
-  ctx.fillText('3 WEEKS', pillLeft + pillW * 0.25, pillCY + 1);
+  var weeksW = ctx.measureText('3 WEEKS').width;
+  ctx.font = '15px -apple-system,sans-serif';
+  var rangeW = ctx.measureText(rangeStr).width;
+  var totalTextW = weeksW + rangeW;
+  var textGap = pillW - totalTextW - 20; // 10px padding each side
+  var weeksX = pillLeft + 10 + weeksW / 2;
+  var sepX   = pillLeft + 10 + weeksW + textGap / 2;
+  var rangeX = sepX + textGap / 2 + rangeW / 2;
+
+  ctx.fillStyle = '#1a1a2e';
+  ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+  ctx.font = 'bold 16px -apple-system,sans-serif';
+  ctx.fillText('3 WEEKS', weeksX, pillCY + 1);
   ctx.fillStyle = 'rgba(26,26,46,0.35)';
-  ctx.fillRect(pillLeft + pillW * 0.5, PAD + 7, 1, pillH - 14);
+  ctx.fillRect(sepX, PAD + 7, 1, pillH - 14);
   ctx.fillStyle = '#1a1a2e';
   ctx.font = '15px -apple-system,sans-serif';
-  ctx.fillText(rangeStr, pillLeft + pillW * 0.75, pillCY + 1);
+  ctx.fillText(rangeStr, rangeX, pillCY + 1);
 
   // ── Watermark ─────────────────────────────────────────────────
   ctx.fillStyle = 'rgba(255,255,255,0.07)';
