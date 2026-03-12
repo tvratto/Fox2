@@ -48,7 +48,7 @@ html, body {
   padding: 10px 24px;
   border-radius: 22px;
   border: none;
-  background: #f5c842;
+  background: #00d4ff;
   color: #1a1a2e;
   font: bold 14px -apple-system, sans-serif;
   cursor: pointer;
@@ -308,7 +308,7 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
     }
     if (isToday) {
       ctx.strokeStyle = 'rgba(245,200,66,0.5)';
-      ctx.lineWidth = 1;
+      ctx.lineWidth = 2;
       ctx.strokeRect(bandX+0.5, gTop+0.5, bandW-1, gH-1);
     }
 
@@ -581,12 +581,12 @@ function buildGraphCard() {
   ctx.fillStyle = '#1a1a2e';
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'center';
-  ctx.font = 'bold 15px -apple-system,sans-serif';
+  ctx.font = 'bold 16px -apple-system,sans-serif';
   ctx.fillText('3 WEEKS', pillLeft + pillW * 0.25, pillCY + 1);
   ctx.fillStyle = 'rgba(26,26,46,0.35)';
   ctx.fillRect(pillLeft + pillW * 0.5, PAD + 7, 1, pillH - 14);
   ctx.fillStyle = '#1a1a2e';
-  ctx.font = '13px -apple-system,sans-serif';
+  ctx.font = '15px -apple-system,sans-serif';
   ctx.fillText(rangeStr, pillLeft + pillW * 0.75, pillCY + 1);
 
   // ── Watermark ─────────────────────────────────────────────────
