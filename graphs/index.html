@@ -82,14 +82,16 @@ html, body {
 
 <div class="scroll-y" id="scroller">
   <div class="page">
-    <div class="card-wrap"><canvas id="card-graph" style="cursor:pointer;"></canvas></div>
+    <div class="card-wrap" style="position:relative;">
+      <canvas id="card-graph" style="cursor:pointer;"></canvas>
+      <p id="label-hint" style="position:absolute;top:7%;left:0;right:0;text-align:center;font-size:11px;color:rgba(255,255,255,0.3);pointer-events:none;margin:0;z-index:1;">Tap to show/hide labels</p>
+    </div>
     <button class="share-btn" id="btn-share" onclick="shareGraph()">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
         <path d="M8 1v9M4 4l4-3 4 3M3 10v4h10v-4" stroke="#1a1a2e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
       Share
     </button>
-    <p id="label-hint" style="margin-top:8px;font-size:11px;color:rgba(255,255,255,0.25);text-align:center;">Tap graph to hide labels</p>
   </div>
 
 </div>
@@ -420,10 +422,14 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
     }
     ctx.font='bold '+valFS+'px -apple-system,sans-serif';
     ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.textBaseline='bottom';
-    if (showLabels) {
-      for (var i=0; i<labels.length; i++) {
-        if (labels[i].visible) ctx.fillText(labels[i].s, labels[i].x, labels[i].y);
-      }
+    // labelStep: 0=all, 1=every 2nd, 2=every 4th, 3=none
+    var skipN = [1, 2, 4, Infinity][labelStep];
+    var shown = 0;
+    for (var i=0; i<labels.length; i++) {
+      if (!labels[i].visible) continue;
+      if (labels[i].newest) { ctx.fillText(labels[i].s, labels[i].x, labels[i].y); continue; }
+      shown++;
+      if (shown % skipN === 0) ctx.fillText(labels[i].s, labels[i].x, labels[i].y);
     }
   }
 
@@ -609,7 +615,8 @@ function buildGraphCard() {
 
 // ─── Render + share ───────────────────────────────────────────────
 var graphCanvas;
-var showLabels = true;
+var labelStep = 1; // 0=all, 1=half, 2=quarter, 3=none
+var HINT_LABELS = 'Tap to show/hide labels';
 
 function renderCard() {
   graphCanvas = buildGraphCard();
@@ -636,6 +643,7 @@ window.addEventListener('load', function() {
 
   // ── Tap to toggle labels (ignore pinch) ───────────────────────
   var dest = document.getElementById('card-graph');
+  var lastTouch = 0;
   var touchStartTime = 0, touchStartX = 0, touchStartY = 0, touchCount = 0;
 
   dest.addEventListener('touchstart', function(e) {
@@ -648,25 +656,23 @@ window.addEventListener('load', function() {
   }, { passive: true });
 
   dest.addEventListener('touchend', function(e) {
-    if (touchCount > 1) return; // was a pinch
+    if (touchCount > 1) { touchCount = 0; return; }
     var dt = Date.now() - touchStartTime;
     var dx = Math.abs(e.changedTouches[0].clientX - touchStartX);
     var dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
     if (dt < 250 && dx < 10 && dy < 10) {
-      showLabels = !showLabels;
+      lastTouch = Date.now();
+      labelStep = (labelStep + 1) % 4;
       renderCard();
-      var hint = document.getElementById('label-hint');
-      if (hint) hint.textContent = showLabels ? 'Tap to hide labels' : 'Tap to show labels';
     }
     touchCount = 0;
   }, { passive: true });
 
-  // Mouse click (desktop)
+  // Mouse click (desktop) — skip if a touch just fired
   dest.addEventListener('click', function() {
-    showLabels = !showLabels;
+    if (Date.now() - lastTouch < 500) return;
+    labelStep = (labelStep + 1) % 4;
     renderCard();
-    var hint = document.getElementById('label-hint');
-    if (hint) hint.textContent = showLabels ? 'Tap/click to hide labels' : 'Tap/click to show labels';
   });
 });
 
