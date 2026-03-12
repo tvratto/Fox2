@@ -111,9 +111,23 @@ var aParam      = params.get('a') || '';
 var sParam      = params.get('s') || '';
 
 // Parse injected AUCs if present
-var injectedAUCs = [];
+// Sparse format: "6:20,7:128,8:165" — index:value pairs for days with data
+// Dense format (legacy): "0,0,0,20,128" — one value per day
+var injectedAUCs = {};  // keyed by day index
 if (aParam) {
-  injectedAUCs = aParam.split(',').map(function(v) { return parseFloat(v) || 0; });
+  var aucParts = aParam.split(',');
+  if (aucParts[0] && aucParts[0].indexOf(':') >= 0) {
+    // Sparse format
+    for (var ai = 0; ai < aucParts.length; ai++) {
+      var kv = aucParts[ai].split(':');
+      if (kv.length === 2) injectedAUCs[parseInt(kv[0], 10)] = parseFloat(kv[1]) || 0;
+    }
+  } else {
+    // Dense legacy format
+    for (var ai = 0; ai < aucParts.length; ai++) {
+      injectedAUCs[ai] = parseFloat(aucParts[ai]) || 0;
+    }
+  }
 }
 
 // Parse streaks
@@ -159,7 +173,7 @@ if (dParam) {
 
     // Use injected AUC if available, otherwise trapezoid approximation
     var auc = 0;
-    if (injectedAUCs.length > d) {
+    if (injectedAUCs[d] !== undefined) {
       auc = injectedAUCs[d];
     } else if (epochs.length >= 2) {
       for (var j = 1; j < epochs.length; j++) {
