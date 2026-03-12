@@ -128,6 +128,11 @@ var totalDays = 0;
 var bestStreak = 0;
 var currentStreak = 0;
 
+// Base36 decoder
+function fromBase36(s) {
+  return parseInt(s, 36);
+}
+
 if (dParam) {
   var dayBlocks = dParam.split('|');
   totalDays = dayBlocks.length;
@@ -141,19 +146,15 @@ if (dParam) {
     var epochs = [], vals = [];
     var dayStartEpoch = windowStart + d * 86400;
 
-    if (rest.length > 0) {
-      var meas = rest.split(',');
-      for (var i = 0; i < meas.length; i++) {
-        var parts = meas[i].split(':');
-        if (parts.length === 2) {
-          var minuteOffset = parseInt(parts[0], 10);
-          var ppm          = parseFloat(parts[1]);
-          if (!isNaN(minuteOffset) && !isNaN(ppm)) {
-            epochs.push(dayStartEpoch + minuteOffset * 60);
-            vals.push(ppm);
-          }
-        }
-      }
+    // Each measurement is exactly 4 chars: 2 for minutes (base36), 2 for ppm×10 (base36)
+    var i = 0;
+    while (i + 4 <= rest.length) {
+      var minuteOffset = fromBase36(rest.substring(i,   i+2));
+      var ppmTimes10   = fromBase36(rest.substring(i+2, i+4));
+      var ppm          = ppmTimes10 / 10.0;
+      epochs.push(dayStartEpoch + minuteOffset * 60);
+      vals.push(ppm);
+      i += 4;
     }
 
     // Use injected AUC if available, otherwise trapezoid approximation
@@ -161,9 +162,9 @@ if (dParam) {
     if (injectedAUCs.length > d) {
       auc = injectedAUCs[d];
     } else if (epochs.length >= 2) {
-      for (var i = 1; i < epochs.length; i++) {
-        var dt = (epochs[i] - epochs[i-1]) / 3600;
-        auc += 0.5 * (vals[i-1] + vals[i]) * dt;
+      for (var j = 1; j < epochs.length; j++) {
+        var dt = (epochs[j] - epochs[j-1]) / 3600;
+        auc += 0.5 * (vals[j-1] + vals[j]) * dt;
       }
     }
 
@@ -250,19 +251,25 @@ function buildGraphCard() {
 
   // Day bands + labels
   var labelY = gBottom + 3;
+  var bandW  = gW / totalDays;
+  // For dense views (>7 days), only label Mondays + today
+  var labelFS = totalDays <= 7 ? 11 : 9;
   for (var d = 0; d < totalDays; d++) {
-    var bandX = gLeft + (d / totalDays) * gW;
-    var bandW = gW / totalDays;
-    var midX  = bandX + bandW / 2;
+    var bandX   = gLeft + (d / totalDays) * gW;
+    var midX    = bandX + bandW / 2;
     var isToday = (d === totalDays - 1);
+    var label   = days[d].label.toLowerCase();
+    var showLabel = totalDays <= 7 || isToday || label === 'm';
 
     if (d % 2 === 1) {
       ctx.fillStyle = 'rgba(255,255,255,0.04)';
       ctx.fillRect(bandX, gTop, bandW, gH);
     }
     if (d > 0) {
-      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-      ctx.lineWidth = 0.75;
+      // Stronger divider on Mondays for 21-day view
+      var isMondayBoundary = (label === 'm' && totalDays > 7);
+      ctx.strokeStyle = isMondayBoundary ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.15)';
+      ctx.lineWidth = isMondayBoundary ? 1 : 0.75;
       ctx.beginPath(); ctx.moveTo(bandX, gTop); ctx.lineTo(bandX, gBottom); ctx.stroke();
     }
     if (isToday) {
@@ -270,10 +277,12 @@ function buildGraphCard() {
       ctx.lineWidth = 1;
       ctx.strokeRect(bandX+0.5, gTop+0.5, bandW-1, gH-1);
     }
-    ctx.fillStyle = isToday ? '#f5c842' : 'rgba(255,255,255,0.45)';
-    ctx.font = (isToday ? 'bold ' : '') + '11px -apple-system,sans-serif';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-    ctx.fillText(days[d].label.toLowerCase(), midX, labelY);
+    if (showLabel) {
+      ctx.fillStyle = isToday ? '#f5c842' : 'rgba(255,255,255,0.45)';
+      ctx.font = (isToday ? 'bold ' : '') + labelFS + 'px -apple-system,sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText(label, midX, labelY);
+    }
   }
 
   // X axis
@@ -412,22 +421,39 @@ function buildGraphCard() {
   // TODAY pill
   pill(ctx, CW/2, PAD+PILL_H/2, 90, PILL_H, PILL_H/2, '#f5c842','#1a1a2e','TODAY',11);
 
-  // Per-day AUC row
+  // Per-day AUC row — only show for 7 days or fewer, too cramped at 21
   var rowY=gBottom+LABEL_H+SNAP_PAD+SNAP_H/2, aucFS=13, heartFS=11;
-  for (var d=0; d<totalDays; d++) {
-    var bandW=gW/totalDays, cx=gLeft+(d+0.5)*bandW;
-    var isToday=(d===totalDays-1);
-    var hit=targetAUC>0&&days[d].auc>=targetAUC;
-    var aucStr=days[d].auc>0?String(Math.round(days[d].auc)):'\u2014';
-    var heart=hit?'\u2665':'\u2661';
-    ctx.fillStyle=hit?'#e53935':'rgba(255,255,255,0.3)';
-    ctx.font=heartFS+'px -apple-system,sans-serif';
-    ctx.textAlign='center'; ctx.textBaseline='alphabetic';
-    ctx.fillText(heart, cx, rowY-aucFS*0.15);
-    ctx.fillStyle=isToday?(hit?'#FFFF00':'#FF8C00'):(hit?'#FFA500':'rgba(255,255,255,0.55)');
-    ctx.font=(isToday?'bold ':'')+aucFS+'px -apple-system,sans-serif';
-    ctx.textAlign='center'; ctx.textBaseline='top';
-    ctx.fillText(aucStr, cx, rowY+heartFS*0.3);
+  if (totalDays <= 7) {
+    for (var d=0; d<totalDays; d++) {
+      var bW=gW/totalDays, cx=gLeft+(d+0.5)*bW;
+      var isToday=(d===totalDays-1);
+      var hit=targetAUC>0&&days[d].auc>=targetAUC;
+      var aucStr=days[d].auc>0?String(Math.round(days[d].auc)):'\u2014';
+      var heart=hit?'\u2665':'\u2661';
+      ctx.fillStyle=hit?'#e53935':'rgba(255,255,255,0.3)';
+      ctx.font=heartFS+'px -apple-system,sans-serif';
+      ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+      ctx.fillText(heart, cx, rowY-aucFS*0.15);
+      ctx.fillStyle=isToday?(hit?'#FFFF00':'#FF8C00'):(hit?'#FFA500':'rgba(255,255,255,0.55)');
+      ctx.font=(isToday?'bold ':'')+aucFS+'px -apple-system,sans-serif';
+      ctx.textAlign='center'; ctx.textBaseline='top';
+      ctx.fillText(aucStr, cx, rowY+heartFS*0.3);
+    }
+  } else {
+    // 21-day view: show colored dots per day (hit=orange, miss=dim)
+    var dotY = gBottom + LABEL_H + SNAP_PAD + SNAP_H/2;
+    for (var d=0; d<totalDays; d++) {
+      var bW=gW/totalDays, cx=gLeft+(d+0.5)*bW;
+      var isToday=(d===totalDays-1);
+      var hit=targetAUC>0&&days[d].auc>=targetAUC;
+      var hasData=days[d].auc>0;
+      ctx.beginPath();
+      ctx.arc(cx, dotY, isToday?4:2.5, 0, Math.PI*2);
+      ctx.fillStyle = !hasData ? 'rgba(255,255,255,0.1)' :
+                      hit       ? (isToday ? '#FFFF00' : '#FFA500') :
+                                  'rgba(255,255,255,0.3)';
+      ctx.fill();
+    }
   }
 
   // Watermark
