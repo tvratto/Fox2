@@ -205,71 +205,70 @@ function filledDot(ctx, cx, cy, r, color) {
   ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fillStyle=color; ctx.fill();
 }
 
-// ─── 5-day continuous graph card ─────────────────────────────────
-function buildGraphCard() {
-  var SCALE = 2, CW = 400, PAD = 14;
-  var PILL_H = 28, PILL_PAD = 10, LABEL_H = 16;
-  var SNAP_H = 36, SNAP_PAD = 6, FOOTER_H = 14, GRAPH_H = 160;
-  var CH = PAD + PILL_H + PILL_PAD + GRAPH_H + LABEL_H + SNAP_PAD + SNAP_H + PAD + FOOTER_H;
+// ─── Catmull-Rom spline helpers ───────────────────────────────────
+function catmullRomCP(p0, p1, p2, p3) {
+  var t = 0.5;
+  return {
+    cp1x: p1.x + (p2.x - p0.x) * t / 3,
+    cp1y: p1.y + (p2.y - p0.y) * t / 3,
+    cp2x: p2.x - (p3.x - p1.x) * t / 3,
+    cp2y: p2.y - (p3.y - p1.y) * t / 3
+  };
+}
 
-  var canvas = document.createElement('canvas');
-  canvas.width  = CW * SCALE;
-  canvas.height = CH * SCALE;
-  var ctx = canvas.getContext('2d');
-  ctx.scale(SCALE, SCALE);
+function splinePath(ctx, pts, bottomY) {
+  if (pts.length < 2) return;
+  var p0 = { x: 2*pts[0].x - pts[1].x, y: 2*pts[0].y - pts[1].y };
+  var pN = { x: 2*pts[pts.length-1].x - pts[pts.length-2].x,
+             y: 2*pts[pts.length-1].y - pts[pts.length-2].y };
+  var ext = [p0].concat(pts).concat([pN]);
+  if (bottomY !== undefined) {
+    ctx.moveTo(pts[0].x, bottomY);
+    ctx.lineTo(pts[0].x, pts[0].y);
+  } else {
+    ctx.moveTo(pts[0].x, pts[0].y);
+  }
+  for (var i = 0; i < pts.length - 1; i++) {
+    var cp = catmullRomCP(ext[i], ext[i+1], ext[i+2], ext[i+3]);
+    ctx.bezierCurveTo(cp.cp1x, cp.cp1y, cp.cp2x, cp.cp2y, pts[i+1].x, pts[i+1].y);
+  }
+}
 
-  ctx.fillStyle = '#111';
-  roundRect(ctx,0,0,CW,CH,14); ctx.fill();
+// ─── Draw a single week row ───────────────────────────────────────
+// weekDays: array of 7 day objects from days[]
+// dayOffset: index of weekDays[0] within the global days[] array
+// gLeft/gRight/gTop/gBottom: pixel bounds for this row's graph area
+// maxY: shared y scale maximum
+// isLastWeek: true if this row contains today
+function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, maxY, isLastWeek) {
+  var gW = gRight - gLeft;
+  var gH = gBottom - gTop;
+  var DAYS = weekDays.length;
 
-  var gLeft = PAD+6, gRight = CW-PAD-4;
-  var gTop  = PAD+PILL_H+PILL_PAD, gBottom = gTop+GRAPH_H;
-  var gW = gRight-gLeft, gH = GRAPH_H;
-  var TOTAL_SECS = totalDays * 86400;
-
-  function ex(epoch) {
-    return gLeft + ((epoch - windowStart) / TOTAL_SECS) * gW;
+  function wx(epoch) {
+    // x within this row: epoch relative to this week's start midnight
+    var weekStartEpoch = windowStart + dayOffset * 86400;
+    return gLeft + ((epoch - weekStartEpoch) / (DAYS * 86400)) * gW;
   }
 
-  var allPts = [];
-  for (var d = 0; d < totalDays; d++) {
-    for (var i = 0; i < days[d].epochs.length; i++) {
-      allPts.push({ epoch: days[d].epochs[i], val: days[d].vals[i], dayIdx: d });
-    }
-  }
-  allPts.sort(function(a,b){ return a.epoch - b.epoch; });
-
-  var rawMax = 0;
-  for (var i = 0; i < allPts.length; i++) if (allPts[i].val > rawMax) rawMax = allPts[i].val;
-  if (rawMax < 4) rawMax = 4;
-  var step = rawMax <= 4 ? 0.5 : rawMax <= 8 ? 1 : rawMax <= 15 ? 2 : 5;
-  var maxY = Math.ceil(rawMax * 1.15 / step) * step;
-  if (maxY < 2) maxY = 2;
-
-  function gvy(v) {
-    return gBottom - (Math.min(Math.max(v,0), maxY) / maxY) * gH;
+  function wy(v) {
+    return gBottom - (Math.min(Math.max(v, 0), maxY) / maxY) * gH;
   }
 
-  // Day bands + labels
-  var labelY = gBottom + 3;
-  var bandW  = gW / totalDays;
-  // For dense views (>7 days), only label Mondays + today
-  var labelFS = totalDays <= 7 ? 11 : 9;
-  for (var d = 0; d < totalDays; d++) {
-    var bandX   = gLeft + (d / totalDays) * gW;
-    var midX    = bandX + bandW / 2;
-    var isToday = (d === totalDays - 1);
-    var label   = days[d].label.toLowerCase();
-    var showLabel = totalDays <= 7 || isToday || label === 'm';
+  // ── Day bands ──────────────────────────────────────────────────
+  var bandW = gW / DAYS;
+  for (var d = 0; d < DAYS; d++) {
+    var bandX   = gLeft + d * bandW;
+    var isToday = isLastWeek && (d === DAYS - 1);
+    var label   = weekDays[d].label.toLowerCase();
 
     if (d % 2 === 1) {
       ctx.fillStyle = 'rgba(255,255,255,0.04)';
       ctx.fillRect(bandX, gTop, bandW, gH);
     }
     if (d > 0) {
-      // Stronger divider on Mondays for 21-day view
-      var isMondayBoundary = (label === 'm' && totalDays > 7);
-      ctx.strokeStyle = isMondayBoundary ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.15)';
-      ctx.lineWidth = isMondayBoundary ? 1 : 0.75;
+      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+      ctx.lineWidth = 0.75;
       ctx.beginPath(); ctx.moveTo(bandX, gTop); ctx.lineTo(bandX, gBottom); ctx.stroke();
     }
     if (isToday) {
@@ -277,25 +276,25 @@ function buildGraphCard() {
       ctx.lineWidth = 1;
       ctx.strokeRect(bandX+0.5, gTop+0.5, bandW-1, gH-1);
     }
-    if (showLabel) {
-      ctx.fillStyle = isToday ? '#f5c842' : 'rgba(255,255,255,0.45)';
-      ctx.font = (isToday ? 'bold ' : '') + labelFS + 'px -apple-system,sans-serif';
-      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-      ctx.fillText(label, midX, labelY);
-    }
+
+    // Day labels below x axis
+    ctx.fillStyle = isToday ? '#f5c842' : 'rgba(255,255,255,0.45)';
+    ctx.font = (isToday ? 'bold ' : '') + '10px -apple-system,sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.fillText(label, bandX + bandW/2, gBottom + 3);
   }
 
-  // X axis
-  ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+  // ── X axis ────────────────────────────────────────────────────
+  ctx.strokeStyle = 'rgba(255,255,255,0.5)';
   ctx.lineWidth = 0.75;
   ctx.beginPath(); ctx.moveTo(gLeft, gBottom); ctx.lineTo(gRight, gBottom); ctx.stroke();
 
-  // Target line
+  // ── Target line ───────────────────────────────────────────────
   if (targetAUC > 0) {
     var tPPM = targetAUC / 24;
     if (tPPM <= maxY) {
-      var tY = gvy(tPPM);
-      ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+      var tY = wy(tPPM);
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
       ctx.lineWidth = 0.75;
       ctx.setLineDash([4,3]);
       ctx.beginPath(); ctx.moveTo(gLeft, tY); ctx.lineTo(gRight, tY); ctx.stroke();
@@ -303,73 +302,48 @@ function buildGraphCard() {
     }
   }
 
+  // ── Collect points for this week ──────────────────────────────
+  var allPts = [];
+  for (var d = 0; d < DAYS; d++) {
+    for (var i = 0; i < weekDays[d].epochs.length; i++) {
+      allPts.push({ epoch: weekDays[d].epochs[i], val: weekDays[d].vals[i], dayIdx: d });
+    }
+  }
+  allPts.sort(function(a,b){ return a.epoch - b.epoch; });
+
   if (allPts.length > 0) {
-    var firstDayIdx   = allPts[0].dayIdx;
-    var firstMidnight = windowStart + firstDayIdx * 86400;
-    var pts = [{ x: ex(firstMidnight), y: gvy(0) }];
+    // Midnight anchor at first data day
+    var weekStartEpoch = windowStart + dayOffset * 86400;
+    var firstMidnight  = weekStartEpoch + allPts[0].dayIdx * 86400;
+    var pts = [{ x: wx(firstMidnight), y: wy(0) }];
     for (var i = 0; i < allPts.length; i++) {
-      pts.push({ x: ex(allPts[i].epoch), y: gvy(allPts[i].val) });
+      pts.push({ x: wx(allPts[i].epoch), y: wy(allPts[i].val) });
     }
-    var first = pts[0], last = pts[pts.length-1];
+    var last = pts[pts.length-1];
 
-    // Catmull-Rom control point helper
-    // Given 4 points p0..p3, returns cubic bezier control points for segment p1->p2
-    function catmullRomCP(p0, p1, p2, p3, tension) {
-      tension = tension || 0.5;
-      return {
-        cp1x: p1.x + (p2.x - p0.x) * tension / 3,
-        cp1y: p1.y + (p2.y - p0.y) * tension / 3,
-        cp2x: p2.x - (p3.x - p1.x) * tension / 3,
-        cp2y: p2.y - (p3.y - p1.y) * tension / 3
-      };
-    }
-
-    // Build a spline path through pts using Catmull-Rom
-    // Phantom points at each end to handle boundary tangents cleanly
-    function splinePath(ctx, pts, startAtBottom) {
-      if (pts.length < 2) return;
-      // Phantom endpoints mirror the first/last segments
-      var phantom0 = { x: 2*pts[0].x - pts[1].x, y: 2*pts[0].y - pts[1].y };
-      var phantomN = { x: 2*pts[pts.length-1].x - pts[pts.length-2].x,
-                       y: 2*pts[pts.length-1].y - pts[pts.length-2].y };
-      var ext = [phantom0].concat(pts).concat([phantomN]);
-
-      if (startAtBottom) {
-        ctx.moveTo(pts[0].x, gBottom);
-        ctx.lineTo(pts[0].x, pts[0].y);
-      } else {
-        ctx.moveTo(pts[0].x, pts[0].y);
-      }
-
-      for (var i = 0; i < pts.length - 1; i++) {
-        var cp = catmullRomCP(ext[i], ext[i+1], ext[i+2], ext[i+3]);
-        ctx.bezierCurveTo(cp.cp1x, cp.cp1y, cp.cp2x, cp.cp2y, pts[i+1].x, pts[i+1].y);
-      }
-    }
-
-    // Filled gradient area
+    // Gradient fill
     var grad = ctx.createLinearGradient(0, gTop, 0, gBottom);
     grad.addColorStop(0,   'rgba(255,140,0,0.0)');
-    grad.addColorStop(0.5, 'rgba(255,140,0,0.25)');
-    grad.addColorStop(1,   'rgba(255,140,0,0.55)');
+    grad.addColorStop(0.5, 'rgba(255,140,0,0.22)');
+    grad.addColorStop(1,   'rgba(255,140,0,0.5)');
     ctx.fillStyle = grad;
     ctx.beginPath();
-    splinePath(ctx, pts, true);
+    splinePath(ctx, pts, gBottom);
     ctx.lineTo(last.x, gBottom);
     ctx.closePath(); ctx.fill();
 
     // Spline line
-    ctx.strokeStyle = '#FF8C00'; ctx.lineWidth = 2;
+    ctx.strokeStyle = '#FF8C00'; ctx.lineWidth = 1.5;
     ctx.lineJoin = 'round'; ctx.lineCap = 'round';
     ctx.beginPath();
-    splinePath(ctx, pts, false);
+    splinePath(ctx, pts);
     ctx.stroke();
 
     // Dots
-    var dotR = 3.5, valFS = 9;
+    var dotR = 3, valFS = 8;
     for (var i = 0; i < allPts.length; i++) {
       var px = pts[i+1].x, py = pts[i+1].y;
-      var isNewest = (i === allPts.length-1);
+      var isNewest = isLastWeek && (i === allPts.length - 1);
       var dc = allPts[i].val >= 5 ? '#00FF00' : '#00FFFF';
       if (isNewest) {
         ctx.globalAlpha=0.3; filledDot(ctx,px,py,dotR*2.2,dc);
@@ -381,12 +355,12 @@ function buildGraphCard() {
 
     // Labels with collision resolution
     ctx.font = 'bold '+valFS+'px -apple-system,sans-serif';
-    var PAD_X=2, MAX_SHIFT=gW/totalDays*0.35, ITERS=5;
+    var PAD_X=2, MAX_SHIFT=gW/DAYS*0.35, ITERS=5;
     var MIN_CX=gLeft+2, MAX_CX=gRight-2;
     var labels = [];
     for (var i = 0; i < allPts.length; i++) {
       var px=pts[i+1].x, py=pts[i+1].y;
-      var isNewest=(i===allPts.length-1);
+      var isNewest=isLastWeek&&(i===allPts.length-1);
       var dotEdge=isNewest?dotR*1.4:dotR;
       var s=String(Math.round(allPts[i].val));
       var w=ctx.measureText(s).width;
@@ -417,50 +391,76 @@ function buildGraphCard() {
       if (labels[i].visible) ctx.fillText(labels[i].s, labels[i].x, labels[i].y);
     }
   }
+}
 
-  // TODAY pill
-  pill(ctx, CW/2, PAD+PILL_H/2, 90, PILL_H, PILL_H/2, '#f5c842','#1a1a2e','TODAY',11);
+// ─── 3-week graph card ────────────────────────────────────────────
+function buildGraphCard() {
+  var SCALE   = 2;
+  var CW      = 400;
+  var PAD     = 14;
+  var PILL_H  = 28;
+  var PILL_PAD = 8;
+  var WEEKS   = 3;
+  var DAYS_PER_WEEK = 7;
+  var GRAPH_H = 90;   // height of each week's graph area
+  var LABEL_H = 14;   // day letters below each graph
+  var ROW_GAP = 14;   // gap between week rows
+  var FOOTER_H = 14;
 
-  // Per-day AUC row — only show for 7 days or fewer, too cramped at 21
-  var rowY=gBottom+LABEL_H+SNAP_PAD+SNAP_H/2, aucFS=13, heartFS=11;
-  if (totalDays <= 7) {
-    for (var d=0; d<totalDays; d++) {
-      var bW=gW/totalDays, cx=gLeft+(d+0.5)*bW;
-      var isToday=(d===totalDays-1);
-      var hit=targetAUC>0&&days[d].auc>=targetAUC;
-      var aucStr=days[d].auc>0?String(Math.round(days[d].auc)):'\u2014';
-      var heart=hit?'\u2665':'\u2661';
-      ctx.fillStyle=hit?'#e53935':'rgba(255,255,255,0.3)';
-      ctx.font=heartFS+'px -apple-system,sans-serif';
-      ctx.textAlign='center'; ctx.textBaseline='alphabetic';
-      ctx.fillText(heart, cx, rowY-aucFS*0.15);
-      ctx.fillStyle=isToday?(hit?'#FFFF00':'#FF8C00'):(hit?'#FFA500':'rgba(255,255,255,0.55)');
-      ctx.font=(isToday?'bold ':'')+aucFS+'px -apple-system,sans-serif';
-      ctx.textAlign='center'; ctx.textBaseline='top';
-      ctx.fillText(aucStr, cx, rowY+heartFS*0.3);
-    }
-  } else {
-    // 21-day view: show colored dots per day (hit=orange, miss=dim)
-    var dotY = gBottom + LABEL_H + SNAP_PAD + SNAP_H/2;
-    for (var d=0; d<totalDays; d++) {
-      var bW=gW/totalDays, cx=gLeft+(d+0.5)*bW;
-      var isToday=(d===totalDays-1);
-      var hit=targetAUC>0&&days[d].auc>=targetAUC;
-      var hasData=days[d].auc>0;
-      ctx.beginPath();
-      ctx.arc(cx, dotY, isToday?4:2.5, 0, Math.PI*2);
-      ctx.fillStyle = !hasData ? 'rgba(255,255,255,0.1)' :
-                      hit       ? (isToday ? '#FFFF00' : '#FFA500') :
-                                  'rgba(255,255,255,0.3)';
-      ctx.fill();
+  // Total height: pill + 3 rows of (graph + labels) + gaps between + footer
+  var CH = PAD + PILL_H + PILL_PAD
+         + WEEKS * (GRAPH_H + LABEL_H)
+         + (WEEKS - 1) * ROW_GAP
+         + PAD + FOOTER_H;
+
+  var canvas = document.createElement('canvas');
+  canvas.width  = CW * SCALE;
+  canvas.height = CH * SCALE;
+  var ctx = canvas.getContext('2d');
+  ctx.scale(SCALE, SCALE);
+
+  // Card background
+  ctx.fillStyle = '#111';
+  roundRect(ctx, 0, 0, CW, CH, 14); ctx.fill();
+
+  var gLeft  = PAD + 6;
+  var gRight = CW - PAD - 4;
+
+  // ── Compute shared y scale across ALL 21 days ─────────────────
+  var rawMax = 0;
+  for (var d = 0; d < totalDays; d++) {
+    for (var i = 0; i < days[d].vals.length; i++) {
+      if (days[d].vals[i] > rawMax) rawMax = days[d].vals[i];
     }
   }
+  if (rawMax < 4) rawMax = 4;
+  var step = rawMax <= 4 ? 0.5 : rawMax <= 8 ? 1 : rawMax <= 15 ? 2 : 5;
+  var maxY = Math.ceil(rawMax * 1.15 / step) * step;
+  if (maxY < 2) maxY = 2;
 
-  // Watermark
-  ctx.fillStyle='rgba(255,255,255,0.07)';
-  ctx.font='9px -apple-system,sans-serif';
-  ctx.textAlign='right'; ctx.textBaseline='alphabetic';
-  ctx.fillText('fox2.app', CW-PAD, CH-4);
+  // ── Draw 3 week rows ─────────────────────────────────────────
+  var rowTop = PAD + PILL_H + PILL_PAD;
+  for (var w = 0; w < WEEKS; w++) {
+    var dayOffset  = w * DAYS_PER_WEEK;
+    var weekDays   = days.slice(dayOffset, dayOffset + DAYS_PER_WEEK);
+    var isLastWeek = (w === WEEKS - 1);
+    var gTop       = rowTop;
+    var gBottom    = gTop + GRAPH_H;
+
+    drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, maxY, isLastWeek);
+
+    rowTop += GRAPH_H + LABEL_H + ROW_GAP;
+  }
+
+  // ── TODAY pill ────────────────────────────────────────────────
+  pill(ctx, CW/2, PAD + PILL_H/2, 90, PILL_H, PILL_H/2,
+       '#f5c842', '#1a1a2e', 'TODAY', 11);
+
+  // ── Watermark ─────────────────────────────────────────────────
+  ctx.fillStyle = 'rgba(255,255,255,0.07)';
+  ctx.font = '9px -apple-system,sans-serif';
+  ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic';
+  ctx.fillText('fox2.app', CW - PAD, CH - 4);
 
   return canvas;
 }
