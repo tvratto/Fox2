@@ -102,19 +102,26 @@ var windowStart = (function() {
   return Math.floor(weekEndMs / 1000) - 20 * 86400;
 })();
 
-// Parse injected AUCs — sparse base36 format: "6:1k,7:3k" or legacy decimal "6:128,7:165"
+// Parse injected AUCs — fixed 21-slot, 2-char base36 each, no separators
+// e.g. &a=003k4h3t000...  zero = no data for that day
 var injectedAUCs = {};
 if (aParam) {
-  var aucParts = aParam.split(',');
-  for (var ai = 0; ai < aucParts.length; ai++) {
-    var kv = aucParts[ai].split(':');
-    if (kv.length === 2) {
-      var idx = parseInt(kv[0], 36);
-      var val = parseInt(kv[1], 36);
-      injectedAUCs[idx] = val;
-    } else if (kv.length === 1 && kv[0] !== '') {
-      // Legacy dense decimal format
-      injectedAUCs[ai] = parseFloat(kv[0]) || 0;
+  if (aParam.indexOf(':') < 0 && aParam.indexOf(',') < 0) {
+    // New fixed-width base36 format
+    for (var ai = 0; ai * 2 + 2 <= aParam.length; ai++) {
+      var val = parseInt(aParam.substring(ai * 2, ai * 2 + 2), 36);
+      if (val > 0) injectedAUCs[ai] = val;
+    }
+  } else {
+    // Legacy sparse format fallback
+    var aucParts = aParam.split(',');
+    for (var ai = 0; ai < aucParts.length; ai++) {
+      var kv = aucParts[ai].split(':');
+      if (kv.length === 2) {
+        injectedAUCs[parseInt(kv[0], 36)] = parseInt(kv[1], 36);
+      } else if (kv.length === 1 && kv[0] !== '') {
+        injectedAUCs[ai] = parseFloat(kv[0]) || 0;
+      }
     }
   }
 }
