@@ -781,17 +781,83 @@ window.addEventListener('load', function() {
   });
 });
 
+function drawPopupOnCanvas(canvas, dot) {
+  var ctx = canvas.getContext('2d');
+  var S = graphScale;
+  var DAYS_S = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var MONS   = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var d = new Date(dot.epoch * 1000);
+  var h = d.getHours(), m = d.getMinutes();
+  var ampm = h >= 12 ? 'pm' : 'am'; h = h % 12 || 12;
+  var ms = m < 10 ? '0'+m : String(m);
+  var line1 = 'Zone ' + Math.round(dot.val);
+  var line2  = DAYS_S[d.getDay()] + ' ' + MONS[d.getMonth()] + ' ' + d.getDate() + '  ' + h + ':' + ms + ampm;
+
+  var fs1 = 15 * S, fs2 = 11 * S;
+  ctx.font = 'bold ' + fs1 + 'px -apple-system,sans-serif';
+  var w1 = ctx.measureText(line1).width;
+  ctx.font = fs2 + 'px -apple-system,sans-serif';
+  var w2 = ctx.measureText(line2).width;
+  var padX = 10 * S, padY = 6 * S, gap = 3 * S;
+  var pw = Math.max(w1, w2) + padX * 2;
+  var ph = fs1 + gap + fs2 + padY * 2;
+  var GAP = 10 * S;
+
+  var dotX = dot.cx * S, dotY = dot.cy * S;
+  var px = Math.max(4, Math.min(dotX - pw/2, canvas.width - pw - 4));
+  var py = Math.max(4, dotY - ph - GAP);
+
+  ctx.save();
+  ctx.fillStyle = 'rgba(20,20,35,0.95)';
+  var r = 8 * S;
+  ctx.beginPath();
+  ctx.moveTo(px + r, py);
+  ctx.lineTo(px + pw - r, py);
+  ctx.quadraticCurveTo(px + pw, py, px + pw, py + r);
+  ctx.lineTo(px + pw, py + ph - r);
+  ctx.quadraticCurveTo(px + pw, py + ph, px + pw - r, py + ph);
+  ctx.lineTo(px + r, py + ph);
+  ctx.quadraticCurveTo(px, py + ph, px, py + ph - r);
+  ctx.lineTo(px, py + r);
+  ctx.quadraticCurveTo(px, py, px + r, py);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = S * 0.75;
+  ctx.stroke();
+
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold ' + fs1 + 'px -apple-system,sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  ctx.fillText(line1, px + pw/2, py + padY);
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = fs2 + 'px -apple-system,sans-serif';
+  ctx.fillText(line2, px + pw/2, py + padY + fs1 + gap);
+  ctx.restore();
+}
+
 function doShare(canvas) {
   canvas.toBlob(function(blob) {
     var file = new File([blob], 'fox2-results.png', { type: 'image/png' });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       navigator.share({ files: [file], title: 'FOX2 Results' })
-        .catch(function() {}); // dismissed — no problem
+        .catch(function() {});
     }
   }, 'image/png');
 }
 
-function shareGraph() { if (graphCanvas) doShare(graphCanvas); }
+function shareGraph() {
+  if (!graphCanvas) return;
+  if (selectedDot) {
+    var copy = document.createElement('canvas');
+    copy.width = graphCanvas.width; copy.height = graphCanvas.height;
+    copy.getContext('2d').drawImage(graphCanvas, 0, 0);
+    drawPopupOnCanvas(copy, selectedDot);
+    doShare(copy);
+  } else {
+    doShare(graphCanvas);
+  }
+}
 
 </script>
 </body>
