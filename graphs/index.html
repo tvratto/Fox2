@@ -62,6 +62,22 @@ html, body {
   padding: 40px 20px;
   line-height: 1.6;
 }
+#loading {
+  position: fixed; inset: 0;
+  background: #000;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100;
+}
+#loading-inner { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+#loading-spinner {
+  width: 36px; height: 36px;
+  border: 3px solid rgba(255,255,255,0.15);
+  border-top-color: #f5c842;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+#loading-text { color: rgba(255,255,255,0.4); font-size: 13px; }
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -77,6 +93,13 @@ html, body {
     </button>
   </div>
 
+</div>
+
+<div id="loading">
+  <div id="loading-inner">
+    <div id="loading-spinner"></div>
+    <div id="loading-text">Loading results…</div>
+  </div>
 </div>
 
 <div id="no-data">
@@ -184,6 +207,7 @@ if (dParam) {
 
 // Show no-data message if URL has no data
 if (!dParam || totalDays === 0) {
+  document.getElementById('loading').style.display = 'none';
   document.getElementById('scroller').style.display = 'none';
   document.getElementById('no-data').style.display  = 'block';
 }
@@ -585,6 +609,10 @@ window.addEventListener('load', function() {
     var dest = document.getElementById('card-graph');
     dest.width = graphCanvas.width; dest.height = graphCanvas.height;
     dest.getContext('2d').drawImage(graphCanvas, 0, 0);
+
+    // Hide loading overlay
+    var loading = document.getElementById('loading');
+    if (loading) loading.style.display = 'none';
 
     // Auto-trigger share sheet on load (real Safari only)
     if (navigator.share && navigator.canShare) {
