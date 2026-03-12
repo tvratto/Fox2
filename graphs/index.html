@@ -574,18 +574,19 @@ function buildGraphCard() {
   }
   var rangeStr = fmtDate(windowStart) + ' – ' + fmtDate(windowStart + 20 * 86400);
   var pillW = 220, pillH = PILL_H, pillCY = PAD + pillH / 2;
+  var pillLeft = CW/2 - pillW/2, pillRight = CW/2 + pillW/2;
   ctx.fillStyle = '#f5c842';
-  roundRect(ctx, CW/2 - pillW/2, PAD, pillW, pillH, pillH/2); ctx.fill();
+  roundRect(ctx, pillLeft, PAD, pillW, pillH, pillH/2); ctx.fill();
   ctx.fillStyle = '#1a1a2e';
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'center';
   ctx.font = 'bold 15px -apple-system,sans-serif';
-  ctx.fillText('3 WEEKS', CW/2 - 36, pillCY + 1);
+  ctx.fillText('3 WEEKS', pillLeft + pillW * 0.25, pillCY + 1);
   ctx.fillStyle = 'rgba(26,26,46,0.35)';
-  ctx.fillRect(CW/2 - 8, PAD + 7, 1, pillH - 14);
+  ctx.fillRect(pillLeft + pillW * 0.5, PAD + 7, 1, pillH - 14);
   ctx.fillStyle = '#1a1a2e';
   ctx.font = '13px -apple-system,sans-serif';
-  ctx.fillText(rangeStr, CW/2 + 46, pillCY + 1);
+  ctx.fillText(rangeStr, pillLeft + pillW * 0.75, pillCY + 1);
 
   // ── Watermark ─────────────────────────────────────────────────
   ctx.fillStyle = 'rgba(255,255,255,0.07)';
