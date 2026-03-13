@@ -96,6 +96,15 @@ html, body {
       Share
     </button>
   </div>
+  <div class="page">
+    <div class="card-wrap"><canvas id="card-streaks"></canvas></div>
+    <button class="share-btn" onclick="shareStreaks()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M8 1v9M4 4l4-3 4 3M3 10v4h10v-4" stroke="#1a1a2e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Share
+    </button>
+  </div>
 
 </div>
 
@@ -650,8 +659,289 @@ function buildGraphCard() {
   return canvas;
 }
 
+// ─── 21-day AUC bar card ──────────────────────────────────────────
+function buildStreakCard() {
+  var SCALE    = 2;
+  var CW       = 400;
+  var PAD      = 14;
+  var PILL_H   = 28;
+  var PILL_PAD = 8;
+  var WEEKS    = 3;
+  var DAYS_PER_WEEK = 7;
+  var BAR_H    = 90;
+  var LABEL_H  = 14;
+  var ROW_GAP  = 12;
+  var SUMMARY_H = 60;
+  var FOOTER_H = 14;
+
+  var CH = PAD + PILL_H + PILL_PAD
+         + WEEKS * (BAR_H + LABEL_H)
+         + (WEEKS - 1) * ROW_GAP
+         + ROW_GAP + SUMMARY_H
+         + PAD + FOOTER_H;
+
+  var canvas = document.createElement('canvas');
+  canvas.width  = CW * SCALE;
+  canvas.height = CH * SCALE;
+  var ctx = canvas.getContext('2d');
+  ctx.scale(SCALE, SCALE);
+
+  ctx.fillStyle = '#111';
+  roundRect(ctx, 0, 0, CW, CH, 14); ctx.fill();
+
+  var gLeft  = PAD + 6;
+  var gRight = CW - PAD - 4;
+  var gW     = gRight - gLeft;
+  var bandW  = gW / DAYS_PER_WEEK;
+
+  // ── Shared AUC y-scale ────────────────────────────────────────
+  var yMax = targetAUC > 0 ? targetAUC : 0;
+  for (var d = 0; d < totalDays; d++) {
+    if (days[d].auc > yMax) yMax = days[d].auc;
+  }
+  yMax *= 1.15;
+  if (yMax < 40) yMax = 40;
+
+  // Today = last day with data
+  var todayIdx = 0;
+  for (var d = 0; d < totalDays; d++) {
+    if (days[d].vals.length > 0) todayIdx = d;
+  }
+
+  // ── 3 week rows ───────────────────────────────────────────────
+  var rowTop = PAD + PILL_H + PILL_PAD;
+
+  for (var w = 0; w < WEEKS; w++) {
+    var dayOffset = w * DAYS_PER_WEEK;
+    var weekDays  = days.slice(dayOffset, dayOffset + DAYS_PER_WEEK);
+    var gTop      = rowTop;
+    var gBottom   = gTop + BAR_H;
+
+    // Target dashed line
+    if (targetAUC > 0) {
+      var tY = gBottom - (targetAUC / yMax) * BAR_H;
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.moveTo(gLeft, tY); ctx.lineTo(gRight, tY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // Baseline
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(gLeft, gBottom); ctx.lineTo(gRight, gBottom);
+    ctx.stroke();
+
+    // Today column highlight band
+    for (var d = 0; d < DAYS_PER_WEEK; d++) {
+      if (dayOffset + d === todayIdx) {
+        ctx.fillStyle = 'rgba(255,255,100,0.06)';
+        ctx.fillRect(gLeft + d * bandW, gTop, bandW, BAR_H);
+      }
+    }
+
+    // Bars + day labels
+    for (var d = 0; d < DAYS_PER_WEEK; d++) {
+      var globalIdx = dayOffset + d;
+      var day       = weekDays[d];
+      var cx        = gLeft + d * bandW + bandW / 2;
+      var isToday   = (globalIdx === todayIdx);
+      var isFuture  = (globalIdx > todayIdx);
+      var auc       = day.auc;
+      var hit       = targetAUC > 0 && auc >= targetAUC;
+
+      if (auc > 0 && !isFuture) {
+        var bh  = Math.min(auc / yMax, 1) * BAR_H;
+        var bx  = gLeft + d * bandW + bandW * 0.12;
+        var bw  = bandW * 0.76;
+        var by  = gBottom - bh;
+        var br  = Math.min(3, bh / 2);
+        ctx.fillStyle = isToday ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.2)';
+        roundRect(ctx, bx, by, bw, bh, br); ctx.fill();
+        if (hit) {
+          ctx.strokeStyle = '#FFA500';
+          ctx.lineWidth = 2;
+          roundRect(ctx, bx, by, bw, bh, br); ctx.stroke();
+        }
+
+        var valFS = 13;
+        if (bh > valFS * 1.6) {
+          ctx.fillStyle = 'rgba(255,255,255,0.8)';
+          ctx.font = 'bold ' + valFS + 'px -apple-system,sans-serif';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(Math.round(auc), cx, by + bh / 2);
+        }
+      }
+
+      if (isToday) {
+        ctx.strokeStyle = '#f5c842';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(gLeft + d * bandW + 1, gTop + 1, bandW - 2, BAR_H - 2);
+      }
+
+      var labelY = gBottom + LABEL_H * 0.75;
+      ctx.fillStyle = isToday ? '#f5c842' : 'rgba(255,255,255,0.45)';
+      ctx.font = (isToday ? 'bold ' : '') + '11px -apple-system,sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(day.label.toLowerCase(), cx, labelY);
+    }
+
+    rowTop += BAR_H + LABEL_H + ROW_GAP;
+  }
+
+  // ── Summary strip ─────────────────────────────────────────────
+  var daysWithData = 0, totalAUC = 0;
+  var completedDays = 0, completedOnTarget = 0;
+  for (var d = 0; d < totalDays; d++) {
+    if (days[d].auc > 0) {
+      daysWithData++;
+      totalAUC += days[d].auc;
+      if (d !== todayIdx) {
+        completedDays++;
+        if (targetAUC > 0 && days[d].auc >= targetAUC) completedOnTarget++;
+      }
+    }
+  }
+  var avgAUC      = daysWithData > 0 ? Math.round(totalAUC / daysWithData) : 0;
+  var pctOnTarget = completedDays > 0 ? Math.round(completedOnTarget / completedDays * 100) : 0;
+
+  var summaryY  = rowTop;
+  var sumPad    = 6;
+  var rectY     = summaryY;
+  var rectW     = gRight - gLeft + sumPad * 2;
+  var rectX     = gLeft - sumPad;
+  var colW      = rectW / 3;
+  var LABEL_FS  = 14;
+  var LINE_GAP  = 3;
+  var VALUE_FS  = 26;
+  var VALUE_GAP = 4;
+  var blockH    = LABEL_FS + LINE_GAP + VALUE_GAP + VALUE_FS;
+  var blockTop  = rectY + (SUMMARY_H - blockH) / 2;
+
+  ctx.strokeStyle = '#f5c842';
+  ctx.lineWidth = 4;
+  roundRect(ctx, rectX, rectY, rectW, SUMMARY_H, 10); ctx.stroke();
+
+  for (var d = 1; d <= 2; d++) {
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.lineWidth = 0.75;
+    ctx.beginPath();
+    ctx.moveTo(rectX + colW * d, rectY + 6);
+    ctx.lineTo(rectX + colW * d, rectY + SUMMARY_H - 6);
+    ctx.stroke();
+  }
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 0.75;
+  ctx.beginPath();
+  ctx.moveTo(rectX + colW * 0.5, rectY + SUMMARY_H * 0.2);
+  ctx.lineTo(rectX + colW * 0.5, rectY + SUMMARY_H * 0.8);
+  ctx.stroke();
+
+  function drawSumCell(cx, label, value) {
+    var labelY = blockTop + LABEL_FS / 2;
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.font = LABEL_FS + 'px -apple-system,sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(label, cx, labelY);
+    var lw    = ctx.measureText(label).width;
+    var lineY = blockTop + LABEL_FS + LINE_GAP;
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 0.75;
+    ctx.beginPath();
+    ctx.moveTo(cx - lw/2, lineY); ctx.lineTo(cx + lw/2, lineY);
+    ctx.stroke();
+    var valueY = lineY + VALUE_GAP + VALUE_FS / 2;
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold ' + VALUE_FS + 'px -apple-system,sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(value, cx, valueY);
+  }
+
+  // Left compartment: Streaks header + Best | Now
+  var leftColCX     = rectX + colW * 0.5;
+  var STREAK_HDR_FS = 11;
+  var STREAK_LBL_FS = 10;
+  var STREAK_VAL_FS = 18;
+  var STREAK_GAP    = 3;
+  var streakTotalH  = STREAK_HDR_FS + STREAK_GAP + STREAK_LBL_FS + STREAK_GAP + STREAK_VAL_FS;
+  var streakTop     = rectY + (SUMMARY_H - streakTotalH) / 2;
+
+  var hdrY = streakTop + STREAK_HDR_FS / 2;
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.font = STREAK_HDR_FS + 'px -apple-system,sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('Streaks', leftColCX, hdrY);
+  var hdrLW    = ctx.measureText('Streaks').width;
+  var hdrLineY = streakTop + STREAK_HDR_FS + 2;
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 0.75;
+  ctx.beginPath();
+  ctx.moveTo(leftColCX - hdrLW/2, hdrLineY);
+  ctx.lineTo(leftColCX + hdrLW/2, hdrLineY);
+  ctx.stroke();
+
+  var subLblY = hdrLineY + STREAK_GAP + STREAK_LBL_FS / 2;
+  var subValY = subLblY + STREAK_LBL_FS / 2 + STREAK_GAP + STREAK_VAL_FS / 2;
+  var leftQX  = rectX + colW * 0.25;
+  var rightQX = rectX + colW * 0.75;
+
+  ctx.font = STREAK_LBL_FS + 'px -apple-system,sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('best', leftQX,  subLblY);
+  ctx.fillText('now',  rightQX, subLblY);
+
+  ctx.font = 'bold ' + STREAK_VAL_FS + 'px -apple-system,sans-serif';
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(String(bestStreak),    leftQX,  subValY);
+  ctx.fillText(String(currentStreak), rightQX, subValY);
+
+  // Middle: Daily Avg
+  drawSumCell(rectX + colW * 1.5, 'Daily Avg', String(avgAUC));
+
+  // Right: Target %
+  var targetLabel = targetAUC > 0 ? 'Target (' + targetAUC + ')' : 'Target';
+  drawSumCell(rectX + colW * 2.5, targetLabel, pctOnTarget + '%');
+
+  // ── Pill ──────────────────────────────────────────────────────
+  var pillCX = CW / 2;
+  var pillCY = PAD + PILL_H / 2;
+  var pillW  = 220;
+  ctx.fillStyle = '#f5c842';
+  roundRect(ctx, pillCX - pillW/2, pillCY - PILL_H/2, pillW, PILL_H, PILL_H/2); ctx.fill();
+  ctx.fillStyle = '#1a1a2e';
+  ctx.font = 'bold 16px -apple-system,sans-serif';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.fillText('21 DAYS', pillCX - pillW/2 + 14, pillCY + 1);
+  ctx.fillStyle = 'rgba(26,26,46,0.35)';
+  ctx.fillRect(pillCX - 1, pillCY - PILL_H/2 + 6, 1, PILL_H - 12);
+
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var d0 = new Date(windowStart * 1000);
+  var d1 = new Date((windowStart + 20 * 86400) * 1000);
+  var dateStr = months[d0.getUTCMonth()] + ' ' + d0.getUTCDate()
+              + ' – ' + months[d1.getUTCMonth()] + ' ' + d1.getUTCDate();
+  ctx.fillStyle = '#1a1a2e';
+  ctx.font = '15px -apple-system,sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText(dateStr, pillCX + pillW/2 - 14, pillCY + 1);
+
+  // ── Watermark ─────────────────────────────────────────────────
+  ctx.fillStyle = 'rgba(255,255,255,0.07)';
+  ctx.font = '9px -apple-system,sans-serif';
+  ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic';
+  ctx.fillText('fox2.app', CW - PAD, CH - 4);
+
+  return canvas;
+}
+
 // ─── Render + share ───────────────────────────────────────────────
-var graphCanvas;
+var graphCanvas, streakCanvas;
 var dotHits = [];
 var selectedDot = null;
 var graphScale = 2;
@@ -669,6 +959,11 @@ window.addEventListener('load', function() {
 
   setTimeout(function() {
     renderCard();
+
+    streakCanvas = buildStreakCard();
+    var destS = document.getElementById('card-streaks');
+    destS.width = streakCanvas.width; destS.height = streakCanvas.height;
+    destS.getContext('2d').drawImage(streakCanvas, 0, 0);
 
     // Hide loading overlay
     var loading = document.getElementById('loading');
@@ -858,6 +1153,11 @@ function shareGraph() {
   } else {
     doShare(graphCanvas);
   }
+}
+
+function shareStreaks() {
+  if (!streakCanvas) return;
+  doShare(streakCanvas);
 }
 
 </script>
