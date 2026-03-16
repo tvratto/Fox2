@@ -385,6 +385,7 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
     ctx.lineJoin = 'round'; ctx.lineCap = 'round';
     ctx.beginPath();
     splinePath(ctx, pts);
+    ctx.lineTo(gRight, wy(0));   // trail line to week edge baseline
     ctx.stroke();
 
     // Dots
