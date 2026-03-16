@@ -286,16 +286,18 @@ function splinePath(ctx, pts, bottomY) {
 // dayOffset: index of weekDays[0] within the global days[] array
 // gLeft/gRight/gTop/gBottom: pixel bounds for this row's graph area
 // maxY: shared y scale maximum
-// todayIdx: global day index of today
-function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, maxY, todayIdx, prevPt, nextPt) {
+// prevPt/nextPt: last point from previous week / first point from next week
+// isLastWeek: true if this is the final row (last QR data point gets no extension)
+function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, maxY, todayIdx, prevPt, nextPt, isLastWeek) {
   prevPt = prevPt || null;
   nextPt = nextPt || null;
+  isLastWeek = isLastWeek || false;
   var gW = gRight - gLeft;
   var gH = gBottom - gTop;
   var DAYS = weekDays.length;
+  var GAP_LIMIT = 960 * 60; // 960 minutes in seconds
 
   function wx(epoch) {
-    // x within this row: epoch relative to this week's start midnight
     var weekStartEpoch = windowStart + dayOffset * 86400;
     return gLeft + ((epoch - weekStartEpoch) / (DAYS * 86400)) * gW;
   }
@@ -326,7 +328,6 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
       ctx.strokeRect(bandX+0.5, gTop+0.5, bandW-1, gH-1);
     }
 
-    // Day labels below x axis
     ctx.fillStyle = isToday ? '#f5c842' : 'rgba(255,255,255,0.45)';
     ctx.font = (isToday ? 'bold ' : '') + '10px -apple-system,sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'top';
@@ -363,98 +364,134 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
   if (allPts.length > 0) {
     var weekStartEpoch = windowStart + dayOffset * 86400;
 
-    // Single pts array for both fill and line.
-    // prevPt/nextPt are ghost points at their real epoch x (off-screen) for Sat→Sun continuity.
-    // For week 0 (no prevPt), anchor back to midnight of first data day at first measurement value.
-    var pts = [];
+    // Split allPts into segments at gaps > 960 minutes
+    var segments = [];
+    var seg = [allPts[0]];
+    for (var i = 1; i < allPts.length; i++) {
+      if (allPts[i].epoch - allPts[i-1].epoch > GAP_LIMIT) {
+        segments.push(seg);
+        seg = [];
+      }
+      seg.push(allPts[i]);
+    }
+    segments.push(seg);
 
-    if (prevPt) {
-      pts.push({ x: wx(prevPt.epoch), y: wy(prevPt.val) });
-    } else {
-      var firstMidnight = weekStartEpoch + allPts[0].dayIdx * 86400;
-      pts.push({ x: wx(firstMidnight), y: wy(allPts[0].val) });
-    }
-    for (var i = 0; i < allPts.length; i++) {
-      pts.push({ x: wx(allPts[i].epoch), y: wy(allPts[i].val) });
-    }
-    if (nextPt) {
-      pts.push({ x: wx(nextPt.epoch), y: wy(nextPt.val) });
+    // Helper: build pts array for one segment and draw fill + line
+    function drawSegment(segPts, isFirst, isLast) {
+      var pts = [];
+      var firstEpoch = segPts[0].epoch;
+      var lastEpoch  = segPts[segPts.length-1].epoch;
+
+      // ── Leading point ──────────────────────────────────────────
+      if (isFirst && prevPt && (firstEpoch - prevPt.epoch) <= GAP_LIMIT) {
+        // Valid Sat→Sun ghost: use prevPt off-screen for spline continuity
+        pts.push({ x: wx(prevPt.epoch), y: wy(prevPt.val) });
+      } else {
+        // No valid prev: extend back to midnight of first data day at first val
+        var firstMidnight = weekStartEpoch + segPts[0].dayIdx * 86400;
+        pts.push({ x: wx(firstMidnight), y: wy(segPts[0].val) });
+      }
+
+      // ── Data points ────────────────────────────────────────────
+      for (var j = 0; j < segPts.length; j++) {
+        pts.push({ x: wx(segPts[j].epoch), y: wy(segPts[j].val) });
+      }
+
+      // ── Trailing point ─────────────────────────────────────────
+      if (isLast && nextPt && (nextPt.epoch - lastEpoch) <= GAP_LIMIT) {
+        // Valid Sat→Sun ghost: use nextPt off-screen for spline continuity
+        pts.push({ x: wx(nextPt.epoch), y: wy(nextPt.val) });
+      } else if (isLast && isLastWeek) {
+        // Very last point of the entire graph — no extension
+      } else {
+        // Mid-week gap, or end of non-final row: trail to midnight of next day at zero
+        var nextMidnight = weekStartEpoch + (segPts[segPts.length-1].dayIdx + 1) * 86400;
+        pts.push({ x: wx(nextMidnight), y: wy(0) });
+      }
+
+      // ── Draw ───────────────────────────────────────────────────
+      var p0  = { x: 2*pts[0].x - pts[1].x, y: 2*pts[0].y - pts[1].y };
+      var pN  = { x: 2*pts[pts.length-1].x - pts[pts.length-2].x,
+                  y: 2*pts[pts.length-1].y - pts[pts.length-2].y };
+      var ext = [p0].concat(pts).concat([pN]);
+
+      var grad = ctx.createLinearGradient(0, gTop, 0, gBottom);
+      grad.addColorStop(0,   'rgba(255,140,0,0.0)');
+      grad.addColorStop(0.5, 'rgba(255,140,0,0.22)');
+      grad.addColorStop(1,   'rgba(255,140,0,0.5)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, gBottom);
+      ctx.lineTo(pts[0].x, pts[0].y);
+      for (var k = 0; k < pts.length - 1; k++) {
+        var cp = catmullRomCP(ext[k], ext[k+1], ext[k+2], ext[k+3]);
+        ctx.bezierCurveTo(cp.cp1x, cp.cp1y, cp.cp2x, cp.cp2y, pts[k+1].x, pts[k+1].y);
+      }
+      ctx.lineTo(pts[pts.length-1].x, gBottom);
+      ctx.closePath(); ctx.fill();
+
+      ctx.strokeStyle = '#FF8C00'; ctx.lineWidth = 1.5;
+      ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (var k = 0; k < pts.length - 1; k++) {
+        var cp = catmullRomCP(ext[k], ext[k+1], ext[k+2], ext[k+3]);
+        ctx.bezierCurveTo(cp.cp1x, cp.cp1y, cp.cp2x, cp.cp2y, pts[k+1].x, pts[k+1].y);
+      }
+      ctx.stroke();
+
+      return pts;
     }
 
-    // Clip to row bounds so off-screen ghost points don't bleed
+    // Clip to row bounds so ghost points don't bleed outside
     ctx.save();
     ctx.beginPath();
     ctx.rect(gLeft, gTop, gRight - gLeft, gBottom - gTop);
     ctx.clip();
 
-    // Precompute Catmull-Rom extended array (shared by fill and line)
-    var p0  = { x: 2*pts[0].x - pts[1].x, y: 2*pts[0].y - pts[1].y };
-    var pN  = { x: 2*pts[pts.length-1].x - pts[pts.length-2].x,
-                y: 2*pts[pts.length-1].y - pts[pts.length-2].y };
-    var ext = [p0].concat(pts).concat([pN]);
-
-    // Gradient fill — same beziers as line, closed to baseline
-    var grad = ctx.createLinearGradient(0, gTop, 0, gBottom);
-    grad.addColorStop(0,   'rgba(255,140,0,0.0)');
-    grad.addColorStop(0.5, 'rgba(255,140,0,0.22)');
-    grad.addColorStop(1,   'rgba(255,140,0,0.5)');
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.moveTo(pts[0].x, gBottom);
-    ctx.lineTo(pts[0].x, pts[0].y);
-    for (var i = 0; i < pts.length - 1; i++) {
-      var cp = catmullRomCP(ext[i], ext[i+1], ext[i+2], ext[i+3]);
-      ctx.bezierCurveTo(cp.cp1x, cp.cp1y, cp.cp2x, cp.cp2y, pts[i+1].x, pts[i+1].y);
+    var segmentPts = [];
+    for (var si = 0; si < segments.length; si++) {
+      segmentPts.push(drawSegment(segments[si], si === 0, si === segments.length - 1));
     }
-    ctx.lineTo(pts[pts.length-1].x, gBottom);
-    ctx.closePath(); ctx.fill();
-
-    // Spline line — identical beziers
-    ctx.strokeStyle = '#FF8C00'; ctx.lineWidth = 1.5;
-    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(pts[0].x, pts[0].y);
-    for (var i = 0; i < pts.length - 1; i++) {
-      var cp = catmullRomCP(ext[i], ext[i+1], ext[i+2], ext[i+3]);
-      ctx.bezierCurveTo(cp.cp1x, cp.cp1y, cp.cp2x, cp.cp2y, pts[i+1].x, pts[i+1].y);
-    }
-    ctx.stroke();
 
     ctx.restore();
 
-    // Dots — data points always start at pts[1]
+    // ── Dots + labels ─────────────────────────────────────────────
     var dotR = 3, valFS = 12;
-    for (var i = 0; i < allPts.length; i++) {
-      var px = pts[i+1].x, py = pts[i+1].y;
-      var isNewest = (allPts[i].dayIdx + dayOffset === todayIdx) && (i === allPts.length - 1);
-      var dc = allPts[i].val >= 5 ? '#00FF00' : '#00FFFF';
-      var isSelected = selectedDot && selectedDot.epoch === allPts[i].epoch;
-      if (isNewest) {
-        ctx.globalAlpha=0.3; filledDot(ctx,px,py,dotR*2.2,dc);
-        ctx.globalAlpha=1;   filledDot(ctx,px,py,dotR*1.4,dc);
-      } else {
-        filledDot(ctx,px,py,dotR,dc);
-      }
-      if (isSelected) {
-        ctx.beginPath(); ctx.arc(px, py, dotR*2.8, 0, Math.PI*2);
-        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
-      }
-      dotHits.push({ cx: px, cy: py, val: allPts[i].val, epoch: allPts[i].epoch });
-    }
-
-    // Labels with collision resolution
+    var labels = [];
     ctx.font = 'bold '+valFS+'px -apple-system,sans-serif';
     var PAD_X=2, MAX_SHIFT=gW/DAYS*0.35, ITERS=5;
     var MIN_CX=gLeft+2, MAX_CX=gRight-2;
-    var labels = [];
-    for (var i = 0; i < allPts.length; i++) {
-      var px=pts[i+1].x, py=pts[i+1].y;
-      var isNewest=(allPts[i].dayIdx + dayOffset === todayIdx)&&(i===allPts.length-1);
-      var dotEdge=isNewest?dotR*1.4:dotR;
-      var s=String(Math.round(allPts[i].val));
-      var w=ctx.measureText(s).width;
-      labels.push({ s:s, baseX:px, x:px, y:py-dotEdge-1, w:w, visible:true, newest:isNewest });
+
+    var globalI = 0;
+    for (var si = 0; si < segments.length; si++) {
+      var sPts = segmentPts[si];
+      for (var j = 0; j < segments[si].length; j++) {
+        var ap = allPts[globalI];
+        var px = sPts[j+1].x, py = sPts[j+1].y;
+        var isNewest = (ap.dayIdx + dayOffset === todayIdx) && (globalI === allPts.length - 1);
+        var dc = ap.val >= 5 ? '#00FF00' : '#00FFFF';
+        var isSelected = selectedDot && selectedDot.epoch === ap.epoch;
+        if (isNewest) {
+          ctx.globalAlpha=0.3; filledDot(ctx,px,py,dotR*2.2,dc);
+          ctx.globalAlpha=1;   filledDot(ctx,px,py,dotR*1.4,dc);
+        } else {
+          filledDot(ctx,px,py,dotR,dc);
+        }
+        if (isSelected) {
+          ctx.beginPath(); ctx.arc(px, py, dotR*2.8, 0, Math.PI*2);
+          ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+        }
+        dotHits.push({ cx: px, cy: py, val: ap.val, epoch: ap.epoch });
+
+        var dotEdge = isNewest ? dotR*1.4 : dotR;
+        var s = String(Math.round(ap.val));
+        var w = ctx.measureText(s).width;
+        labels.push({ s:s, baseX:px, x:px, y:py-dotEdge-1, w:w, visible:true, newest:isNewest });
+        globalI++;
+      }
     }
+
     for (var pass=0; pass<ITERS; pass++) {
       for (var i=0; i<labels.length-1; i++) {
         var L=labels[i], R=labels[i+1];
@@ -486,7 +523,7 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
   }
 
   // ── AUC / heart row below day labels ─────────────────────────
-  var aucY    = gBottom + 14 + 18; // 14=LABEL_H, 18 = mid of AUC_H(36)
+  var aucY    = gBottom + 14 + 18;
   var aucFS   = 18;
   var heartFS = 16;
   for (var d = 0; d < DAYS; d++) {
@@ -575,7 +612,7 @@ function buildGraphCard() {
     var gTop       = rowTop;
     var gBottom    = gTop + GRAPH_H;
 
-    // Last measurement from previous week (ghost point before this row)
+    // Last measurement from previous week
     var prevPt = null;
     if (w > 0) {
       for (var pd = w * DAYS_PER_WEEK - 1; pd >= (w-1) * DAYS_PER_WEEK; pd--) {
@@ -587,7 +624,7 @@ function buildGraphCard() {
       }
     }
 
-    // First measurement from next week (ghost point after this row)
+    // First measurement from next week
     var nextPt = null;
     if (w < WEEKS - 1) {
       for (var nd = (w+1) * DAYS_PER_WEEK; nd < (w+2) * DAYS_PER_WEEK; nd++) {
@@ -598,7 +635,7 @@ function buildGraphCard() {
       }
     }
 
-    drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, maxY, todayIdx, prevPt, nextPt);
+    drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, maxY, todayIdx, prevPt, nextPt, w === WEEKS - 1);
 
     rowTop += GRAPH_H + LABEL_H + AUC_H + ROW_GAP;
   }
