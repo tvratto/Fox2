@@ -367,7 +367,7 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
       pts.push({ x: wx(allPts[i].epoch), y: wy(allPts[i].val) });
     }
     var last = pts[pts.length-1];
-
+    
     // Gradient fill
     var grad = ctx.createLinearGradient(0, gTop, 0, gBottom);
     grad.addColorStop(0,   'rgba(255,140,0,0.0)');
@@ -377,6 +377,7 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
     ctx.beginPath();
     splinePath(ctx, pts, gBottom);
     ctx.lineTo(last.x, gBottom);
+    ctx.lineTo(gRight, gBottom);   // ← extend fill to right edge of week
     ctx.closePath(); ctx.fill();
 
     // Spline line
