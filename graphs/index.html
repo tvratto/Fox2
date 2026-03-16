@@ -377,19 +377,25 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
     segments.push(seg);
 
     // Helper: build pts array for one segment and draw fill + line
+    // Returns pts so dots/labels can use pts[0..N-1] directly
     function drawSegment(segPts, isFirst, isLast) {
       var pts = [];
       var firstEpoch = segPts[0].epoch;
       var lastEpoch  = segPts[segPts.length-1].epoch;
 
+      // fillStartX: where the fill base begins (may be left of first data point)
+      var fillStartX;
+
       // ── Leading point ──────────────────────────────────────────
       if (isFirst && prevPt && (firstEpoch - prevPt.epoch) <= GAP_LIMIT) {
-        // Valid Sat→Sun ghost: use prevPt off-screen for spline continuity
+        // Valid Sat→Sun ghost: include in spline pts for natural curvature
         pts.push({ x: wx(prevPt.epoch), y: wy(prevPt.val) });
+        fillStartX = wx(prevPt.epoch);
       } else {
-        // No valid prev: extend back to midnight of first data day at first val
+        // No valid prev: spline starts at first data point,
+        // but fill extends back to midnight of that day
         var firstMidnight = weekStartEpoch + segPts[0].dayIdx * 86400;
-        pts.push({ x: wx(firstMidnight), y: wy(segPts[0].val) });
+        fillStartX = wx(firstMidnight);
       }
 
       // ── Data points ────────────────────────────────────────────
@@ -397,16 +403,22 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
         pts.push({ x: wx(segPts[j].epoch), y: wy(segPts[j].val) });
       }
 
+      // fillEndX: where the fill base ends
+      var fillEndX;
+
       // ── Trailing point ─────────────────────────────────────────
       if (isLast && nextPt && (nextPt.epoch - lastEpoch) <= GAP_LIMIT) {
-        // Valid Sat→Sun ghost: use nextPt off-screen for spline continuity
+        // Valid Sat→Sun ghost: include in spline pts
         pts.push({ x: wx(nextPt.epoch), y: wy(nextPt.val) });
+        fillEndX = wx(nextPt.epoch);
       } else if (isLast && isLastWeek) {
-        // Very last point of the entire graph — no extension
+        // Very last point — no extension, fill ends at last data point
+        fillEndX = pts[pts.length-1].x;
       } else {
-        // Mid-week gap, or end of non-final row: trail to midnight of next day at zero
+        // Mid-week gap or end of non-final row: trail to next midnight at zero
         var nextMidnight = weekStartEpoch + (segPts[segPts.length-1].dayIdx + 1) * 86400;
         pts.push({ x: wx(nextMidnight), y: wy(0) });
+        fillEndX = wx(nextMidnight);
       }
 
       // ── Draw ───────────────────────────────────────────────────
@@ -421,13 +433,13 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
       grad.addColorStop(1,   'rgba(255,140,0,0.5)');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.moveTo(pts[0].x, gBottom);
+      ctx.moveTo(fillStartX, gBottom);
       ctx.lineTo(pts[0].x, pts[0].y);
       for (var k = 0; k < pts.length - 1; k++) {
         var cp = catmullRomCP(ext[k], ext[k+1], ext[k+2], ext[k+3]);
         ctx.bezierCurveTo(cp.cp1x, cp.cp1y, cp.cp2x, cp.cp2y, pts[k+1].x, pts[k+1].y);
       }
-      ctx.lineTo(pts[pts.length-1].x, gBottom);
+      ctx.lineTo(fillEndX, gBottom);
       ctx.closePath(); ctx.fill();
 
       ctx.strokeStyle = '#FF8C00'; ctx.lineWidth = 1.5;
@@ -440,7 +452,7 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
       }
       ctx.stroke();
 
-      return pts;
+      return { pts: pts, dataOffset: (isFirst && prevPt && (firstEpoch - prevPt.epoch) <= GAP_LIMIT) ? 1 : 0 };
     }
 
     // Clip to row bounds so ghost points don't bleed outside
@@ -465,10 +477,11 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
 
     var globalI = 0;
     for (var si = 0; si < segments.length; si++) {
-      var sPts = segmentPts[si];
+      var sPts = segmentPts[si].pts;
+      var dOff = segmentPts[si].dataOffset;
       for (var j = 0; j < segments[si].length; j++) {
         var ap = allPts[globalI];
-        var px = sPts[j+1].x, py = sPts[j+1].y;
+        var px = sPts[j + dOff].x, py = sPts[j + dOff].y;
         var isNewest = (ap.dayIdx + dayOffset === todayIdx) && (globalI === allPts.length - 1);
         var dc = ap.val >= 5 ? '#00FF00' : '#00FFFF';
         var isSelected = selectedDot && selectedDot.epoch === ap.epoch;
