@@ -295,7 +295,7 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
   var gW = gRight - gLeft;
   var gH = gBottom - gTop;
   var DAYS = weekDays.length;
-  var GAP_LIMIT = 960 * 60; // 960 minutes in seconds
+  var GAP_LIMIT = 24 * 60 * 60; // 24 hours in seconds
 
   function wx(epoch) {
     var weekStartEpoch = windowStart + dayOffset * 86400;
