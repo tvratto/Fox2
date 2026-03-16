@@ -287,7 +287,9 @@ function splinePath(ctx, pts, bottomY) {
 // gLeft/gRight/gTop/gBottom: pixel bounds for this row's graph area
 // maxY: shared y scale maximum
 // todayIdx: global day index of today
-function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, maxY, todayIdx) {
+function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, maxY, todayIdx, prevPt, nextPt) {
+  prevPt = prevPt || null;
+  nextPt = nextPt || null;
   var gW = gRight - gLeft;
   var gH = gBottom - gTop;
   var DAYS = weekDays.length;
@@ -359,36 +361,68 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
   allPts.sort(function(a,b){ return a.epoch - b.epoch; });
 
   if (allPts.length > 0) {
-    // Midnight anchor at first data day
     var weekStartEpoch = windowStart + dayOffset * 86400;
-    var firstMidnight  = weekStartEpoch + allPts[0].dayIdx * 86400;
-    var pts = [{ x: wx(firstMidnight), y: wy(0) }];
+
+    // Single pts array for both fill and line.
+    // prevPt/nextPt are ghost points at their real epoch x (off-screen) for Sat→Sun continuity.
+    // For week 0 (no prevPt), anchor back to midnight of first data day at first measurement value.
+    var pts = [];
+
+    if (prevPt) {
+      pts.push({ x: wx(prevPt.epoch), y: wy(prevPt.val) });
+    } else {
+      var firstMidnight = weekStartEpoch + allPts[0].dayIdx * 86400;
+      pts.push({ x: wx(firstMidnight), y: wy(allPts[0].val) });
+    }
     for (var i = 0; i < allPts.length; i++) {
       pts.push({ x: wx(allPts[i].epoch), y: wy(allPts[i].val) });
     }
-    var last = pts[pts.length-1];
-    
-    // Gradient fill
+    if (nextPt) {
+      pts.push({ x: wx(nextPt.epoch), y: wy(nextPt.val) });
+    }
+
+    // Clip to row bounds so off-screen ghost points don't bleed
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(gLeft, gTop, gRight - gLeft, gBottom - gTop);
+    ctx.clip();
+
+    // Precompute Catmull-Rom extended array (shared by fill and line)
+    var p0  = { x: 2*pts[0].x - pts[1].x, y: 2*pts[0].y - pts[1].y };
+    var pN  = { x: 2*pts[pts.length-1].x - pts[pts.length-2].x,
+                y: 2*pts[pts.length-1].y - pts[pts.length-2].y };
+    var ext = [p0].concat(pts).concat([pN]);
+
+    // Gradient fill — same beziers as line, closed to baseline
     var grad = ctx.createLinearGradient(0, gTop, 0, gBottom);
     grad.addColorStop(0,   'rgba(255,140,0,0.0)');
     grad.addColorStop(0.5, 'rgba(255,140,0,0.22)');
     grad.addColorStop(1,   'rgba(255,140,0,0.5)');
     ctx.fillStyle = grad;
     ctx.beginPath();
-    splinePath(ctx, pts, gBottom);
-    ctx.lineTo(last.x, gBottom);
-    ctx.lineTo(gRight, gBottom);   // ← extend fill to right edge of week
+    ctx.moveTo(pts[0].x, gBottom);
+    ctx.lineTo(pts[0].x, pts[0].y);
+    for (var i = 0; i < pts.length - 1; i++) {
+      var cp = catmullRomCP(ext[i], ext[i+1], ext[i+2], ext[i+3]);
+      ctx.bezierCurveTo(cp.cp1x, cp.cp1y, cp.cp2x, cp.cp2y, pts[i+1].x, pts[i+1].y);
+    }
+    ctx.lineTo(pts[pts.length-1].x, gBottom);
     ctx.closePath(); ctx.fill();
 
-    // Spline line
+    // Spline line — identical beziers
     ctx.strokeStyle = '#FF8C00'; ctx.lineWidth = 1.5;
     ctx.lineJoin = 'round'; ctx.lineCap = 'round';
     ctx.beginPath();
-    splinePath(ctx, pts);
-    ctx.lineTo(gRight, wy(0));   // trail line to week edge baseline
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (var i = 0; i < pts.length - 1; i++) {
+      var cp = catmullRomCP(ext[i], ext[i+1], ext[i+2], ext[i+3]);
+      ctx.bezierCurveTo(cp.cp1x, cp.cp1y, cp.cp2x, cp.cp2y, pts[i+1].x, pts[i+1].y);
+    }
     ctx.stroke();
 
-    // Dots
+    ctx.restore();
+
+    // Dots — data points always start at pts[1]
     var dotR = 3, valFS = 12;
     for (var i = 0; i < allPts.length; i++) {
       var px = pts[i+1].x, py = pts[i+1].y;
@@ -541,7 +575,30 @@ function buildGraphCard() {
     var gTop       = rowTop;
     var gBottom    = gTop + GRAPH_H;
 
-    drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, maxY, todayIdx);
+    // Last measurement from previous week (ghost point before this row)
+    var prevPt = null;
+    if (w > 0) {
+      for (var pd = w * DAYS_PER_WEEK - 1; pd >= (w-1) * DAYS_PER_WEEK; pd--) {
+        if (days[pd] && days[pd].epochs.length > 0) {
+          var ei = days[pd].epochs.length - 1;
+          prevPt = { epoch: days[pd].epochs[ei], val: days[pd].vals[ei] };
+          break;
+        }
+      }
+    }
+
+    // First measurement from next week (ghost point after this row)
+    var nextPt = null;
+    if (w < WEEKS - 1) {
+      for (var nd = (w+1) * DAYS_PER_WEEK; nd < (w+2) * DAYS_PER_WEEK; nd++) {
+        if (days[nd] && days[nd].epochs.length > 0) {
+          nextPt = { epoch: days[nd].epochs[0], val: days[nd].vals[0] };
+          break;
+        }
+      }
+    }
+
+    drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, maxY, todayIdx, prevPt, nextPt);
 
     rowTop += GRAPH_H + LABEL_H + AUC_H + ROW_GAP;
   }
@@ -559,7 +616,7 @@ function buildGraphCard() {
   }
   var minZone = allVals.length ? Math.round(Math.min.apply(null, allVals)) : 0;
   var maxZone = allVals.length ? Math.round(Math.max.apply(null, allVals)) : 0;
-  var avgZone = daysWithData > 0 ? Math.round(totalAUC / (daysWithData * 24)) : 0;
+  var avgZone = daysWithData > 0 ? Math.round(totalAUC / (daysWithData * 24) * 10) / 10 : 0;
   var pctOnTarget = daysWithData > 0 ? Math.round(daysOnTarget / daysWithData * 100) : 0;
 
   var summaryY = rowTop + ROW_GAP;
@@ -567,7 +624,7 @@ function buildGraphCard() {
   var rectY = summaryY;
   var sumStats = [
     { label: 'Range',  value: minZone + '–' + maxZone },
-    { label: 'Avg',    value: String(avgZone)          },
+    { label: 'Avg',    value: avgZone.toFixed(1)          },
     { label: targetAUC > 0 ? 'Target (' + targetAUC + ')' : 'Target',
                        value: pctOnTarget + '%'         }
   ];
