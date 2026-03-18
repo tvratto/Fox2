@@ -4,6 +4,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="dark">
 <title>FOX2 Onboarding</title>
+<script id="runtime-vars"></script>
 <style>
 :root { color-scheme: dark; }
 * { box-sizing: border-box; }
@@ -36,7 +37,7 @@ body {
 .btn-primary { background:#00ffff; color:#000; }
 .btn-secondary { background:#222; color:#fff; }
 
-/* ── Welcome ── */
+/* -- Welcome -- */
 .welcome {
   flex:1; display:flex; flex-direction:column;
   justify-content:center; text-align:center; gap:10px;
@@ -57,7 +58,7 @@ body {
 .welcome-body { font-size:19px; line-height:1.6; opacity:0.85; }
 .disclaimer { font-size:13px; opacity:0.4; margin-top:8px; }
 
-/* ── Info boxes ── */
+/* -- Info boxes -- */
 .content-area { flex:1; overflow-y:auto; min-height:0; display:flex; flex-direction:column; gap:12px; }
 .info-box { background:#0a0a0a; border:1px solid #1e1e1e; border-radius:12px; padding:16px; }
 .info-box-text { font-size:19px; line-height:1.6; color:#ccc; }
@@ -65,7 +66,7 @@ body {
 .info-box-text strong.fat { color:#4CAF50; }
 .arc-wrap { width:100%; max-width:300px; margin:8px auto 0; }
 
-/* ── Intent cards ── */
+/* -- Intent cards -- */
 .step-question { font-size:19px; color:#666; text-align:center; flex-shrink:0; }
 .intent-grid { flex:1; display:flex; flex-direction:column; gap:12px; overflow-y:auto; padding:2px; min-height:0; }
 .intent-card {
@@ -84,7 +85,7 @@ body {
 .intent-check { width:24px; height:24px; border-radius:50%; border:2px solid #333; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all 0.18s; font-size:13px; }
 .intent-card.sel .intent-check { background:#00ffff; border-color:#00ffff; color:#000; }
 
-/* ── Confirm ── */
+/* -- Confirm -- */
 .confirm-wrap { flex:1; display:flex; flex-direction:column; gap:12px; overflow-y:auto; min-height:0; }
 .confirm-hero { border-radius:16px; padding:18px 16px 16px; text-align:center; flex-shrink:0; }
 .confirm-intent-label { font-size:13px; text-transform:uppercase; letter-spacing:0.12em; color:#555; margin-bottom:4px; }
@@ -107,7 +108,7 @@ body {
 .meaning-text { font-size:17px; line-height:1.5; color:#bbb; }
 .change-link { text-align:center; font-size:16px; color:#00ffff; cursor:pointer; opacity:0.6; padding:4px; text-decoration:underline; text-underline-offset:3px; flex-shrink:0; }
 
-/* ── Device preview slideshow ── */
+/* -- Device preview slideshow -- */
 .preview-wrap {
   flex:1; display:flex; flex-direction:column; align-items:center;
   justify-content:center; gap:16px; min-height:0;
@@ -131,7 +132,7 @@ body {
 .device-screen-slide svg { width:100%; height:100%; display:block; }
 #todaySlide svg { width:100%; height:100%; display:block; }
 .slide-caption {
-  font-size:18px; line-height:1.5; color:#aaa;
+  font-size:20px; line-height:1.5; color:#aaa;
   text-align:center; padding:0 8px; flex-shrink:0;
   height:80px;
   overflow:hidden;
@@ -143,24 +144,24 @@ body {
 .slide-dot { width:7px; height:7px; border-radius:50%; background:#333; transition:all .3s; }
 .slide-dot.active { background:#00ffff; width:20px; border-radius:4px; }
 
-/* ── Steps ── */
+/* -- Steps -- */
 .step-list { display:flex; flex-direction:column; gap:10px; overflow-y:auto; flex:1; min-height:0; }
 .step-item { display:flex; align-items:flex-start; gap:14px; background:#0a0a0a; border:1px solid #1e1e1e; border-radius:12px; padding:14px; flex-shrink:0; }
 .step-num { width:32px; height:32px; border-radius:50%; background:#00ffff; color:#000; font-size:16px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
 .step-text { font-size:17px; line-height:1.5; color:#ccc; }
 .step-text strong { color:#fff; font-weight:600; }
 
-/* ── Caveats ── */
+/* -- Caveats -- */
 .caveat-list { list-style:none; padding:0; margin:0; }
 .caveat-list li { position:relative; padding-left:18px; margin-bottom:18px; font-size:18px; line-height:1.5; color:#ccc; }
 .caveat-list li:last-child { margin-bottom:0; }
 .caveat-list li:before { content:"\2022"; position:absolute; left:0; color:#00ffff; font-weight:bold; }
 .caveat-list li strong { color:#ff9800; }
 
-/* ── Done ── */
+/* -- Done -- */
 .done-wrap { flex:1; display:flex; flex-direction:column; justify-content:center; text-align:center; gap:12px; }
 
-/* ── Welcome device graphic ── */
+/* -- Welcome device graphic -- */
 .device-frame{width:200px;height:320px;position:relative;margin:0 auto;flex-shrink:0;}
 .device-body{position:absolute;inset:0;background:#232347;border-radius:100px/140px;box-shadow:0 10px 30px rgba(0,0,0,.85), inset 0 2px 4px rgba(255,255,255,.10);z-index:1}
 .device-body::before{content:"";position:absolute;left:0;width:100%;height:26px;background:#000;z-index:2;top:-20px;}
@@ -186,8 +187,16 @@ body {
 // state: 0=welcome, 1=measures, 2=goal-intent, 3=goal-confirm, 4=goal-preview, 5=how-to, 6=caveats, 7=done
 var state = 0;
 var TOTAL_SCREENS = 7;
-var intent = 'explore';
-var customVal = 130;
+var RUNTIME_CURRENT_LEVEL = (typeof RUNTIME_CURRENT_LEVEL !== 'undefined') ? RUNTIME_CURRENT_LEVEL : 1;
+var RUNTIME_TARGET2       = (typeof RUNTIME_TARGET2       !== 'undefined') ? RUNTIME_TARGET2       : 60;
+var RUNTIME_TARGET3       = (typeof RUNTIME_TARGET3       !== 'undefined') ? RUNTIME_TARGET3       : 120;
+
+// Map level -> intent
+var _lvlToIntent = {1:'explore', 2:'fat', 3:'lose', 4:'custom'};
+var intent   = _lvlToIntent[RUNTIME_CURRENT_LEVEL] || 'explore';
+var customVal = (RUNTIME_CURRENT_LEVEL === 4)
+  ? Math.round((RUNTIME_TARGET2 + RUNTIME_TARGET3) / 2)  // midpoint as sensible custom default
+  : 130;
 var slideIndex = 0;
 var slideTimer = null;
 
@@ -197,12 +206,12 @@ var intentData = {
     tlMain: 'No daily target', tlSub: 'Streaks not tracked',
     heroBg: '#060d1a', heroBorder: '#0d1f3a',
     rows: [
-      { c:'#2196F3', t:'Measure whenever you like — no pressure to hit a number.' },
+      { c:'#2196F3', t:'Measure whenever you like &#8212; no pressure to hit a number.' },
       { c:'#2196F3', t:'Good for getting a baseline feel for where your body is right now.' },
       { c:'#2196F3', t:'You can set a target anytime from the Settings menu.' }
     ],
     nowValue: 3, nowLabel: 'Good!',
-    caption: 'After each measurement you\'ll see a number from 1 to 20. This is where your fuel balance sits right now.'
+    caption: 'Each higher number means additional fat used for energy.'
   },
   fat: {
     name: 'Use fat as fuel', badge: '60', color: '#4CAF50',
@@ -210,23 +219,23 @@ var intentData = {
     heroBg: '#061a08', heroBorder: '#0d3a12',
     rows: [
       { c:'#4CAF50', t:'A daily total that can be reached through a modest but sustained shift toward fat metabolism throughout the day.' },
-      { c:'#4CAF50', t:'Eating patterns, carbohydrate intake, and activity all influence your number — use your readings to discover what works for your body.' },
+      { c:'#4CAF50', t:'Eating patterns, carbohydrate intake, and activity all influence your number &#8212; use your readings to discover what works for your body.' },
       { c:'#4CAF50', t:'Regularly shifting your body into fat metabolism supports better metabolic balance over time.' }
     ],
     nowValue: 4, nowLabel: 'Good!',
-    caption: 'When your number gets close to 5, fat begins to take over as your dominant fuel. You\'re working toward that shift.'
+    caption: 'Numbers around 5 and above mean fat is taking over as your dominant fuel.'
   },
   lose: {
     name: 'Make fat my primary fuel', badge: '120', color: '#9C27B0',
     tlMain: 'Daily target: 120', tlSub: 'Streaks tracked',
     heroBg: '#100618', heroBorder: '#220d30',
     rows: [
-      { c:'#9C27B0', t:'A full fat-dominant day — your body running on fat for most of it.' },
+      { c:'#9C27B0', t:'A full fat-dominant day &#8212; your body running on fat for most of it.' },
       { c:'#9C27B0', t:'Usually requires consistent low-carb eating combined with regular movement.' },
       { c:'#9C27B0', t:'Sustained fat-dominant days create the conditions for meaningful changes in body composition over time.' }
     ],
     nowValue: 7, nowLabel: 'Great!',
-    caption: 'A number like this means fat is your dominant fuel. This is what you\'re working toward — consistently.'
+    caption: 'Numbers like these indicate that the balance between glucose and fat is shifting more to fat.'
   },
   custom: {
     name: 'Custom target', badge: '130', color: '#E91E63',
@@ -238,11 +247,11 @@ var intentData = {
       { c:'#E91E63', t:'You can always adjust this later from the Settings menu.' }
     ],
     nowValue: 8, nowLabel: 'Great!',
-    caption: 'After each measurement you\'ll see a number from 1 to 20 — use your readings to track progress toward your target.'
+    caption: 'A number from 1 to 20 &#8212; where your fuel balance sits right now.'
   }
 };
 
-// ── SVG generators ──
+// -- SVG generators --
 function getZoneSVG() {
   return '<svg viewBox="0 0 184 184" xmlns="http://www.w3.org/2000/svg">' +
     '<rect x="55" y="7" width="74" height="16" rx="8" fill="#00ffff"/>' +
@@ -432,7 +441,7 @@ function getStreaksSVG() {
   '</svg>';
 }
 
-// ── Slide timer ──
+// -- Slide timer --
 function startSlideTimer(slides) {
   stopSlideTimer();
   slideTimer = setInterval(function() {
@@ -468,7 +477,7 @@ function updateSlide(slides) {
   });
 }
 
-// ── Render ──
+// -- Render --
 function render() {
   stopSlideTimer();
   var content = '';
@@ -500,7 +509,7 @@ function render() {
       '</div>';
     buttons =
       '<button class="btn btn-secondary" onclick="goTo(2)">Skip to Setup</button>' +
-      '<button class="btn btn-primary" onclick="next()">What FOX2 Measures ›</button>';
+      '<button class="btn btn-primary" onclick="next()">What FOX2 Measures &#8250;</button>';
 
   } else if (state === 1) {
     // What FOX2 Measures
@@ -512,8 +521,8 @@ function render() {
         '<div class="arc-wrap">' + getArcSVG() + '</div>' +
       '</div>';
     buttons =
-      '<button class="btn btn-secondary" onclick="back()">‹ Welcome</button>' +
-      '<button class="btn btn-primary" onclick="next()">Your Goal ›</button>';
+      '<button class="btn btn-secondary" onclick="back()">&#8249; Welcome</button>' +
+      '<button class="btn btn-primary" onclick="next()">Your Goal &#8250;</button>';
 
   } else if (state === 2) {
     // Goal intent
@@ -521,34 +530,43 @@ function render() {
     content =
       '<div class="step-question">What are you hoping to do?</div>' +
       '<div class="intent-grid">' +
-        icard('explore','🔍','Just explore',"I'm curious where I am — no pressure") +
-        icard('fat','🔥','Use fat as fuel','I want to shift my body toward fat metabolism') +
-        icard('lose','🚀','Make fat my primary fuel','I want fat metabolism dominant for most of my day') +
-        icard('custom','🎯','Custom target','I have a specific number in mind') +
+        icard('explore','&#128269;','Just explore',"I'm curious where I am &#8212; no pressure") +
+        icard('fat','&#128293;','Use fat as fuel','I want to shift my body toward fat metabolism') +
+        icard('lose','&#128640;','Make fat my primary fuel','I want fat metabolism dominant for most of my day') +
+        icard('custom','&#127919;','Custom target','I have a specific number in mind') +
       '</div>';
     buttons =
-      '<button class="btn btn-secondary" onclick="back()">‹ What FOX2 Measures</button>' +
-      '<button class="btn btn-primary" onclick="next()">Confirm ›</button>';
+      '<button class="btn btn-secondary" onclick="back()">&#8249; What FOX2 Measures</button>' +
+      '<button class="btn btn-primary" onclick="next()">Confirm &#8250;</button>';
 
   } else if (state === 3) {
     // Goal confirm
     var d = intentData[intent];
     var badgeVal = intent === 'custom' ? customVal : d.badge;
     var targetNum = intent === 'custom' ? customVal : (intent === 'explore' ? 0 : parseInt(d.badge));
-    var avgLow = targetNum > 0 ? Math.floor(targetNum / 24) : 0;
-    var avgHigh = targetNum > 0 ? Math.ceil(targetNum / 24) : 0;
-    var avgStr = avgLow === avgHigh ? String(avgLow) : avgLow + '&#8211;' + avgHigh;
+
+    // Dynamic plain-English description
+    var dayDesc;
+    if (intent === 'explore') {
+      dayDesc = 'You\'re starting by getting a feel for where your body is &#8212; no target, no pressure.';
+    } else if (intent === 'fat') {
+      dayDesc = 'You\'re aiming to shift your fuel balance toward fat for a good part of your day.';
+    } else if (intent === 'lose') {
+      dayDesc = 'You\'re working toward fat as your primary fuel for most of your day.';
+    } else {
+      dayDesc = 'You\'re setting your own target.';
+    }
+
     titleText = 'Confirm Goal';
     content =
       '<div class="confirm-wrap">' +
         '<div class="confirm-hero" style="background:'+d.heroBg+';border:1px solid '+d.heroBorder+';">' +
-          '<div class="confirm-intent-label">Your goal</div>' +
-          '<div class="confirm-intent-name">'+d.name+'</div>' +
-          '<div class="confirm-target-row">' +
-            '<div class="confirm-target-badge" id="confirmBadgeLive" style="color:'+d.color+';">'+badgeVal+'</div>' +
-            '<div><div class="tl-main" id="confirmTLLive">'+(intent==='custom'?'Daily target: '+customVal:d.tlMain)+'</div><div class="tl-sub">'+d.tlSub+'</div></div>' +
+          '<div class="confirm-intent-name" style="margin-bottom:12px;">'+d.name+'</div>' +
+          '<div style="display:flex;align-items:center;gap:14px;">' +
+            '<div class="confirm-target-badge" id="confirmBadgeLive" style="color:'+d.color+';flex-shrink:0;">'+badgeVal+'</div>' +
+            '<div id="dayDescLine" style="font-size:15px;line-height:1.5;color:#aaa;text-align:left;">'+dayDesc+'</div>' +
           '</div>' +
-          (targetNum > 0 ? '<div id="avgNowLine" style="font-size:14px;color:#555;margin-top:10px;">That\'s an average NOW reading of about <strong style="color:'+d.color+';">'+avgStr+'</strong> across your whole day <span style="color:#444;">('+avgStr+' &times; 24hrs = '+targetNum+')</span></div>' : '') +
+          (d.tlSub ? '<div style="font-size:12px;color:#444;margin-top:10px;text-align:center;text-transform:uppercase;letter-spacing:0.1em;">'+d.tlSub+'</div>' : '') +
         '</div>' +
         (intent==='custom' ?
           '<div class="custom-adjuster visible"><button class="adj-btn" onclick="adjustCustom(-10)">&#8722;</button><div><div class="adj-val" id="adjVal">'+customVal+'</div><div class="adj-unit">daily target</div></div><button class="adj-btn" onclick="adjustCustom(10)">+</button></div>'
@@ -560,8 +578,8 @@ function render() {
         '<div class="change-link" onclick="goTo(2)">&#8592; Change my goal</div>' +
       '</div>';
     buttons =
-      '<button class="btn btn-secondary" onclick="goTo(2)">‹ Your Goal</button>' +
-      '<button class="btn btn-primary" onclick="next()">What You\'ll See ›</button>';
+      '<button class="btn btn-secondary" onclick="goTo(2)">&#8249; Your Goal</button>' +
+      '<button class="btn btn-primary" onclick="next()">What You\'ll See &#8250;</button>';
 
   } else if (state === 4) {
     var d = intentData[intent];
@@ -569,9 +587,15 @@ function render() {
                      intent === 'fat'     ? 'getTodayFatSVG' :
                      intent === 'lose'    ? 'getTodayLoseSVG' : 'getTodayCustomSVG';
     var targetNum2 = intent === 'custom' ? customVal : d.badge;
+    var avg2 = targetNum2 > 0 ? (targetNum2 / 24) : 0;
+    var avgStr2 = avg2 > 0 ? (Number.isInteger(avg2) ? String(avg2) : avg2.toFixed(1)) : '0';
     var todayCaption = intent === 'explore'
-      ? 'The <strong>TODAY screen</strong> shows your readings accumulating across the day.'
-      : 'Each measurement adds to your daily total — working toward your goal of <strong style="color:'+d.color+';">'+targetNum2+'</strong>. That\'s the number to beat.';
+      ? 'Your total builds up across the day. No target set.'
+      : intent === 'fat'
+      ? 'Reach <strong style="color:'+d.color+';">'+targetNum2+'</strong> &#8212; that\'s averaging '+avgStr2+' across the day <span style="color:#555;">('+avgStr2+' &#215; 24 hours = '+targetNum2+')</span>.'
+      : intent === 'lose'
+      ? 'Reach <strong style="color:'+d.color+';">'+targetNum2+'</strong> &#8212; that\'s averaging '+avgStr2+' across the day <span style="color:#555;">('+avgStr2+' &#215; 24 hours = '+targetNum2+')</span>.'
+      : 'Your target is <strong style="color:'+d.color+';">'+targetNum2+'</strong> &#8212; averaging '+avgStr2+' across the day <span style="color:#555;">('+avgStr2+' &#215; 24 hours = '+targetNum2+')</span>.';
     titleText = 'What You\'ll See';
     content =
       '<div class="preview-wrap">' +
@@ -592,8 +616,8 @@ function render() {
         '</div>' +
       '</div>';
     buttons =
-      '<button class="btn btn-secondary" onclick="goTo(3)">‹ Confirm Goal</button>' +
-      '<button class="btn btn-primary" onclick="next()">Before You Measure ›</button>';
+      '<button class="btn btn-secondary" onclick="goTo(3)">&#8249; Confirm Goal</button>' +
+      '<button class="btn btn-primary" onclick="next()">Before You Measure &#8250;</button>';
 
     // Today data per intent
     var todayData = intent === 'explore'
@@ -620,13 +644,13 @@ function render() {
       '<div class="content-area">' +
         '<ul class="caveat-list">' +
           '<li>FOX2 is sensitive to <strong>alcohol</strong>. If you drink, wait until the next day to measure.</li>' +
-          '<li>Food and flavored drinks can interfere. Wait at least an hour after eating or drinking anything other than plain water — or rinse your mouth thoroughly first.</li>' +
+          '<li>Food and flavored drinks can interfere. Wait at least an hour after eating or drinking anything other than plain water &#8212; or rinse your mouth thoroughly first.</li>' +
           '<li>FOX2 measures deep lung air. Blow out as completely as you can for the best reading.</li>' +
         '</ul>' +
       '</div>';
     buttons =
-      '<button class="btn btn-secondary" onclick="back()">‹ What You\'ll See</button>' +
-      '<button class="btn btn-primary" onclick="next()">First Measurement ›</button>';
+      '<button class="btn btn-secondary" onclick="back()">&#8249; What You\'ll See</button>' +
+      '<button class="btn btn-primary" onclick="next()">First Measurement &#8250;</button>';
 
   } else if (state === 6) {
     showTitle = true;
@@ -637,14 +661,14 @@ function render() {
         // Device with callouts
         '<div style="flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:0;padding:0 8px;">' +
 
-          // Left callout — circle button
+          // Left callout &#8212; circle button
           '<div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end;flex:1;">' +
             '<div style="text-align:right;">' +
-              '<div style="font-size:17px;font-weight:700;color:#00ffff;">● Circle</div>' +
+              '<div style="font-size:17px;font-weight:700;color:#00ffff;">&#9679; Circle</div>' +
               '<div style="font-size:15px;color:#555;">Select / Power</div>' +
             '</div>' +
             '<div style="text-align:right;">' +
-              '<div style="font-size:17px;font-weight:700;color:#ff9800;">▲ Triangle</div>' +
+              '<div style="font-size:17px;font-weight:700;color:#ff9800;">&#9650; Triangle</div>' +
               '<div style="font-size:15px;color:#555;">Navigate menu</div>' +
             '</div>' +
           '</div>' +
@@ -671,9 +695,9 @@ function render() {
             '<div style="position:absolute;top:7px;right:-10px;width:36px;height:18px;background:#e8e8e8;border-radius:5px;transform-origin:left center;transform:rotate(-45deg);box-shadow:0 1px 4px rgba(0,0,0,.4);z-index:5;"></div>' +
             // connector lines
             '<svg style="position:absolute;inset:0;width:100%;height:100%;z-index:10;overflow:visible;" viewBox="0 0 120 192">' +
-              // circle → left
+              // circle &#8594; left
               '<line x1="26" y1="162" x2="-8" y2="155" stroke="#00ffff" stroke-width="1" stroke-dasharray="3,2" opacity="0.5"/>' +
-              // triangle → left
+              // triangle &#8594; left
               '<line x1="14" y1="147" x2="-8" y2="135" stroke="#ff9800" stroke-width="1" stroke-dasharray="3,2" opacity="0.5"/>' +
             '</svg>' +
           '</div>' +
@@ -683,7 +707,7 @@ function render() {
 
         '</div>' +
 
-        '<div style="font-size:17px;color:#555;text-align:center;flex-shrink:0;">From the menu, use <strong style="color:#ff9800;">▲</strong> to navigate and <strong style="color:#00ffff;">●</strong> to select <strong style="color:#fff;">Measure</strong>.</div>' +
+        '<div style="font-size:17px;color:#555;text-align:center;flex-shrink:0;">From the menu, use <strong style="color:#ff9800;">&#9650;</strong> to navigate and <strong style="color:#00ffff;">&#9679;</strong> to select <strong style="color:#fff;">Measure</strong>.</div>' +
 
         // Divider
         '<div style="height:1px;background:#1e1e1e;flex-shrink:0;"></div>' +
@@ -695,7 +719,7 @@ function render() {
           // Step 1
           '<div style="display:flex;gap:14px;align-items:flex-start;">' +
             '<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">' +
-              '<div style="width:40px;height:40px;border-radius:50%;background:#111;border:2px solid #00ffff;display:flex;align-items:center;justify-content:center;font-size:20px;">⏱</div>' +
+              '<div style="width:40px;height:40px;border-radius:50%;background:#111;border:2px solid #00ffff;display:flex;align-items:center;justify-content:center;font-size:20px;">&#9201;</div>' +
               '<div style="width:2px;flex:1;min-height:20px;background:#1e1e1e;margin:4px 0;"></div>' +
             '</div>' +
             '<div style="padding-top:6px;padding-bottom:14px;">' +
@@ -707,19 +731,19 @@ function render() {
           // Step 2
           '<div style="display:flex;gap:14px;align-items:flex-start;">' +
             '<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">' +
-              '<div style="width:40px;height:40px;border-radius:50%;background:#111;border:2px solid #4CAF50;display:flex;align-items:center;justify-content:center;font-size:20px;">💨</div>' +
+              '<div style="width:40px;height:40px;border-radius:50%;background:#111;border:2px solid #4CAF50;display:flex;align-items:center;justify-content:center;font-size:20px;">&#128168;</div>' +
               '<div style="width:2px;flex:1;min-height:20px;background:#1e1e1e;margin:4px 0;"></div>' +
             '</div>' +
             '<div style="padding-top:6px;padding-bottom:14px;">' +
               '<div style="font-size:17px;font-weight:700;color:#4CAF50;margin-bottom:3px;">Blow</div>' +
-              '<div style="font-size:15px;line-height:1.5;color:#aaa;">When prompted, take a full breath in — then blow steadily until FOX2 buzzes.</div>' +
+              '<div style="font-size:15px;line-height:1.5;color:#aaa;">When prompted, take a full breath in &#8212; then blow steadily until FOX2 buzzes.</div>' +
             '</div>' +
           '</div>' +
 
           // Step 3
           '<div style="display:flex;gap:14px;align-items:flex-start;">' +
             '<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">' +
-              '<div style="width:40px;height:40px;border-radius:50%;background:#111;border:2px solid #f5c842;display:flex;align-items:center;justify-content:center;font-size:20px;">📊</div>' +
+              '<div style="width:40px;height:40px;border-radius:50%;background:#111;border:2px solid #f5c842;display:flex;align-items:center;justify-content:center;font-size:20px;">&#128202;</div>' +
             '</div>' +
             '<div style="padding-top:6px;">' +
               '<div style="font-size:17px;font-weight:700;color:#f5c842;margin-bottom:3px;">Result</div>' +
@@ -729,7 +753,7 @@ function render() {
 
         '</div>' +
       '</div>';
-    buttons = '<button class="btn btn-secondary" onclick="back()">‹ Before You Measure</button><button class="btn btn-primary" style="flex:1;">Ready to try?</button>';
+    buttons = '<button class="btn btn-secondary" onclick="back()">&#8249; Before You Measure</button><button class="btn btn-primary" style="flex:1;" onclick="doneOnboarding()">Ready to try?</button>';
   }
 
   // Update DOM
@@ -781,7 +805,7 @@ function selectIntent(key, el) {
   el.querySelector('.intent-check').textContent = '✓';
 }
 
-// ── Arc canvas animation (screen 2) ──
+// -- Arc canvas animation (screen 2) --
 var arcAnimTimer = null;
 
 function stopArcAnimation() {
@@ -853,7 +877,7 @@ function startArcAnimation() {
     ctx.fillStyle = '#4CAF50';
     ctx.fillText('FAT', 152*S, 110*S);
 
-    // NOW number — centered in arc
+    // NOW number &#8212; centered in arc
     ctx.fillStyle = numColor;
     ctx.font = 'bold ' + Math.round(38*S) + 'px -apple-system,sans-serif';
     ctx.textAlign = 'center';
@@ -881,23 +905,16 @@ function adjustCustom(delta) {
   intentData.custom.badge = String(customVal);
   intentData.custom.tlMain = 'Daily target: ' + customVal;
 
-  // Update average NOW line live
-  var avgLow = Math.floor(customVal / 24);
-  var avgHigh = Math.ceil(customVal / 24);
-  var avgStr = avgLow === avgHigh ? String(avgLow) : avgLow + '–' + avgHigh;
-  var avgEl = document.getElementById('avgNowLine');
-  if (avgEl) avgEl.innerHTML =
-    'That\'s an average NOW reading of about <strong style="color:#E91E63;">' + avgStr + '</strong> across your whole day ' +
-    '<span style="color:#444;">(' + avgStr + ' &times; 24hrs = ' + customVal + ')</span>';
+  // Update day description line live
+  var descEl = document.getElementById('dayDescLine');
+  if (descEl) descEl.innerHTML = 'You\'re setting your own target.';
 
-  // Update confirm badge and target label
+  // Update confirm badge
   var badgeEl = document.getElementById('confirmBadgeLive');
   if (badgeEl) badgeEl.textContent = customVal;
-  var tlEl = document.getElementById('confirmTLLive');
-  if (tlEl) tlEl.textContent = 'Daily target: ' + customVal;
 }
 
-// ── Global animation cleanup ──
+// -- Global animation cleanup --
 var activeTimers = [];
 
 function trackTimer(id) { activeTimers.push(id); return id; }
@@ -909,7 +926,7 @@ function stopAllAnimations() {
   stopArcAnimation();
 }
 
-// ── NOW screen canvas animation ──
+// -- NOW screen canvas animation --
 var nowAnimTimer = null;
 
 function stopNowAnimation() {
@@ -1000,13 +1017,13 @@ function startNowAnimation(finalValue, label, todayCaption, todayData) {
     ctx.fillStyle = '#0ff'; ctx.fillRect(176*S,17*S,2*S,6*S);
     ctx.fillStyle = '#0f0'; ctx.fillRect(160*S,17*S,14*S,6*S);
 
-    // Number — always visible
+    // Number &#8212; always visible
     ctx.fillStyle = numColor;
     ctx.font = 'bold ' + Math.round(60*S) + 'px -apple-system,sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(String(Math.max(displayVal, 1)), 92*S, 125*S);
 
-    // Label — only once settled
+    // Label &#8212; only once settled
     if (settled) {
       ctx.fillStyle = numColor;
       ctx.font = 'bold ' + Math.round(22*S) + 'px -apple-system,sans-serif';
@@ -1098,7 +1115,7 @@ function startNowAnimation(finalValue, label, todayCaption, todayData) {
               trackTimer(setTimeout(function() {
                 if (!document.getElementById('nowCanvas')) return;
                 runSequence();
-              }, 4000));
+              }, 6000));
             }, 1200));
           }
         }, 400));
@@ -1106,7 +1123,7 @@ function startNowAnimation(finalValue, label, todayCaption, todayData) {
     }, 400));
   }
 
-  // Capture the initial NOW caption before first run — caption is already visible
+  // Capture the initial NOW caption before first run &#8212; caption is already visible
   trackTimer(setTimeout(function() {
     var caption = document.getElementById('previewCaption');
     if (caption) nowCaption = caption.innerHTML;
@@ -1153,7 +1170,7 @@ function startTodayAnimation(todayData, newValue) {
 
     if (highlightLast && pts.length > 2) {
       var sl = pts[pts.length-2];
-      // Base area — dark orange
+      // Base area &#8212; dark orange
       ctx.beginPath();
       ctx.moveTo(hx(0), yBase*S); ctx.lineTo(pts[0].x, pts[0].y);
       for (var i=0; i<pts.length-2; i++) {
@@ -1162,7 +1179,7 @@ function startTodayAnimation(todayData, newValue) {
       }
       ctx.lineTo(sl.x,sl.y); ctx.lineTo(sl.x,yBase*S); ctx.closePath();
       ctx.fillStyle = '#cc6600'; ctx.fill();
-      // Delta area — bright orange
+      // Delta area &#8212; bright orange
       ctx.beginPath();
       ctx.moveTo(sl.x,yBase*S); ctx.lineTo(sl.x,sl.y);
       ctx.quadraticCurveTo(sl.x,sl.y,(sl.x+last.x)/2,(sl.y+last.y)/2);
@@ -1255,6 +1272,31 @@ function startTodayAnimation(todayData, newValue) {
       if (aucVal >= newTotal) clearInterval(aucId);
     }, 50));
   }, 600));
+}
+
+function doneOnboarding() {
+  // Map intent to firmware level number
+  var lvlMap = {explore:1, fat:2, lose:3, custom:4};
+  var level = lvlMap[intent] || 1;
+  var target = (intent === 'fat')    ? RUNTIME_TARGET2 :
+               (intent === 'lose')   ? RUNTIME_TARGET3 :
+               (intent === 'custom') ? customVal : 0;
+
+  var form = new FormData();
+  form.append('level',        String(level));
+  form.append('customTarget', String(target));
+  form.append('epoch',        String(Math.floor(Date.now() / 1000)));
+  form.append('tzoffset',     String(new Date().getTimezoneOffset()));
+
+  fetch('/save', { method: 'POST', body: form })
+    .then(function() { return fetch('/exit'); })
+    .then(function() {
+      document.body.innerHTML = '<div style="text-align:center;padding:40px;font-size:18px;color:#fff">All set &#8212; enjoy FOX2!</div>';
+    })
+    .catch(function() {
+      // /exit may not respond if device reboots immediately — that is fine
+      document.body.innerHTML = '<div style="text-align:center;padding:40px;font-size:18px;color:#fff">All set &#8212; enjoy FOX2!</div>';
+    });
 }
 
 render();
