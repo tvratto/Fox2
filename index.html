@@ -28,10 +28,12 @@ body {
 .dots { display:flex; gap:8px; justify-content:center; margin:6px 0; flex-shrink:0; }
 .dot { width:8px; height:8px; border-radius:50%; background:#333; transition:all .3s; }
 .dot.active { background:#00ffff; width:24px; border-radius:4px; }
-.btn-row { display:flex; gap:10px; padding-top:6px; flex-shrink:0; }
+.btn-row { display:flex; gap:8px; padding-top:4px; flex-shrink:0; }
 .btn {
-  flex:1; padding:12px; border-radius:10px; border:none;
+  flex:1; padding:4px 10px; border-radius:8px; border:none;
   font-size:16px; font-weight:600; cursor:pointer; transition:all .2s; user-select:none;
+  min-height:34px; display:flex; align-items:center; justify-content:center;
+  white-space:normal; text-align:center; line-height:1.2;
 }
 .btn:active { transform:scale(0.95); }
 .btn-primary { background:#00ffff; color:#000; }
@@ -132,7 +134,7 @@ body {
 .device-screen-slide svg { width:100%; height:100%; display:block; }
 #todaySlide svg { width:100%; height:100%; display:block; }
 .slide-caption {
-  font-size:20px; line-height:1.5; color:#aaa;
+  font-size:18px; line-height:1.5; color:#aaa;
   text-align:center; padding:0 8px; flex-shrink:0;
   height:80px;
   overflow:hidden;
@@ -158,7 +160,6 @@ body {
 .caveat-list li:before { content:"\2022"; position:absolute; left:0; color:#00ffff; font-weight:bold; }
 .caveat-list li strong { color:#ff9800; }
 
-/* -- Done -- */
 .done-wrap { flex:1; display:flex; flex-direction:column; justify-content:center; text-align:center; gap:12px; }
 
 /* -- Welcome device graphic -- */
@@ -184,9 +185,9 @@ body {
 </div>
 
 <script>
-// state: 0=welcome, 1=measures, 2=goal-intent, 3=goal-confirm, 4=goal-preview, 5=how-to, 6=caveats, 7=done
+// state: 0=welcome, 1=measures, 2=how-fox2-works, 3=track-week, 4=full-picture, 5=goal-intent, 6=goal-confirm, 7=caveats, 8=done
 var state = 0;
-var TOTAL_SCREENS = 7;
+var TOTAL_SCREENS = 9;
 var RUNTIME_CURRENT_LEVEL = (typeof RUNTIME_CURRENT_LEVEL !== 'undefined') ? RUNTIME_CURRENT_LEVEL : 1;
 var RUNTIME_TARGET2       = (typeof RUNTIME_TARGET2       !== 'undefined') ? RUNTIME_TARGET2       : 60;
 var RUNTIME_TARGET3       = (typeof RUNTIME_TARGET3       !== 'undefined') ? RUNTIME_TARGET3       : 120;
@@ -211,19 +212,19 @@ var intentData = {
       { c:'#2196F3', t:'You can set a target anytime from the Settings menu.' }
     ],
     nowValue: 3, nowLabel: 'Good!',
-    caption: 'Each higher number means additional fat used for energy.'
+    caption: 'After each measurement you\'ll see a number from 1 to 20. This is where your fuel balance sits right now.'
   },
   fat: {
     name: 'Use fat as fuel', badge: '60', color: '#4CAF50',
     tlMain: 'Daily target: 60', tlSub: 'Streaks tracked',
     heroBg: '#061a08', heroBorder: '#0d3a12',
     rows: [
-      { c:'#4CAF50', t:'A daily total that can be reached through a modest but sustained shift toward fat metabolism throughout the day.' },
+      { c:'#4CAF50', t:'A TODAY total that can be reached through a modest but sustained shift toward fat metabolism throughout the day.' },
       { c:'#4CAF50', t:'Eating patterns, carbohydrate intake, and activity all influence your number &#8212; use your readings to discover what works for your body.' },
       { c:'#4CAF50', t:'Regularly shifting your body into fat metabolism supports better metabolic balance over time.' }
     ],
     nowValue: 4, nowLabel: 'Good!',
-    caption: 'Numbers around 5 and above mean fat is taking over as your dominant fuel.'
+    caption: 'When your number gets close to 5, fat begins to take over as your dominant fuel. You\'re working toward that shift.'
   },
   lose: {
     name: 'Make fat my primary fuel', badge: '120', color: '#9C27B0',
@@ -235,7 +236,7 @@ var intentData = {
       { c:'#9C27B0', t:'Sustained fat-dominant days create the conditions for meaningful changes in body composition over time.' }
     ],
     nowValue: 7, nowLabel: 'Great!',
-    caption: 'Numbers like these indicate that the balance between glucose and fat is shifting more to fat.'
+    caption: 'A number like this means fat is your dominant fuel. This is what you\'re working toward &#8212; consistently.'
   },
   custom: {
     name: 'Custom target', badge: '130', color: '#E91E63',
@@ -247,7 +248,7 @@ var intentData = {
       { c:'#E91E63', t:'You can always adjust this later from the Settings menu.' }
     ],
     nowValue: 8, nowLabel: 'Great!',
-    caption: 'A number from 1 to 20 &#8212; where your fuel balance sits right now.'
+    caption: 'After each measurement you\'ll see a number from 1 to 20 &#8212; use your readings to track progress toward your target.'
   }
 };
 
@@ -351,19 +352,22 @@ function makeNowSVG(value, label) {
   return svg;
 }
 
-function makeTodaySVG(target, meas, total) {
+function makeTodaySVG(target, meas, total, originVal) {
   var xMin=8, xMax=170, yBase=100, yTop=30, maxVal=10;
   function hx(h){return xMin+(h/24)*(xMax-xMin);}
   function vy(v){return yBase-(v/maxVal)*(yBase-yTop);}
-  var allPts=[{x:hx(0),y:vy(meas[0].value)}];
+  var startVal = (originVal !== undefined) ? originVal : meas[0].value;
+  var allPts=[{x:hx(0),y:vy(startVal)}];
   for(var i=0;i<meas.length;i++) allPts.push({x:hx(meas[i].hour),y:vy(meas[i].value)});
-  var path='M '+xMin+','+yBase+' L '+xMin+','+allPts[0].y;
-  for(var i=0;i<allPts.length-1;i++){
-    var cx=(allPts[i].x+allPts[i+1].x)/2;
-    path+=' Q '+allPts[i].x+','+allPts[i].y+' '+cx+','+((allPts[i].y+allPts[i+1].y)/2);
-  }
   var last=allPts[allPts.length-1];
-  path+=' Q '+last.x+','+last.y+' '+last.x+','+last.y+' L '+last.x+','+yBase+' Z';
+  var path='M '+xMin+','+yBase+' L '+allPts[0].x+','+allPts[0].y;
+  for(var i=0;i<allPts.length-1;i++){
+    var p0=allPts[Math.max(i-1,0)], p1=allPts[i], p2=allPts[i+1], p3=allPts[Math.min(i+2,allPts.length-1)];
+    var cp1x=p1.x+(p2.x-p0.x)/6, cp1y=p1.y+(p2.y-p0.y)/6;
+    var cp2x=p2.x-(p3.x-p1.x)/6, cp2y=p2.y-(p3.y-p1.y)/6;
+    path+=' C '+cp1x+','+cp1y+' '+cp2x+','+cp2y+' '+p2.x+','+p2.y;
+  }
+  path+=' L '+last.x+','+yBase+' Z';
   var svg='<svg viewBox="0 0 184 184" xmlns="http://www.w3.org/2000/svg">' +
     '<rect x="66" y="5" width="52" height="16" rx="8" fill="#f5c842"/>' +
     '<text x="92" y="17" font-size="11" font-weight="700" fill="#1a1a2e" text-anchor="middle">TODAY</text>' +
@@ -384,61 +388,773 @@ function makeTodaySVG(target, meas, total) {
   svg+='<text x="68" y="160" font-size="40" font-weight="700" fill="#ff9800" text-anchor="middle">'+total+'</text>';
   if(target>0){
     svg+='<text x="101" y="155" font-size="40" font-weight="700" fill="#fff" text-anchor="middle">/</text>' +
-      '<path d="M128,123 C123,119 119,121 119,126 C119,131 128,137 128,137 C128,137 137,131 137,126 C137,121 133,119 128,123 Z" fill="none" stroke="#ff4444" stroke-width="2"/>' +
+      '<path d="M128,123 C123,119 119,121 119,126 C119,131 128,137 128,137 C128,137 137,131 137,126 C137,121 133,119 128,123 Z" fill="#ff4444" stroke="#ff4444" stroke-width="1"/>' +
       '<text x="111" y="160" font-size="20" font-weight="700" fill="#666" text-anchor="start">'+target+'</text>';
   }
   svg+='</svg>';
   return svg;
 }
 
+function getTodaySchematicSVG() {
+  // Returns a canvas element — animation driven by startTodaySchematicAnimation()
+  return '<canvas id="todaySchematicCanvas" width="480" height="480" style="width:100%;max-width:100%;aspect-ratio:1/1;display:block;"></canvas>';
+}
+
+function startTodaySchematicAnimation() {
+  var canvas = document.getElementById('todaySchematicCanvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var W = 480, H = 480;
+  canvas.width = W; canvas.height = H;
+  var S = W / 184;
+
+  var xMin = 8, xMax = 170, yBase = 100, yTop = 30, maxVal = 10;
+  function hx(h) { return (xMin + (h/24)*(xMax-xMin)) * S; }
+  function vy(v) { return (yBase - (v/maxVal)*(yBase-yTop)) * S; }
+
+  var green = '#4CAF50';
+  var orange = '#ff9800';
+  var yBaseS = yBase * S, xMinS = xMin * S, xMaxS = xMax * S;
+
+  // Three measurement points
+  var pts = [
+    { hour: 7,  val: 4 },
+    { hour: 13, val: 2 },
+    { hour: 20, val: 6 }
+  ];
+
+  // Pre-calculate pixel coords including origin
+  var allPts = [{ x: hx(0), y: vy(0), _val: 0 }];
+  for (var i = 0; i < pts.length; i++) {
+    allPts.push({ x: hx(pts[i].hour), y: vy(pts[i].val), _val: pts[i].val });
+  }
+
+  // AUC up to each segment end
+  var segAUC = [];
+  var running = 0;
+  for (var i = 0; i < pts.length; i++) {
+    var h0 = i === 0 ? 0 : pts[i-1].hour;
+    var v0 = i === 0 ? 0 : pts[i-1].val;
+    running += (v0 + pts[i].val) / 2 * (pts[i].hour - h0);
+    segAUC.push(Math.round(running));
+  }
+  var totalAUC = segAUC[segAUC.length - 1];
+
+  function getBezier(p0, p1, t) {
+    var cp1x = p0.x + (p1.x - p0.x) * 0.4;
+    var cp1y = p0.y;
+    var cp2x = p0.x + (p1.x - p0.x) * 0.6;
+    var cp2y = p1.y;
+    var mt = 1 - t;
+    return {
+      x: mt*mt*mt*p0.x + 3*mt*mt*t*cp1x + 3*mt*t*t*cp2x + t*t*t*p1.x,
+      y: mt*mt*mt*p0.y + 3*mt*mt*t*cp1y + 3*mt*t*t*cp2y + t*t*t*p1.y
+    };
+  }
+
+  function drawAxes() {
+    ctx.beginPath(); ctx.moveTo(xMinS, yBaseS); ctx.lineTo(xMaxS, yBaseS);
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1*S; ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.font = Math.round(12*S) + 'px -apple-system,sans-serif';
+    ctx.textAlign = 'left';   ctx.fillText('0a',  xMinS, 115*S);
+    ctx.textAlign = 'center'; ctx.fillText('12p', 92*S,   115*S);
+    ctx.textAlign = 'right';  ctx.fillText('12a', xMaxS, 115*S);
+  }
+
+  function drawMiniArc(cx, cy, val) {
+    var r = 12 * S;
+    var lw = 3.5 * S;
+    var segs = Math.round(val);
+    var activeColors = ['#00ffff','#00ffff','#00ffff','#00ddbb','#4CAF50','#4CAF50','#4CAF50','#4CAF50','#4CAF50','#4CAF50'];
+    var dimColors    = ['#003333','#003333','#003333','#003333','#003300','#003300','#003300','#003300','#003300','#003300'];
+    // Match screen 1 arc exactly: from -0.9841π to -0.0270π (opens upward)
+    var startAngle = -0.9841 * Math.PI;
+    var endAngle   = -0.0270 * Math.PI;
+    var totalSpan  = endAngle - startAngle;
+    var GAP = 0.04;
+    for (var i = 0; i < 10; i++) {
+      var a0 = startAngle + (i / 10) * totalSpan + GAP;
+      var a1 = startAngle + ((i+1) / 10) * totalSpan - GAP;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, a0, a1, false);
+      ctx.strokeStyle = i < segs ? activeColors[i] : dimColors[i];
+      ctx.lineWidth = lw;
+      ctx.lineCap = 'butt';
+      ctx.stroke();
+    }
+  }
+
+  function drawSegment(p0, p1, full) {
+    var steps = 30;
+    ctx.beginPath();
+    ctx.moveTo(p0.x, yBaseS); ctx.lineTo(p0.x, p0.y);
+    for (var i = 1; i <= steps; i++) {
+      var p = getBezier(p0, p1, i/steps);
+      ctx.lineTo(p.x, p.y);
+    }
+    ctx.lineTo(p1.x, yBaseS); ctx.closePath();
+    ctx.fillStyle = orange; ctx.globalAlpha = 0.4; ctx.fill(); ctx.globalAlpha = 1.0;
+    ctx.beginPath(); ctx.moveTo(p0.x, p0.y);
+    for (var i = 1; i <= steps; i++) {
+      var p = getBezier(p0, p1, i/steps);
+      ctx.lineTo(p.x, p.y);
+    }
+    ctx.strokeStyle = orange; ctx.lineWidth = 2*S; ctx.stroke();
+    if (full) {
+      ctx.beginPath(); ctx.arc(p1.x, p1.y, 5*S, 0, Math.PI*2);
+      ctx.fillStyle = green; ctx.fill();
+      // Mini arc above dot — val is the measurement value for this segment end
+      drawMiniArc(p1.x, p1.y - 18*S, p1._val);
+    }
+  }
+
+  function drawCompletedSegments(upToSeg) {
+    for (var s = 0; s < upToSeg; s++) {
+      drawSegment(allPts[s], allPts[s+1], true);
+    }
+  }
+
+  function drawTotal(auc) {
+    ctx.fillStyle = '#ff9800';
+    ctx.font = 'bold ' + Math.round(48*S) + 'px -apple-system,sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(String(Math.round(auc)), 92*S, 160*S);
+  }
+
+  function runCycle() {
+    if (!document.getElementById('todaySchematicCanvas')) return;
+
+    var segFrames = 33;
+    var pauseFrames = 18;
+    var holdFrames = 37;
+    var currentSeg = 0;
+    var frame = 0;
+    var phase = 'sweep';
+
+    function tick() {
+      if (!document.getElementById('todaySchematicCanvas')) return;
+      ctx.clearRect(0, 0, W, H);
+
+      if (phase === 'sweep') {
+        var progress = frame / segFrames;
+        var p0 = allPts[currentSeg], p1 = allPts[currentSeg+1];
+        var steps = 30;
+
+        drawCompletedSegments(currentSeg);
+
+        // Animating fill
+        ctx.beginPath();
+        ctx.moveTo(p0.x, yBaseS); ctx.lineTo(p0.x, p0.y);
+        for (var i = 1; i <= steps; i++) {
+          var p = getBezier(p0, p1, (i/steps) * progress);
+          ctx.lineTo(p.x, p.y);
+        }
+        var tip = getBezier(p0, p1, progress);
+        ctx.lineTo(tip.x, yBaseS); ctx.closePath();
+        ctx.fillStyle = orange; ctx.globalAlpha = 0.4; ctx.fill(); ctx.globalAlpha = 1.0;
+
+        // Animating line
+        ctx.beginPath(); ctx.moveTo(p0.x, p0.y);
+        for (var i = 1; i <= steps; i++) {
+          var p = getBezier(p0, p1, (i/steps) * progress);
+          ctx.lineTo(p.x, p.y);
+        }
+        ctx.strokeStyle = orange; ctx.lineWidth = 2*S; ctx.stroke();
+
+        drawAxes();
+
+        var segStartAUC = currentSeg === 0 ? 0 : segAUC[currentSeg-1];
+        drawTotal(segStartAUC + (segAUC[currentSeg] - segStartAUC) * progress);
+
+        frame++;
+        if (frame > segFrames) {
+          phase = 'pause'; frame = 0;
+        }
+
+      } else if (phase === 'pause') {
+        drawCompletedSegments(currentSeg + 1);
+        drawAxes();
+        drawTotal(segAUC[currentSeg]);
+        frame++;
+        if (frame > pauseFrames) {
+          currentSeg++;
+          frame = 0;
+          phase = currentSeg >= pts.length ? 'hold' : 'sweep';
+        }
+
+      } else if (phase === 'hold') {
+        drawCompletedSegments(pts.length);
+        drawAxes();
+        drawTotal(totalAUC);
+        frame++;
+        if (frame > holdFrames) {
+          trackTimer(setTimeout(runCycle, 0));
+          return;
+        }
+      }
+
+      trackTimer(setTimeout(tick, 22));
+    }
+
+    tick();
+  }
+
+  runCycle();
+}
+
+function getUsageSchematicSVG() {
+  return '<canvas id="usageSchematicCanvas" width="360" height="360" style="width:100%;aspect-ratio:1/1;display:block;"></canvas>';
+}
+
+function startUsageSchematicAnimation() {
+  var canvas = document.getElementById('usageSchematicCanvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var W = 360, H = 360;
+  canvas.width = W; canvas.height = H;
+  var S = W / 184;
+
+  var xMin = 8, xMax = 170, yBase = 100, yTop = 30, maxVal = 10;
+  function hx(h) { return (xMin + (h/24)*(xMax-xMin)) * S; }
+  function vy(v) { return (yBase - (v/maxVal)*(yBase-yTop)) * S; }
+
+  var green = '#4CAF50';
+  var orange = '#ff9800';
+  var yBaseS = yBase * S, xMinS = xMin * S, xMaxS = xMax * S;
+
+  var pts = [
+    { hour: 7,  val: 5, icon: '🐓' },
+    { hour: 13, val: 3, icon: '☀️' },
+    { hour: 20, val: 6, icon: '🌙' }
+  ];
+
+  var allPts = [{ x: hx(0), y: vy(0), _val: 0 }];
+  for (var i = 0; i < pts.length; i++) {
+    allPts.push({ x: hx(pts[i].hour), y: vy(pts[i].val), _val: pts[i].val, _icon: pts[i].icon });
+  }
+
+  var segAUC = [];
+  var running = 0;
+  for (var i = 0; i < pts.length; i++) {
+    var h0 = i === 0 ? 0 : pts[i-1].hour;
+    var v0 = i === 0 ? 0 : pts[i-1].val;
+    running += (v0 + pts[i].val) / 2 * (pts[i].hour - h0);
+    segAUC.push(Math.round(running));
+  }
+  var totalAUC = segAUC[segAUC.length - 1];
+
+  function getBezier(p0, p1, t) {
+    var cp1x = p0.x + (p1.x - p0.x) * 0.4;
+    var cp1y = p0.y;
+    var cp2x = p0.x + (p1.x - p0.x) * 0.6;
+    var cp2y = p1.y;
+    var mt = 1 - t;
+    return {
+      x: mt*mt*mt*p0.x + 3*mt*mt*t*cp1x + 3*mt*t*t*cp2x + t*t*t*p1.x,
+      y: mt*mt*mt*p0.y + 3*mt*mt*t*cp1y + 3*mt*t*t*cp2y + t*t*t*p1.y
+    };
+  }
+
+  function drawAxes() {
+    ctx.beginPath(); ctx.moveTo(xMinS, yBaseS); ctx.lineTo(xMaxS, yBaseS);
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1*S; ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.font = Math.round(12*S) + 'px -apple-system,sans-serif';
+    ctx.textAlign = 'left';   ctx.fillText('0a',  xMinS, 115*S);
+    ctx.textAlign = 'center'; ctx.fillText('12p', 92*S,  115*S);
+    ctx.textAlign = 'right';  ctx.fillText('12a', xMaxS, 115*S);
+  }
+
+  function drawIcon(cx, cy, icon) {
+    var r = 7 * S;
+    ctx.save();
+    if (icon === '🐓') {
+      // Morning — half sun rising from horizon line
+      ctx.strokeStyle = '#f5c842'; ctx.fillStyle = '#f5c842'; ctx.lineWidth = 1.5*S;
+      // Horizon line
+      ctx.beginPath(); ctx.moveTo(cx - 10*S, cy + 2*S); ctx.lineTo(cx + 10*S, cy + 2*S); ctx.stroke();
+      // Half circle
+      ctx.beginPath(); ctx.arc(cx, cy + 2*S, r * 0.8, Math.PI, 0, false); ctx.fill();
+      // Rays above
+      var rayAngles = [-Math.PI*0.75, -Math.PI*0.5, -Math.PI*0.25];
+      rayAngles.forEach(function(a) {
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(a) * r * 1.2, cy + 2*S + Math.sin(a) * r * 1.2);
+        ctx.lineTo(cx + Math.cos(a) * r * 1.9, cy + 2*S + Math.sin(a) * r * 1.9);
+        ctx.stroke();
+      });
+    } else if (icon === '☀️') {
+      // Afternoon — full sun with rays
+      ctx.strokeStyle = '#f5c842'; ctx.fillStyle = '#f5c842'; ctx.lineWidth = 1.5*S;
+      ctx.beginPath(); ctx.arc(cx, cy, r * 0.7, 0, Math.PI*2); ctx.fill();
+      for (var i = 0; i < 8; i++) {
+        var a = (i / 8) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(a) * r * 1.1, cy + Math.sin(a) * r * 1.1);
+        ctx.lineTo(cx + Math.cos(a) * r * 1.8, cy + Math.sin(a) * r * 1.8);
+        ctx.stroke();
+      }
+    } else if (icon === '🌙') {
+      // Evening — crescent moon
+      ctx.fillStyle = '#aaaaff';
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#000';
+      ctx.beginPath(); ctx.arc(cx + r*0.4, cy - r*0.1, r * 0.85, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawSegment(p0, p1, full) {
+    var steps = 30;
+    ctx.beginPath();
+    ctx.moveTo(p0.x, yBaseS); ctx.lineTo(p0.x, p0.y);
+    for (var i = 1; i <= steps; i++) {
+      var p = getBezier(p0, p1, i/steps);
+      ctx.lineTo(p.x, p.y);
+    }
+    ctx.lineTo(p1.x, yBaseS); ctx.closePath();
+    ctx.fillStyle = orange; ctx.globalAlpha = 0.4; ctx.fill(); ctx.globalAlpha = 1.0;
+    ctx.beginPath(); ctx.moveTo(p0.x, p0.y);
+    for (var i = 1; i <= steps; i++) {
+      var p = getBezier(p0, p1, i/steps);
+      ctx.lineTo(p.x, p.y);
+    }
+    ctx.strokeStyle = orange; ctx.lineWidth = 2*S; ctx.stroke();
+    if (full) {
+      ctx.beginPath(); ctx.arc(p1.x, p1.y, 5*S, 0, Math.PI*2);
+      ctx.fillStyle = green; ctx.fill();
+      if (p1._icon) drawIcon(p1.x, p1.y - 20*S, p1._icon);
+    }
+  }
+
+  function drawCompletedSegments(upToSeg) {
+    for (var s = 0; s < upToSeg; s++) {
+      drawSegment(allPts[s], allPts[s+1], true);
+    }
+  }
+
+  function drawTotal(auc) {
+    ctx.fillStyle = '#ff9800';
+    ctx.font = 'bold ' + Math.round(48*S) + 'px -apple-system,sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(String(Math.round(auc)), 92*S, 160*S);
+  }
+
+  function runCycle() {
+    if (!document.getElementById('usageSchematicCanvas')) return;
+    var segFrames = 33, pauseFrames = 18, holdFrames = 37;
+    var currentSeg = 0, frame = 0, phase = 'sweep';
+
+    function tick() {
+      if (!document.getElementById('usageSchematicCanvas')) return;
+      ctx.clearRect(0, 0, W, H);
+
+      if (phase === 'sweep') {
+        var progress = frame / segFrames;
+        var p0 = allPts[currentSeg], p1 = allPts[currentSeg+1];
+        var steps = 30;
+        drawCompletedSegments(currentSeg);
+        ctx.beginPath();
+        ctx.moveTo(p0.x, yBaseS); ctx.lineTo(p0.x, p0.y);
+        for (var i = 1; i <= steps; i++) {
+          var p = getBezier(p0, p1, (i/steps) * progress);
+          ctx.lineTo(p.x, p.y);
+        }
+        var tip = getBezier(p0, p1, progress);
+        ctx.lineTo(tip.x, yBaseS); ctx.closePath();
+        ctx.fillStyle = orange; ctx.globalAlpha = 0.4; ctx.fill(); ctx.globalAlpha = 1.0;
+        ctx.beginPath(); ctx.moveTo(p0.x, p0.y);
+        for (var i = 1; i <= steps; i++) {
+          var p = getBezier(p0, p1, (i/steps) * progress);
+          ctx.lineTo(p.x, p.y);
+        }
+        ctx.strokeStyle = orange; ctx.lineWidth = 2*S; ctx.stroke();
+        drawAxes();
+        var segStartAUC = currentSeg === 0 ? 0 : segAUC[currentSeg-1];
+        drawTotal(segStartAUC + (segAUC[currentSeg] - segStartAUC) * progress);
+        frame++;
+        if (frame > segFrames) { phase = 'pause'; frame = 0; }
+
+      } else if (phase === 'pause') {
+        drawCompletedSegments(currentSeg + 1);
+        drawAxes();
+        drawTotal(segAUC[currentSeg]);
+        frame++;
+        if (frame > pauseFrames) { currentSeg++; frame = 0; phase = currentSeg >= pts.length ? 'hold' : 'sweep'; }
+
+      } else if (phase === 'hold') {
+        drawCompletedSegments(pts.length);
+        drawAxes();
+        drawTotal(totalAUC);
+        frame++;
+        if (frame > holdFrames) { trackTimer(setTimeout(runCycle, 0)); return; }
+      }
+
+      trackTimer(setTimeout(tick, 22));
+    }
+    tick();
+  }
+  runCycle();
+}
+
+function startProgressSchematicAnimation() {
+  var canvas = document.getElementById('progressSchematicCanvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var W = 480, H = 240;
+  canvas.width = W; canvas.height = H;
+
+  // 5 bars with TODAY totals, target line at 60
+  var bars = [
+    { val: 72, day: 'M' },
+    { val: 45, day: 'T' },
+    { val: 88, day: 'W' },
+    { val: 61, day: 'T' },
+    { val: 78, day: 'F' }
+  ];
+  var target = 60;
+  var maxVal = 100;
+  var orange = '#FF9800';
+  var green = '#4CAF50';
+  var cyan = '#00ffff';
+
+  // Layout
+  var padL = 10, padR = 10, padT = 50, padB = 40;
+  var chartW = W - padL - padR;
+  var chartH = H - padT - padB;
+  var barW = Math.floor(chartW / bars.length * 0.72);
+  var barGap = Math.floor(chartW / bars.length);
+
+  function barX(i) { return padL + i * barGap + (barGap - barW) / 2; }
+  function barH(val) { return Math.round((val / maxVal) * chartH); }
+  function barTop(val) { return padT + chartH - barH(val); }
+  var targetY = padT + chartH - Math.round((target / maxVal) * chartH);
+
+  // Mini TODAY graphs above each bar — varied patterns, dip mid-day (lunch), different start points
+  var dayMeas = [
+    [{h:6,v:6},{h:12,v:2},{h:16,v:4},{h:21,v:7}],
+    [{h:8,v:2},{h:13,v:1},{h:20,v:3}],
+    [{h:7,v:4},{h:11,v:6},{h:14,v:2},{h:19,v:8}],
+    [{h:9,v:3},{h:15,v:2},{h:22,v:4}],
+    [{h:6,v:7},{h:12,v:3},{h:17,v:5},{h:20,v:6}],
+  ];
+
+  function drawMiniTodayGraph(x, y, w, h, measPts, hitGoal) {
+    // x,y = top-left of mini graph area, w,h = size
+    var xMin = 0, xMax = 24;
+    var yMax = 10;
+    function gx(hour) { return x + (hour / xMax) * w; }
+    function gy(val)  { return y + h - (val / yMax) * h; }
+
+    var pts = [{x: gx(0), y: gy(0)}];
+    for (var i = 0; i < measPts.length; i++) {
+      pts.push({x: gx(measPts[i].h), y: gy(measPts[i].v)});
+    }
+
+    // Filled area
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, y + h);
+    ctx.lineTo(pts[0].x, pts[0].y);
+    for (var i = 0; i < pts.length - 1; i++) {
+      var cp1x = pts[i].x + (pts[i+1].x - pts[i].x) * 0.4;
+      var cp2x = pts[i].x + (pts[i+1].x - pts[i].x) * 0.6;
+      ctx.bezierCurveTo(cp1x, pts[i].y, cp2x, pts[i+1].y, pts[i+1].x, pts[i+1].y);
+    }
+    ctx.lineTo(pts[pts.length-1].x, y + h);
+    ctx.closePath();
+    ctx.fillStyle = '#f5c842';
+    ctx.globalAlpha = 0.5;
+    ctx.fill();
+    ctx.globalAlpha = 1.0;
+
+    // Line
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (var i = 0; i < pts.length - 1; i++) {
+      var cp1x = pts[i].x + (pts[i+1].x - pts[i].x) * 0.4;
+      var cp2x = pts[i].x + (pts[i+1].x - pts[i].x) * 0.6;
+      ctx.bezierCurveTo(cp1x, pts[i].y, cp2x, pts[i+1].y, pts[i+1].x, pts[i+1].y);
+    }
+    ctx.strokeStyle = '#f5c842';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Dots — colored per value: green if >=5, cyan if <5
+    for (var i = 1; i < pts.length; i++) {
+      ctx.beginPath();
+      ctx.arc(pts[i].x, pts[i].y, 4, 0, Math.PI*2);
+      ctx.fillStyle = measPts[i-1].v >= 5 ? '#4CAF50' : '#00ffff';
+      ctx.fill();
+    }
+  }
+
+  function drawAxesAndTarget(numBars) {
+    // Baseline
+    ctx.beginPath();
+    ctx.moveTo(padL, padT + chartH);
+    ctx.lineTo(W - padR, padT + chartH);
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
+
+    // Day labels for completed bars
+    ctx.fillStyle = '#fff';
+    ctx.font = '13px -apple-system,sans-serif';
+    ctx.textAlign = 'center';
+    for (var i = 0; i < numBars; i++) {
+      ctx.fillText(bars[i].day, barX(i) + barW/2, padT + chartH + 20);
+    }
+
+    // Target line (dashed) across all bars revealed so far
+    if (numBars > 0) {
+      ctx.beginPath();
+      ctx.setLineDash([6, 4]);
+      ctx.moveTo(padL, targetY);
+      ctx.lineTo(barX(numBars-1) + barW + barGap * 0.3, targetY);
+      ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+    }
+  }
+
+  function drawBar(i, heightFraction) {
+    var x = barX(i);
+    var fullH = barH(bars[i].val);
+    var h = Math.round(fullH * heightFraction);
+    var y = padT + chartH - h;
+    var hitGoal = bars[i].val >= target;
+    ctx.fillStyle = hitGoal ? orange : '#666';
+    ctx.beginPath();
+    ctx.roundRect(x, y, barW, h, [6, 6, 0, 0]);
+    ctx.fill();
+  }
+
+  function drawCompletedBars(upTo) {
+    for (var i = 0; i < upTo; i++) {
+      drawBar(i, 1.0);
+      var hitGoal = bars[i].val >= target;
+      // Mini TODAY graph above bar — width matches bar, height = 36px
+      var gx = barX(i), gy = barTop(bars[i].val) - 50;
+      drawMiniTodayGraph(gx, gy, barW, 43, dayMeas[i], hitGoal);
+    }
+  }
+
+  function runCycle() {
+    if (!document.getElementById('progressSchematicCanvas')) return;
+    var barFrames = 25;
+    var pauseFrames = 15;
+    var holdFrames = 40;
+    var currentBar = 0;
+    var frame = 0;
+    var phase = 'rise';
+
+    function tick() {
+      if (!document.getElementById('progressSchematicCanvas')) return;
+      ctx.clearRect(0, 0, W, H);
+
+      if (phase === 'rise') {
+        var progress = frame / barFrames;
+        drawCompletedBars(currentBar);
+        drawBar(currentBar, progress);
+        drawAxesAndTarget(currentBar + 1);
+        frame++;
+        if (frame > barFrames) { phase = 'pause'; frame = 0; }
+
+      } else if (phase === 'pause') {
+        drawCompletedBars(currentBar + 1);
+        drawAxesAndTarget(currentBar + 1);
+        frame++;
+        if (frame > pauseFrames) {
+          currentBar++;
+          frame = 0;
+          phase = currentBar >= bars.length ? 'hold' : 'rise';
+        }
+
+      } else if (phase === 'hold') {
+        drawCompletedBars(bars.length);
+        drawAxesAndTarget(bars.length);
+        frame++;
+        if (frame > holdFrames) {
+          trackTimer(setTimeout(runCycle, 0));
+          return;
+        }
+      }
+
+      trackTimer(setTimeout(tick, 22));
+    }
+
+    tick();
+  }
+
+  runCycle();
+}
+
 function getTodayExploreSVG() {
   return makeTodaySVG(0, [{hour:7,value:4},{hour:12,value:3},{hour:18,value:5}], 47);
 }
+function getTodayShowsSVG() {
+  // Custom SVG for What FOX2 Shows You screen: values 4, 1, 3 with last dot emphasised
+  var target=60, meas=[{hour:7,value:4},{hour:13,value:1},{hour:18,value:3}], total=35;
+  var xMin=8, xMax=170, yBase=100, yTop=30, maxVal=10;
+  function hx(h){return xMin+(h/24)*(xMax-xMin);}
+  function vy(v){return yBase-(v/maxVal)*(yBase-yTop);}
+  var allPts=[{x:hx(0),y:vy(meas[0].value)}];
+  for(var i=0;i<meas.length;i++) allPts.push({x:hx(meas[i].hour),y:vy(meas[i].value)});
+  var path='M '+xMin+','+yBase+' L '+xMin+','+allPts[0].y;
+  for(var i=0;i<allPts.length-1;i++){
+    var cx=(allPts[i].x+allPts[i+1].x)/2;
+    path+=' Q '+allPts[i].x+','+allPts[i].y+' '+cx+','+((allPts[i].y+allPts[i+1].y)/2);
+  }
+  var last=allPts[allPts.length-1];
+  path+=' Q '+last.x+','+last.y+' '+last.x+','+last.y+' L '+last.x+','+yBase+' Z';
+  var svg='<svg viewBox="0 0 184 184" xmlns="http://www.w3.org/2000/svg">' +
+    '<rect x="66" y="5" width="52" height="16" rx="8" fill="#f5c842"/>' +
+    '<text x="92" y="17" font-size="11" font-weight="700" fill="#1a1a2e" text-anchor="middle">TODAY</text>' +
+    '<rect x="158" y="10" width="18" height="10" rx="2" stroke="#0ff" stroke-width="1" fill="none"/>' +
+    '<rect x="176" y="12" width="2" height="6" fill="#0ff"/>' +
+    '<rect x="160" y="12" width="14" height="6" fill="#0f0"/>' +
+    '<path d="'+path+'" fill="#f5c842"/>';
+  for(var i=1;i<allPts.length;i++){
+    var isLast = i === allPts.length-1;
+    var dc=meas[i-1].value>=5?'#4CAF50':'#00ffff';
+    var r = isLast ? 6 : 3;
+    var fs = isLast ? 20 : 14;
+    svg+='<circle cx="'+allPts[i].x+'" cy="'+allPts[i].y+'" r="'+r+'" fill="'+dc+'"/>';
+    svg+='<text x="'+allPts[i].x+'" y="'+(allPts[i].y-(isLast?12:8))+'" font-size="'+fs+'" font-weight="700" fill="#fff" text-anchor="middle">'+meas[i-1].value+'</text>';
+  }
+  svg+='<line x1="'+last.x+'" y1="'+last.y+'" x2="'+xMax+'" y2="'+last.y+'" stroke="#666" stroke-width="1" stroke-dasharray="4,4"/>';
+  svg+='<line x1="'+xMin+'" y1="'+yBase+'" x2="'+xMax+'" y2="'+yBase+'" stroke="#fff" stroke-width="1"/>' +
+    '<text x="'+xMin+'" y="115" font-size="12" fill="#fff" text-anchor="start">0a</text>' +
+    '<text x="92" y="115" font-size="12" fill="#fff" text-anchor="middle">12p</text>' +
+    '<text x="'+xMax+'" y="115" font-size="12" fill="#fff" text-anchor="end">12a</text>';
+  svg+='<text x="68" y="160" font-size="40" font-weight="700" fill="#ff9800" text-anchor="middle">'+total+'</text>';
+  svg+='<text x="101" y="155" font-size="40" font-weight="700" fill="#fff" text-anchor="middle">/</text>' +
+    '<path d="M128,123 C123,119 119,121 119,126 C119,131 128,137 128,137 C128,137 137,131 137,126 C137,121 133,119 128,123 Z" fill="none" stroke="#ff4444" stroke-width="2"/>' +
+    '<text x="111" y="160" font-size="20" font-weight="700" fill="#666" text-anchor="start">'+target+'</text>';
+  svg+='</svg>';
+  return svg;
+}
 function getTodayFatSVG() {
-  return makeTodaySVG(60, [{hour:7,value:4},{hour:12,value:3},{hour:18,value:5}], 47);
+  // Shows hitting target of 60: readings that push total just over 60
+  return makeTodaySVG(60, [{hour:7,value:3},{hour:12,value:4},{hour:18,value:6}], 63);
 }
 function getTodayLoseSVG() {
-  return makeTodaySVG(120, [{hour:7,value:5},{hour:12,value:6},{hour:18,value:7}], 81);
+  // Shows hitting target of 120: higher readings pushing total over 120
+  return makeTodaySVG(120, [{hour:7,value:5},{hour:12,value:7},{hour:18,value:8}], 124);
 }
 function getTodayCustomSVG() {
-  return makeTodaySVG(customVal, [{hour:7,value:5},{hour:12,value:6},{hour:18,value:7}], 81);
+  return makeTodaySVG(customVal, [{hour:7,value:5},{hour:12,value:7},{hour:18,value:8}], Math.round(customVal * 1.05));
+}
+
+function getGoalStreaksSVG(target, targetVal, targetColor) {
+  if (!target || target === 0) target = 40;
+  if (!targetVal) targetVal = target;
+  if (!targetColor) targetColor = '#FF9800';
+
+  // Layout mirrors the canvas animation — viewBox 480x260
+  var W = 480, H = 200;
+  var padL = 10, padR = 10, padT = 30, padB = 45;
+  var chartW = W - padL - padR;
+  var chartH = H - padT - padB;
+  var maxVal = Math.max(100, Math.round(target * 1.28));
+
+  // Scale bars relative to target
+  var ratio = target / 60; // scale from the base 60 example
+  var barsData = [
+    { val: Math.round(72  * ratio), day: 'M' },
+    { val: Math.round(45  * ratio), day: 'T' },
+    { val: Math.round(88  * ratio), day: 'W' },
+    { val: Math.round(61  * ratio), day: 'T' },
+    { val: Math.round(78  * ratio), day: 'F' }
+  ];
+
+  var barW = Math.floor(chartW / barsData.length * 0.72);
+  var barGap = Math.floor(chartW / barsData.length * 0.85);
+  var barsTotal = barGap * barsData.length;
+  var barsStartX = W - barsTotal - padR;
+  function barX(i) { return barsStartX + i * barGap + (barGap - barW) / 2; }
+  function barH(val) { return Math.round((val / maxVal) * chartH); }
+  function barTop(val) { return padT + chartH - barH(val); }
+  var targetY = padT + chartH - Math.round((target / maxVal) * chartH);
+
+  var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">';
+
+  // Bars + mini graphs
+  for (var i = 0; i < barsData.length; i++) {
+    var b = barsData[i];
+    var bh = barH(b.val);
+    var by = barTop(b.val);
+    var bx = barX(i);
+    var hit = b.val >= target;
+    var fill = hit ? '#FF9800' : '#555';
+
+    // Bar — label centered vertically, font sized to fill bar width
+    svg += '<rect x="' + bx + '" y="' + by + '" width="' + barW + '" height="' + bh + '" rx="4" fill="' + fill + '"/>';
+    var fontSize = Math.min(barW * 0.7, bh * 0.5, 20);
+    var labelColor = hit ? '#000' : '#fff';
+    svg += '<text x="' + (bx + barW/2) + '" y="' + (by + bh/2 + fontSize*0.35) + '" font-size="' + Math.round(fontSize) + '" font-weight="700" fill="' + labelColor + '" text-anchor="middle">' + b.val + '</text>';
+
+    // Day label
+    svg += '<text x="' + (bx + barW/2) + '" y="' + (padT + chartH + 22) + '" font-size="26" fill="#fff" text-anchor="middle">' + b.day + '</text>';
+
+  }
+
+  var barsLeft = barsStartX;
+  var barsRight = W - padR;
+
+  // Baseline
+  svg += '<line x1="' + barsLeft + '" y1="' + (padT + chartH) + '" x2="' + barsRight + '" y2="' + (padT + chartH) + '" stroke="#fff" stroke-width="1"/>';
+
+  // Target line
+  svg += '<line x1="' + barsLeft + '" y1="' + targetY + '" x2="' + barsRight + '" y2="' + targetY + '" stroke="#ffffff" stroke-width="2.25" stroke-dasharray="6,4"/>';
+
+  svg += '</svg>';
+  return svg;
 }
 
 function getStreaksSVG() {
-  return '<svg viewBox="0 0 184 184" xmlns="http://www.w3.org/2000/svg">' +
+  var maxH = 50;
+  function bh(v) { return Math.round((v/70)*maxH); }
+  var bars = [
+    {v:62, fill:'#FF9800', tc:'#1a1a2e', day:'s'},
+    {v:50, fill:'#555',    tc:'#ccc',    day:'m'},
+    {v:65, fill:'#FF9800', tc:'#1a1a2e', day:'t'},
+    {v:61, fill:'#FF9800', tc:'#1a1a2e', day:'w'},
+    {v:70, fill:'#FF9800', tc:'#1a1a2e', day:'t', today:true}
+  ];
+  var svg = '<svg viewBox="0 0 184 184" xmlns="http://www.w3.org/2000/svg">' +
     '<rect x="42" y="5" width="100" height="20" rx="10" fill="#9C27B0"/>' +
     '<text x="92" y="19" font-size="12" font-weight="700" fill="#1a1a2e" text-anchor="middle">5 Day</text>' +
     '<rect x="158" y="15" width="18" height="10" rx="2" stroke="#0ff" stroke-width="1" fill="none"/>' +
     '<rect x="176" y="17" width="2" height="6" fill="#0ff"/>' +
     '<rect x="160" y="17" width="14" height="6" fill="#0f0"/>' +
-    '<g transform="translate(22,50)">' +
-      '<line x1="0" y1="30" x2="140" y2="30" stroke="#ffffff" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.8"/>' +
-      '<rect x="4" y="8" width="24" height="42" rx="4" fill="#FF9800"/>' +
-      '<text x="16" y="30" font-size="10" font-weight="700" fill="#1a1a2e" text-anchor="middle">102</text>' +
-      '<text x="16" y="60" font-size="11" fill="#00ffff" text-anchor="middle">s</text>' +
-      '<rect x="32" y="12" width="24" height="38" rx="4" fill="#FF9800"/>' +
-      '<text x="44" y="34" font-size="10" font-weight="700" fill="#1a1a2e" text-anchor="middle">94</text>' +
-      '<text x="44" y="60" font-size="11" fill="#00ffff" text-anchor="middle">m</text>' +
-      '<rect x="60" y="4" width="24" height="46" rx="4" fill="#FF9800"/>' +
-      '<text x="72" y="30" font-size="10" font-weight="700" fill="#1a1a2e" text-anchor="middle">114</text>' +
-      '<text x="72" y="60" font-size="11" fill="#00ffff" text-anchor="middle">t</text>' +
-      '<rect x="88" y="10" width="24" height="40" rx="4" fill="#FF9800"/>' +
-      '<text x="100" y="33" font-size="10" font-weight="700" fill="#1a1a2e" text-anchor="middle">97</text>' +
-      '<text x="100" y="60" font-size="11" fill="#00ffff" text-anchor="middle">w</text>' +
-      '<rect x="116" y="24" width="24" height="26" rx="4" fill="#FFEB3B"/>' +
-      '<text x="128" y="40" font-size="10" font-weight="700" fill="#1a1a2e" text-anchor="middle">67</text>' +
-      '<text x="128" y="60" font-size="12" font-weight="700" fill="#FFEB3B" text-anchor="middle">t</text>' +
-      '<line x1="0" y1="50" x2="140" y2="50" stroke="#ffffff" stroke-width="1.5"/>' +
-    '</g>' +
+    '<g transform="translate(22,50)">';
+  // target line at 60: y = 50 - (60/70)*50 = 7
+  svg += '<line x1="0" y1="7" x2="140" y2="7" stroke="#ffffff" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.8"/>';
+  var xs = [4, 32, 60, 88, 116];
+  for (var i = 0; i < bars.length; i++) {
+    var b = bars[i];
+    var h = bh(b.v);
+    var y = 50 - h;
+    var x = xs[i];
+    svg += '<rect x="' + x + '" y="' + y + '" width="24" height="' + h + '" rx="4" fill="' + b.fill + '"/>';
+    svg += '<text x="' + (x+12) + '" y="' + (y + Math.min(h/2+5, h-3)) + '" font-size="9" font-weight="700" fill="' + b.tc + '" text-anchor="middle">' + b.v + '</text>';
+    svg += '<text x="' + (x+12) + '" y="60" font-size="11" fill="#00ffff" text-anchor="middle">' + b.day + '</text>';
+  }
+  svg += '<line x1="0" y1="50" x2="140" y2="50" stroke="#ffffff" stroke-width="1.5"/>';
+  svg += '</g>';
+  svg +=
     '<g transform="translate(0,130)">' +
       '<circle cx="50" cy="20" r="18" fill="#9C27B0" stroke="#555" stroke-width="2"/>' +
       '<text x="50" y="28" font-size="20" font-weight="700" fill="#FFEB3B" text-anchor="middle">8</text>' +
       '<text x="50" y="45" font-size="11" fill="#00ffff" text-anchor="middle">best</text>' +
       '<circle cx="134" cy="20" r="18" fill="#FFEB3B" stroke="#555" stroke-width="2"/>' +
-      '<text x="134" y="28" font-size="20" font-weight="700" fill="#1a1a2e" text-anchor="middle">5</text>' +
+      '<text x="134" y="28" font-size="20" font-weight="700" fill="#1a1a2e" text-anchor="middle">3</text>' +
       '<text x="134" y="45" font-size="11" fill="#00ffff" text-anchor="middle">now</text>' +
     '</g>' +
   '</svg>';
+  return svg;
 }
 
 // -- Slide timer --
@@ -508,25 +1224,73 @@ function render() {
         '<div class="disclaimer">FOX2 provides informational insight and is not a medical diagnostic device.</div>' +
       '</div>';
     buttons =
-      '<button class="btn btn-secondary" onclick="goTo(2)">Skip to Setup</button>' +
-      '<button class="btn btn-primary" onclick="next()">What FOX2 Measures &#8250;</button>';
+      '<button class="btn btn-secondary" onclick="goTo(5)">Skip to Setup</button>' +
+      '<button class="btn btn-primary" onclick="next()">Next &#8250;</button>';
 
   } else if (state === 1) {
     // What FOX2 Measures
-    titleText = 'What FOX2 Measures';
+    titleText = 'Measure your metabolic balance';
     content =
       '<div class="content-area">' +
         '<div class="info-box"><div class="info-box-text">Your body runs on two fuels &#8212; <strong>glucose</strong> and <strong class="fat">fat</strong>. The balance between them shifts constantly, hour to hour and day to day.</div></div>' +
         '<div class="info-box"><div class="info-box-text">When your balance shifts toward fat, small amounts of <strong>acetone</strong> naturally appear in your breath. FOX2 measures this signal to show where your balance sits right now.</div></div>' +
-        '<div class="arc-wrap">' + getArcSVG() + '</div>' +
+        '<div class="arc-wrap" style="margin-top:-12px;">' + getArcSVG() + '</div>' +
       '</div>';
     buttons =
-      '<button class="btn btn-secondary" onclick="back()">&#8249; Welcome</button>' +
-      '<button class="btn btn-primary" onclick="next()">Your Goal &#8250;</button>';
+      '<button class="btn btn-secondary" onclick="back()">&#8249; Back</button>' +
+      '<button class="btn btn-primary" onclick="next()">Next &#8250;</button>';
 
   } else if (state === 2) {
+    // How FOX2 Works
+    titleText = 'Build your Daily Score';
+    content =
+      '<div class="content-area" style="gap:4px;">' +
+        '<div class="info-box"><div class="info-box-text">FOX2 doesn\'t just tell you where you are &#8212; it shows you where you\'ve been. Each reading builds your <strong style="color:#ff9800;">Daily Score</strong>, so you can see how your choices across the whole day added up.</div></div>' +
+        '<div style="flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden;">' +
+          getTodaySchematicSVG() +
+        '</div>' +
+      '</div>';
+    buttons =
+      '<button class="btn btn-secondary" onclick="back()">&#8249; Back</button>' +
+      '<button class="btn btn-primary" onclick="next()">Next &#8250;</button>';
+
+  } else if (state === 3) {
+    // Track your week
+    titleText = 'Track your week';
+    content =
+      '<div class="content-area" style="gap:4px;">' +
+        '<div class="info-box"><div class="info-box-text">Your <strong style="color:#ff9800;">Daily Score</strong>s don\'t disappear &#8212; they stack up in your <strong style="color:#9C27B0;">5 DAY</strong> history, building a picture of how your week is going.</div></div>' +
+        '<div style="flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden;">' +
+          '<canvas id="progressSchematicCanvas" width="480" height="240" style="width:100%;max-height:100%;display:block;"></canvas>' +
+        '</div>' +
+      '</div>';
+    buttons =
+      '<button class="btn btn-secondary" onclick="back()">&#8249; Back</button>' +
+      '<button class="btn btn-primary" onclick="next()">Next &#8250;</button>';
+
+  } else if (state === 4) {
+    // How to use FOX2
+    titleText = 'So how does it work?';
+    content =
+      '<div class="content-area" style="gap:12px;">' +
+        '<ul class="caveat-list" style="flex-shrink:0;">' +
+          '<li>A measurement takes around a minute.</li>' +
+          '<li>Measure a few times a day to see how your day is shaping up &#8212; even once is useful.</li>' +
+          '<li>Try different approaches to diet and exercise and see what makes a difference.</li>' +
+          '<li>Set a <strong style="color:#ff9800;">Daily Score</strong> target based on what you would like to achieve.</li>' +
+        '</ul>' +
+        '<div style="flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden;">' +
+          '<div style="width:75%;aspect-ratio:1/1;">' +
+            getUsageSchematicSVG() +
+          '</div>' +
+      '</div>';
+    buttons =
+      '<button class="btn btn-secondary" onclick="back()">&#8249; Back</button>' +
+      '<button class="btn btn-primary" onclick="next()">Next &#8250;</button>';
+
+  } else if (state === 5) {
     // Goal intent
-    titleText = 'Your Goal';
+    titleText = 'What\'s your goal?';
     content =
       '<div class="step-question">What are you hoping to do?</div>' +
       '<div class="intent-grid">' +
@@ -536,224 +1300,139 @@ function render() {
         icard('custom','&#127919;','Custom target','I have a specific number in mind') +
       '</div>';
     buttons =
-      '<button class="btn btn-secondary" onclick="back()">&#8249; What FOX2 Measures</button>' +
-      '<button class="btn btn-primary" onclick="next()">Confirm &#8250;</button>';
+      '<button class="btn btn-secondary" onclick="back()">&#8249; Back</button>' +
+      '<button class="btn btn-primary" onclick="next()">Next &#8250;</button>';
 
-  } else if (state === 3) {
+  } else if (state === 6) {
     // Goal confirm
     var d = intentData[intent];
     var badgeVal = intent === 'custom' ? customVal : d.badge;
     var targetNum = intent === 'custom' ? customVal : (intent === 'explore' ? 0 : parseInt(d.badge));
-
-    // Dynamic plain-English description
-    var dayDesc;
-    if (intent === 'explore') {
-      dayDesc = 'You\'re starting by getting a feel for where your body is &#8212; no target, no pressure.';
-    } else if (intent === 'fat') {
-      dayDesc = 'You\'re aiming to shift your fuel balance toward fat for a good part of your day.';
-    } else if (intent === 'lose') {
-      dayDesc = 'You\'re working toward fat as your primary fuel for most of your day.';
-    } else {
-      dayDesc = 'You\'re setting your own target.';
-    }
-
-    titleText = 'Confirm Goal';
+    var avgLow = targetNum > 0 ? Math.floor(targetNum / 24) : 0;
+    var avgHigh = targetNum > 0 ? Math.ceil(targetNum / 24) : 0;
+    var avgStr = avgLow === avgHigh ? String(avgLow) : avgLow + '&#8211;' + avgHigh;
+    titleText = d.name;
+    var outcomeItems = {
+      explore: [
+        'A great place to start &#8212; no pressure, just curiosity.',
+        'See how your balance shifts at different times of day.',
+        'Discover how meals, activity and sleep affect your readings.',
+        'Get comfortable with the measurement habit before setting a target.'
+      ],
+      fat: [
+        'Hitting this goal means your body is regularly switching between glucose and fat for energy.',
+        'A great target for maintaining and improving metabolic fitness.',
+        'Achievable through modest changes to diet and activity.',
+        'Consistent readings at this level support long-term metabolic balance.'
+      ],
+      lose: [
+        'At this level fat is your dominant fuel for most of the day.',
+        'Typically requires sustained low-carb and/or low-calorie eating combined with regular movement.',
+        'Consistent days at this level create the conditions for meaningful changes in body composition over time.',
+        'This is the goal for those serious about metabolic change.'
+      ],
+      custom: [
+        'You\'ve chosen your own number &#8212; use your readings to work toward it.',
+        'Adjust it anytime from the Settings menu as you learn more about your body.',
+        'Track your progress day by day in your <strong style="color:#ff9800;">Daily Score</strong> and week by week in your <strong style="color:#9C27B0;">5 DAY</strong> history.'
+      ]
+    };
+    var bullets = outcomeItems[intent] || outcomeItems.explore;
     content =
       '<div class="confirm-wrap">' +
-        '<div class="confirm-hero" style="background:'+d.heroBg+';border:1px solid '+d.heroBorder+';">' +
-          '<div class="confirm-intent-name" style="margin-bottom:12px;">'+d.name+'</div>' +
-          '<div style="display:flex;align-items:center;gap:14px;">' +
-            '<div class="confirm-target-badge" id="confirmBadgeLive" style="color:'+d.color+';flex-shrink:0;">'+badgeVal+'</div>' +
-            '<div id="dayDescLine" style="font-size:15px;line-height:1.5;color:#aaa;text-align:left;">'+dayDesc+'</div>' +
-          '</div>' +
-          (d.tlSub ? '<div style="font-size:12px;color:#444;margin-top:10px;text-align:center;text-transform:uppercase;letter-spacing:0.1em;">'+d.tlSub+'</div>' : '') +
-        '</div>' +
-        (intent==='custom' ?
-          '<div class="custom-adjuster visible"><button class="adj-btn" onclick="adjustCustom(-10)">&#8722;</button><div><div class="adj-val" id="adjVal">'+customVal+'</div><div class="adj-unit">daily target</div></div><button class="adj-btn" onclick="adjustCustom(10)">+</button></div>'
-          : '') +
-        '<div class="confirm-meaning">' +
-          '<div class="meaning-title">What this means</div>' +
-          d.rows.map(function(r){return '<div class="meaning-row"><div class="meaning-dot" style="background:'+r.c+'"></div><div class="meaning-text">'+r.t+'</div></div>';}).join('') +
-        '</div>' +
-        '<div class="change-link" onclick="goTo(2)">&#8592; Change my goal</div>' +
+        (intent!=='explore' ?
+        '<div style="background:'+d.heroBg+';border:1px solid '+d.heroBorder+';border-radius:16px;padding:10px 12px;flex-shrink:0;">' +
+          (intent==='custom' ?
+            '<div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 0;">' +
+              '<button class="adj-btn" onclick="adjustCustom(-10)">&#8249;</button>' +
+              '<div style="font-size:72px;font-weight:800;line-height:1;color:'+d.color+';" id="confirmBadgeLive">'+badgeVal+'</div>' +
+              '<button class="adj-btn" onclick="adjustCustom(10)">&#8250;</button>' +
+            '</div>'
+            :
+          '<div style="display:flex;align-items:center;gap:12px;">' +
+              '<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">' +
+                '<div style="font-size:11px;text-transform:uppercase;letter-spacing:0.12em;color:#fff;margin-bottom:2px;">Daily Score</div>' +
+                '<div style="font-size:72px;font-weight:800;line-height:1;color:'+d.color+';" id="confirmBadgeLive">'+badgeVal+'</div>' +
+              '</div>' +
+              '<div style="flex:1;min-width:0;transform:scale(1.1);transform-origin:right center;">' +
+                getGoalStreaksSVG(targetNum, badgeVal, d.color) +
+              '</div>' +
+            '</div>'
+          ) +
+        '</div>'
+        : '') +
+        '<ul class="caveat-list" style="flex-shrink:0;">' +
+          bullets.map(function(b){ return '<li>'+b+'</li>'; }).join('') +
+        '</ul>' +
+        '<div class="change-link" onclick="goTo(5)">&#8592; Change my goal</div>' +
       '</div>';
     buttons =
-      '<button class="btn btn-secondary" onclick="goTo(2)">&#8249; Your Goal</button>' +
-      '<button class="btn btn-primary" onclick="next()">What You\'ll See &#8250;</button>';
+      '<button class="btn btn-secondary" onclick="back()">&#8249; Back</button>' +
+      '<button class="btn btn-primary" onclick="next()">Next &#8250;</button>';
 
-  } else if (state === 4) {
-    var d = intentData[intent];
-    var todaySVGFn = intent === 'explore' ? 'getTodayExploreSVG' :
-                     intent === 'fat'     ? 'getTodayFatSVG' :
-                     intent === 'lose'    ? 'getTodayLoseSVG' : 'getTodayCustomSVG';
-    var targetNum2 = intent === 'custom' ? customVal : d.badge;
-    var avg2 = targetNum2 > 0 ? (targetNum2 / 24) : 0;
-    var avgStr2 = avg2 > 0 ? (Number.isInteger(avg2) ? String(avg2) : avg2.toFixed(1)) : '0';
-    var todayCaption = intent === 'explore'
-      ? 'Your total builds up across the day. No target set.'
-      : intent === 'fat'
-      ? 'Reach <strong style="color:'+d.color+';">'+targetNum2+'</strong> &#8212; that\'s averaging '+avgStr2+' across the day <span style="color:#555;">('+avgStr2+' &#215; 24 hours = '+targetNum2+')</span>.'
-      : intent === 'lose'
-      ? 'Reach <strong style="color:'+d.color+';">'+targetNum2+'</strong> &#8212; that\'s averaging '+avgStr2+' across the day <span style="color:#555;">('+avgStr2+' &#215; 24 hours = '+targetNum2+')</span>.'
-      : 'Your target is <strong style="color:'+d.color+';">'+targetNum2+'</strong> &#8212; averaging '+avgStr2+' across the day <span style="color:#555;">('+avgStr2+' &#215; 24 hours = '+targetNum2+')</span>.';
-    titleText = 'What You\'ll See';
-    content =
-      '<div class="preview-wrap">' +
-        '<div style="text-align:center;flex-shrink:0;">' +
-          '<div style="font-size:12px;text-transform:uppercase;letter-spacing:0.12em;color:#555;margin-bottom:4px;">Your goal</div>' +
-          '<div style="font-size:20px;font-weight:700;color:'+d.color+';">'+d.name+'</div>' +
-        '</div>' +
-        '<div class="device-screen-outer" style="width:280px;height:280px;overflow:hidden;">' +
-          '<div id="previewTrack" style="display:flex;flex-direction:row;width:560px;height:280px;transition:transform 1.0s cubic-bezier(0.25,0.46,0.45,0.94);">' +
-            '<canvas id="nowCanvas" width="280" height="280" style="flex:0 0 280px;display:block;background:#000;"></canvas>' +
-            '<canvas id="todayCanvas" width="280" height="280" style="flex:0 0 280px;display:block;background:#000;"></canvas>' +
-          '</div>' +
-        '</div>' +
-        '<div class="slide-caption" id="previewCaption">' + d.caption + '</div>' +
-        '<div class="slide-dots" style="display:flex;gap:8px;justify-content:center;flex-shrink:0;">' +
-          '<div class="slide-dot active" id="previewDot0"></div>' +
-          '<div class="slide-dot" id="previewDot1"></div>' +
-        '</div>' +
-      '</div>';
-    buttons =
-      '<button class="btn btn-secondary" onclick="goTo(3)">&#8249; Confirm Goal</button>' +
-      '<button class="btn btn-primary" onclick="next()">Before You Measure &#8250;</button>';
-
-    // Today data per intent
-    var todayData = intent === 'explore'
-      ? { meas:[{hour:7,value:4},{hour:12,value:3}], baseAUC:32, target:0 }
-      : intent === 'fat'
-      ? { meas:[{hour:7,value:4},{hour:12,value:3}], baseAUC:32, target:60 }
-      : intent === 'lose'
-      ? { meas:[{hour:7,value:5},{hour:12,value:6}], baseAUC:49, target:120 }
-      : { meas:[{hour:7,value:5},{hour:12,value:6}], baseAUC:49, target:customVal };
-
-    setTimeout(function(){
-      // Clear any stale canvas content from previous goal selection
-      ['nowCanvas','todayCanvas'].forEach(function(id) {
-        var c = document.getElementById(id);
-        if (c) { var x = c.getContext('2d'); x.clearRect(0,0,c.width,c.height); x.fillStyle='#000'; x.fillRect(0,0,c.width,c.height); }
-      });
-      startNowAnimation(d.nowValue, d.nowLabel, todayCaption, todayData);
-    }, 80);
-
-  } else if (state === 5) {
+  } else if (state === 7) {
     // Caveats
-    titleText = 'Before You Measure';
+    titleText = 'Before you measure';
     content =
-      '<div class="content-area">' +
-        '<ul class="caveat-list">' +
-          '<li>FOX2 is sensitive to <strong>alcohol</strong>. If you drink, wait until the next day to measure.</li>' +
-          '<li>Food and flavored drinks can interfere. Wait at least an hour after eating or drinking anything other than plain water &#8212; or rinse your mouth thoroughly first.</li>' +
-          '<li>FOX2 measures deep lung air. Blow out as completely as you can for the best reading.</li>' +
+      '<div class="content-area" style="gap:8px;">' +
+        '<ul class="caveat-list" style="flex-shrink:0;font-size:16px;margin:0;">' +
+          '<li style="margin-bottom:12px;">FOX2 is sensitive to <strong>alcohol</strong>. If you drink, wait until the next day to measure.</li>' +
+          '<li style="margin-bottom:12px;">Food and flavored drinks can interfere. Wait at least an hour after eating or drinking anything other than plain water &#8212; or rinse your mouth thoroughly first.</li>' +
+          '<li style="margin-bottom:12px;">FOX2 measures deep lung air. Blow out as completely as you can for the best reading.</li>' +
+          '<li style="margin-bottom:0;">Wait at least 15 minutes between measurements or after exercising to allow acetone to build back up in your lungs.</li>' +
         '</ul>' +
       '</div>';
     buttons =
-      '<button class="btn btn-secondary" onclick="back()">&#8249; What You\'ll See</button>' +
-      '<button class="btn btn-primary" onclick="next()">First Measurement &#8250;</button>';
+      '<button class="btn btn-secondary" onclick="back()">&#8249; Back</button>' +
+      '<button class="btn btn-primary" onclick="next()">Next &#8250;</button>';
 
-  } else if (state === 6) {
+  } else if (state === 8) {
     showTitle = true;
-    titleText = 'Your First Measurement';
+    titleText = 'Taking your first measurement';
+    var deviceGraphic =
     content =
-      '<div class="content-area" style="gap:12px;">' +
+      '<div class="content-area" style="gap:10px;">' +
 
-        // Device with callouts
-        '<div style="flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:0;padding:0 8px;">' +
-
-          // Left callout &#8212; circle button
-          '<div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end;flex:1;">' +
-            '<div style="text-align:right;">' +
-              '<div style="font-size:17px;font-weight:700;color:#00ffff;">&#9679; Circle</div>' +
-              '<div style="font-size:15px;color:#555;">Select / Power</div>' +
-            '</div>' +
-            '<div style="text-align:right;">' +
-              '<div style="font-size:17px;font-weight:700;color:#ff9800;">&#9650; Triangle</div>' +
-              '<div style="font-size:15px;color:#555;">Navigate menu</div>' +
-            '</div>' +
-          '</div>' +
-
-          // Device
-          '<div style="position:relative;width:120px;height:192px;flex-shrink:0;margin:0 16px;">' +
-            // body
+        // Device graphic at top
+        '<div style="flex-shrink:0;display:flex;align-items:center;gap:16px;padding:0 8px;margin-top:50px;">' +
+          '<div style="position:relative;width:120px;height:192px;flex-shrink:0;">' +
             '<div style="position:absolute;inset:0;background:#232347;border-radius:60px/96px;box-shadow:0 6px 20px rgba(0,0,0,.85),inset 0 1px 3px rgba(255,255,255,.1);z-index:1;"></div>' +
-            // top cap
-            '<div style="position:absolute;left:0;width:100%;height:16px;background:#141414;z-index:2;top:-12px;"></div>' +
-            // bottom cap
-            '<div style="position:absolute;left:0;width:100%;height:48px;background:#141414;z-index:2;bottom:-40px;"></div>' +
-            // seam
+            '<div style="position:absolute;left:0;width:100%;height:16px;background:#000;z-index:2;top:-12px;"></div>' +
+            '<div style="position:absolute;left:0;width:100%;height:48px;background:#000;z-index:2;bottom:-40px;"></div>' +
             '<div style="position:absolute;left:10%;width:80%;height:1px;top:18%;background:linear-gradient(to bottom,rgba(255,255,255,.18),rgba(0,0,0,.45));z-index:4;"></div>' +
-            // screen
             '<div style="position:absolute;top:22%;left:50%;transform:translateX(-50%);width:84px;height:84px;background:#000;border-radius:9px;box-shadow:inset 0 1px 6px rgba(0,0,0,.7),0 0 0 2px #333;display:flex;align-items:center;justify-content:center;z-index:3;overflow:hidden;">' +
               getMenuSVG() +
             '</div>' +
-            // triangle button
-            '<div style="position:absolute;left:14px;bottom:28px;width:18px;height:18px;background:#ff9800;clip-path:polygon(50% 100%,0 0,100% 0);z-index:3;box-shadow:0 2px 6px rgba(255,152,0,.4);"></div>' +
-            // circle button
-            '<div style="position:absolute;left:50%;transform:translateX(-50%);bottom:14px;width:28px;height:28px;background:#0ff;border-radius:50%;z-index:3;box-shadow:0 2px 8px rgba(0,255,255,.4);"></div>' +
-            // mouthpiece
+            '<div style="position:absolute;left:24px;bottom:36px;width:18px;height:18px;background:#ff9800;clip-path:polygon(0 0,100% 0,50% 100%);z-index:5;box-shadow:0 2px 6px rgba(255,152,0,.4);"></div>' +
+            '<div style="position:absolute;left:50%;transform:translateX(-50%);bottom:14px;width:28px;height:28px;background:#0ff;border-radius:50%;z-index:5;box-shadow:0 2px 8px rgba(0,255,255,.4);"></div>' +
             '<div style="position:absolute;top:7px;right:-10px;width:36px;height:18px;background:#e8e8e8;border-radius:5px;transform-origin:left center;transform:rotate(-45deg);box-shadow:0 1px 4px rgba(0,0,0,.4);z-index:5;"></div>' +
-            // connector lines
-            '<svg style="position:absolute;inset:0;width:100%;height:100%;z-index:10;overflow:visible;" viewBox="0 0 120 192">' +
-              // circle &#8594; left
-              '<line x1="26" y1="162" x2="-8" y2="155" stroke="#00ffff" stroke-width="1" stroke-dasharray="3,2" opacity="0.5"/>' +
-              // triangle &#8594; left
-              '<line x1="14" y1="147" x2="-8" y2="135" stroke="#ff9800" stroke-width="1" stroke-dasharray="3,2" opacity="0.5"/>' +
-            '</svg>' +
           '</div>' +
-
-          // Right spacer
-          '<div style="flex:1;"></div>' +
-
+          '<div style="flex:1;font-size:17px;color:#aaa;line-height:1.6;">' +
+            '<div style="display:flex;gap:8px;margin-bottom:9px;"><span style="color:#00ffff;flex-shrink:0;">&#8226;</span><span>When you click <strong style="color:#fff;">Ready to go!</strong> below you can take your first measurement!</span></div>' +
+            '<div style="display:flex;gap:8px;"><span style="color:#00ffff;flex-shrink:0;">&#8226;</span><span>From the menu, use <strong style="color:#ff9800;">&#9660;</strong> to navigate and <strong style="color:#00ffff;">&#9679;</strong> to select <strong style="color:#fff;">Measure</strong>.</span></div>' +
+          '</div>' +
         '</div>' +
+        '<div style="flex:0.5;min-height:0;"></div>' +
+        '<div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0;">' +
 
-        '<div style="font-size:17px;color:#555;text-align:center;flex-shrink:0;">From the menu, use <strong style="color:#ff9800;">&#9650;</strong> to navigate and <strong style="color:#00ffff;">&#9679;</strong> to select <strong style="color:#fff;">Measure</strong>.</div>' +
-
-        // Divider
-        '<div style="height:1px;background:#1e1e1e;flex-shrink:0;"></div>' +
-
-        '<div style="font-size:17px;color:#555;text-align:center;flex-shrink:0;">Then here\'s what happens:</div>' +
-
-        '<div style="display:flex;flex-direction:column;gap:0;flex-shrink:0;">' +
-
-          // Step 1
-          '<div style="display:flex;gap:14px;align-items:flex-start;">' +
-            '<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">' +
-              '<div style="width:40px;height:40px;border-radius:50%;background:#111;border:2px solid #00ffff;display:flex;align-items:center;justify-content:center;font-size:20px;">&#9201;</div>' +
-              '<div style="width:2px;flex:1;min-height:20px;background:#1e1e1e;margin:4px 0;"></div>' +
-            '</div>' +
-            '<div style="padding-top:6px;padding-bottom:14px;">' +
-              '<div style="font-size:17px;font-weight:700;color:#00ffff;margin-bottom:3px;">Warmup</div>' +
-              '<div style="font-size:15px;line-height:1.5;color:#aaa;">A countdown appears. Just wait and breathe normally.</div>' +
-            '</div>' +
+          '<div style="display:flex;gap:12px;align-items:center;">' +
+            '<canvas id="warmupIconCanvas" width="80" height="80" style="width:53px;height:53px;border-radius:50%;flex-shrink:0;"></canvas>' +
+            '<div style="font-size:18px;line-height:1.4;color:#aaa;"><strong style="color:#00ffff;">Warmup</strong> &#8212; A countdown appears. Just wait and breathe normally.</div>' +
           '</div>' +
 
-          // Step 2
-          '<div style="display:flex;gap:14px;align-items:flex-start;">' +
-            '<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">' +
-              '<div style="width:40px;height:40px;border-radius:50%;background:#111;border:2px solid #4CAF50;display:flex;align-items:center;justify-content:center;font-size:20px;">&#128168;</div>' +
-              '<div style="width:2px;flex:1;min-height:20px;background:#1e1e1e;margin:4px 0;"></div>' +
-            '</div>' +
-            '<div style="padding-top:6px;padding-bottom:14px;">' +
-              '<div style="font-size:17px;font-weight:700;color:#4CAF50;margin-bottom:3px;">Blow</div>' +
-              '<div style="font-size:15px;line-height:1.5;color:#aaa;">When prompted, take a full breath in &#8212; then blow steadily until FOX2 buzzes.</div>' +
-            '</div>' +
+          '<div style="display:flex;gap:12px;align-items:center;">' +
+            '<div style="width:53px;height:53px;border-radius:50%;background:#111;display:flex;align-items:center;justify-content:center;font-size:39px;flex-shrink:0;">&#127880;</div>' +
+            '<div style="font-size:18px;line-height:1.4;color:#aaa;"><strong style="color:#ff4444;">Blow</strong> &#8212; Take a breath in, then blow like you are filling a balloon until FOX2 buzzes or you run out of air.</div>' +
           '</div>' +
 
-          // Step 3
-          '<div style="display:flex;gap:14px;align-items:flex-start;">' +
-            '<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">' +
-              '<div style="width:40px;height:40px;border-radius:50%;background:#111;border:2px solid #f5c842;display:flex;align-items:center;justify-content:center;font-size:20px;">&#128202;</div>' +
-            '</div>' +
-            '<div style="padding-top:6px;">' +
-              '<div style="font-size:17px;font-weight:700;color:#f5c842;margin-bottom:3px;">Result</div>' +
-              '<div style="font-size:15px;line-height:1.5;color:#aaa;">Your reading appears on the NOW screen. FOX2 slides through your other screens then shuts off.</div>' +
-            '</div>' +
+          '<div style="display:flex;gap:12px;align-items:center;">' +
+            '<canvas id="resultIconCanvas" width="80" height="80" style="width:53px;height:53px;border-radius:50%;flex-shrink:0;"></canvas>' +
+            '<div style="font-size:18px;line-height:1.4;color:#aaa;"><strong style="color:#4CAF50;">Result</strong> &#8212; Your reading appears on the NOW screen. FOX2 slides through your screens then shuts off.</div>' +
           '</div>' +
 
         '</div>' +
       '</div>';
-    buttons = '<button class="btn btn-secondary" onclick="back()">&#8249; Before You Measure</button><button class="btn btn-primary" style="flex:1;" onclick="doneOnboarding()">Ready to try?</button>';
+    buttons = '<button class="btn btn-secondary" onclick="back()">&#8249; Back</button><button class="btn btn-primary" style="flex:1;" onclick="doneOnboarding()">Ready to go!</button>';
   }
 
   // Update DOM
@@ -772,7 +1451,7 @@ function render() {
   dotsEl.innerHTML = dh;
 
   // Re-highlight selected intent card
-  if (state === 2) {
+  if (state === 5) {
     var cards = document.querySelectorAll('.intent-card');
     cards.forEach(function(c) {
       if (c.dataset.intent === intent) {
@@ -781,8 +1460,113 @@ function render() {
       }
     });
   }
+
+  // Start schematic animation on How FOX2 Works screen
+  if (state === 2) {
+    trackTimer(setTimeout(startTodaySchematicAnimation, 600));
+  }
+
+  // Start progress animation on Track Your Week screen
+  if (state === 3) {
+    trackTimer(setTimeout(startProgressSchematicAnimation, 400));
+  }
+
+  // Start usage schematic animation on Using FOX2 screen
+  if (state === 4) {
+    trackTimer(setTimeout(startUsageSchematicAnimation, 400));
+  }
+
+  // Start step icon animations on Taking your first measurement screen
+  if (state === 8) {
+    trackTimer(setTimeout(startWarmupIconAnimation, 300));
+    trackTimer(setTimeout(startResultIconAnimation, 300));
+  }
 }
 
+function startWarmupIconAnimation() {
+  var canvas = document.getElementById('warmupIconCanvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var W = 80;
+  canvas.width = W; canvas.height = W;
+  var cx = W/2, cy = W/2, r = 28;
+  var count = 5; // countdown from 5
+  var frame = 0;
+  var framesPerCount = 40;
+
+  function draw() {
+    if (!document.getElementById('warmupIconCanvas')) return;
+    ctx.clearRect(0,0,W,W);
+    ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(cx,cy,W/2,0,Math.PI*2); ctx.fill();
+
+    // Spinning arc background
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.strokeStyle = '#003333'; ctx.lineWidth = 5; ctx.stroke();
+
+    // Spinning progress arc
+    var progress = (frame % framesPerCount) / framesPerCount;
+    ctx.beginPath(); ctx.arc(cx,cy,r, -Math.PI/2, -Math.PI/2 + progress * Math.PI*2);
+    ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.stroke();
+
+    // Countdown number
+    var num = count - Math.floor(frame / framesPerCount);
+    if (num < 1) num = 1;
+    ctx.fillStyle = '#00ffff';
+    ctx.font = 'bold 28px -apple-system,sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(String(num), cx, cy);
+
+    frame++;
+    if (frame >= framesPerCount * count) frame = 0;
+    trackTimer(setTimeout(draw, 40));
+  }
+  draw();
+}
+
+function startResultIconAnimation() {
+  var canvas = document.getElementById('resultIconCanvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var W = 80;
+  canvas.width = W; canvas.height = W;
+  var cx = W/2, cy = W/2 + 6, r = 26;
+  var activeColors = ['#00ffff','#00ffff','#00ffff','#00ddbb','#4CAF50','#4CAF50','#4CAF50','#4CAF50','#4CAF50','#4CAF50'];
+  var dimColors    = ['#003333','#003333','#003333','#003333','#003300','#003300','#003300','#003300','#003300','#003300'];
+  var startAngle = -0.9841 * Math.PI;
+  var endAngle   = -0.0270 * Math.PI;
+  var totalSpan  = endAngle - startAngle;
+  var GAP = 0.04;
+  var frame = 0;
+  var totalFrames = 60;
+
+  function draw() {
+    if (!document.getElementById('resultIconCanvas')) return;
+    ctx.clearRect(0,0,W,W);
+    ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(W/2,W/2,W/2,0,Math.PI*2); ctx.fill();
+
+    var segs = Math.round((frame / totalFrames) * 10);
+    for (var i = 0; i < 10; i++) {
+      var a0 = startAngle + (i/10) * totalSpan + GAP;
+      var a1 = startAngle + ((i+1)/10) * totalSpan - GAP;
+      ctx.beginPath(); ctx.arc(cx, cy, r, a0, a1, false);
+      ctx.strokeStyle = i < segs ? activeColors[i] : dimColors[i];
+      ctx.lineWidth = 7; ctx.lineCap = 'butt'; ctx.stroke();
+    }
+
+    // Number in center
+    var val = Math.round((frame / totalFrames) * 7) + 1;
+    var numColor = segs <= 4 ? '#00ffff' : '#4CAF50';
+    ctx.fillStyle = numColor;
+    ctx.font = 'bold 20px -apple-system,sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(String(Math.min(val,10)), cx, cy + 2);
+
+    frame++;
+    if (frame > totalFrames + 20) frame = 0;
+    trackTimer(setTimeout(draw, 40));
+  }
+  draw();
+}
 function icard(key, icon, title, sub) {
   return '<div class="intent-card" data-intent="'+key+'" onclick="selectIntent(\''+key+'\',this)">' +
     '<div class="intent-icon">'+icon+'</div>' +
@@ -817,8 +1601,8 @@ function startArcAnimation() {
   var canvas = document.getElementById('arcCanvas');
   if (!canvas) return;
   var ctx = canvas.getContext('2d');
-  var W = 320, H = 140;
-  var S = W / 184; // scale from SVG coords
+  var W = 320, H = 210;
+  var S = W / 184;
 
   // Arc center in SVG coords: cx=92, cy=93, r=60 (from getArcSVG baseline)
   var cx = 92, cy = 93, r = 60;
@@ -831,9 +1615,6 @@ function startArcAnimation() {
   var dimColors    = ['#003333','#003333','#003333','#003333','#003300','#003300','#003300','#003300','#003300','#003300'];
   var GAP = 0.02;
 
-  // Oscillate value between 1 and 10 smoothly
-  var t = 0;
-
   function drawArc(val) {
     ctx.clearRect(0, 0, W, H);
     ctx.fillStyle = '#000';
@@ -841,7 +1622,7 @@ function startArcAnimation() {
 
     var segs = Math.round(val);
     var numColor = segs <= 4 ? '#00ffff' : '#4CAF50';
-    var dispVal = segs * 2; // display on 1-20 scale
+    var dispVal = segs; // display actual segment count 1-8
 
     // Segments
     for (var i = 0; i < 10; i++) {
@@ -876,22 +1657,28 @@ function startArcAnimation() {
     ctx.fillText('GLUCOSE', 32*S, 110*S);
     ctx.fillStyle = '#4CAF50';
     ctx.fillText('FAT', 152*S, 110*S);
-
-    // NOW number &#8212; centered in arc
-    ctx.fillStyle = numColor;
-    ctx.font = 'bold ' + Math.round(38*S) + 'px -apple-system,sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(String(dispVal), 92*S, 88*S);
   }
 
-  arcAnimTimer = setInterval(function() {
-    t += 0.04;
-    // Oscillate between 1 and 9 segments using sine
-    var val = 1 + 8 * (0.5 + 0.5 * Math.sin(t));
-    drawArc(val);
-  }, 50);
+  function runArcCycle() {
+    var frames = 56; // 56 frames × 50ms = 2.8s to count up
+    var frame = 0;
+    clearInterval(arcAnimTimer);
+    arcAnimTimer = setInterval(function() {
+      var val = 1 + (7 * frame / frames);
+      drawArc(Math.min(val, 8));
+      frame++;
+      if (frame > frames) {
+        // Hold at 8 for 1.5s then restart
+        clearInterval(arcAnimTimer);
+        arcAnimTimer = setTimeout(function() {
+          runArcCycle();
+        }, 1500);
+      }
+    }, 50);
+  }
 
   drawArc(1);
+  runArcCycle();
 }
 
 function next() { stopAllAnimations(); if (state < TOTAL_SCREENS-1) { state++; render(); } }
@@ -905,13 +1692,20 @@ function adjustCustom(delta) {
   intentData.custom.badge = String(customVal);
   intentData.custom.tlMain = 'Daily target: ' + customVal;
 
-  // Update day description line live
-  var descEl = document.getElementById('dayDescLine');
-  if (descEl) descEl.innerHTML = 'You\'re setting your own target.';
+  // Update average NOW line live
+  var avgLow = Math.floor(customVal / 24);
+  var avgHigh = Math.ceil(customVal / 24);
+  var avgStr = avgLow === avgHigh ? String(avgLow) : avgLow + '&#8211;' + avgHigh;
+  var avgEl = document.getElementById('avgNowLine');
+  if (avgEl) avgEl.innerHTML =
+    'That\'s an average NOW reading of about <strong style="color:#E91E63;">' + avgStr + '</strong> across your whole day ' +
+    '<span style="color:#444;">(' + avgStr + ' &times; 24hrs = ' + customVal + ')</span>';
 
-  // Update confirm badge
+  // Update confirm badge and target label
   var badgeEl = document.getElementById('confirmBadgeLive');
   if (badgeEl) badgeEl.textContent = customVal;
+  var tlEl = document.getElementById('confirmTLLive');
+  if (tlEl) tlEl.textContent = 'Daily target: ' + customVal;
 }
 
 // -- Global animation cleanup --
@@ -1115,7 +1909,7 @@ function startNowAnimation(finalValue, label, todayCaption, todayData) {
               trackTimer(setTimeout(function() {
                 if (!document.getElementById('nowCanvas')) return;
                 runSequence();
-              }, 6000));
+              }, 4000));
             }, 1200));
           }
         }, 400));
