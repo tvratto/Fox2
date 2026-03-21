@@ -783,7 +783,7 @@ function buildGraphCard() {
   }
 
   // ── Summary stats strip ───────────────────────────────────────
-  var TAB_W = 32, TAB_H = 20, TAB_R = 6, TAB_GAP = 3, TAB_FS = 11;
+  var TAB_W = 44, TAB_H = 20, TAB_R = 6, TAB_GAP = 3, TAB_FS = 11;
   var tabsAboveH = TAB_H - 3; // tabs protrude this many px above box top
   var summaryY = rowTop + ROW_GAP + tabsAboveH;
   var sumPad = 6;
@@ -798,8 +798,8 @@ function buildGraphCard() {
 
   tabHitBoxes = [];
   var tabs = [
-    { view: 'stats', label: 'S' },
-    { view: 'zones', label: 'T' }
+    { view: 'stats', label: 'Sum' },
+    { view: 'zones', label: 'Time' }
   ];
 
   // ── Draw inactive tab first (behind), then active (in front) ──
