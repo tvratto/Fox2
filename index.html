@@ -468,7 +468,6 @@ function startTodaySchematicAnimation() {
     var segs = Math.round(val);
     var activeColors = ['#00ffff','#00ffff','#00ffff','#00ddbb','#4CAF50','#4CAF50','#4CAF50','#4CAF50','#4CAF50','#4CAF50'];
     var dimColors    = ['#003333','#003333','#003333','#003333','#003300','#003300','#003300','#003300','#003300','#003300'];
-    // Match screen 1 arc exactly: from -0.9841π to -0.0270π (opens upward)
     var startAngle = -0.9841 * Math.PI;
     var endAngle   = -0.0270 * Math.PI;
     var totalSpan  = endAngle - startAngle;
@@ -483,6 +482,14 @@ function startTodaySchematicAnimation() {
       ctx.lineCap = 'butt';
       ctx.stroke();
     }
+    // Value number centered inside arc
+    var numColor = segs <= 4 ? '#00ffff' : '#4CAF50';
+    ctx.fillStyle = numColor;
+    ctx.font = 'bold ' + Math.round(10*S) + 'px -apple-system,sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(segs), cx, cy + 4*S);
+    ctx.textBaseline = 'alphabetic';
   }
 
   function drawSegment(p0, p1, full) {
@@ -1490,37 +1497,22 @@ function startWarmupIconAnimation() {
   var W = 80;
   canvas.width = W; canvas.height = W;
   var cx = W/2, cy = W/2, r = 28;
-  var count = 5; // countdown from 5
-  var frame = 0;
-  var framesPerCount = 40;
 
-  function draw() {
-    if (!document.getElementById('warmupIconCanvas')) return;
-    ctx.clearRect(0,0,W,W);
-    ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(cx,cy,W/2,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(cx,cy,W/2,0,Math.PI*2); ctx.fill();
 
-    // Spinning arc background
-    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
-    ctx.strokeStyle = '#003333'; ctx.lineWidth = 5; ctx.stroke();
+  // Background ring
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
+  ctx.strokeStyle = '#003333'; ctx.lineWidth = 5; ctx.stroke();
 
-    // Spinning progress arc
-    var progress = (frame % framesPerCount) / framesPerCount;
-    ctx.beginPath(); ctx.arc(cx,cy,r, -Math.PI/2, -Math.PI/2 + progress * Math.PI*2);
-    ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.stroke();
+  // 80% progress arc
+  ctx.beginPath(); ctx.arc(cx,cy,r, -Math.PI/2, -Math.PI/2 + 0.80 * Math.PI*2);
+  ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.stroke();
 
-    // Countdown number
-    var num = count - Math.floor(frame / framesPerCount);
-    if (num < 1) num = 1;
-    ctx.fillStyle = '#00ffff';
-    ctx.font = 'bold 28px -apple-system,sans-serif';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(String(num), cx, cy);
-
-    frame++;
-    if (frame >= framesPerCount * count) frame = 0;
-    trackTimer(setTimeout(draw, 40));
-  }
-  draw();
+  // Number
+  ctx.fillStyle = '#00ffff';
+  ctx.font = 'bold 24px -apple-system,sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('27', cx, cy);
 }
 
 function startResultIconAnimation() {
@@ -1530,42 +1522,28 @@ function startResultIconAnimation() {
   var W = 80;
   canvas.width = W; canvas.height = W;
   var cx = W/2, cy = W/2 + 6, r = 26;
+  var segs = 7;
   var activeColors = ['#00ffff','#00ffff','#00ffff','#00ddbb','#4CAF50','#4CAF50','#4CAF50','#4CAF50','#4CAF50','#4CAF50'];
   var dimColors    = ['#003333','#003333','#003333','#003333','#003300','#003300','#003300','#003300','#003300','#003300'];
   var startAngle = -0.9841 * Math.PI;
   var endAngle   = -0.0270 * Math.PI;
   var totalSpan  = endAngle - startAngle;
   var GAP = 0.04;
-  var frame = 0;
-  var totalFrames = 60;
 
-  function draw() {
-    if (!document.getElementById('resultIconCanvas')) return;
-    ctx.clearRect(0,0,W,W);
-    ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(W/2,W/2,W/2,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(W/2,W/2,W/2,0,Math.PI*2); ctx.fill();
 
-    var segs = Math.round((frame / totalFrames) * 10);
-    for (var i = 0; i < 10; i++) {
-      var a0 = startAngle + (i/10) * totalSpan + GAP;
-      var a1 = startAngle + ((i+1)/10) * totalSpan - GAP;
-      ctx.beginPath(); ctx.arc(cx, cy, r, a0, a1, false);
-      ctx.strokeStyle = i < segs ? activeColors[i] : dimColors[i];
-      ctx.lineWidth = 7; ctx.lineCap = 'butt'; ctx.stroke();
-    }
-
-    // Number in center
-    var val = Math.round((frame / totalFrames) * 7) + 1;
-    var numColor = segs <= 4 ? '#00ffff' : '#4CAF50';
-    ctx.fillStyle = numColor;
-    ctx.font = 'bold 20px -apple-system,sans-serif';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(String(Math.min(val,10)), cx, cy + 2);
-
-    frame++;
-    if (frame > totalFrames + 20) frame = 0;
-    trackTimer(setTimeout(draw, 40));
+  for (var i = 0; i < 10; i++) {
+    var a0 = startAngle + (i/10) * totalSpan + GAP;
+    var a1 = startAngle + ((i+1)/10) * totalSpan - GAP;
+    ctx.beginPath(); ctx.arc(cx, cy, r, a0, a1, false);
+    ctx.strokeStyle = i < segs ? activeColors[i] : dimColors[i];
+    ctx.lineWidth = 7; ctx.lineCap = 'butt'; ctx.stroke();
   }
-  draw();
+
+  ctx.fillStyle = '#4CAF50';
+  ctx.font = 'bold 22px -apple-system,sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('7', cx, cy + 2);
 }
 function icard(key, icon, title, sub) {
   return '<div class="intent-card" data-intent="'+key+'" onclick="selectIntent(\''+key+'\',this)">' +
