@@ -321,7 +321,7 @@ function splinePath(ctx, pts, bottomY) {
 // maxY: shared y scale maximum
 // prevPt/nextPt: last point from previous week / first point from next week
 // isLastWeek: true if this is the final row (last QR data point gets no extension)
-function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, maxY, todayIdx, prevPt, nextPt, isLastWeek) {
+function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, maxY, todayIdx, prevPt, nextPt, isLastWeek, zoneGrad) {
   prevPt = prevPt || null;
   nextPt = nextPt || null;
   isLastWeek = isLastWeek || false;
@@ -373,14 +373,13 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
   ctx.beginPath(); ctx.moveTo(gLeft, gBottom); ctx.lineTo(gRight, gBottom); ctx.stroke();
 
   // ── Target line ───────────────────────────────────────────────
-  if (targetAUC > 0) {
+  if (summaryView === 'stats' && targetAUC > 0) {
     var tPPM = targetAUC / 24;
     if (tPPM <= maxY) {
-      var tY = wy(tPPM);
       ctx.strokeStyle = 'rgba(255,255,255,0.2)';
       ctx.lineWidth = 0.75;
-      ctx.setLineDash([4,3]);
-      ctx.beginPath(); ctx.moveTo(gLeft, tY); ctx.lineTo(gRight, tY); ctx.stroke();
+      ctx.setLineDash([4, 3]);
+      ctx.beginPath(); ctx.moveTo(gLeft, wy(tPPM)); ctx.lineTo(gRight, wy(tPPM)); ctx.stroke();
       ctx.setLineDash([]);
     }
   }
@@ -460,30 +459,116 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
                   y: 2*pts[pts.length-1].y - pts[pts.length-2].y };
       var ext = [p0].concat(pts).concat([pN]);
 
-      var grad = ctx.createLinearGradient(0, gTop, 0, gBottom);
-      grad.addColorStop(0,   'rgba(255,140,0,0.0)');
-      grad.addColorStop(0.5, 'rgba(255,140,0,0.22)');
-      grad.addColorStop(1,   'rgba(255,140,0,0.5)');
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.moveTo(fillStartX, gBottom);
-      ctx.lineTo(pts[0].x, pts[0].y);
-      for (var k = 0; k < pts.length - 1; k++) {
-        var cp = catmullRomCP(ext[k], ext[k+1], ext[k+2], ext[k+3]);
-        ctx.bezierCurveTo(cp.cp1x, cp.cp1y, cp.cp2x, cp.cp2y, pts[k+1].x, pts[k+1].y);
+      // ── Helper: evaluate spline at parameter t (0..pts.length-1) ──
+      function evalSpline(t) {
+        var i = Math.min(Math.floor(t), pts.length - 2);
+        var frac = t - i;
+        // Bezier via catmull-rom control points
+        var cp = catmullRomCP(ext[i], ext[i+1], ext[i+2], ext[i+3]);
+        var mt = 1 - frac;
+        var x = mt*mt*mt*pts[i].x + 3*mt*mt*frac*cp.cp1x + 3*mt*frac*frac*cp.cp2x + frac*frac*frac*pts[i+1].x;
+        var y = mt*mt*mt*pts[i].y + 3*mt*mt*frac*cp.cp1y + 3*mt*frac*frac*cp.cp2y + frac*frac*frac*pts[i+1].y;
+        return { x: x, y: y };
       }
-      ctx.lineTo(fillEndX, gBottom);
-      ctx.closePath(); ctx.fill();
 
-      ctx.strokeStyle = '#FF8C00'; ctx.lineWidth = 1.5;
-      ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(pts[0].x, pts[0].y);
-      for (var k = 0; k < pts.length - 1; k++) {
-        var cp = catmullRomCP(ext[k], ext[k+1], ext[k+2], ext[k+3]);
-        ctx.bezierCurveTo(cp.cp1x, cp.cp1y, cp.cp2x, cp.cp2y, pts[k+1].x, pts[k+1].y);
+      // ── Sample spline at ~1px intervals ───────────────────────
+      var STEPS = Math.ceil((pts[pts.length-1].x - pts[0].x) * 2);
+      STEPS = Math.max(STEPS, 60);
+      var samples = [];
+      for (var si2 = 0; si2 <= STEPS; si2++) {
+        var t = si2 / STEPS * (pts.length - 1);
+        var sp = evalSpline(t);
+        var ppm = (gBottom - sp.y) / (gBottom - gTop) * maxY;
+        samples.push({ x: sp.x, y: sp.y, ppm: ppm });
       }
-      ctx.stroke();
+
+      // ── Zone fill colours ──────────────────────────────────────
+      var ZONE_COLORS_FILL   = ['rgba(0,212,255,0.45)',  'rgba(76,175,130,0.4)', 'rgba(168,85,247,0.35)'];
+      var ZONE_COLORS_STROKE = ['#00d4ff', '#4caf82', '#a855f7'];
+      var ORANGE_FILL_GRAD = (function() {
+        var g = ctx.createLinearGradient(0, gTop, 0, gBottom);
+        g.addColorStop(0,   'rgba(255,140,0,0.0)');
+        g.addColorStop(0.5, 'rgba(255,140,0,0.22)');
+        g.addColorStop(1,   'rgba(255,140,0,0.5)');
+        return g;
+      })();
+
+      function zoneOf(ppm) {
+        return ppm >= 5 ? 2 : ppm >= 3 ? 1 : 0;
+      }
+
+      if (summaryView === 'zones') {
+        // ── Zone-crossing fill ────────────────────────────────────
+        // Group samples into runs of the same zone, draw each as a filled shape
+        var runs = [];
+        var curZone = zoneOf(samples[0].ppm);
+        var runStart = 0;
+        for (var si2 = 1; si2 < samples.length; si2++) {
+          var z = zoneOf(samples[si2].ppm);
+          if (z !== curZone) {
+            runs.push({ zone: curZone, from: runStart, to: si2 });
+            curZone = z; runStart = si2;
+          }
+        }
+        runs.push({ zone: curZone, from: runStart, to: samples.length - 1 });
+
+        for (var ri = 0; ri < runs.length; ri++) {
+          var run = runs[ri];
+          var s0 = samples[run.from], sN = samples[run.to];
+
+          ctx.fillStyle = ZONE_COLORS_FILL[run.zone];
+          ctx.beginPath();
+          // Start at baseline under first sample
+          var bx0 = (run.from === 0) ? fillStartX : s0.x;
+          var bxN = (run.to === samples.length - 1) ? fillEndX : sN.x;
+          ctx.moveTo(bx0, gBottom);
+          ctx.lineTo(s0.x, s0.y);
+          // Trace curve forward through this run
+          for (var si2 = run.from + 1; si2 <= run.to; si2++) {
+            ctx.lineTo(samples[si2].x, samples[si2].y);
+          }
+          ctx.lineTo(bxN, gBottom);
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        // ── Stroke line with zone colours ─────────────────────────
+        for (var ri = 0; ri < runs.length; ri++) {
+          var run = runs[ri];
+          ctx.strokeStyle = ZONE_COLORS_STROKE[run.zone];
+          ctx.lineWidth = 1.5;
+          ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(samples[run.from].x, samples[run.from].y);
+          for (var si2 = run.from + 1; si2 <= run.to; si2++) {
+            ctx.lineTo(samples[si2].x, samples[si2].y);
+          }
+          ctx.stroke();
+        }
+
+      } else {
+        // ── Orange fill + stroke (stats view) ─────────────────────
+        ctx.fillStyle = ORANGE_FILL_GRAD;
+        ctx.beginPath();
+        ctx.moveTo(fillStartX, gBottom);
+        ctx.lineTo(pts[0].x, pts[0].y);
+        for (var k = 0; k < pts.length - 1; k++) {
+          var cp = catmullRomCP(ext[k], ext[k+1], ext[k+2], ext[k+3]);
+          ctx.bezierCurveTo(cp.cp1x, cp.cp1y, cp.cp2x, cp.cp2y, pts[k+1].x, pts[k+1].y);
+        }
+        ctx.lineTo(fillEndX, gBottom);
+        ctx.closePath(); ctx.fill();
+
+        ctx.strokeStyle = '#FF8C00'; ctx.lineWidth = 1.5;
+        ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x, pts[0].y);
+        for (var k = 0; k < pts.length - 1; k++) {
+          var cp = catmullRomCP(ext[k], ext[k+1], ext[k+2], ext[k+3]);
+          ctx.bezierCurveTo(cp.cp1x, cp.cp1y, cp.cp2x, cp.cp2y, pts[k+1].x, pts[k+1].y);
+        }
+        ctx.stroke();
+      }
 
       return { pts: pts, dataOffset: (isFirst && prevPt && (firstEpoch - prevPt.epoch) <= GAP_LIMIT) ? 1 : 0 };
     }
@@ -611,12 +696,13 @@ function buildGraphCard() {
   var SUMMARY_H = 60;
   var LABEL_ABOVE_H = 0;
   var FOOTER_H = 14;
+  var TAB_ABOVE_H = 17; // folder tabs protrude above summary box
 
-  // Total height: pill + 3 rows of (graph + labels + auc) + gaps between + summary + footer
+  // Total height: pill + 3 rows of (graph + labels + auc) + gaps between + tabs + summary + footer
   var CH = PAD + PILL_H + PILL_PAD
          + WEEKS * (GRAPH_H + LABEL_H + AUC_H)
          + (WEEKS - 1) * ROW_GAP
-         + ROW_GAP + LABEL_ABOVE_H + SUMMARY_H
+         + ROW_GAP + LABEL_ABOVE_H + TAB_ABOVE_H + SUMMARY_H
          + PAD + FOOTER_H;
 
   var canvas = document.createElement('canvas');
@@ -650,6 +736,16 @@ function buildGraphCard() {
     if (days[d].vals.length > 0) todayIdx = d;
   }
 
+  // ── Zone gradient stop fractions (for zones view fill) ───────
+  var zoneGrad = null;
+  if (summaryView === 'zones') {
+    var zt = calcZoneTimes();
+    var ztTotal = zt.glucose + zt.mixed + zt.fat || 1;
+    var s3 = zt.glucose / ztTotal;           // end of cyan / start of green
+    var s5 = s3 + zt.mixed / ztTotal;        // end of green / start of violet
+    zoneGrad = { s3: s3, s5: s5 };
+  }
+
   // ── Draw 3 week rows ─────────────────────────────────────────
   var rowTop = PAD + PILL_H + PILL_PAD;
   for (var w = 0; w < WEEKS; w++) {
@@ -681,84 +777,179 @@ function buildGraphCard() {
       }
     }
 
-    drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, maxY, todayIdx, prevPt, nextPt, w === WEEKS - 1);
+    drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, maxY, todayIdx, prevPt, nextPt, w === WEEKS - 1, zoneGrad);
 
     rowTop += GRAPH_H + LABEL_H + AUC_H + ROW_GAP;
   }
 
   // ── Summary stats strip ───────────────────────────────────────
-  // zone = round(ppm), range/avg shown as integer zones
-  var allVals = [], daysWithData = 0, daysOnTarget = 0, totalAUC = 0;
-  for (var d = 0; d < totalDays; d++) {
-    for (var i = 0; i < days[d].vals.length; i++) allVals.push(days[d].vals[i]);
-    if (days[d].vals.length > 0) {
-      daysWithData++;
-      totalAUC += days[d].auc;
-      if (targetAUC > 0 && days[d].auc >= targetAUC) daysOnTarget++;
-    }
-  }
-  var minZone = allVals.length ? Math.round(Math.min.apply(null, allVals)) : 0;
-  var maxZone = allVals.length ? Math.round(Math.max.apply(null, allVals)) : 0;
-  var avgZone = daysWithData > 0 ? Math.round(totalAUC / (daysWithData * 24) * 10) / 10 : 0;
-  var pctOnTarget = daysWithData > 0 ? Math.round(daysOnTarget / daysWithData * 100) : 0;
-
-  var summaryY = rowTop + ROW_GAP;
+  var TAB_W = 32, TAB_H = 20, TAB_R = 6, TAB_GAP = 3, TAB_FS = 11;
+  var tabsAboveH = TAB_H - 3; // tabs protrude this many px above box top
+  var summaryY = rowTop + ROW_GAP + tabsAboveH;
   var sumPad = 6;
   var rectY = summaryY;
-  var sumStats = [
-    { label: 'Range',  value: minZone + '–' + maxZone },
-    { label: 'Avg',    value: avgZone.toFixed(1)          },
-    { label: targetAUC > 0 ? 'Target (' + targetAUC + ')' : 'Target',
-                       value: pctOnTarget + '%'         }
-  ];
+  var boxX = gLeft - sumPad;
+  var boxW = gRight - gLeft + sumPad * 2;
   var colW = (gRight - gLeft) / 3;
   var LABEL_FS = 14;
-  var LABEL_TOP_PAD = 8;
   var LINE_GAP = 3;
+  var VALUE_FS = 26;
+  var VALUE_GAP = 4;
 
-  // Yellow border rounded rect (no fill)
-  ctx.strokeStyle = '#f5c842';
-  ctx.lineWidth = 4;
-  roundRect(ctx, gLeft - sumPad, rectY, gRight - gLeft + sumPad*2, SUMMARY_H, 10); ctx.stroke();
+  tabHitBoxes = [];
+  var tabs = [
+    { view: 'stats', label: 'S' },
+    { view: 'zones', label: 'T' }
+  ];
 
-  // Dividers, labels, underlines, values
-  for (var s = 0; s < sumStats.length; s++) {
-    var cx = gLeft + colW * s + colW / 2;
+  // ── Draw inactive tab first (behind), then active (in front) ──
+  var drawOrder = summaryView === 'stats' ? [1, 0] : [0, 1];
+  for (var di = 0; di < drawOrder.length; di++) {
+    var ti = drawOrder[di];
+    var tx = boxX + 6 + ti * (TAB_W + TAB_GAP);
+    var ty = rectY - tabsAboveH;
+    var isActive = summaryView === tabs[ti].view;
 
-    if (s > 0) {
-      ctx.strokeStyle = 'rgba(255,255,255,0.25)';
-      ctx.lineWidth = 0.75;
-      ctx.beginPath();
-      ctx.moveTo(gLeft + colW * s, rectY + 6);
-      ctx.lineTo(gLeft + colW * s, rectY + SUMMARY_H - 6);
-      ctx.stroke();
-    }
-
-    var VALUE_FS = 26;
-    var VALUE_GAP = 4;
-    var blockH = LABEL_FS + LINE_GAP + VALUE_GAP + VALUE_FS;
-    var blockTop = rectY + (SUMMARY_H - blockH) / 2;
-
-    var labelY = blockTop + LABEL_FS / 2;
-    ctx.fillStyle = 'rgba(255,255,255,0.6)';
-    ctx.font = LABEL_FS + 'px -apple-system,sans-serif';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(sumStats[s].label, cx, labelY);
-
-    var lw = ctx.measureText(sumStats[s].label).width;
-    var lineY = blockTop + LABEL_FS + LINE_GAP;
-    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-    ctx.lineWidth = 0.75;
+    // Folder tab shape: rounded top corners, open bottom
     ctx.beginPath();
-    ctx.moveTo(cx - lw/2, lineY);
-    ctx.lineTo(cx + lw/2, lineY);
+    ctx.moveTo(tx, rectY + 3);                          // bottom-left
+    ctx.lineTo(tx, ty + TAB_R);
+    ctx.quadraticCurveTo(tx, ty, tx + TAB_R, ty);       // top-left corner
+    ctx.lineTo(tx + TAB_W - TAB_R, ty);
+    ctx.quadraticCurveTo(tx + TAB_W, ty, tx + TAB_W, ty + TAB_R); // top-right corner
+    ctx.lineTo(tx + TAB_W, rectY + 3);                  // bottom-right
+    ctx.closePath();
+
+    ctx.fillStyle = isActive ? '#111' : 'rgba(255,255,255,0.05)';
+    ctx.fill();
+
+    // Border — top and sides only, no bottom
+    ctx.beginPath();
+    ctx.moveTo(tx, rectY + 3);
+    ctx.lineTo(tx, ty + TAB_R);
+    ctx.quadraticCurveTo(tx, ty, tx + TAB_R, ty);
+    ctx.lineTo(tx + TAB_W - TAB_R, ty);
+    ctx.quadraticCurveTo(tx + TAB_W, ty, tx + TAB_W, ty + TAB_R);
+    ctx.lineTo(tx + TAB_W, rectY + 3);
+    ctx.strokeStyle = isActive ? '#f5c842' : 'rgba(245,200,66,0.35)';
+    ctx.lineWidth = isActive ? 2 : 1.5;
     ctx.stroke();
 
-    var valueY = lineY + VALUE_GAP + VALUE_FS / 2;
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold ' + VALUE_FS + 'px -apple-system,sans-serif';
+    // Label
+    ctx.fillStyle = isActive ? '#f5c842' : 'rgba(255,255,255,0.3)';
+    ctx.font = 'bold ' + TAB_FS + 'px -apple-system,sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(sumStats[s].value, cx, valueY);
+    ctx.fillText(tabs[ti].label, tx + TAB_W / 2, ty + tabsAboveH / 2);
+
+    tabHitBoxes.push({ view: tabs[ti].view, x: tx, y: ty, w: TAB_W, h: TAB_H });
+  }
+
+  // ── Box border ────────────────────────────────────────────────
+  ctx.strokeStyle = '#f5c842';
+  ctx.lineWidth = 2;
+  roundRect(ctx, boxX, rectY, boxW, SUMMARY_H, 10); ctx.stroke();
+
+  // Erase top border behind active tab so it merges cleanly
+  var activeTx = boxX + 6 + (summaryView === 'stats' ? 0 : 1) * (TAB_W + TAB_GAP);
+  ctx.fillStyle = '#111';
+  ctx.fillRect(activeTx + 2, rectY - 1, TAB_W - 4, 4);
+
+  if (summaryView === 'stats') {
+    // ── Stats view: Range / Avg / Target% ──────────────────────
+    var allVals = [], daysWithData = 0, daysOnTarget = 0, totalAUC = 0;
+    for (var d = 0; d < totalDays; d++) {
+      for (var i = 0; i < days[d].vals.length; i++) allVals.push(days[d].vals[i]);
+      if (days[d].vals.length > 0) {
+        daysWithData++;
+        totalAUC += days[d].auc;
+        if (targetAUC > 0 && days[d].auc >= targetAUC) daysOnTarget++;
+      }
+    }
+    var minZone = allVals.length ? Math.round(Math.min.apply(null, allVals)) : 0;
+    var maxZone = allVals.length ? Math.round(Math.max.apply(null, allVals)) : 0;
+    var avgZone = daysWithData > 0 ? Math.round(totalAUC / (daysWithData * 24) * 10) / 10 : 0;
+    var pctOnTarget = daysWithData > 0 ? Math.round(daysOnTarget / daysWithData * 100) : 0;
+
+    var sumStats = [
+      { label: 'Range',  value: minZone + '–' + maxZone },
+      { label: 'Avg',    value: avgZone.toFixed(1) },
+      { label: targetAUC > 0 ? 'Target (' + targetAUC + ')' : 'Target', value: pctOnTarget + '%' }
+    ];
+
+    for (var s = 0; s < sumStats.length; s++) {
+      var cx = gLeft + colW * s + colW / 2;
+      if (s > 0) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 0.75;
+        ctx.beginPath();
+        ctx.moveTo(gLeft + colW * s, rectY + 6);
+        ctx.lineTo(gLeft + colW * s, rectY + SUMMARY_H - 6);
+        ctx.stroke();
+      }
+      var blockH = LABEL_FS + LINE_GAP + VALUE_GAP + VALUE_FS;
+      var blockTop = rectY + (SUMMARY_H - blockH) / 2;
+      var labelY = blockTop + LABEL_FS / 2;
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.font = LABEL_FS + 'px -apple-system,sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(sumStats[s].label, cx, labelY);
+      var lw = ctx.measureText(sumStats[s].label).width;
+      var lineY = blockTop + LABEL_FS + LINE_GAP;
+      ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 0.75;
+      ctx.beginPath();
+      ctx.moveTo(cx - lw/2, lineY); ctx.lineTo(cx + lw/2, lineY); ctx.stroke();
+      var valueY = lineY + VALUE_GAP + VALUE_FS / 2;
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold ' + VALUE_FS + 'px -apple-system,sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(sumStats[s].value, cx, valueY);
+    }
+
+  } else {
+    // ── Zones view: Glucose / Mixed / Fat ──────────────────────
+    var zt = calcZoneTimes();
+    var total = zt.glucose + zt.mixed + zt.fat || 1;
+
+    var zones = [
+      { label: 'Glucose', value: Math.round(zt.glucose / total * 100) + '%', color: '#00d4ff', pct: zt.glucose / total },
+      { label: 'Mixed',   value: Math.round(zt.mixed   / total * 100) + '%', color: '#4caf82', pct: zt.mixed   / total },
+      { label: 'Fat',     value: Math.round(zt.fat     / total * 100) + '%', color: '#a855f7', pct: zt.fat     / total }
+    ];
+
+    for (var s = 0; s < zones.length; s++) {
+      var z = zones[s];
+      var cx = gLeft + colW * s + colW / 2;
+
+      if (s > 0) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 0.75;
+        ctx.beginPath();
+        ctx.moveTo(gLeft + colW * s, rectY + 6);
+        ctx.lineTo(gLeft + colW * s, rectY + SUMMARY_H - 6);
+        ctx.stroke();
+      }
+
+      var blockH = LABEL_FS + LINE_GAP + VALUE_GAP + VALUE_FS;
+      var blockTop = rectY + (SUMMARY_H - blockH) / 2;
+      var labelY = blockTop + LABEL_FS / 2;
+      ctx.fillStyle = z.color;
+      ctx.font = 'bold ' + LABEL_FS + 'px -apple-system,sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(z.label, cx, labelY);
+
+      var barW = colW * 0.72;
+      var barH = 3;
+      var barX = cx - barW / 2;
+      var lineY = blockTop + LABEL_FS + LINE_GAP;
+      ctx.fillStyle = 'rgba(255,255,255,0.12)';
+      roundRect(ctx, barX, lineY, barW, barH, 2); ctx.fill();
+      ctx.fillStyle = z.color;
+      roundRect(ctx, barX, lineY, Math.max(barW * z.pct, 2), barH, 2); ctx.fill();
+
+      var valueY = lineY + VALUE_GAP + VALUE_FS / 2;
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold ' + VALUE_FS + 'px -apple-system,sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(z.value, cx, valueY);
+    }
   }
 
   // ── 3 WEEKS + date range pill ─────────────────────────────────
@@ -1087,6 +1278,117 @@ var graphCanvas, streakCanvas;
 var dotHits = [];
 var selectedDot = null;
 var graphScale = 2;
+var summaryView = 'stats'; // 'stats' | 'zones'
+var tabHitBoxes = []; // [{view, x, y, w, h}] in logical (pre-scale) canvas coords
+
+function setSummaryView(v) {
+  summaryView = v;
+  renderCard();
+}
+
+// ── Zone time calculation ─────────────────────────────────────────
+// Mirrors device AUC logic per day:
+//   - Extrapolate linearly back to midnight from first reading
+//     (using last reading of previous day if within 16h, else start at 0)
+//   - Interpolate between readings during the day
+//   - After last reading, trail linearly to 0 at next midnight
+// Buckets every minute into a zone.
+// Thresholds: <3 = glucose, 3–5 = mixed, ≥5 = fat
+function calcZoneTimes() {
+  var glucose = 0, mixed = 0, fat = 0;
+
+  function bucket(ppm) {
+    ppm = Math.max(0, ppm);
+    if      (ppm >= 5) fat++;
+    else if (ppm >= 3) mixed++;
+    else               glucose++;
+  }
+
+  function sampleMinutes(x0, y0, x1, y1) {
+    // Walk every integer minute from x0 to x1-1, linearly interpolating ppm
+    var span = x1 - x0;
+    if (span <= 0) return;
+    for (var m = 0; m < span; m++) {
+      var ppm = y0 + (y1 - y0) * (m / span);
+      bucket(ppm);
+    }
+  }
+
+  for (var d = 0; d < totalDays; d++) {
+    var pts  = days[d].epochs;
+    var vals = days[d].vals;
+    if (pts.length === 0) continue;
+
+    var dayStart = windowStart + d * 86400; // midnight of this day (seconds)
+
+    // ── Midnight baseline ───────────────────────────────────────
+    var firstMinute = (pts[0] - dayStart) / 60;
+    var baselinePPM = 0;
+
+    // Find last reading from previous day
+    if (d > 0) {
+      var prevPts  = days[d-1].epochs;
+      var prevVals = days[d-1].vals;
+      if (prevPts.length > 0) {
+        var lastPrevEpoch = prevPts[prevPts.length - 1];
+        var lastPrevPPM   = prevVals[prevVals.length - 1];
+        var prevMinute    = (lastPrevEpoch - dayStart) / 60; // negative
+        var gap = firstMinute - prevMinute;
+        if (gap <= 960) { // ≤16h gap
+          // Linear interpolation to midnight (minute 0)
+          var slope = (vals[0] - lastPrevPPM) / (firstMinute - prevMinute);
+          baselinePPM = vals[0] - slope * firstMinute;
+          baselinePPM = Math.max(0, Math.min(baselinePPM, 30));
+        }
+      }
+    }
+
+    // ── Midnight → first reading ────────────────────────────────
+    sampleMinutes(0, baselinePPM, firstMinute, vals[0]);
+
+    // ── Between readings ────────────────────────────────────────
+    for (var i = 1; i < pts.length; i++) {
+      var m0 = (pts[i-1] - dayStart) / 60;
+      var m1 = (pts[i]   - dayStart) / 60;
+      sampleMinutes(m0, vals[i-1], m1, vals[i]);
+    }
+
+    // ── Last reading → midnight (interpolate toward next day) ───
+    var lastMinute = (pts[pts.length - 1] - dayStart) / 60;
+    var lastPPM    = vals[vals.length - 1];
+    var trailPPM   = 0;
+
+    if (d < totalDays - 1) {
+      var nextPts  = days[d+1].epochs;
+      var nextVals = days[d+1].vals;
+      if (nextPts.length > 0) {
+        var nextFirstEpoch  = nextPts[0];
+        var nextFirstMinute = (nextFirstEpoch - dayStart) / 60; // will be >1440
+        var gap = nextFirstMinute - lastMinute;
+        if (gap <= 960) { // ≤16h
+          // Interpolate the line between lastPPM and next day's first reading,
+          // sample only the portion from lastMinute to midnight (1440)
+          var nextFirstPPM = nextVals[0];
+          var slope = (nextFirstPPM - lastPPM) / gap;
+          trailPPM = lastPPM + slope * (1440 - lastMinute);
+          trailPPM = Math.max(0, Math.min(trailPPM, 30));
+        }
+      }
+    }
+
+    sampleMinutes(lastMinute, lastPPM, 1440, trailPPM);
+  }
+
+  return { glucose: glucose, mixed: mixed, fat: fat };
+}
+
+function fmtHM(minutes) {
+  var h = Math.floor(minutes / 60);
+  var m = Math.round(minutes % 60);
+  if (h === 0) return m + 'm';
+  if (m === 0) return h + 'h';
+  return h + 'h ' + m + 'm';
+}
 
 function renderCard() {
   dotHits = [];
@@ -1182,6 +1484,17 @@ window.addEventListener('load', function() {
 
   function handleTap(clientX, clientY) {
     var c = canvasCoords(clientX, clientY);
+
+    // Check summary tab hits first
+    for (var ti = 0; ti < tabHitBoxes.length; ti++) {
+      var tb = tabHitBoxes[ti];
+      if (c.x >= tb.x - 6 && c.x <= tb.x + tb.w + 6 &&
+          c.y >= tb.y - 6 && c.y <= tb.y + tb.h + 6) {
+        setSummaryView(tb.view);
+        return;
+      }
+    }
+
     var dot = findNearestDot(c.x, c.y);
     if (dot) {
       selectedDot = dot;
