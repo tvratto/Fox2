@@ -2121,11 +2121,21 @@ function doneOnboarding() {
   fetch('/save', { method: 'POST', body: form })
     .then(function() { return fetch('/exit'); })
     .then(function() {
-      document.body.innerHTML = '<div style="text-align:center;padding:40px;font-size:18px;color:#fff">All set &#8212; enjoy FOX2!</div>';
+          document.body.innerHTML = 
+      '<div style="text-align:center;padding:40px;font-size:18px;color:#fff;max-width:480px;margin:0 auto;line-height:1.6;">' +
+        '<div style="font-size:24px;margin-bottom:20px;">Preview Mode</div>' +
+        '<div style="opacity:0.8;">This is a preview of the FOX2 onboarding experience.<br><br>' +
+        'To save your goal settings, connect to your FOX2 device and complete onboarding directly from the device.</div>' +
+      '</div>';
     })
     .catch(function() {
       // /exit may not respond if device reboots immediately — that is fine
-      document.body.innerHTML = '<div style="text-align:center;padding:40px;font-size:18px;color:#fff">All set &#8212; enjoy FOX2!</div>';
+          document.body.innerHTML = 
+      '<div style="text-align:center;padding:40px;font-size:18px;color:#fff;max-width:480px;margin:0 auto;line-height:1.6;">' +
+        '<div style="font-size:24px;margin-bottom:20px;">Preview Mode</div>' +
+        '<div style="opacity:0.8;">This is a preview of the FOX2 onboarding experience.<br><br>' +
+        'To save your goal settings, connect to your FOX2 device and complete onboarding directly from the device.</div>' +
+      '</div>';
     });
 }
 
