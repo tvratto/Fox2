@@ -285,7 +285,92 @@ function filledDot(ctx, cx, cy, r, color) {
   ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fillStyle=color; ctx.fill();
 }
 
-// ─── Catmull-Rom spline helpers ───────────────────────────────────
+// ─── ConstrainedSpline helpers (matches device InterpolationLib) ───
+// Cache for first derivatives to avoid infinite recursion
+var derivCache = {};
+
+function getFirstDerivate(x, y, n, i) {
+  var cacheKey = i + '_' + n;
+  if (derivCache[cacheKey] !== undefined) {
+    return derivCache[cacheKey];
+  }
+  
+  var fd1_x;
+  if (i === 0) {
+    // Base case: calculate derivative at i=1 first
+    var fd1_1;
+    if ((x[2] - x[1]) / (y[2] - y[1]) * (x[1] - x[0]) / (y[1] - y[0]) < 0) {
+      fd1_1 = 0;
+    } else {
+      fd1_1 = 2.0 / ((x[2] - x[1]) / (y[2] - y[1]) + (x[1] - x[0]) / (y[1] - y[0]));
+    }
+    fd1_x = 3.0 / 2.0 * (y[1] - y[0]) / (x[1] - x[0]) - fd1_1 / 2.0;
+  }
+  else if (i === n) {
+    // Base case: calculate derivative at i=n-1 first
+    var fd1_nm1;
+    if ((x[n] - x[n-1]) / (y[n] - y[n-1]) * (x[n-1] - x[n-2]) / (y[n-1] - y[n-2]) < 0) {
+      fd1_nm1 = 0;
+    } else {
+      fd1_nm1 = 2.0 / ((x[n] - x[n-1]) / (y[n] - y[n-1]) + (x[n-1] - x[n-2]) / (y[n-1] - y[n-2]));
+    }
+    fd1_x = 3.0 / 2.0 * (y[n] - y[n - 1]) / (x[n] - x[n - 1]) - fd1_nm1 / 2.0;
+  }
+  else {
+    if ((x[i + 1] - x[i]) / (y[i + 1] - y[i]) * (x[i] - x[i - 1]) / (y[i] - y[i - 1]) < 0) {
+      fd1_x = 0;
+    }
+    else {
+      fd1_x = 2.0 / ((x[i + 1] - x[i]) / (y[i + 1] - y[i]) + (x[i] - x[i - 1]) / (y[i] - y[i - 1]));
+    }
+  }
+  
+  derivCache[cacheKey] = fd1_x;
+  return fd1_x;
+}
+
+function getLeftSecondDerivate(x, y, n, i) {
+  var fdi_x = getFirstDerivate(x, y, n, i);
+  var fdi_xl1 = getFirstDerivate(x, y, n, i - 1);
+  var fd2l_x = -2.0 * (fdi_x + 2.0 * fdi_xl1) / (x[i] - x[i - 1]);
+  fd2l_x += 6.0 * (y[i] - y[i - 1]) / (x[i] - x[i - 1]) / (x[i] - x[i - 1]);
+  return fd2l_x;
+}
+
+function getRightSecondDerivate(x, y, n, i) {
+  var fdi_x = getFirstDerivate(x, y, n, i);
+  var fdi_xl1 = getFirstDerivate(x, y, n, i - 1);
+  var fd2r_x = 2.0 * (2.0 * fdi_x + fdi_xl1) / (x[i] - x[i - 1]);
+  fd2r_x -= 6.0 * (y[i] - y[i - 1]) / (x[i] - x[i - 1]) / (x[i] - x[i - 1]);
+  return fd2r_x;
+}
+
+function constrainedSpline(xValues, yValues, numValues, pointX) {
+  if (pointX <= xValues[0]) return yValues[0];
+  if (pointX >= xValues[numValues - 1]) return yValues[numValues - 1];
+  
+  var i = 0;
+  while (pointX >= xValues[i + 1] && i < numValues - 2) i++;
+  if (pointX === xValues[i + 1]) return yValues[i + 1];
+  
+  var x0 = xValues[i + 1];
+  var x1 = xValues[i];
+  var y0 = yValues[i + 1];
+  var y1 = yValues[i];
+  
+  var fd2i_xl1 = getLeftSecondDerivate(xValues, yValues, numValues - 1, i + 1);
+  var fd2i_x = getRightSecondDerivate(xValues, yValues, numValues - 1, i + 1);
+  
+  var d = (fd2i_x - fd2i_xl1) / (6.0 * (x0 - x1));
+  var c = (x0 * fd2i_xl1 - x1 * fd2i_x) / 2.0 / (x0 - x1);
+  var b = (y0 - y1 - c * (x0 * x0 - x1 * x1) - d * (x0 * x0 * x0 - x1 * x1 * x1)) / (x0 - x1);
+  var a = y1 - b * x1 - c * x1 * x1 - d * x1 * x1 * x1;
+  
+  var rst = a + pointX * (b + pointX * (c + pointX * d));
+  return rst;
+}
+
+// ─── Catmull-Rom spline helpers (visual rendering only) ───────────
 function catmullRomCP(p0, p1, p2, p3) {
   var t = 0.5;
   return {
@@ -1308,7 +1393,7 @@ function setSummaryView(v) {
 
 // ── Zone time calculation ─────────────────────────────────────────
 // Matches device behavior (drawKetoneGraphToSprite_zones):
-//   - Uses Catmull-Rom spline interpolation (same as graph rendering)
+//   - Uses ConstrainedSpline interpolation (exact device algorithm)
 //   - Samples only up to last measurement (not full 1440 minutes)
 //   - Rounds PPM to integers before zone classification
 //   - No inter-day interpolation for zone calculations
@@ -1328,62 +1413,41 @@ function calcZoneTimes() {
     
     var dayStart = windowStart + d * 86400; // midnight of this day (seconds)
     
-    // ── Build spline data points (minutes, ppm) ───────────────────
-    var splinePts = [];
+    // ── Build arrays for ConstrainedSpline (minutes, ppm) ─────────
+    var xVals = [];
+    var yVals = [];
     
     // Add midnight anchor if needed (device adds this during graph prep)
     var firstMinute = (pts[0] - dayStart) / 60;
     if (firstMinute > 0) {
       // Add a midnight point - use first measurement value for simplicity
       // (device has more complex logic with previous day, but this matches the visual better)
-      splinePts.push({ x: 0, y: vals[0] });
+      xVals.push(0);
+      yVals.push(vals[0]);
     }
     
     // Add all measurements
     for (var i = 0; i < pts.length; i++) {
       var minute = (pts[i] - dayStart) / 60;
-      splinePts.push({ x: minute, y: vals[i] });
+      xVals.push(minute);
+      yVals.push(vals[i]);
     }
     
-    if (splinePts.length < 2) {
+    if (xVals.length < 2) {
       // Need at least 2 points for spline - skip this day
       continue;
     }
     
-    // ── Build Catmull-Rom spline (mirror device logic) ────────────
-    // Create extended array with phantom endpoints
-    var p0 = { x: 2*splinePts[0].x - splinePts[1].x, 
-               y: 2*splinePts[0].y - splinePts[1].y };
-    var pN = { x: 2*splinePts[splinePts.length-1].x - splinePts[splinePts.length-2].x,
-               y: 2*splinePts[splinePts.length-1].y - splinePts[splinePts.length-2].y };
-    var ext = [p0].concat(splinePts).concat([pN]);
-    
-    // ── Spline evaluation function ────────────────────────────────
-    function evalSplineAt(t) {
-      var i = Math.min(Math.floor(t), splinePts.length - 2);
-      var frac = t - i;
-      // Bezier via catmull-rom control points
-      var cp = catmullRomCP(ext[i], ext[i+1], ext[i+2], ext[i+3]);
-      var mt = 1 - frac;
-      var y = mt*mt*mt*splinePts[i].y + 3*mt*mt*frac*cp.cp1y + 3*mt*frac*frac*cp.cp2y + frac*frac*frac*splinePts[i+1].y;
-      return y;
-    }
+    // Clear derivative cache for this day
+    derivCache = {};
     
     // ── Sample the curve every minute up to last measurement ──────
-    var lastMinute = splinePts[splinePts.length - 1].x;
+    var lastMinute = xVals[xVals.length - 1];
     
     for (var minute = 0; minute < lastMinute; minute++) {
-      // Map minute to spline parameter t
-      var t = 0;
-      for (var j = 0; j < splinePts.length - 1; j++) {
-        if (minute >= splinePts[j].x && minute < splinePts[j+1].x) {
-          var span = splinePts[j+1].x - splinePts[j].x;
-          t = j + (minute - splinePts[j].x) / span;
-          break;
-        }
-      }
+      // Use ConstrainedSpline (exact device algorithm)
+      var ppm = constrainedSpline(xVals, yVals, xVals.length, minute);
       
-      var ppm = evalSplineAt(t);
       if (isNaN(ppm)) continue;
       
       ppm = Math.max(0, ppm);
