@@ -471,15 +471,35 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
         return { x: x, y: y };
       }
 
-      // ── Sample spline at ~1px intervals ───────────────────────
-      var STEPS = Math.ceil((pts[pts.length-1].x - pts[0].x) * 2);
-      STEPS = Math.max(STEPS, 60);
+      // ── Sample spline at pixel intervals (time-aware) ────────
+      // Sample every pixel from start to end of curve
+      var startX = pts[0].x;
+      var endX = pts[pts.length-1].x;
       var samples = [];
-      for (var si2 = 0; si2 <= STEPS; si2++) {
-        var t = si2 / STEPS * (pts.length - 1);
-        var sp = evalSpline(t);
-        var ppm = (gBottom - sp.y) / (gBottom - gTop) * maxY;
-        samples.push({ x: sp.x, y: sp.y, ppm: ppm });
+      for (var px = startX; px <= endX; px += 0.5) {
+        // Find which segment this pixel falls into
+        var segIdx = -1;
+        for (var i = 0; i < pts.length - 1; i++) {
+          if (px >= pts[i].x && px <= pts[i+1].x) {
+            segIdx = i;
+            break;
+          }
+        }
+        
+        if (segIdx === -1) continue;
+        
+        // Calculate fractional position within this segment based on pixel x
+        var x0 = pts[segIdx].x;
+        var x1 = pts[segIdx + 1].x;
+        var frac = (px - x0) / (x1 - x0);
+        
+        // Evaluate Bezier with catmull-rom control points
+        var cp = catmullRomCP(ext[segIdx], ext[segIdx+1], ext[segIdx+2], ext[segIdx+3]);
+        var mt = 1 - frac;
+        var y = mt*mt*mt*pts[segIdx].y + 3*mt*mt*frac*cp.cp1y + 3*mt*frac*frac*cp.cp2y + frac*frac*frac*pts[segIdx+1].y;
+        
+        var ppm = (gBottom - y) / (gBottom - gTop) * maxY;
+        samples.push({ x: px, y: y, ppm: ppm });
       }
 
       // ── Zone fill colours ──────────────────────────────────────
