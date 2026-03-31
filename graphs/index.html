@@ -483,8 +483,8 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
       }
 
       // ── Zone fill colours ──────────────────────────────────────
-      var ZONE_COLORS_FILL   = ['rgba(0,212,255,0.45)',  'rgba(76,175,130,0.4)', 'rgba(168,85,247,0.35)'];
-      var ZONE_COLORS_STROKE = ['#00d4ff', '#4caf82', '#a855f7'];
+      var ZONE_COLORS_FILL   = ['rgba(34,211,238,0.45)',  'rgba(74,222,128,0.4)', 'rgba(168,85,247,0.35)'];
+      var ZONE_COLORS_STROKE = ['#22D3EE', '#4ADE80', '#A855F7'];
       var ORANGE_FILL_GRAD = (function() {
         var g = ctx.createLinearGradient(0, gTop, 0, gBottom);
         g.addColorStop(0,   'rgba(255,140,0,0.0)');
@@ -494,7 +494,7 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
       })();
 
       function zoneOf(ppm) {
-        return ppm >= 5 ? 2 : ppm >= 3 ? 1 : 0;
+        var rounded = Math.round(ppm); return rounded <= 2 ? 0 : rounded <= 4 ? 1 : 2;
       }
 
       if (summaryView === 'zones') {
@@ -601,7 +601,7 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
         var ap = allPts[globalI];
         var px = sPts[j + dOff].x, py = sPts[j + dOff].y;
         var isNewest = (ap.dayIdx + dayOffset === todayIdx) && (globalI === allPts.length - 1);
-        var dc = ap.val >= 5 ? '#00FF00' : '#00FFFF';
+        var dotRounded = Math.round(ap.val); var dc = dotRounded <= 2 ? '#22D3EE' : dotRounded <= 4 ? '#4ADE80' : '#A855F7';
         var isSelected = selectedDot && selectedDot.epoch === ap.epoch;
         if (isNewest) {
           ctx.globalAlpha=0.3; filledDot(ctx,px,py,dotR*2.2,dc);
