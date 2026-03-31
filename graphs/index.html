@@ -783,7 +783,7 @@ function buildGraphCard() {
   }
 
   // ── Summary stats strip ───────────────────────────────────────
-  var TAB_W = 44, TAB_H = 20, TAB_R = 6, TAB_GAP = 3, TAB_FS = 11;
+  var TAB_W = 66, TAB_H = 30, TAB_R = 9, TAB_GAP = 4, TAB_FS = 16;
   var tabsAboveH = TAB_H - 3; // tabs protrude this many px above box top
   var summaryY = rowTop + ROW_GAP + tabsAboveH;
   var sumPad = 6;
@@ -1287,96 +1287,99 @@ function setSummaryView(v) {
 }
 
 // ── Zone time calculation ─────────────────────────────────────────
-// Mirrors device AUC logic per day:
-//   - Extrapolate linearly back to midnight from first reading
-//     (using last reading of previous day if within 16h, else start at 0)
-//   - Interpolate between readings during the day
-//   - After last reading, trail linearly to 0 at next midnight
-// Buckets every minute into a zone.
-// Thresholds: <3 = glucose, 3–5 = mixed, ≥5 = fat
+// Matches device behavior (drawKetoneGraphToSprite_zones):
+//   - Uses Catmull-Rom spline interpolation (same as graph rendering)
+//   - Samples only up to last measurement (not full 1440 minutes)
+//   - Rounds PPM to integers before zone classification
+//   - No inter-day interpolation for zone calculations
+//   - Processes ALL days with data (not just most recent)
+// Thresholds: <=2 = glucose, <=4 = mixed, >=5 = fat (after rounding)
 function calcZoneTimes() {
   var glucose = 0, mixed = 0, fat = 0;
 
-  function bucket(ppm) {
-    ppm = Math.max(0, ppm);
-    if      (ppm >= 5) fat++;
-    else if (ppm >= 3) mixed++;
-    else               glucose++;
-  }
-
-  function sampleMinutes(x0, y0, x1, y1) {
-    // Walk every integer minute from x0 to x1-1, linearly interpolating ppm
-    var span = x1 - x0;
-    if (span <= 0) return;
-    for (var m = 0; m < span; m++) {
-      var ppm = y0 + (y1 - y0) * (m / span);
-      bucket(ppm);
-    }
-  }
-
+  if (totalDays === 0) return { glucose: 0, mixed: 0, fat: 0 };
+  
+  // Process all days that have data
   for (var d = 0; d < totalDays; d++) {
     var pts  = days[d].epochs;
     var vals = days[d].vals;
-    if (pts.length === 0) continue;
-
+    
+    if (pts.length === 0) continue; // Skip days with no data
+    
     var dayStart = windowStart + d * 86400; // midnight of this day (seconds)
-
-    // ── Midnight baseline ───────────────────────────────────────
+    
+    // ── Build spline data points (minutes, ppm) ───────────────────
+    var splinePts = [];
+    
+    // Add midnight anchor if needed (device adds this during graph prep)
     var firstMinute = (pts[0] - dayStart) / 60;
-    var baselinePPM = 0;
-
-    // Find last reading from previous day
-    if (d > 0) {
-      var prevPts  = days[d-1].epochs;
-      var prevVals = days[d-1].vals;
-      if (prevPts.length > 0) {
-        var lastPrevEpoch = prevPts[prevPts.length - 1];
-        var lastPrevPPM   = prevVals[prevVals.length - 1];
-        var prevMinute    = (lastPrevEpoch - dayStart) / 60; // negative
-        var gap = firstMinute - prevMinute;
-        if (gap <= 960) { // ≤16h gap
-          // Linear interpolation to midnight (minute 0)
-          var slope = (vals[0] - lastPrevPPM) / (firstMinute - prevMinute);
-          baselinePPM = vals[0] - slope * firstMinute;
-          baselinePPM = Math.max(0, Math.min(baselinePPM, 30));
+    if (firstMinute > 0) {
+      // Add a midnight point - use first measurement value for simplicity
+      // (device has more complex logic with previous day, but this matches the visual better)
+      splinePts.push({ x: 0, y: vals[0] });
+    }
+    
+    // Add all measurements
+    for (var i = 0; i < pts.length; i++) {
+      var minute = (pts[i] - dayStart) / 60;
+      splinePts.push({ x: minute, y: vals[i] });
+    }
+    
+    if (splinePts.length < 2) {
+      // Need at least 2 points for spline - skip this day
+      continue;
+    }
+    
+    // ── Build Catmull-Rom spline (mirror device logic) ────────────
+    // Create extended array with phantom endpoints
+    var p0 = { x: 2*splinePts[0].x - splinePts[1].x, 
+               y: 2*splinePts[0].y - splinePts[1].y };
+    var pN = { x: 2*splinePts[splinePts.length-1].x - splinePts[splinePts.length-2].x,
+               y: 2*splinePts[splinePts.length-1].y - splinePts[splinePts.length-2].y };
+    var ext = [p0].concat(splinePts).concat([pN]);
+    
+    // ── Spline evaluation function ────────────────────────────────
+    function evalSplineAt(t) {
+      var i = Math.min(Math.floor(t), splinePts.length - 2);
+      var frac = t - i;
+      // Bezier via catmull-rom control points
+      var cp = catmullRomCP(ext[i], ext[i+1], ext[i+2], ext[i+3]);
+      var mt = 1 - frac;
+      var y = mt*mt*mt*splinePts[i].y + 3*mt*mt*frac*cp.cp1y + 3*mt*frac*frac*cp.cp2y + frac*frac*frac*splinePts[i+1].y;
+      return y;
+    }
+    
+    // ── Sample the curve every minute up to last measurement ──────
+    var lastMinute = splinePts[splinePts.length - 1].x;
+    
+    for (var minute = 0; minute < lastMinute; minute++) {
+      // Map minute to spline parameter t
+      var t = 0;
+      for (var j = 0; j < splinePts.length - 1; j++) {
+        if (minute >= splinePts[j].x && minute < splinePts[j+1].x) {
+          var span = splinePts[j+1].x - splinePts[j].x;
+          t = j + (minute - splinePts[j].x) / span;
+          break;
         }
       }
-    }
-
-    // ── Midnight → first reading ────────────────────────────────
-    sampleMinutes(0, baselinePPM, firstMinute, vals[0]);
-
-    // ── Between readings ────────────────────────────────────────
-    for (var i = 1; i < pts.length; i++) {
-      var m0 = (pts[i-1] - dayStart) / 60;
-      var m1 = (pts[i]   - dayStart) / 60;
-      sampleMinutes(m0, vals[i-1], m1, vals[i]);
-    }
-
-    // ── Last reading → midnight (interpolate toward next day) ───
-    var lastMinute = (pts[pts.length - 1] - dayStart) / 60;
-    var lastPPM    = vals[vals.length - 1];
-    var trailPPM   = 0;
-
-    if (d < totalDays - 1) {
-      var nextPts  = days[d+1].epochs;
-      var nextVals = days[d+1].vals;
-      if (nextPts.length > 0) {
-        var nextFirstEpoch  = nextPts[0];
-        var nextFirstMinute = (nextFirstEpoch - dayStart) / 60; // will be >1440
-        var gap = nextFirstMinute - lastMinute;
-        if (gap <= 960) { // ≤16h
-          // Interpolate the line between lastPPM and next day's first reading,
-          // sample only the portion from lastMinute to midnight (1440)
-          var nextFirstPPM = nextVals[0];
-          var slope = (nextFirstPPM - lastPPM) / gap;
-          trailPPM = lastPPM + slope * (1440 - lastMinute);
-          trailPPM = Math.max(0, Math.min(trailPPM, 30));
-        }
+      
+      var ppm = evalSplineAt(t);
+      if (isNaN(ppm)) continue;
+      
+      ppm = Math.max(0, ppm);
+      
+      // Round ppm to nearest integer (matches device)
+      var ppmInt = Math.round(ppm);
+      
+      // Classify this minute into a zone (matches device thresholds)
+      if (ppmInt <= 2) {
+        glucose++;
+      } else if (ppmInt <= 4) {
+        mixed++;
+      } else {
+        fat++;
       }
     }
-
-    sampleMinutes(lastMinute, lastPPM, 1440, trailPPM);
   }
 
   return { glucose: glucose, mixed: mixed, fat: fat };
