@@ -65,6 +65,38 @@ html, body {
   text-decoration: none;
 }
 .guide-btn:active { opacity: 0.75; }
+.ppm-toggle {
+  position: absolute; top: 19px; left: 10px;
+  display: flex; align-items: center; gap: 6px;
+  z-index: 5;
+}
+.ppm-toggle label {
+  font-size: 11px; color: rgba(255,255,255,0.5);
+  font-weight: 600; letter-spacing: 0.3px;
+  cursor: pointer; user-select: none; -webkit-user-select: none;
+}
+.ppm-toggle label.active { color: #f5c842; }
+.toggle-track {
+  width: 34px; height: 18px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 9px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.toggle-track.on { background: rgba(245,200,66,0.4); }
+.toggle-thumb {
+  width: 14px; height: 14px;
+  background: #888;
+  border-radius: 50%;
+  position: absolute; top: 2px; left: 2px;
+  transition: transform 0.2s, background 0.2s;
+}
+.toggle-track.on .toggle-thumb {
+  transform: translateX(16px);
+  background: #f5c842;
+}
 #no-data {
   display: none;
   text-align: center;
@@ -96,6 +128,12 @@ html, body {
 <div class="scroll-y" id="scroller">
   <div class="page">
     <div class="card-wrap" style="position:relative;">
+      <div class="ppm-toggle" id="ppm-toggle">
+        <div class="toggle-track" id="toggle-track" onclick="togglePPM()">
+          <div class="toggle-thumb"></div>
+        </div>
+        <label id="lbl-ppm">PPM</label>
+      </div>
       <canvas id="card-graph" style="cursor:pointer;"></canvas>
       <div id="dot-popup" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;">
         <div id="dot-popup-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div>
@@ -256,6 +294,70 @@ if (!dParam || totalDays === 0) {
   document.getElementById('loading').style.display = 'none';
   document.getElementById('scroller').style.display = 'none';
   document.getElementById('no-data').style.display  = 'block';
+}
+
+// ─── PPM toggle ──────────────────────────────────────────────────
+var showPPM = false;
+
+// Store original (output-scale) data for toggling back
+var originalDays = [];
+for (var d = 0; d < days.length; d++) {
+  originalDays.push({
+    label: days[d].label,
+    epochs: days[d].epochs.slice(),
+    vals: days[d].vals.slice(),
+    auc: days[d].auc
+  });
+}
+var originalTargetAUC = targetAUC;
+
+// Inverse of convertPPMtoOutput: output → raw ppm
+function outputToPPM(output) {
+  if (output <= 10.0) return output / 2.0;
+  return 5.0 + (output - 10.0) * 1.5;
+}
+
+function applyPPMMode() {
+  for (var d = 0; d < days.length; d++) {
+    var src = originalDays[d];
+    if (showPPM) {
+      // Convert vals to raw PPM
+      days[d].vals = [];
+      for (var i = 0; i < src.vals.length; i++) {
+        days[d].vals.push(outputToPPM(src.vals[i]));
+      }
+      // Recompute AUC via trapezoid from converted values
+      if (days[d].epochs.length >= 2) {
+        var auc = 0;
+        for (var j = 1; j < days[d].epochs.length; j++) {
+          var dt = (days[d].epochs[j] - days[d].epochs[j-1]) / 3600;
+          auc += 0.5 * (days[d].vals[j-1] + days[d].vals[j]) * dt;
+        }
+        days[d].auc = auc;
+      }
+    } else {
+      // Restore originals
+      days[d].vals = src.vals.slice();
+      days[d].auc = src.auc;
+    }
+  }
+  // Approximate target conversion (output scale is ~2× in the common range)
+  targetAUC = showPPM ? Math.round(originalTargetAUC / 2) : originalTargetAUC;
+}
+
+function togglePPM() {
+  showPPM = !showPPM;
+  var track = document.getElementById('toggle-track');
+  var lblPPM  = document.getElementById('lbl-ppm');
+  track.classList.toggle('on', showPPM);
+  lblPPM.classList.toggle('active', showPPM);
+  applyPPMMode();
+  renderCard();
+  // Re-render streaks card too
+  streakCanvas = buildStreakCard();
+  var destS = document.getElementById('card-streaks');
+  destS.width = streakCanvas.width; destS.height = streakCanvas.height;
+  destS.getContext('2d').drawImage(streakCanvas, 0, 0);
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────
@@ -721,7 +823,7 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
         dotHits.push({ cx: px, cy: py, val: ap.val, epoch: ap.epoch });
 
         var dotEdge = isNewest ? dotR*1.4 : dotR;
-        var s = String(Math.round(ap.val));
+        var s = showPPM ? ap.val.toFixed(1) : String(Math.round(ap.val));
         var w = ctx.measureText(s).width;
         labels.push({ s:s, baseX:px, x:px, y:py-dotEdge-1, w:w, visible:true, newest:isNewest });
         globalI++;
@@ -970,14 +1072,15 @@ function buildGraphCard() {
         if (targetAUC > 0 && days[d].auc >= targetAUC) daysOnTarget++;
       }
     }
-    var minZone = allVals.length ? Math.round(Math.min.apply(null, allVals)) : 0;
-    var maxZone = allVals.length ? Math.round(Math.max.apply(null, allVals)) : 0;
-    var avgZone = daysWithData > 0 ? Math.round(totalAUC / (daysWithData * 24) * 10) / 10 : 0;
+    var minVal = allVals.length ? Math.min.apply(null, allVals) : 0;
+    var maxVal = allVals.length ? Math.max.apply(null, allVals) : 0;
+    var avgVal = daysWithData > 0 ? totalAUC / (daysWithData * 24) : 0;
     var pctOnTarget = daysWithData > 0 ? Math.round(daysOnTarget / daysWithData * 100) : 0;
 
+    var fmtVal = function(v) { return showPPM ? v.toFixed(1) : String(Math.round(v)); };
     var sumStats = [
-      { label: 'Range',  value: minZone + '–' + maxZone },
-      { label: 'Avg',    value: avgZone.toFixed(1) },
+      { label: 'Range',  value: fmtVal(minVal) + '–' + fmtVal(maxVal) },
+      { label: 'Avg',    value: showPPM ? avgVal.toFixed(1) : (Math.round(avgVal * 10) / 10).toFixed(1) },
       { label: targetAUC > 0 ? 'Target (' + targetAUC + ')' : 'Target', value: pctOnTarget + '%' }
     ];
 
@@ -1546,7 +1649,7 @@ window.addEventListener('load', function() {
   }
 
   function showPopup(dot, clientX, clientY) {
-    popupVal.textContent  = 'Zone ' + Math.round(dot.val);
+    popupVal.textContent  = showPPM ? dot.val.toFixed(1) + ' ppm' : 'Zone ' + Math.round(dot.val);
     popupTime.textContent = fmtPopupTime(dot.epoch);
     popup.style.display = 'block';
     var rect = dest.getBoundingClientRect();
@@ -1628,7 +1731,7 @@ function drawPopupOnCanvas(canvas, dot) {
   var h = d.getHours(), m = d.getMinutes();
   var ampm = h >= 12 ? 'pm' : 'am'; h = h % 12 || 12;
   var ms = m < 10 ? '0'+m : String(m);
-  var line1 = 'Zone ' + Math.round(dot.val);
+  var line1 = showPPM ? dot.val.toFixed(1) + ' ppm' : 'Zone ' + Math.round(dot.val);
   var line2  = DAYS_S[d.getDay()] + ' ' + MONS[d.getMonth()] + ' ' + d.getDate() + '  ' + h + ':' + ms + ampm;
 
   var fs1 = 15 * S, fs2 = 11 * S;
