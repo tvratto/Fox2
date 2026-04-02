@@ -176,6 +176,25 @@ html, body {
     </button>
     </div>
   </div>
+  <div class="page">
+    <div class="card-wrap"><canvas id="card-insights"></canvas></div>
+    <div class="btn-row">
+    <button class="share-btn" onclick="shareInsights()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M8 1v9M4 4l4-3 4 3M3 10v4h10v-4" stroke="#1a1a2e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Share
+    </button>
+    <button class="guide-btn" onclick="window.open('https://tvratto.github.io/Fox2/','_blank')">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="8" r="7" stroke="#fff" stroke-width="1.8"/>
+        <path d="M8 7v5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+        <circle cx="8" cy="4.5" r="0.9" fill="#fff"/>
+      </svg>
+      Guide
+    </button>
+    </div>
+  </div>
 
 </div>
 
@@ -358,6 +377,11 @@ function togglePPM() {
   var destS = document.getElementById('card-streaks');
   destS.width = streakCanvas.width; destS.height = streakCanvas.height;
   destS.getContext('2d').drawImage(streakCanvas, 0, 0);
+  // Re-render insights card
+  insightsCanvas = buildInsightsCard();
+  var destI = document.getElementById('card-insights');
+  destI.width = insightsCanvas.width; destI.height = insightsCanvas.height;
+  destI.getContext('2d').drawImage(insightsCanvas, 0, 0);
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────
@@ -1481,8 +1505,486 @@ function buildStreakCard() {
   return canvas;
 }
 
+// ─── Insights card ───────────────────────────────────────────────
+function buildInsightsCard() {
+  var SCALE = 2;
+  var CW = 400;
+  var PAD = 14;
+  var PILL_H = 28;
+  var PILL_PAD = 8;
+  var SECTION_GAP = 16;
+  var SECTION_TITLE_FS = 13;
+  var SECTION_TITLE_H = 20;
+  var CHART_H = 120;
+  var TREND_H = 150;
+  var SHAPE_ROW_H = 28;
+  var FOOTER_H = 14;
+
+  var gLeft = PAD + 6;
+  var gRight = CW - PAD - 4;
+  var gW = gRight - gLeft;
+
+  // ── Gather data ─────────────────────────────────────────────────
+  var todayIdx = 0;
+  for (var d = 0; d < totalDays; d++) {
+    if (days[d].vals.length > 0) todayIdx = d;
+  }
+
+  var daysWithData = 0;
+  for (var d = 0; d < totalDays; d++) {
+    if (days[d].vals.length > 0) daysWithData++;
+  }
+
+  var SHAPE_SECTION_H = SECTION_TITLE_H + Math.min(daysWithData, 21) * SHAPE_ROW_H + 8;
+  var TOD_SECTION_H = SECTION_TITLE_H + CHART_H + 20;
+  var TREND_SECTION_H = SECTION_TITLE_H + TREND_H + 30;
+
+  var CH = PAD + PILL_H + PILL_PAD
+         + TOD_SECTION_H + SECTION_GAP
+         + SHAPE_SECTION_H + SECTION_GAP
+         + TREND_SECTION_H
+         + PAD + FOOTER_H;
+
+  var canvas = document.createElement('canvas');
+  canvas.width = CW * SCALE;
+  canvas.height = CH * SCALE;
+  var ctx = canvas.getContext('2d');
+  ctx.scale(SCALE, SCALE);
+
+  ctx.fillStyle = '#111';
+  roundRect(ctx, 0, 0, CW, CH, 14); ctx.fill();
+
+  // ── Pill title ──────────────────────────────────────────────────
+  var pillCX = CW / 2;
+  var pillCY = PAD + PILL_H / 2;
+  var pillW = 160;
+  ctx.fillStyle = '#f5c842';
+  roundRect(ctx, pillCX - pillW/2, pillCY - PILL_H/2, pillW, PILL_H, PILL_H/2); ctx.fill();
+  ctx.fillStyle = '#1a1a2e';
+  ctx.font = 'bold 16px -apple-system,sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('INSIGHTS', pillCX, pillCY + 1);
+
+  var curY = PAD + PILL_H + PILL_PAD;
+
+  // ════════════════════════════════════════════════════════════════
+  // SECTION 1: Time-of-Day Average
+  // ════════════════════════════════════════════════════════════════
+  function drawSectionTitle(y, text) {
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = 'bold ' + SECTION_TITLE_FS + 'px -apple-system,sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillText(text, gLeft, y);
+    var tw = ctx.measureText(text).width;
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 0.75;
+    ctx.beginPath();
+    ctx.moveTo(gLeft + tw + 8, y + SECTION_TITLE_FS / 2);
+    ctx.lineTo(gRight, y + SECTION_TITLE_FS / 2);
+    ctx.stroke();
+    return y + SECTION_TITLE_H;
+  }
+
+  curY = drawSectionTitle(curY, 'Your Typical Day');
+
+  var hourBuckets = [];
+  for (var h = 0; h < 24; h++) hourBuckets.push({ sum: 0, count: 0 });
+
+  for (var d = 0; d < totalDays; d++) {
+    var dayStart = windowStart + d * 86400;
+    for (var i = 0; i < days[d].epochs.length; i++) {
+      var minuteOfDay = (days[d].epochs[i] - dayStart) / 60;
+      var hour = Math.floor(minuteOfDay / 60);
+      if (hour >= 0 && hour < 24) {
+        hourBuckets[hour].sum += days[d].vals[i];
+        hourBuckets[hour].count++;
+      }
+    }
+  }
+
+  var todPts = [];
+  for (var h = 0; h < 24; h++) {
+    if (hourBuckets[h].count > 0) {
+      todPts.push({ hour: h, avg: hourBuckets[h].sum / hourBuckets[h].count, n: hourBuckets[h].count });
+    }
+  }
+
+  var todTop = curY;
+  var todBottom = curY + CHART_H;
+
+  if (todPts.length >= 2) {
+    var todMax = 0;
+    for (var i = 0; i < todPts.length; i++) {
+      if (todPts[i].avg > todMax) todMax = todPts[i].avg;
+    }
+    todMax = Math.ceil(todMax * 1.2);
+    if (todMax < 4) todMax = 4;
+
+    function todX(hour) { return gLeft + (hour / 24) * gW; }
+    function todY(val) { return todBottom - (Math.min(Math.max(val, 0), todMax) / todMax) * CHART_H; }
+
+    var ZONE_FILLS = ['rgba(34,211,238,0.08)', 'rgba(74,222,128,0.08)', 'rgba(168,85,247,0.08)'];
+    var zoneThresholds = [2.5, 4.5];
+    for (var z = 0; z < 3; z++) {
+      var bandTop = z === 2 ? todTop : todY(zoneThresholds[z === 0 ? 0 : 1]);
+      var bandBot = z === 0 ? todBottom : todY(zoneThresholds[z === 0 ? 0 : 1]);
+      if (z === 2) bandBot = todY(zoneThresholds[1]);
+      if (z === 0) bandTop = todY(zoneThresholds[0]);
+      if (bandTop > todBottom) bandTop = todBottom;
+      if (bandBot < todTop) bandBot = todTop;
+      ctx.fillStyle = ZONE_FILLS[z];
+      ctx.fillRect(gLeft, Math.min(bandTop, bandBot), gW, Math.abs(bandBot - bandTop));
+    }
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 0.75;
+    ctx.beginPath(); ctx.moveTo(gLeft, todBottom); ctx.lineTo(gRight, todBottom); ctx.stroke();
+
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.font = '9px -apple-system,sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    var hourLabels = [0, 6, 12, 18];
+    var hourNames = ['12a', '6a', '12p', '6p'];
+    for (var i = 0; i < hourLabels.length; i++) {
+      var hx = todX(hourLabels[i]);
+      ctx.fillText(hourNames[i], hx, todBottom + 3);
+      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+      ctx.beginPath(); ctx.moveTo(hx, todTop); ctx.lineTo(hx, todBottom); ctx.stroke();
+    }
+
+    for (var d = 0; d < totalDays; d++) {
+      var dayStart = windowStart + d * 86400;
+      for (var i = 0; i < days[d].epochs.length; i++) {
+        var minuteOfDay = (days[d].epochs[i] - dayStart) / 60;
+        var hour = minuteOfDay / 60;
+        var val = days[d].vals[i];
+        var px = todX(hour);
+        var py = todY(val);
+        var rounded = Math.round(val);
+        var dc = rounded <= 2 ? 'rgba(34,211,238,0.35)' : rounded <= 4 ? 'rgba(74,222,128,0.35)' : 'rgba(168,85,247,0.35)';
+        ctx.beginPath(); ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = dc; ctx.fill();
+      }
+    }
+
+    var avgLinePts = [];
+    for (var i = 0; i < todPts.length; i++) {
+      avgLinePts.push({ x: todX(todPts[i].hour + 0.5), y: todY(todPts[i].avg) });
+    }
+
+    if (avgLinePts.length >= 2) {
+      ctx.strokeStyle = '#f5c842';
+      ctx.lineWidth = 2;
+      ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(avgLinePts[0].x, avgLinePts[0].y);
+      if (avgLinePts.length === 2) {
+        ctx.lineTo(avgLinePts[1].x, avgLinePts[1].y);
+      } else {
+        var p0a = { x: 2*avgLinePts[0].x - avgLinePts[1].x, y: 2*avgLinePts[0].y - avgLinePts[1].y };
+        var pNa = { x: 2*avgLinePts[avgLinePts.length-1].x - avgLinePts[avgLinePts.length-2].x,
+                    y: 2*avgLinePts[avgLinePts.length-1].y - avgLinePts[avgLinePts.length-2].y };
+        var extA = [p0a].concat(avgLinePts).concat([pNa]);
+        for (var i = 0; i < avgLinePts.length - 1; i++) {
+          var cp = catmullRomCP(extA[i], extA[i+1], extA[i+2], extA[i+3]);
+          ctx.bezierCurveTo(cp.cp1x, cp.cp1y, cp.cp2x, cp.cp2y, avgLinePts[i+1].x, avgLinePts[i+1].y);
+        }
+      }
+      ctx.stroke();
+    }
+
+    for (var i = 0; i < todPts.length; i++) {
+      var px = avgLinePts[i].x, py = avgLinePts[i].y;
+      ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#f5c842'; ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 10px -apple-system,sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      var valStr = showPPM ? todPts[i].avg.toFixed(1) : String(Math.round(todPts[i].avg));
+      ctx.fillText(valStr, px, py - 6);
+    }
+  } else {
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.font = '12px -apple-system,sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('Not enough data', CW / 2, todTop + CHART_H / 2);
+  }
+
+  curY = todBottom + 20 + SECTION_GAP;
+
+  // ════════════════════════════════════════════════════════════════
+  // SECTION 2: Daily Shape Classification
+  // ════════════════════════════════════════════════════════════════
+  curY = drawSectionTitle(curY, 'Daily Patterns');
+
+  var SHAPE_COLORS = {
+    'Rising':  '#4ADE80',
+    'Falling': '#22D3EE',
+    'Peak':    '#A855F7',
+    'Valley':  '#f5c842',
+    'Flat':    'rgba(255,255,255,0.4)',
+    'Single':  'rgba(255,255,255,0.25)'
+  };
+
+  var SHAPE_ICONS = {
+    'Rising':  '↗',
+    'Falling': '↘',
+    'Peak':    '⌃',
+    'Valley':  '⌄',
+    'Flat':    '→',
+    'Single':  '·'
+  };
+
+  function classifyDay(vals) {
+    if (vals.length === 0) return null;
+    if (vals.length === 1) return 'Single';
+    if (vals.length === 2) {
+      var diff = vals[1] - vals[0];
+      if (Math.abs(diff) < 1.5) return 'Flat';
+      return diff > 0 ? 'Rising' : 'Falling';
+    }
+    var first = vals[0], last = vals[vals.length - 1];
+    var maxVal = vals[0], minVal = vals[0], maxI = 0, minI = 0;
+    for (var i = 1; i < vals.length; i++) {
+      if (vals[i] > maxVal) { maxVal = vals[i]; maxI = i; }
+      if (vals[i] < minVal) { minVal = vals[i]; minI = i; }
+    }
+    var range = maxVal - minVal;
+    if (range < 1.5) return 'Flat';
+    if (maxI > 0 && maxI < vals.length - 1 && (maxVal - first) > range * 0.3 && (maxVal - last) > range * 0.3) return 'Peak';
+    if (minI > 0 && minI < vals.length - 1 && (first - minVal) > range * 0.3 && (last - minVal) > range * 0.3) return 'Valley';
+    var netDiff = last - first;
+    if (netDiff > range * 0.2) return 'Rising';
+    if (netDiff < -range * 0.2) return 'Falling';
+    return 'Flat';
+  }
+
+  var dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var rowI = 0;
+
+  for (var d = 0; d < totalDays; d++) {
+    if (days[d].vals.length === 0) continue;
+    var shape = classifyDay(days[d].vals);
+    var ry = curY + rowI * SHAPE_ROW_H;
+    var shapeColor = SHAPE_COLORS[shape] || '#fff';
+
+    var epochD = new Date((windowStart + d * 86400) * 1000);
+    var dateLabel = dayNames[epochD.getUTCDay()] + ' ' + months[epochD.getUTCMonth()] + ' ' + epochD.getUTCDate();
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = '11px -apple-system,sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText(dateLabel, gLeft, ry + SHAPE_ROW_H / 2);
+
+    var sparkLeft = gLeft + 90;
+    var sparkRight = gRight - 80;
+    var sparkW = sparkRight - sparkLeft;
+    var sparkH = SHAPE_ROW_H - 8;
+    var sparkMid = ry + SHAPE_ROW_H / 2;
+    var sparkTop = sparkMid - sparkH / 2;
+    var sparkBot = sparkMid + sparkH / 2;
+
+    if (days[d].vals.length >= 2) {
+      var dayStart = windowStart + d * 86400;
+      var vMin = days[d].vals[0], vMax = days[d].vals[0];
+      for (var i = 1; i < days[d].vals.length; i++) {
+        if (days[d].vals[i] < vMin) vMin = days[d].vals[i];
+        if (days[d].vals[i] > vMax) vMax = days[d].vals[i];
+      }
+      var vRange = vMax - vMin;
+      if (vRange < 1) vRange = 1;
+
+      ctx.strokeStyle = shapeColor;
+      ctx.lineWidth = 1.5;
+      ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      ctx.beginPath();
+      for (var i = 0; i < days[d].vals.length; i++) {
+        var mx = (days[d].epochs[i] - dayStart) / 86400;
+        var px = sparkLeft + mx * sparkW;
+        var py = sparkBot - ((days[d].vals[i] - vMin) / vRange) * sparkH;
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+
+      for (var i = 0; i < days[d].vals.length; i++) {
+        var mx = (days[d].epochs[i] - dayStart) / 86400;
+        var px = sparkLeft + mx * sparkW;
+        var py = sparkBot - ((days[d].vals[i] - vMin) / vRange) * sparkH;
+        ctx.beginPath(); ctx.arc(px, py, 2, 0, Math.PI * 2);
+        ctx.fillStyle = shapeColor; ctx.fill();
+      }
+    } else {
+      ctx.beginPath(); ctx.arc(sparkLeft + sparkW / 2, sparkMid, 3, 0, Math.PI * 2);
+      ctx.fillStyle = shapeColor; ctx.fill();
+    }
+
+    ctx.fillStyle = shapeColor;
+    ctx.font = 'bold 11px -apple-system,sans-serif';
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    ctx.fillText(SHAPE_ICONS[shape] + ' ' + shape, gRight, ry + SHAPE_ROW_H / 2);
+
+    if (rowI > 0) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+      ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(gLeft, ry); ctx.lineTo(gRight, ry); ctx.stroke();
+    }
+
+    rowI++;
+  }
+
+  curY += rowI * SHAPE_ROW_H + 8 + SECTION_GAP;
+
+  // ════════════════════════════════════════════════════════════════
+  // SECTION 3: Week-over-Week Trend (sparklines)
+  // ════════════════════════════════════════════════════════════════
+  curY = drawSectionTitle(curY, 'Weekly Trend');
+
+  var weekStats = [];
+  for (var w = 0; w < 3; w++) {
+    var wDays = 0, wSum = 0, wAUC = 0, wPeak = 0;
+    for (var d = w * 7; d < (w + 1) * 7 && d < totalDays; d++) {
+      if (days[d].vals.length > 0) {
+        wDays++;
+        for (var i = 0; i < days[d].vals.length; i++) {
+          wSum += days[d].vals[i];
+          if (days[d].vals[i] > wPeak) wPeak = days[d].vals[i];
+        }
+        wAUC += days[d].auc;
+      }
+    }
+    var wMeasCount = 0;
+    for (var d = w * 7; d < (w + 1) * 7 && d < totalDays; d++) {
+      wMeasCount += days[d].vals.length;
+    }
+    weekStats.push({
+      avg: wMeasCount > 0 ? wSum / wMeasCount : 0,
+      avgAUC: wDays > 0 ? wAUC / wDays : 0,
+      peak: wPeak,
+      days: wDays
+    });
+  }
+
+  var weekLabels = ['Wk 1', 'Wk 2', 'Wk 3'];
+  var BAR_AREA_H = 100;
+  var BAR_LABEL_H = 30;
+  var BAR_WEEK_H = 14;
+
+  function trendArrow(v1, v2) {
+    if (v2 === 0 || v1 === 0) return '';
+    var pct = ((v2 - v1) / v1) * 100;
+    if (Math.abs(pct) < 5) return '  →';
+    return pct > 0 ? '  ↑' + Math.round(Math.abs(pct)) + '%' : '  ↓' + Math.round(Math.abs(pct)) + '%';
+  }
+
+  var metrics = [
+    { label: 'Avg', values: [weekStats[0].avg, weekStats[1].avg, weekStats[2].avg], color: 'rgba(245,200,66,{a})' },
+    { label: 'Peak', values: [weekStats[0].peak, weekStats[1].peak, weekStats[2].peak], color: 'rgba(168,85,247,{a})' },
+    { label: 'AUC', values: [weekStats[0].avgAUC, weekStats[1].avgAUC, weekStats[2].avgAUC], color: 'rgba(34,211,238,{a})' }
+  ];
+
+  var groupW = gW / 3;
+  var barGap = 4;
+  var barsPerGroup = 3;
+  var barW = (groupW - barGap * (barsPerGroup + 1)) / barsPerGroup;
+  if (barW > 28) barW = 28;
+  var barsBlockW = barsPerGroup * barW + (barsPerGroup - 1) * barGap;
+
+  var barTop = curY + BAR_LABEL_H;
+  var barBot = curY + BAR_LABEL_H + BAR_AREA_H;
+
+  for (var m = 0; m < metrics.length; m++) {
+    var met = metrics[m];
+    var groupLeft = gLeft + m * groupW;
+    var groupCX = groupLeft + groupW / 2;
+    var barsLeft = groupCX - barsBlockW / 2;
+
+    var vMax = 0;
+    for (var w = 0; w < 3; w++) {
+      if (met.values[w] > vMax) vMax = met.values[w];
+    }
+    if (vMax < 1) vMax = 1;
+
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = 'bold 11px -apple-system,sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.fillText(met.label, groupCX, curY);
+
+    var hasW1W3 = weekStats[0].days > 0 && weekStats[2].days > 0;
+    if (hasW1W3) {
+      var arrow = trendArrow(met.values[0], met.values[2]);
+      if (arrow) {
+        var isUp = arrow.indexOf('↑') >= 0;
+        var isDown = arrow.indexOf('↓') >= 0;
+        ctx.fillStyle = isUp ? '#4ADE80' : isDown ? '#22D3EE' : 'rgba(255,255,255,0.35)';
+        ctx.font = 'bold 10px -apple-system,sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.fillText(arrow.trim(), groupCX, curY + 14);
+      }
+    }
+
+    if (m > 0) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(groupLeft, curY);
+      ctx.lineTo(groupLeft, barBot + BAR_WEEK_H);
+      ctx.stroke();
+    }
+
+    var barAlphas = [0.35, 0.55, 0.85];
+    for (var w = 0; w < 3; w++) {
+      var bx = barsLeft + w * (barW + barGap);
+      var val = met.values[w];
+      var bh = vMax > 0 ? (val / vMax) * BAR_AREA_H : 0;
+      if (val > 0 && bh < 4) bh = 4;
+      var by = barBot - bh;
+      var br = Math.min(4, bh / 2, barW / 2);
+
+      ctx.fillStyle = 'rgba(255,255,255,0.04)';
+      roundRect(ctx, bx, barTop, barW, BAR_AREA_H, 4); ctx.fill();
+
+      if (val > 0) {
+        ctx.fillStyle = met.color.replace('{a}', String(barAlphas[w]));
+        roundRect(ctx, bx, by, barW, bh, br); ctx.fill();
+      }
+
+      var valStr = showPPM ? val.toFixed(1) : String(Math.round(val));
+      var valFS = 11;
+      ctx.font = 'bold ' + valFS + 'px -apple-system,sans-serif';
+      ctx.textAlign = 'center';
+      if (bh > valFS + 6 && val > 0) {
+        ctx.fillStyle = '#fff';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(valStr, bx + barW / 2, by + bh / 2);
+      } else if (val > 0) {
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(valStr, bx + barW / 2, by - 2);
+      }
+
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      ctx.font = '8px -apple-system,sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText(weekLabels[w], bx + barW / 2, barBot + 3);
+    }
+  }
+
+  // ── Watermark ─────────────────────────────────────────────────
+  ctx.fillStyle = 'rgba(255,255,255,0.07)';
+  ctx.font = '9px -apple-system,sans-serif';
+  ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic';
+  ctx.fillText('fox2.app', CW - PAD, CH - 4);
+
+  return canvas;
+}
+
+function shareInsights() {
+  if (!insightsCanvas) return;
+  doShare(insightsCanvas);
+}
+
 // ─── Render + share ───────────────────────────────────────────────
-var graphCanvas, streakCanvas;
+var graphCanvas, streakCanvas, insightsCanvas;
 var dotHits = [];
 var selectedDot = null;
 var graphScale = 2;
@@ -1598,6 +2100,11 @@ window.addEventListener('load', function() {
     var destS = document.getElementById('card-streaks');
     destS.width = streakCanvas.width; destS.height = streakCanvas.height;
     destS.getContext('2d').drawImage(streakCanvas, 0, 0);
+
+    insightsCanvas = buildInsightsCard();
+    var destI = document.getElementById('card-insights');
+    destI.width = insightsCanvas.width; destI.height = insightsCanvas.height;
+    destI.getContext('2d').drawImage(insightsCanvas, 0, 0);
 
     // Hide loading overlay
     var loading = document.getElementById('loading');
