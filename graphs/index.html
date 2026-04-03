@@ -1685,24 +1685,96 @@ function buildInsightsCard() {
     'Single':  '·'
   };
 
-  function classifyDay(vals) {
-    if (vals.length === 0) return null;
-    if (vals.length === 1) return 'Single';
-    if (vals.length === 2) {
-      var diff = vals[1] - vals[0];
+  function classifyDay(dayIdx) {
+    // Sample the actual spline curve across the full 24-hour period
+    var dayStart = windowStart + dayIdx * 86400;
+    var pts = days[dayIdx].epochs;
+    var vals = days[dayIdx].vals;
+    
+    if (pts.length === 0) return null;
+    
+    // Build spline arrays (same as device)
+    var xVals = [];
+    var yVals = [];
+    
+    // Compute midnight anchor using device's extrapolation logic
+    var firstMinute = (pts[0] - dayStart) / 60;
+    if (firstMinute > 0) {
+      // Find last point from previous day
+      var lastPrev = null;
+      for (var d = dayIdx - 1; d >= 0; d--) {
+        if (days[d].epochs.length > 0) {
+          var lastIdx = days[d].epochs.length - 1;
+          lastPrev = {
+            epoch: days[d].epochs[lastIdx],
+            val: days[d].vals[lastIdx]
+          };
+          break;
+        }
+      }
+      
+      var midnightValue;
+      if (lastPrev && (dayStart - lastPrev.epoch) <= 1440 * 60) {
+        // Extrapolate from previous day's last point to today's first point
+        var prevMin = (lastPrev.epoch - dayStart) / 60;
+        var currMin = firstMinute;
+        var slope = (vals[0] - lastPrev.val) / (currMin - prevMin);
+        midnightValue = vals[0] - slope * currMin;
+        midnightValue = Math.max(0, Math.min(30, midnightValue));
+      } else {
+        // No previous day data or gap too large - use first measurement
+        midnightValue = vals[0];
+      }
+      
+      xVals.push(0);
+      yVals.push(midnightValue);
+    }
+    
+    // Add all measurements
+    for (var i = 0; i < pts.length; i++) {
+      var minute = (pts[i] - dayStart) / 60;
+      xVals.push(minute);
+      yVals.push(vals[i]);
+    }
+    
+    if (xVals.length < 2) return 'Single';
+    
+    // Sample spline at regular intervals (every 2 hours)
+    var sampledVals = [];
+    derivCache = {};
+    var lastMinute = Math.min(xVals[xVals.length - 1], 1440); // Don't go past midnight
+    
+    for (var minute = 0; minute <= lastMinute; minute += 120) {
+      var ppm = constrainedSpline(xVals, yVals, xVals.length, minute);
+      if (!isNaN(ppm)) {
+        sampledVals.push(Math.max(0, ppm));
+      }
+    }
+    
+    // Classify based on sampled curve
+    if (sampledVals.length === 0) return null;
+    if (sampledVals.length === 1) return 'Single';
+    
+    if (sampledVals.length === 2) {
+      var diff = sampledVals[1] - sampledVals[0];
       if (Math.abs(diff) < 1.5) return 'Flat';
       return diff > 0 ? 'Rising' : 'Falling';
     }
-    var first = vals[0], last = vals[vals.length - 1];
-    var maxVal = vals[0], minVal = vals[0], maxI = 0, minI = 0;
-    for (var i = 1; i < vals.length; i++) {
-      if (vals[i] > maxVal) { maxVal = vals[i]; maxI = i; }
-      if (vals[i] < minVal) { minVal = vals[i]; minI = i; }
+    
+    // 3+ sampled points: check shape
+    var first = sampledVals[0], last = sampledVals[sampledVals.length - 1];
+    var maxVal = sampledVals[0], minVal = sampledVals[0], maxI = 0, minI = 0;
+    for (var i = 1; i < sampledVals.length; i++) {
+      if (sampledVals[i] > maxVal) { maxVal = sampledVals[i]; maxI = i; }
+      if (sampledVals[i] < minVal) { minVal = sampledVals[i]; minI = i; }
     }
     var range = maxVal - minVal;
     if (range < 1.5) return 'Flat';
-    if (maxI > 0 && maxI < vals.length - 1 && (maxVal - first) > range * 0.3 && (maxVal - last) > range * 0.3) return 'Peak';
-    if (minI > 0 && minI < vals.length - 1 && (first - minVal) > range * 0.3 && (last - minVal) > range * 0.3) return 'Valley';
+    // Peak: max is in the middle (not first or last)
+    if (maxI > 0 && maxI < sampledVals.length - 1 && (maxVal - first) > range * 0.3 && (maxVal - last) > range * 0.3) return 'Peak';
+    // Valley: min is in the middle
+    if (minI > 0 && minI < sampledVals.length - 1 && (first - minVal) > range * 0.3 && (last - minVal) > range * 0.3) return 'Valley';
+    // Rising or falling
     var netDiff = last - first;
     if (netDiff > range * 0.2) return 'Rising';
     if (netDiff < -range * 0.2) return 'Falling';
@@ -1716,7 +1788,7 @@ function buildInsightsCard() {
   
   for (var d = 0; d < totalDays; d++) {
     if (days[d].vals.length === 0) continue;
-    var shape = classifyDay(days[d].vals);
+    var shape = classifyDay(d);
     totalPatterned++;
     
     if (!patternCounts[shape]) {
