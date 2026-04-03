@@ -308,6 +308,9 @@ if (dParam) {
   }
 }
 
+// Calculate zone times for each day
+calcAllDayZoneTimes();
+
 // Show no-data message if URL has no data
 if (!dParam || totalDays === 0) {
   document.getElementById('loading').style.display = 'none';
@@ -1224,25 +1227,26 @@ function buildGraphCard() {
   return canvas;
 }
 
-// ─── 21-day AUC bar card ──────────────────────────────────────────
+// ─── 21-day horizontal AUC bars with zone fills ───────────────────
 function buildStreakCard() {
   var SCALE    = 2;
   var CW       = 400;
   var PAD      = 14;
   var PILL_H   = 28;
   var PILL_PAD = 8;
-  var WEEKS    = 3;
-  var DAYS_PER_WEEK = 7;
-  var BAR_H    = 90;
-  var LABEL_H  = 14;
-  var ROW_GAP  = 12;
-  var SUMMARY_H = 60;
+  var DATE_W   = 52;  // Width for date labels
+  var BAR_H    = 16;  // Height of each bar
+  var BAR_GAP  = 4;   // Gap between bars
   var FOOTER_H = 14;
 
-  var CH = PAD + PILL_H + PILL_PAD
-         + WEEKS * (BAR_H + LABEL_H)
-         + (WEEKS - 1) * ROW_GAP
-         + ROW_GAP + SUMMARY_H
+  // Count days with data
+  var daysWithData = 0;
+  for (var d = 0; d < totalDays; d++) {
+    if (days[d].vals.length > 0) daysWithData++;
+  }
+
+  var CH = PAD + PILL_H + PILL_PAD + 8
+         + daysWithData * (BAR_H + BAR_GAP)
          + PAD + FOOTER_H;
 
   var canvas = document.createElement('canvas');
@@ -1254,18 +1258,17 @@ function buildStreakCard() {
   ctx.fillStyle = '#111';
   roundRect(ctx, 0, 0, CW, CH, 14); ctx.fill();
 
-  var gLeft  = PAD + 6;
-  var gRight = CW - PAD - 4;
-  var gW     = gRight - gLeft;
-  var bandW  = gW / DAYS_PER_WEEK;
+  var barLeft  = PAD + DATE_W + 8;
+  var barRight = CW - PAD - 4;
+  var barW     = barRight - barLeft;
 
-  // ── Shared AUC y-scale ────────────────────────────────────────
-  var yMax = targetAUC > 0 ? targetAUC : 0;
+  // Find max AUC for scaling
+  var maxAUC = targetAUC > 0 ? targetAUC : 0;
   for (var d = 0; d < totalDays; d++) {
-    if (days[d].auc > yMax) yMax = days[d].auc;
+    if (days[d].auc > maxAUC) maxAUC = days[d].auc;
   }
-  yMax *= 1.15;
-  if (yMax < 40) yMax = 40;
+  maxAUC *= 1.05;
+  if (maxAUC < 40) maxAUC = 40;
 
   // Today = last day with data
   var todayIdx = 0;
@@ -1273,207 +1276,7 @@ function buildStreakCard() {
     if (days[d].vals.length > 0) todayIdx = d;
   }
 
-  // ── 3 week rows ───────────────────────────────────────────────
-  var rowTop = PAD + PILL_H + PILL_PAD;
-
-  for (var w = 0; w < WEEKS; w++) {
-    var dayOffset = w * DAYS_PER_WEEK;
-    var weekDays  = days.slice(dayOffset, dayOffset + DAYS_PER_WEEK);
-    var gTop      = rowTop;
-    var gBottom   = gTop + BAR_H;
-
-    // Target dashed line
-    if (targetAUC > 0) {
-      var tY = gBottom - (targetAUC / yMax) * BAR_H;
-      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-      ctx.lineWidth = 1;
-      ctx.setLineDash([3, 3]);
-      ctx.beginPath();
-      ctx.moveTo(gLeft, tY); ctx.lineTo(gRight, tY);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
-
-    // Baseline
-    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(gLeft, gBottom); ctx.lineTo(gRight, gBottom);
-    ctx.stroke();
-
-    // Today column highlight band
-    for (var d = 0; d < DAYS_PER_WEEK; d++) {
-      if (dayOffset + d === todayIdx) {
-        ctx.fillStyle = 'rgba(255,255,100,0.06)';
-        ctx.fillRect(gLeft + d * bandW, gTop, bandW, BAR_H);
-      }
-    }
-
-    // Bars + day labels
-    for (var d = 0; d < DAYS_PER_WEEK; d++) {
-      var globalIdx = dayOffset + d;
-      var day       = weekDays[d];
-      var cx        = gLeft + d * bandW + bandW / 2;
-      var isToday   = (globalIdx === todayIdx);
-      var isFuture  = (globalIdx > todayIdx);
-      var auc       = day.auc;
-      var hit       = targetAUC > 0 && auc >= targetAUC;
-
-      if (auc > 0 && !isFuture) {
-        var bh  = Math.min(auc / yMax, 1) * BAR_H;
-        var bx  = gLeft + d * bandW + bandW * 0.12;
-        var bw  = bandW * 0.76;
-        var by  = gBottom - bh;
-        var br  = Math.min(3, bh / 2);
-        ctx.fillStyle = isToday ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.2)';
-        roundRect(ctx, bx, by, bw, bh, br); ctx.fill();
-        if (hit) {
-          ctx.strokeStyle = '#FFA500';
-          ctx.lineWidth = 2;
-          roundRect(ctx, bx, by, bw, bh, br); ctx.stroke();
-        }
-
-        var valFS = 13;
-        if (bh > valFS * 1.6) {
-          ctx.fillStyle = 'rgba(255,255,255,0.8)';
-          ctx.font = 'bold ' + valFS + 'px -apple-system,sans-serif';
-          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-          ctx.fillText(Math.round(auc), cx, by + bh / 2);
-        }
-      }
-
-      if (isToday) {
-        ctx.strokeStyle = '#f5c842';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(gLeft + d * bandW + 1, gTop + 1, bandW - 2, BAR_H - 2);
-      }
-
-      var labelY = gBottom + LABEL_H * 0.75;
-      ctx.fillStyle = isToday ? '#f5c842' : 'rgba(255,255,255,0.45)';
-      ctx.font = (isToday ? 'bold ' : '') + '11px -apple-system,sans-serif';
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(day.label.toLowerCase(), cx, labelY);
-    }
-
-    rowTop += BAR_H + LABEL_H + ROW_GAP;
-  }
-
-  // ── Summary strip ─────────────────────────────────────────────
-  var daysWithData = 0, totalAUC = 0;
-  var completedDays = 0, completedOnTarget = 0;
-  for (var d = 0; d < totalDays; d++) {
-    if (days[d].auc > 0) {
-      daysWithData++;
-      totalAUC += days[d].auc;
-      if (d !== todayIdx) {
-        completedDays++;
-        if (targetAUC > 0 && days[d].auc >= targetAUC) completedOnTarget++;
-      }
-    }
-  }
-  var avgAUC      = daysWithData > 0 ? Math.round(totalAUC / daysWithData) : 0;
-  var pctOnTarget = completedDays > 0 ? Math.round(completedOnTarget / completedDays * 100) : 0;
-
-  var summaryY  = rowTop;
-  var sumPad    = 6;
-  var rectY     = summaryY;
-  var rectW     = gRight - gLeft + sumPad * 2;
-  var rectX     = gLeft - sumPad;
-  var colW      = rectW / 3;
-  var LABEL_FS  = 14;
-  var LINE_GAP  = 3;
-  var VALUE_FS  = 26;
-  var VALUE_GAP = 4;
-  var blockH    = LABEL_FS + LINE_GAP + VALUE_GAP + VALUE_FS;
-  var blockTop  = rectY + (SUMMARY_H - blockH) / 2;
-
-  ctx.strokeStyle = '#f5c842';
-  ctx.lineWidth = 4;
-  roundRect(ctx, rectX, rectY, rectW, SUMMARY_H, 10); ctx.stroke();
-
-  for (var d = 1; d <= 2; d++) {
-    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
-    ctx.lineWidth = 0.75;
-    ctx.beginPath();
-    ctx.moveTo(rectX + colW * d, rectY + 6);
-    ctx.lineTo(rectX + colW * d, rectY + SUMMARY_H - 6);
-    ctx.stroke();
-  }
-
-  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-  ctx.lineWidth = 0.75;
-  ctx.beginPath();
-  ctx.moveTo(rectX + colW * 0.5, rectY + SUMMARY_H * 0.2);
-  ctx.lineTo(rectX + colW * 0.5, rectY + SUMMARY_H * 0.8);
-  ctx.stroke();
-
-  function drawSumCell(cx, label, value) {
-    var labelY = blockTop + LABEL_FS / 2;
-    ctx.fillStyle = 'rgba(255,255,255,0.6)';
-    ctx.font = LABEL_FS + 'px -apple-system,sans-serif';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(label, cx, labelY);
-    var lw    = ctx.measureText(label).width;
-    var lineY = blockTop + LABEL_FS + LINE_GAP;
-    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-    ctx.lineWidth = 0.75;
-    ctx.beginPath();
-    ctx.moveTo(cx - lw/2, lineY); ctx.lineTo(cx + lw/2, lineY);
-    ctx.stroke();
-    var valueY = lineY + VALUE_GAP + VALUE_FS / 2;
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold ' + VALUE_FS + 'px -apple-system,sans-serif';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(value, cx, valueY);
-  }
-
-  // Left compartment: Streaks header + Best | Now
-  var leftColCX     = rectX + colW * 0.5;
-  var STREAK_HDR_FS = 11;
-  var STREAK_LBL_FS = 10;
-  var STREAK_VAL_FS = 18;
-  var STREAK_GAP    = 3;
-  var streakTotalH  = STREAK_HDR_FS + STREAK_GAP + STREAK_LBL_FS + STREAK_GAP + STREAK_VAL_FS;
-  var streakTop     = rectY + (SUMMARY_H - streakTotalH) / 2;
-
-  var hdrY = streakTop + STREAK_HDR_FS / 2;
-  ctx.fillStyle = 'rgba(255,255,255,0.6)';
-  ctx.font = STREAK_HDR_FS + 'px -apple-system,sans-serif';
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText('Streaks', leftColCX, hdrY);
-  var hdrLW    = ctx.measureText('Streaks').width;
-  var hdrLineY = streakTop + STREAK_HDR_FS + 2;
-  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-  ctx.lineWidth = 0.75;
-  ctx.beginPath();
-  ctx.moveTo(leftColCX - hdrLW/2, hdrLineY);
-  ctx.lineTo(leftColCX + hdrLW/2, hdrLineY);
-  ctx.stroke();
-
-  var subLblY = hdrLineY + STREAK_GAP + STREAK_LBL_FS / 2;
-  var subValY = subLblY + STREAK_LBL_FS / 2 + STREAK_GAP + STREAK_VAL_FS / 2;
-  var leftQX  = rectX + colW * 0.25;
-  var rightQX = rectX + colW * 0.75;
-
-  ctx.font = STREAK_LBL_FS + 'px -apple-system,sans-serif';
-  ctx.fillStyle = 'rgba(255,255,255,0.5)';
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText('best', leftQX,  subLblY);
-  ctx.fillText('now',  rightQX, subLblY);
-
-  ctx.font = 'bold ' + STREAK_VAL_FS + 'px -apple-system,sans-serif';
-  ctx.fillStyle = '#ffffff';
-  ctx.fillText(String(bestStreak),    leftQX,  subValY);
-  ctx.fillText(String(currentStreak), rightQX, subValY);
-
-  // Middle: Daily Avg
-  drawSumCell(rectX + colW * 1.5, 'Daily Avg', String(avgAUC));
-
-  // Right: Target %
-  var targetLabel = targetAUC > 0 ? 'Target (' + targetAUC + ')' : 'Target';
-  drawSumCell(rectX + colW * 2.5, targetLabel, pctOnTarget + '%');
-
-  // ── Pill ──────────────────────────────────────────────────────
+  // ── Pill title ────────────────────────────────────────────────
   var pillCX = CW / 2;
   var pillCY = PAD + PILL_H / 2;
   var pillW  = 220;
@@ -1495,6 +1298,111 @@ function buildStreakCard() {
   ctx.font = '15px -apple-system,sans-serif';
   ctx.textAlign = 'right';
   ctx.fillText(dateStr, pillCX + pillW/2 - 14, pillCY + 1);
+
+  // ── Horizontal bars ───────────────────────────────────────────
+  var barY = PAD + PILL_H + PILL_PAD + 8;
+  var barRow = 0;
+  var daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  for (var d = 0; d < totalDays; d++) {
+    var day = days[d];
+    if (day.vals.length === 0) continue;  // Skip days without data
+
+    var isToday = (d === todayIdx);
+    var auc = day.auc;
+    var zoneTimes = day.zoneTimes || { glucose: 0, mixed: 0, fat: 0 };
+    var totalMins = zoneTimes.glucose + zoneTimes.mixed + zoneTimes.fat;
+
+    // Date label
+    var dateObj = new Date((windowStart + d * 86400) * 1000);
+    var dateLabel = months[dateObj.getUTCMonth()].substring(0, 3) + ' ' + dateObj.getUTCDate();
+    var dayLabel = daysOfWeek[dateObj.getUTCDay()];
+    
+    ctx.fillStyle = isToday ? '#f5c842' : 'rgba(255,255,255,0.5)';
+    ctx.font = (isToday ? 'bold ' : '') + '11px -apple-system,sans-serif';
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    ctx.fillText(dateLabel, PAD + DATE_W - 2, barY + BAR_H / 2);
+    
+    // Day of week (smaller, lighter)
+    ctx.fillStyle = isToday ? 'rgba(245,200,66,0.6)' : 'rgba(255,255,255,0.3)';
+    ctx.font = '9px -apple-system,sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(dayLabel, PAD + DATE_W + 4, barY + BAR_H / 2);
+
+    // Bar dimensions
+    var bx = barLeft;
+    var by = barY;
+    var bw = (auc / maxAUC) * barW;
+    var br = Math.min(4, BAR_H / 2);
+
+    // Save context before clipping
+    ctx.save();
+    
+    // Create clipping path with rounded corners
+    roundRect(ctx, bx, by, bw, BAR_H, br);
+    ctx.clip();
+
+    // Bar background
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.fillRect(bx, by, bw, BAR_H);
+
+    // Zone fills (glucose, mixed, fat)
+    if (totalMins > 0) {
+      var fillX = bx;
+      var glucosePct = zoneTimes.glucose / totalMins;
+      var mixedPct = zoneTimes.mixed / totalMins;
+      var fatPct = zoneTimes.fat / totalMins;
+
+      // Glucose (cyan)
+      if (glucosePct > 0) {
+        var glucoseW = bw * glucosePct;
+        ctx.fillStyle = '#22D3EE';
+        ctx.fillRect(fillX, by, glucoseW, BAR_H);
+        fillX += glucoseW;
+      }
+
+      // Mixed (green)
+      if (mixedPct > 0) {
+        var mixedW = bw * mixedPct;
+        ctx.fillStyle = '#4ADE80';
+        ctx.fillRect(fillX, by, mixedW, BAR_H);
+        fillX += mixedW;
+      }
+
+      // Fat (violet)
+      if (fatPct > 0) {
+        var fatW = bw * fatPct;
+        ctx.fillStyle = '#A855F7';
+        ctx.fillRect(fillX, by, fatW, BAR_H);
+      }
+    }
+    
+    // AUC value inside bar at the end
+    var aucText = Math.round(auc).toString();
+    ctx.font = 'bold 11px -apple-system,sans-serif';
+    var aucWidth = ctx.measureText(aucText).width;
+    
+    // Only show if there's enough room (at least 20px)
+    if (bw > aucWidth + 8) {
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(aucText, bx + bw - 4, by + BAR_H / 2);
+    }
+    
+    // Restore context (removes clipping)
+    ctx.restore();
+
+    // Today highlight border
+    if (isToday) {
+      ctx.strokeStyle = '#f5c842';
+      ctx.lineWidth = 2;
+      roundRect(ctx, bx, by, bw, BAR_H, br); ctx.stroke();
+    }
+
+    barY += BAR_H + BAR_GAP;
+    barRow++;
+  }
 
   // ── Watermark ─────────────────────────────────────────────────
   ctx.fillStyle = 'rgba(255,255,255,0.07)';
@@ -1801,24 +1709,51 @@ function buildInsightsCard() {
     return 'Flat';
   }
 
-  var dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  var rowI = 0;
-
+  // Collect all patterns and find examples
+  var patternCounts = {};
+  var patternExamples = {}; // Store first example of each pattern
+  var totalPatterned = 0;
+  
   for (var d = 0; d < totalDays; d++) {
     if (days[d].vals.length === 0) continue;
     var shape = classifyDay(days[d].vals);
-    var ry = curY + rowI * SHAPE_ROW_H;
+    totalPatterned++;
+    
+    if (!patternCounts[shape]) {
+      patternCounts[shape] = 0;
+      patternExamples[shape] = d; // Store day index of first example
+    }
+    patternCounts[shape]++;
+  }
+
+  // Sort patterns by frequency (descending)
+  var patternList = [];
+  for (var p in patternCounts) {
+    patternList.push({ pattern: p, count: patternCounts[p], example: patternExamples[p] });
+  }
+  patternList.sort(function(a, b) { return b.count - a.count; });
+
+  var dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  // Draw one row per unique pattern
+  for (var pi = 0; pi < patternList.length; pi++) {
+    var pInfo = patternList[pi];
+    var shape = pInfo.pattern;
+    var d = pInfo.example;
+    var pct = Math.round((pInfo.count / totalPatterned) * 100);
+    
+    var ry = curY + pi * SHAPE_ROW_H;
     var shapeColor = SHAPE_COLORS[shape] || '#fff';
 
-    var epochD = new Date((windowStart + d * 86400) * 1000);
-    var dateLabel = dayNames[epochD.getUTCDay()] + ' ' + months[epochD.getUTCMonth()] + ' ' + epochD.getUTCDate();
-    ctx.fillStyle = 'rgba(255,255,255,0.5)';
-    ctx.font = '11px -apple-system,sans-serif';
+    // Percentage label (left)
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.font = 'bold 12px -apple-system,sans-serif';
     ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-    ctx.fillText(dateLabel, gLeft, ry + SHAPE_ROW_H / 2);
+    ctx.fillText(pct + '%', gLeft, ry + SHAPE_ROW_H / 2);
 
-    var sparkLeft = gLeft + 90;
+    // Mini sparkline (example pattern)
+    var sparkLeft = gLeft + 48;
     var sparkRight = gRight - 80;
     var sparkW = sparkRight - sparkLeft;
     var sparkH = SHAPE_ROW_H - 8;
@@ -1848,6 +1783,7 @@ function buildInsightsCard() {
       }
       ctx.stroke();
 
+      // Dots
       for (var i = 0; i < days[d].vals.length; i++) {
         var mx = (days[d].epochs[i] - dayStart) / 86400;
         var px = sparkLeft + mx * sparkW;
@@ -1856,25 +1792,26 @@ function buildInsightsCard() {
         ctx.fillStyle = shapeColor; ctx.fill();
       }
     } else {
+      // Single point — just a dot in the middle
       ctx.beginPath(); ctx.arc(sparkLeft + sparkW / 2, sparkMid, 3, 0, Math.PI * 2);
       ctx.fillStyle = shapeColor; ctx.fill();
     }
 
+    // Shape label + icon
     ctx.fillStyle = shapeColor;
     ctx.font = 'bold 11px -apple-system,sans-serif';
     ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
     ctx.fillText(SHAPE_ICONS[shape] + ' ' + shape, gRight, ry + SHAPE_ROW_H / 2);
 
-    if (rowI > 0) {
+    // Subtle separator
+    if (pi > 0) {
       ctx.strokeStyle = 'rgba(255,255,255,0.06)';
       ctx.lineWidth = 0.5;
       ctx.beginPath(); ctx.moveTo(gLeft, ry); ctx.lineTo(gRight, ry); ctx.stroke();
     }
-
-    rowI++;
   }
 
-  curY += rowI * SHAPE_ROW_H + 8 + SECTION_GAP;
+  curY += patternList.length * SHAPE_ROW_H + 8 + SECTION_GAP;
 
   // ════════════════════════════════════════════════════════════════
   // SECTION 3: Week-over-Week Trend (sparklines)
@@ -2114,6 +2051,64 @@ function calcZoneTimes() {
   }
 
   return { glucose: glucose, mixed: mixed, fat: fat };
+}
+
+// Calculate zone times for a single day
+function calcDayZoneTimes(dayIdx) {
+  var glucose = 0, mixed = 0, fat = 0;
+  
+  var pts  = days[dayIdx].epochs;
+  var vals = days[dayIdx].vals;
+  
+  if (pts.length === 0) return { glucose: 0, mixed: 0, fat: 0 };
+  
+  var dayStart = windowStart + dayIdx * 86400;
+  
+  var xVals = [];
+  var yVals = [];
+  
+  var firstMinute = (pts[0] - dayStart) / 60;
+  if (firstMinute > 0) {
+    xVals.push(0);
+    yVals.push(vals[0]);
+  }
+  
+  for (var i = 0; i < pts.length; i++) {
+    var minute = (pts[i] - dayStart) / 60;
+    xVals.push(minute);
+    yVals.push(vals[i]);
+  }
+  
+  if (xVals.length < 2) return { glucose: 0, mixed: 0, fat: 0 };
+  
+  derivCache = {};
+  var lastMinute = xVals[xVals.length - 1];
+  
+  for (var minute = 0; minute < lastMinute; minute++) {
+    var ppm = constrainedSpline(xVals, yVals, xVals.length, minute);
+    if (isNaN(ppm)) continue;
+    ppm = Math.max(0, ppm);
+    var ppmInt = Math.round(ppm);
+    
+    if (ppmInt <= 2) {
+      glucose++;
+    } else if (ppmInt <= 4) {
+      mixed++;
+    } else {
+      fat++;
+    }
+  }
+  
+  return { glucose: glucose, mixed: mixed, fat: fat };
+}
+
+// Calculate and store zone times for all days
+function calcAllDayZoneTimes() {
+  for (var d = 0; d < totalDays; d++) {
+    if (days[d].vals.length > 0) {
+      days[d].zoneTimes = calcDayZoneTimes(d);
+    }
+  }
 }
 
 function fmtHM(minutes) {
