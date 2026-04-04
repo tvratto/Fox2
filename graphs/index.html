@@ -1784,12 +1784,15 @@ function buildInsightsCard() {
   // Collect all patterns and find examples
   var patternCounts = {};
   var patternExamples = {}; // Store first example of each pattern
+  var dailyPatterns = []; // Store all daily patterns for detail view
   var totalPatterned = 0;
   
   for (var d = 0; d < totalDays; d++) {
     if (days[d].vals.length === 0) continue;
     var shape = classifyDay(d);
     totalPatterned++;
+    
+    dailyPatterns.push({ dayIdx: d, shape: shape });
     
     if (!patternCounts[shape]) {
       patternCounts[shape] = 0;
@@ -1808,6 +1811,102 @@ function buildInsightsCard() {
   var dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
+  // Toggle button (right side of section header)
+  var btnW = 80;
+  var btnH = 24;
+  var btnX = gRight - btnW;
+  var btnY = curY - SECTION_TITLE_H + (SECTION_TITLE_H - btnH) / 2;
+  
+  ctx.fillStyle = 'rgba(255,255,255,0.1)';
+  roundRect(ctx, btnX, btnY, btnW, btnH, btnH / 2); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = '10px -apple-system,sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('Show All', btnX + btnW / 2, btnY + btnH / 2);
+  
+  // Store hitbox for click detection
+  window.patternToggleHitbox = { x: btnX, y: btnY, w: btnW, h: btnH };
+  
+  // Default to summary view
+  if (window.showPatternDetail === undefined) window.showPatternDetail = false;
+
+  // Draw based on current mode
+  if (window.showPatternDetail) {
+    // Detail view: show all days
+    for (var pi = 0; pi < dailyPatterns.length; pi++) {
+      var pData = dailyPatterns[pi];
+      var d = pData.dayIdx;
+      var shape = pData.shape;
+      
+      var ry = curY + pi * SHAPE_ROW_H;
+      var shapeColor = SHAPE_COLORS[shape] || '#fff';
+
+      // Date label
+      var epochD = new Date((windowStart + d * 86400) * 1000);
+      var dateLabel = dayNames[epochD.getUTCDay()] + ' ' + months[epochD.getUTCMonth()] + ' ' + epochD.getUTCDate();
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.font = '11px -apple-system,sans-serif';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillText(dateLabel, gLeft, ry + SHAPE_ROW_H / 2);
+
+      // Mini sparkline
+      var sparkLeft = gLeft + 90;
+      var sparkRight = gRight - 80;
+      var sparkW = sparkRight - sparkLeft;
+      var sparkH = SHAPE_ROW_H - 8;
+      var sparkMid = ry + SHAPE_ROW_H / 2;
+      var sparkBot = sparkMid + sparkH / 2;
+
+      if (days[d].vals.length >= 2) {
+        var dayStart = windowStart + d * 86400;
+        var vMin = days[d].vals[0], vMax = days[d].vals[0];
+        for (var i = 1; i < days[d].vals.length; i++) {
+          if (days[d].vals[i] < vMin) vMin = days[d].vals[i];
+          if (days[d].vals[i] > vMax) vMax = days[d].vals[i];
+        }
+        var vRange = vMax - vMin;
+        if (vRange < 1) vRange = 1;
+
+        ctx.strokeStyle = shapeColor;
+        ctx.lineWidth = 1.5;
+        ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+        ctx.beginPath();
+        for (var i = 0; i < days[d].vals.length; i++) {
+          var mx = (days[d].epochs[i] - dayStart) / 86400;
+          var px = sparkLeft + mx * sparkW;
+          var py = sparkBot - ((days[d].vals[i] - vMin) / vRange) * sparkH;
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+
+        for (var i = 0; i < days[d].vals.length; i++) {
+          var mx = (days[d].epochs[i] - dayStart) / 86400;
+          var px = sparkLeft + mx * sparkW;
+          var py = sparkBot - ((days[d].vals[i] - vMin) / vRange) * sparkH;
+          ctx.beginPath(); ctx.arc(px, py, 2, 0, Math.PI * 2);
+          ctx.fillStyle = shapeColor; ctx.fill();
+        }
+      } else {
+        ctx.beginPath(); ctx.arc(sparkLeft + sparkW / 2, sparkMid, 3, 0, Math.PI * 2);
+        ctx.fillStyle = shapeColor; ctx.fill();
+      }
+
+      ctx.fillStyle = shapeColor;
+      ctx.font = 'bold 11px -apple-system,sans-serif';
+      ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      ctx.fillText(SHAPE_ICONS[shape] + ' ' + shape, gRight, ry + SHAPE_ROW_H / 2);
+
+      if (pi > 0) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+        ctx.lineWidth = 0.5;
+        ctx.beginPath(); ctx.moveTo(gLeft, ry); ctx.lineTo(gRight, ry); ctx.stroke();
+      }
+    }
+
+    curY += dailyPatterns.length * SHAPE_ROW_H + 8 + SECTION_GAP;
+    
+  } else {
+    // Summary view: show pattern percentages
   // Draw one row per unique pattern
   for (var pi = 0; pi < patternList.length; pi++) {
     var pInfo = patternList[pi];
@@ -1884,6 +1983,7 @@ function buildInsightsCard() {
   }
 
   curY += patternList.length * SHAPE_ROW_H + 8 + SECTION_GAP;
+  }
 
   // ════════════════════════════════════════════════════════════════
   // SECTION 3: Week-over-Week Trend (sparklines)
@@ -2214,6 +2314,25 @@ window.addEventListener('load', function() {
     var destI = document.getElementById('card-insights');
     destI.width = insightsCanvas.width; destI.height = insightsCanvas.height;
     destI.getContext('2d').drawImage(insightsCanvas, 0, 0);
+
+    // Click handler for pattern toggle button
+    destI.addEventListener('click', function(e) {
+      var rect = destI.getBoundingClientRect();
+      var scale = (destI.width / 2) / rect.width; // insightsCanvas uses 2x scale
+      var clickX = (e.clientX - rect.left) * scale;
+      var clickY = (e.clientY - rect.top) * scale;
+      
+      // Check if click is on pattern toggle button
+      var btn = window.patternToggleHitbox;
+      if (btn && clickX >= btn.x && clickX <= btn.x + btn.w &&
+          clickY >= btn.y && clickY <= btn.y + btn.h) {
+        window.showPatternDetail = !window.showPatternDetail;
+        // Rebuild and redraw insights card
+        insightsCanvas = buildInsightsCard();
+        destI.width = insightsCanvas.width; destI.height = insightsCanvas.height;
+        destI.getContext('2d').drawImage(insightsCanvas, 0, 0);
+      }
+    });
 
     // Hide loading overlay
     var loading = document.getElementById('loading');
