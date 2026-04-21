@@ -15,200 +15,82 @@ html, body {
   color: #fff;
   overflow: hidden;
 }
-
-/* ── Top header ─────────────────────────────────── */
 .top-header {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  z-index: 60;
+  position: fixed; top: 0; left: 0; right: 0; z-index: 60;
   padding-top: env(safe-area-inset-top);
   background: #000;
-  pointer-events: none;
 }
 .top-header-inner {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  padding: 16px 20px 20px;
-  pointer-events: auto;
-}
-.top-header .nav-tabs {
-  display: flex;
-  align-items: baseline;
+  display: flex; align-items: baseline;
+  padding: 16px 20px 14px;
   gap: 16px;
 }
-.top-header .nav-tab {
-  padding: 0;
-  font-size: 15px;
-  font-weight: 600;
+.nav-tab {
+  padding: 0; font-size: 15px; font-weight: 600;
   color: rgba(255,255,255,0.3);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
   user-select: none; -webkit-user-select: none;
   border: none; background: none;
 }
-.top-header .nav-tab.active {
-  font-size: 24px;
-  font-weight: 700;
-  color: #fff;
-}
-.top-header .ppm-pill {
-  pointer-events: auto;
-}
-
-/* ── Horizontal swipe container ─────────────────── */
+.nav-tab.active { font-size: 24px; font-weight: 700; color: #fff; }
 .scroll-x {
-  display: flex;
-  flex-direction: row;
-  width: 100vw;
-  height: 100dvh;
-  overflow-x: auto;
-  overflow-y: hidden;
+  display: flex; flex-direction: row;
+  width: 100vw; height: 100dvh;
+  overflow-x: auto; overflow-y: hidden;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
 .scroll-x::-webkit-scrollbar { display: none; }
-
-/* ── Each page / slide ──────────────────────────── */
 .page {
-  flex: 0 0 100vw;
-  width: 100vw;
-  height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
+  flex: 0 0 100vw; width: 100vw; height: 100dvh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: flex-start;
   padding: 16px;
-  padding-top: calc(76px + env(safe-area-inset-top));
-  padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  padding-top: calc(68px + env(safe-area-inset-top));
+  padding-bottom: calc(56px + env(safe-area-inset-bottom));
   scroll-snap-align: start;
-  overflow-y: auto;
-  scrollbar-width: none;
+  overflow-y: auto; scrollbar-width: none;
 }
 .page::-webkit-scrollbar { display: none; }
-
-/* ── Card container ─────────────────────────────── */
-.card-wrap {
-  width: 100%;
-  max-width: 420px;
-  margin: auto 0;
-}
-.card-wrap canvas {
-  width: 100%; height: auto;
-  display: block;
-}
-
-/* ── Bottom bar: share + dots ───────────────────── */
+.card-wrap { width: 100%; max-width: 420px; margin: auto 0; }
+.card-wrap canvas { width: 100%; height: auto; display: block; }
 .bottom-bar {
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  z-index: 60;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-  padding: 12px 20px;
-  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 60;
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px; padding: 10px 20px;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom));
   background: #000;
 }
-.bottom-share-btn {
+.bar-btn {
   display: flex; align-items: center; gap: 6px;
-  padding: 8px 18px;
-  border-radius: 20px;
+  padding: 8px 18px; border-radius: 20px;
   border: 1.5px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.05);
   color: rgba(255,255,255,0.7);
   font: 600 13px -apple-system, sans-serif;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: background 0.2s, border-color 0.2s;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
   text-decoration: none;
 }
-.bottom-share-btn:active {
-  background: rgba(255,255,255,0.12);
-  border-color: rgba(255,255,255,0.25);
-}
-.bottom-share-btn svg { opacity: 0.5; }
-
-/* ── Bottom bar ──────────────────────────────────── */
-
-.bottom-guide-btn {
-  display: flex; align-items: center; gap: 6px;
-  padding: 8px 18px;
-  border-radius: 20px;
-  border: 1.5px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.7);
-  font: 600 13px -apple-system, sans-serif;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: background 0.2s, border-color 0.2s;
-  text-decoration: none;
-}
-.bottom-guide-btn:active {
-  background: rgba(255,255,255,0.12);
-  border-color: rgba(255,255,255,0.25);
-}
-.bottom-guide-btn svg { opacity: 0.5; }
-
-/* ── PPM toggle pill ────────────────────────────── */
-.ppm-pill {
-  display: flex; align-items: center; gap: 6px;
-  padding: 5px 11px;
-  border-radius: 14px;
-  border: 1.5px solid rgba(255,255,255,0.1);
-  background: rgba(255,255,255,0.04);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: border-color 0.2s, background 0.2s, opacity 0.3s;
-  user-select: none; -webkit-user-select: none;
-}
-.ppm-pill.on {
-  border-color: rgba(245,200,66,0.35);
-  background: rgba(245,200,66,0.08);
-}
-.ppm-pill.hidden { opacity: 0; pointer-events: none; }
-.ppm-pill .pill-label {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-  color: rgba(255,255,255,0.35);
-  transition: color 0.2s;
-}
-.ppm-pill.on .pill-label { color: #f5c842; }
-.ppm-pill .pill-dot {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.2);
-  transition: background 0.2s;
-}
-.ppm-pill.on .pill-dot { background: #f5c842; }
-
-/* ── No-data / loading ──────────────────────────── */
+.bar-btn:active { background: rgba(255,255,255,0.1); }
+.bar-btn svg { opacity: 0.5; }
 #no-data {
-  display: none;
-  text-align: center;
-  color: rgba(255,255,255,0.4);
-  font-size: 14px;
-  padding: 40px 20px;
-  line-height: 1.6;
+  display: none; text-align: center;
+  color: rgba(255,255,255,0.4); font-size: 14px;
+  padding: 40px 20px; line-height: 1.6;
 }
 #loading {
-  position: fixed; inset: 0;
-  background: #000;
-  display: flex; align-items: center; justify-content: center;
-  z-index: 100;
+  position: fixed; inset: 0; background: #000;
+  display: flex; align-items: center; justify-content: center; z-index: 100;
 }
 #loading-inner { display: flex; flex-direction: column; align-items: center; gap: 16px; }
 #loading-spinner {
-  width: 32px; height: 32px;
-  border: 2.5px solid rgba(255,255,255,0.08);
-  border-top-color: rgba(255,255,255,0.5);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  width: 36px; height: 36px;
+  border: 3px solid rgba(255,255,255,0.15);
+  border-top-color: #f5c842;
+  border-radius: 50%; animation: spin 0.8s linear infinite;
 }
-#loading-text { color: rgba(255,255,255,0.3); font-size: 13px; letter-spacing: 0.3px; }
+#loading-text { color: rgba(255,255,255,0.4); font-size: 13px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
@@ -216,11 +98,10 @@ html, body {
 
 <div class="top-header">
   <div class="top-header-inner">
-    <div class="nav-tabs">
-      <button class="nav-tab active" data-page="0">Results</button>
-      <button class="nav-tab" data-page="1">Streaks</button>
-      <button class="nav-tab" data-page="2">Insights</button>
-    </div>
+    <button class="nav-tab active" data-page="0">Results</button>
+    <button class="nav-tab" data-page="1">Fuel</button>
+    <button class="nav-tab" data-page="2">Daily Scores</button>
+    <button class="nav-tab" data-page="3">Insights</button>
   </div>
 </div>
 
@@ -234,24 +115,31 @@ html, body {
       </div>
     </div>
   </div>
-
+  <div class="page">
+    <div class="card-wrap" style="position:relative;">
+      <canvas id="card-fuel" style="cursor:pointer;"></canvas>
+      <div id="dot-popup-fuel" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;">
+        <div id="dot-popup-fuel-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div>
+        <div id="dot-popup-fuel-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div>
+      </div>
+    </div>
+  </div>
   <div class="page">
     <div class="card-wrap"><canvas id="card-streaks"></canvas></div>
   </div>
-
   <div class="page">
     <div class="card-wrap"><canvas id="card-insights"></canvas></div>
   </div>
 </div>
 
 <div class="bottom-bar">
-  <button class="bottom-share-btn" id="bottom-share" onclick="handleBottomShare()">
+  <button class="bar-btn" id="bottom-share" onclick="handleBottomShare()">
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
       <path d="M8 1v9M4 4l4-3 4 3M3 10v4h10v-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
     Share
   </button>
-  <a class="bottom-guide-btn" href="https://tvratto.github.io/Fox2/" target="_blank">
+  <a class="bar-btn" href="https://tvratto.github.io/Fox2/" target="_blank">
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
       <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.8"/>
       <path d="M8 7v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
@@ -432,8 +320,10 @@ function applyPPMMode() {
 
 function togglePPM() {
   showPPM = !showPPM;
-  var pill = document.getElementById('ppm-pill');
-  pill.classList.toggle('on', showPPM);
+  var track = document.getElementById('toggle-track');
+  var lblPPM  = document.getElementById('lbl-ppm');
+  track.classList.toggle('on', showPPM);
+  lblPPM.classList.toggle('active', showPPM);
   applyPPMMode();
   renderCard();
   // Re-render streaks card too
@@ -596,7 +486,7 @@ function splinePath(ctx, pts, bottomY) {
 // maxY: shared y scale maximum
 // prevPt/nextPt: last point from previous week / first point from next week
 // isLastWeek: true if this is the final row (last QR data point gets no extension)
-function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, maxY, todayIdx, prevPt, nextPt, isLastWeek, zoneGrad) {
+function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, maxY, todayIdx, prevPt, nextPt, isLastWeek, zoneGrad, viewMode) {
   prevPt = prevPt || null;
   nextPt = nextPt || null;
   isLastWeek = isLastWeek || false;
@@ -648,7 +538,7 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
   ctx.beginPath(); ctx.moveTo(gLeft, gBottom); ctx.lineTo(gRight, gBottom); ctx.stroke();
 
   // ── Target line ───────────────────────────────────────────────
-  if (summaryView === 'stats' && targetAUC > 0) {
+  if (viewMode === 'stats' && targetAUC > 0) {
     var tPPM = targetAUC / 24;
     if (tPPM <= maxY) {
       ctx.strokeStyle = 'rgba(255,255,255,0.2)';
@@ -792,7 +682,7 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
         var rounded = Math.round(ppm); return rounded <= 2 ? 0 : rounded <= 4 ? 1 : 2;
       }
 
-      if (summaryView === 'zones') {
+      if (viewMode === 'zones') {
         // ── Zone-crossing fill ────────────────────────────────────
         // Group samples into runs of the same zone, draw each as a filled shape
         var runs = [];
@@ -976,44 +866,30 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
 }
 
 // ─── 3-week graph card ────────────────────────────────────────────
-function buildGraphCard() {
+// forcedView: optional 'stats'|'zones' — locks the view and hides tabs
+function buildGraphCard(forcedView) {
   var SCALE   = graphScale;
-
-  // ── Compute available space to fill the page ──────────────────
-  var headerH = 76;  // matches CSS padding-top (without safe area)
-  var bottomH = 64;  // matches CSS padding-bottom (without safe area)
-  var CW = Math.min(window.innerWidth - 32, 420);
-  var CH = Math.min(window.innerHeight - headerH - bottomH, CW * 1.45);
-
-  // ── Scale internal layout to fill available height ────────────
-  var PAD     = Math.round(CW * 0.035);
+  var CW      = 400;
+  var PAD     = 14;
   var PILL_H  = 28;
   var PILL_PAD = 8;
   var WEEKS   = 3;
   var DAYS_PER_WEEK = 7;
-  var FOOTER_H = 14;
-  var TAB_ABOVE_H = 17;
+  var GRAPH_H = 90;   // height of each week's graph area
+  var LABEL_H = 14;   // day letters below each graph
+  var AUC_H   = 36;   // heart + AUC number row (doubled)
+  var ROW_GAP = 12;   // gap between week rows
   var SUMMARY_H = 60;
   var LABEL_ABOVE_H = 0;
-  var LABEL_H = 14;
-  var AUC_H   = 36;
+  var FOOTER_H = 14;
+  var TAB_ABOVE_H = 17; // folder tab protrudes above summary box
 
-  // Fixed overhead: everything except graph rows and gaps
-  var fixedH = PAD + PILL_H + PILL_PAD
-             + WEEKS * (LABEL_H + AUC_H)
-             + TAB_ABOVE_H + SUMMARY_H
-             + PAD + FOOTER_H + LABEL_ABOVE_H;
-  // Remaining height split between 3 graph rows + 2 row gaps
-  var flexH = CH - fixedH;
-  var ROW_GAP = Math.max(6, Math.round(flexH * 0.04));
-  var GRAPH_H = Math.max(50, Math.floor((flexH - (WEEKS - 1) * ROW_GAP - ROW_GAP) / WEEKS));
-
-  // Recalculate CH from actual components (avoid fractional drift)
-  CH = PAD + PILL_H + PILL_PAD
-     + WEEKS * (GRAPH_H + LABEL_H + AUC_H)
-     + (WEEKS - 1) * ROW_GAP
-     + ROW_GAP + LABEL_ABOVE_H + TAB_ABOVE_H + SUMMARY_H
-     + PAD + FOOTER_H;
+  // Total height: pill + 3 rows of (graph + labels + auc) + gaps between + tabs + summary + footer
+  var CH = PAD + PILL_H + PILL_PAD
+         + WEEKS * (GRAPH_H + LABEL_H + AUC_H)
+         + (WEEKS - 1) * ROW_GAP
+         + ROW_GAP + LABEL_ABOVE_H + TAB_ABOVE_H + SUMMARY_H
+         + PAD + FOOTER_H;
 
   var canvas = document.createElement('canvas');
   canvas.width  = CW * SCALE;
@@ -1022,8 +898,8 @@ function buildGraphCard() {
   ctx.scale(SCALE, SCALE);
 
   // Card background
-  ctx.fillStyle = '#000';
-  ctx.fillRect(0, 0, CW, CH);
+  ctx.fillStyle = '#111';
+  roundRect(ctx, 0, 0, CW, CH, 14); ctx.fill();
 
   var gLeft  = PAD + 6;
   var gRight = CW - PAD - 4;
@@ -1047,8 +923,9 @@ function buildGraphCard() {
   }
 
   // ── Zone gradient stop fractions (for zones view fill) ───────
+  var activeView = forcedView || summaryView;
   var zoneGrad = null;
-  if (summaryView === 'zones') {
+  if (activeView === 'zones') {
     var zt = calcZoneTimes();
     var ztTotal = zt.glucose + zt.mixed + zt.fat || 1;
     var s3 = zt.glucose / ztTotal;           // end of cyan / start of green
@@ -1087,13 +964,13 @@ function buildGraphCard() {
       }
     }
 
-    drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, maxY, todayIdx, prevPt, nextPt, w === WEEKS - 1, zoneGrad);
+    drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, maxY, todayIdx, prevPt, nextPt, w === WEEKS - 1, zoneGrad, activeView);
 
     rowTop += GRAPH_H + LABEL_H + AUC_H + ROW_GAP;
   }
 
   // ── Summary stats strip ───────────────────────────────────────
-  var TAB_W = 66, TAB_H = 30, TAB_R = 9, TAB_GAP = 4, TAB_FS = 16;
+  var TAB_W = 84, TAB_H = 30, TAB_R = 9, TAB_GAP = 4, TAB_FS = 14;
   var tabsAboveH = TAB_H - 3; // tabs protrude this many px above box top
   var summaryY = rowTop + ROW_GAP + tabsAboveH;
   var sumPad = 6;
@@ -1107,52 +984,41 @@ function buildGraphCard() {
   var VALUE_GAP = 4;
 
   tabHitBoxes = [];
-  var tabs = [
-    { view: 'stats', label: 'Sum' },
-    { view: 'zones', label: 'Time' }
-  ];
+  var tabLabel = forcedView === 'zones' ? 'Fuel' : 'Summary';
 
-  // ── Draw inactive tab first (behind), then active (in front) ──
-  var drawOrder = summaryView === 'stats' ? [1, 0] : [0, 1];
-  for (var di = 0; di < drawOrder.length; di++) {
-    var ti = drawOrder[di];
-    var tx = boxX + 6 + ti * (TAB_W + TAB_GAP);
-    var ty = rectY - tabsAboveH;
-    var isActive = summaryView === tabs[ti].view;
+  // ── Single always-active tab ──────────────────────────────────
+  var tx = boxX + 6;
+  var ty = rectY - tabsAboveH;
 
-    // Folder tab shape: rounded top corners, open bottom
-    ctx.beginPath();
-    ctx.moveTo(tx, rectY + 3);                          // bottom-left
-    ctx.lineTo(tx, ty + TAB_R);
-    ctx.quadraticCurveTo(tx, ty, tx + TAB_R, ty);       // top-left corner
-    ctx.lineTo(tx + TAB_W - TAB_R, ty);
-    ctx.quadraticCurveTo(tx + TAB_W, ty, tx + TAB_W, ty + TAB_R); // top-right corner
-    ctx.lineTo(tx + TAB_W, rectY + 3);                  // bottom-right
-    ctx.closePath();
+  // Folder tab shape: rounded top corners, open bottom
+  ctx.beginPath();
+  ctx.moveTo(tx, rectY + 3);
+  ctx.lineTo(tx, ty + TAB_R);
+  ctx.quadraticCurveTo(tx, ty, tx + TAB_R, ty);
+  ctx.lineTo(tx + TAB_W - TAB_R, ty);
+  ctx.quadraticCurveTo(tx + TAB_W, ty, tx + TAB_W, ty + TAB_R);
+  ctx.lineTo(tx + TAB_W, rectY + 3);
+  ctx.closePath();
+  ctx.fillStyle = '#111';
+  ctx.fill();
 
-    ctx.fillStyle = isActive ? '#111' : 'rgba(255,255,255,0.05)';
-    ctx.fill();
+  // Border — top and sides only
+  ctx.beginPath();
+  ctx.moveTo(tx, rectY + 3);
+  ctx.lineTo(tx, ty + TAB_R);
+  ctx.quadraticCurveTo(tx, ty, tx + TAB_R, ty);
+  ctx.lineTo(tx + TAB_W - TAB_R, ty);
+  ctx.quadraticCurveTo(tx + TAB_W, ty, tx + TAB_W, ty + TAB_R);
+  ctx.lineTo(tx + TAB_W, rectY + 3);
+  ctx.strokeStyle = '#f5c842';
+  ctx.lineWidth = 2;
+  ctx.stroke();
 
-    // Border — top and sides only, no bottom
-    ctx.beginPath();
-    ctx.moveTo(tx, rectY + 3);
-    ctx.lineTo(tx, ty + TAB_R);
-    ctx.quadraticCurveTo(tx, ty, tx + TAB_R, ty);
-    ctx.lineTo(tx + TAB_W - TAB_R, ty);
-    ctx.quadraticCurveTo(tx + TAB_W, ty, tx + TAB_W, ty + TAB_R);
-    ctx.lineTo(tx + TAB_W, rectY + 3);
-    ctx.strokeStyle = isActive ? '#f5c842' : 'rgba(245,200,66,0.35)';
-    ctx.lineWidth = isActive ? 2 : 1.5;
-    ctx.stroke();
-
-    // Label
-    ctx.fillStyle = isActive ? '#f5c842' : 'rgba(255,255,255,0.3)';
-    ctx.font = 'bold ' + TAB_FS + 'px -apple-system,sans-serif';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(tabs[ti].label, tx + TAB_W / 2, ty + tabsAboveH / 2);
-
-    tabHitBoxes.push({ view: tabs[ti].view, x: tx, y: ty, w: TAB_W, h: TAB_H });
-  }
+  // Label
+  ctx.fillStyle = '#f5c842';
+  ctx.font = 'bold ' + TAB_FS + 'px -apple-system,sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(tabLabel, tx + TAB_W / 2, ty + tabsAboveH / 2);
 
   // ── Box border ────────────────────────────────────────────────
   ctx.strokeStyle = '#f5c842';
@@ -1160,11 +1026,10 @@ function buildGraphCard() {
   roundRect(ctx, boxX, rectY, boxW, SUMMARY_H, 10); ctx.stroke();
 
   // Erase top border behind active tab so it merges cleanly
-  var activeTx = boxX + 6 + (summaryView === 'stats' ? 0 : 1) * (TAB_W + TAB_GAP);
-  ctx.fillStyle = '#000';
-  ctx.fillRect(activeTx + 2, rectY - 1, TAB_W - 4, 4);
+  ctx.fillStyle = '#111';
+  ctx.fillRect(tx + 2, rectY - 1, TAB_W - 4, 4);
 
-  if (summaryView === 'stats') {
+  if (activeView === 'stats') {
     // ── Stats view: Range / Avg / Target% ──────────────────────
     var allVals = [], daysWithData = 0, daysOnTarget = 0, totalAUC = 0;
     for (var d = 0; d < totalDays; d++) {
@@ -1331,8 +1196,8 @@ function buildStreakCard() {
   var ctx = canvas.getContext('2d');
   ctx.scale(SCALE, SCALE);
 
-  ctx.fillStyle = '#000';
-  ctx.fillRect(0, 0, CW, CH);
+  ctx.fillStyle = '#111';
+  roundRect(ctx, 0, 0, CW, CH, 14); ctx.fill();
 
   var barLeft  = PAD + DATE_W + 8;
   var barRight = CW - PAD - 4;
@@ -1535,8 +1400,8 @@ function buildInsightsCard() {
   var ctx = canvas.getContext('2d');
   ctx.scale(SCALE, SCALE);
 
-  ctx.fillStyle = '#000';
-  ctx.fillRect(0, 0, CW, CH);
+  ctx.fillStyle = '#111';
+  roundRect(ctx, 0, 0, CW, CH, 14); ctx.fill();
 
   // ── Pill title ──────────────────────────────────────────────────
   var pillCX = CW / 2;
@@ -1691,7 +1556,7 @@ function buildInsightsCard() {
     ctx.lineWidth = 0.75;
     roundRect(ctx, barLeft, ry, barW_full, BAR_ROW_H, 5); ctx.stroke();
 
-    ctx.fillStyle = '#000';
+    ctx.fillStyle = '#111';
     ctx.beginPath();
     ctx.moveTo(barLeft, ry);
     ctx.lineTo(barLeft + 5, ry);
@@ -2211,7 +2076,9 @@ function shareInsights() {
 }
 
 // ─── Render + share ───────────────────────────────────────────────
-var graphCanvas, streakCanvas, insightsCanvas;
+var graphCanvas, fuelCanvas, streakCanvas, insightsCanvas;
+var graphDotHits = [], fuelDotHits = [];
+var dotHits = graphDotHits; // legacy alias used inside buildGraphCard
 var dotHits = [];
 var selectedDot = null;
 var graphScale = 2;
@@ -2368,11 +2235,19 @@ function fmtHM(minutes) {
 }
 
 function renderCard() {
-  dotHits = [];
+  graphDotHits = []; dotHits = graphDotHits;
   graphCanvas = buildGraphCard();
   var dest = document.getElementById('card-graph');
   dest.width = graphCanvas.width; dest.height = graphCanvas.height;
   dest.getContext('2d').drawImage(graphCanvas, 0, 0);
+
+  fuelDotHits = []; dotHits = fuelDotHits;
+  fuelCanvas = buildGraphCard('zones');
+  var destF = document.getElementById('card-fuel');
+  destF.width = fuelCanvas.width; destF.height = fuelCanvas.height;
+  destF.getContext('2d').drawImage(fuelCanvas, 0, 0);
+
+  dotHits = graphDotHits; // restore default
 }
 
 window.addEventListener('load', function() {
@@ -2533,6 +2408,111 @@ window.addEventListener('load', function() {
   });
 });
 
+// ── Fuel card tap handler ─────────────────────────────────────────
+window.addEventListener('load', function() {
+  if (!dParam || totalDays === 0) return;
+
+  var destF     = document.getElementById('card-fuel');
+  var popupF    = document.getElementById('dot-popup-fuel');
+  var popupFVal = document.getElementById('dot-popup-fuel-val');
+  var popupFTime= document.getElementById('dot-popup-fuel-time');
+  var touchStartTime = 0, touchStartX = 0, touchStartY = 0, touchCount = 0;
+  var lastTouch = 0;
+  var HIT_RADIUS = 22;
+
+  var DAYS_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var MONTHS     = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  function fmtTime(epoch) {
+    var d = new Date(epoch * 1000);
+    var h = d.getUTCHours(), m = d.getUTCMinutes();
+    var ampm = h >= 12 ? 'pm' : 'am';
+    h = h % 12 || 12;
+    var ms = m < 10 ? '0'+m : String(m);
+    return DAYS_SHORT[d.getUTCDay()] + ' ' + MONTHS[d.getUTCMonth()] + ' ' + d.getUTCDate()
+         + '  ' + h + ':' + ms + ampm;
+  }
+
+  function fuelCanvasCoords(clientX, clientY) {
+    var rect = destF.getBoundingClientRect();
+    var scale = (destF.width / graphScale) / rect.width;
+    return { x: (clientX - rect.left) * scale,
+             y: (clientY - rect.top)  * scale };
+  }
+
+  function findNearestFuelDot(cx, cy) {
+    var best = null, bestD = HIT_RADIUS;
+    for (var i = 0; i < fuelDotHits.length; i++) {
+      var dx = fuelDotHits[i].cx - cx, dy = fuelDotHits[i].cy - cy;
+      var d = Math.sqrt(dx*dx + dy*dy);
+      if (d < bestD) { bestD = d; best = fuelDotHits[i]; }
+    }
+    return best;
+  }
+
+  function showFuelPopup(dot) {
+    popupFVal.textContent  = showPPM ? dot.val.toFixed(1) + ' ppm' : 'Zone ' + Math.round(dot.val);
+    popupFTime.textContent = fmtTime(dot.epoch);
+    popupF.style.display = 'block';
+    var rect = destF.getBoundingClientRect();
+    var wrap = destF.parentElement.getBoundingClientRect();
+    var logicalW = destF.width / graphScale;
+    var cssScale  = rect.width / logicalW;
+    var dotCssX = dot.cx * cssScale + (rect.left - wrap.left);
+    var dotCssY = dot.cy * cssScale + (rect.top  - wrap.top);
+    popupF.style.left = '0'; popupF.style.top = '0';
+    var pw = popupF.offsetWidth, ph = popupF.offsetHeight;
+    var GAP = 10;
+    var px = Math.max(4, Math.min(dotCssX - pw/2, wrap.width - pw - 4));
+    var py = Math.max(4, dotCssY - ph - GAP);
+    popupF.style.left = px + 'px';
+    popupF.style.top  = py + 'px';
+  }
+
+  function hideFuelPopup() {
+    popupF.style.display = 'none';
+    if (selectedDot) { selectedDot = null; renderCard(); }
+  }
+
+  function handleFuelTap(clientX, clientY) {
+    var c = fuelCanvasCoords(clientX, clientY);
+    var dot = findNearestFuelDot(c.x, c.y);
+    if (dot) {
+      selectedDot = dot;
+      renderCard();
+      showFuelPopup(dot);
+    } else {
+      hideFuelPopup();
+    }
+  }
+
+  destF.addEventListener('touchstart', function(e) {
+    touchCount = e.touches.length;
+    if (touchCount === 1) {
+      touchStartTime = Date.now();
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }
+  }, { passive: true });
+
+  destF.addEventListener('touchend', function(e) {
+    if (touchCount > 1) { touchCount = 0; hideFuelPopup(); return; }
+    var dt = Date.now() - touchStartTime;
+    var dx = Math.abs(e.changedTouches[0].clientX - touchStartX);
+    var dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
+    if (dt < 250 && dx < 10 && dy < 10) {
+      lastTouch = Date.now();
+      handleFuelTap(touchStartX, touchStartY);
+    }
+    touchCount = 0;
+  }, { passive: true });
+
+  destF.addEventListener('click', function(e) {
+    if (Date.now() - lastTouch < 500) return;
+    handleFuelTap(e.clientX, e.clientY);
+  });
+});
+
 function drawPopupOnCanvas(canvas, dot) {
   var ctx = canvas.getContext('2d');
   var S = graphScale;
@@ -2616,18 +2596,19 @@ function shareStreaks() {
   doShare(streakCanvas);
 }
 
-// ── Page navigation: tabs, PPM pill, share routing ──
+// ── Page navigation: tabs + share routing ──
 var currentPage = 0;
 
 function handleBottomShare() {
   if (currentPage === 0) shareGraph();
-  else if (currentPage === 1) shareStreaks();
+  else if (currentPage === 1) { if (fuelCanvas) doShare(fuelCanvas); }
+  else if (currentPage === 2) shareStreaks();
   else shareInsights();
 }
 
 (function() {
   var scroller = document.getElementById('scroller');
-  var tabs = document.querySelectorAll('.top-header .nav-tab');
+  var tabs = document.querySelectorAll('.nav-tab');
 
   function updatePage(idx) {
     if (idx === currentPage) return;
@@ -2640,7 +2621,6 @@ function handleBottomShare() {
     updatePage(idx);
   }, { passive: true });
 
-  // Tab click → scroll to page
   for (var i = 0; i < tabs.length; i++) {
     tabs[i].addEventListener('click', (function(idx) {
       return function() {
