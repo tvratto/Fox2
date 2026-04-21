@@ -879,6 +879,7 @@ function buildGraphCard(forcedView) {
   var LABEL_H = 14;   // day letters below each graph
   var AUC_H   = 36;   // heart + AUC number row (doubled)
   var ROW_GAP = 12;   // gap between week rows
+  var SUMMARY_GAP = 4; // tighter gap before summary box
   var SUMMARY_H = 60;
   var LABEL_ABOVE_H = 0;
   var FOOTER_H = 14;
@@ -888,7 +889,7 @@ function buildGraphCard(forcedView) {
   var CH = PAD + PILL_H + PILL_PAD
          + WEEKS * (GRAPH_H + LABEL_H + AUC_H)
          + (WEEKS - 1) * ROW_GAP
-         + ROW_GAP + LABEL_ABOVE_H + TAB_ABOVE_H + SUMMARY_H
+         + SUMMARY_GAP + LABEL_ABOVE_H + TAB_ABOVE_H + SUMMARY_H
          + PAD + FOOTER_H;
 
   var canvas = document.createElement('canvas');
@@ -972,7 +973,7 @@ function buildGraphCard(forcedView) {
   // ── Summary stats strip ───────────────────────────────────────
   var TAB_W = 84, TAB_H = 30, TAB_R = 9, TAB_GAP = 4, TAB_FS = 14;
   var tabsAboveH = TAB_H - 3; // tabs protrude this many px above box top
-  var summaryY = rowTop + ROW_GAP + tabsAboveH;
+  var summaryY = rowTop + SUMMARY_GAP + tabsAboveH;
   var sumPad = 6;
   var rectY = summaryY;
   var boxX = gLeft - sumPad;
