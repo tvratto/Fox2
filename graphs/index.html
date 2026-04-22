@@ -1362,41 +1362,91 @@ function buildInsightsCard() {
   var PAD = 14;
   var PILL_H = 28;
   var PILL_PAD = 8;
-  var SECTION_GAP = 16;
-  var SECTION_TITLE_FS = 13;
-  var SECTION_TITLE_H = 20;
-  var CHART_H = 120;
-  var TREND_H = 150;
-  var SHAPE_ROW_H = 28;
+  var SECTION_GAP = 18;
+  var SECTION_TITLE_FS = 15;
+  var SECTION_TITLE_H = 26;
+  var SHAPE_ROW_H = 38;
   var FOOTER_H = 14;
 
-  var gLeft = PAD + 6;
+  var gLeft  = PAD + 6;
   var gRight = CW - PAD - 4;
-  var gW = gRight - gLeft;
+  var gW     = gRight - gLeft;
 
-  // ── Gather data ─────────────────────────────────────────────────
+  // ── Gather base data ────────────────────────────────────────────
   var todayIdx = 0;
   for (var d = 0; d < totalDays; d++) {
     if (days[d].vals.length > 0) todayIdx = d;
   }
-
   var daysWithData = 0;
   for (var d = 0; d < totalDays; d++) {
     if (days[d].vals.length > 0) daysWithData++;
   }
 
+  // ── Week AUC totals (for Momentum) ──────────────────────────────
+  var weekAUC = [0, 0, 0], weekDays = [0, 0, 0];
+  for (var w = 0; w < 3; w++) {
+    for (var d = w * 7; d < (w + 1) * 7 && d < totalDays; d++) {
+      if (days[d].vals.length > 0) {
+        weekAUC[w] += days[d].auc;
+        weekDays[w]++;
+      }
+    }
+  }
+  var weekAvgAUC = [
+    weekDays[0] > 0 ? weekAUC[0] / weekDays[0] : 0,
+    weekDays[1] > 0 ? weekAUC[1] / weekDays[1] : 0,
+    weekDays[2] > 0 ? weekAUC[2] / weekDays[2] : 0
+  ];
+
+  var wA = weekAvgAUC[0], wB = weekAvgAUC[2] > 0 ? weekAvgAUC[2] : weekAvgAUC[1];
+  var momentumPct = (wA > 0 && wB > 0) ? Math.round(((wB - wA) / wA) * 100) : null;
+  var momentumVerdict;
+  if (momentumPct === null)    momentumVerdict = 'Not enough data yet';
+  else if (momentumPct >= 10)  momentumVerdict = 'Improving';
+  else if (momentumPct <= -10) momentumVerdict = 'Slipping';
+  else                         momentumVerdict = 'Holding steady';
+
+  // ── Personal bests ──────────────────────────────────────────────
+  var bestDayAUC = 0, bestDayIdx = -1, bestReading = 0;
+  for (var d = 0; d < totalDays; d++) {
+    if (days[d].auc > bestDayAUC) { bestDayAUC = days[d].auc; bestDayIdx = d; }
+    for (var i = 0; i < days[d].vals.length; i++) {
+      if (days[d].vals[i] > bestReading) bestReading = days[d].vals[i];
+    }
+  }
+  var bestStreak = 0, curStreak = 0;
+  for (var d = 0; d < totalDays; d++) {
+    if (targetAUC > 0 && days[d].auc >= targetAUC) {
+      curStreak++; if (curStreak > bestStreak) bestStreak = curStreak;
+    } else if (days[d].vals.length > 0) { curStreak = 0; }
+  }
+
+  // ── Section heights ─────────────────────────────────────────────
+  var MOM_BAR_H   = 42;
+  var MOM_VERDICT_H = 28;
+  var MOMENTUM_H  = SECTION_TITLE_H + MOM_BAR_H + 8 + MOM_VERDICT_H;
+
   var SHAPE_SECTION_H = SECTION_TITLE_H + Math.min(daysWithData, 21) * SHAPE_ROW_H + 8;
-  var TOD_SECTION_H = SECTION_TITLE_H + CHART_H + 20;
-  var TREND_SECTION_H = SECTION_TITLE_H + TREND_H + 30;
+
+  var BEST_LABEL_FS = 15, BEST_VALUE_FS = 28, BEST_SUB_FS = 15;
+  var BEST_ROW_H = BEST_LABEL_FS + 6 + BEST_VALUE_FS + 6 + BEST_SUB_FS + 6;
+  var BESTS_H     = SECTION_TITLE_H + BEST_ROW_H + 8;
+
+  var FT_BAR_H    = 18;
+  var FT_LABEL_FS = 15;
+  var FT_SUMMARY_FS = 15;
+  var FT_WK_H     = FT_BAR_H + 9 + FT_LABEL_FS + 8 + FT_SUMMARY_FS + 15 + 21;
+  var FUELTIME_H  = SECTION_TITLE_H + 3 * FT_WK_H;
 
   var CH = PAD + PILL_H + PILL_PAD
-         + TOD_SECTION_H + SECTION_GAP
+         + MOMENTUM_H + SECTION_GAP
          + SHAPE_SECTION_H + SECTION_GAP
-         + TREND_SECTION_H
+         + BESTS_H + SECTION_GAP
+         + FUELTIME_H
          + PAD + FOOTER_H;
 
   var canvas = document.createElement('canvas');
-  canvas.width = CW * SCALE;
+  canvas.width  = CW * SCALE;
   canvas.height = CH * SCALE;
   var ctx = canvas.getContext('2d');
   ctx.scale(SCALE, SCALE);
@@ -1405,9 +1455,7 @@ function buildInsightsCard() {
   roundRect(ctx, 0, 0, CW, CH, 14); ctx.fill();
 
   // ── Pill title ──────────────────────────────────────────────────
-  var pillCX = CW / 2;
-  var pillCY = PAD + PILL_H / 2;
-  var pillW = 160;
+  var pillCX = CW / 2, pillCY = PAD + PILL_H / 2, pillW = 160;
   ctx.fillStyle = '#f5c842';
   roundRect(ctx, pillCX - pillW/2, pillCY - PILL_H/2, pillW, PILL_H, PILL_H/2); ctx.fill();
   ctx.fillStyle = '#1a1a2e';
@@ -1417,9 +1465,6 @@ function buildInsightsCard() {
 
   var curY = PAD + PILL_H + PILL_PAD;
 
-  // ════════════════════════════════════════════════════════════════
-  // SECTION 1: Time-of-Day Average
-  // ════════════════════════════════════════════════════════════════
   function drawSectionTitle(y, text) {
     ctx.fillStyle = 'rgba(255,255,255,0.5)';
     ctx.font = 'bold ' + SECTION_TITLE_FS + 'px -apple-system,sans-serif';
@@ -1435,275 +1480,117 @@ function buildInsightsCard() {
     return y + SECTION_TITLE_H;
   }
 
-  curY = drawSectionTitle(curY, 'Zones by Time of Day');
+  // ════════════════════════════════════════════════════════════════
+  // SECTION 1: Momentum
+  // ════════════════════════════════════════════════════════════════
+  curY = drawSectionTitle(curY, 'Momentum');
 
-  var PERIODS = [
-    { label: '1a – 9a',  startMin: 60,   endMin: 540,  name: 'Morning' },
-    { label: '9a – 5p',  startMin: 540,  endMin: 1020, name: 'Midday' },
-    { label: '5p – 1a',  startMin: 1020, endMin: 1500, name: 'Evening' }
-  ];
+  var BAR_GAP = 8;
+  var wkW = (gW - BAR_GAP * 2) / 3;
+  var maxAvg = Math.max(weekAvgAUC[0], weekAvgAUC[1], weekAvgAUC[2], 1);
+  var wkLabels = ['Week 1', 'Week 2', 'Week 3'];
 
-  var periodZones = [];
-  for (var p = 0; p < PERIODS.length; p++) {
-    periodZones.push({ glucose: 0, mixed: 0, fat: 0 });
-  }
+  for (var w = 0; w < 3; w++) {
+    var bx = gLeft + w * (wkW + BAR_GAP);
+    var fillW = weekAvgAUC[w] > 0 ? Math.max((weekAvgAUC[w] / maxAvg) * wkW, 8) : 0;
 
-  for (var d = 0; d < totalDays; d++) {
-    var pts  = days[d].epochs;
-    var vals = days[d].vals;
-    if (pts.length < 2) continue;
+    // Background track
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    roundRect(ctx, bx, curY, wkW, MOM_BAR_H, 7); ctx.fill();
 
-    var dayStart = windowStart + d * 86400;
-    var xVals = [];
-    var yVals = [];
-    var firstMinute = (pts[0] - dayStart) / 60;
-    if (firstMinute > 0) {
-      xVals.push(0);
-      yVals.push(vals[0]);
-    }
-    for (var i = 0; i < pts.length; i++) {
-      xVals.push((pts[i] - dayStart) / 60);
-      yVals.push(vals[i]);
+    // Fill
+    if (fillW > 0) {
+      ctx.fillStyle = 'rgba(255,255,255,0.22)';
+      roundRect(ctx, bx, curY, fillW, MOM_BAR_H, 7); ctx.fill();
     }
 
-    if (xVals.length < 2) continue;
-    derivCache = {};
-
-    var lastMinute = xVals[xVals.length - 1];
-
-    for (var minute = 0; minute < lastMinute; minute++) {
-      var ppm = constrainedSpline(xVals, yVals, xVals.length, minute);
-      if (isNaN(ppm)) continue;
-      ppm = Math.max(0, ppm);
-      var ppmInt = Math.round(ppm);
-
-      // Evening wraps past midnight: minutes 0-59 (12a-1a) count as Evening
-      var matched = false;
-      for (var p = 0; p < PERIODS.length; p++) {
-        var s = PERIODS[p].startMin, e = PERIODS[p].endMin;
-        if (e > 1440) {
-          if (minute >= s || minute < e - 1440) { matched = true; }
-        } else {
-          if (minute >= s && minute < e) { matched = true; }
-        }
-        if (matched) {
-          if (ppmInt <= 2) periodZones[p].glucose++;
-          else if (ppmInt <= 4) periodZones[p].mixed++;
-          else periodZones[p].fat++;
-          break;
-        }
-      }
-    }
-  }
-
-  var BAR_ROW_H = 26;
-  var BAR_GAP = 6;
-  var LABEL_COL_W = 68;
-  var barLeft = gLeft + LABEL_COL_W;
-  var barRight = gRight;
-  var barW_full = barRight - barLeft;
-
-  var ZONE_COLORS = ['#22D3EE', '#4ADE80', '#A855F7'];
-  var ZONE_NAMES  = ['Glucose', 'Mixed', 'Fat'];
-
-  var todTop = curY;
-
-  for (var p = 0; p < PERIODS.length; p++) {
-    var pz = periodZones[p];
-    var total = pz.glucose + pz.mixed + pz.fat;
-    var ry = curY + p * (BAR_ROW_H + BAR_GAP);
-
-    ctx.fillStyle = 'rgba(255,255,255,0.55)';
-    ctx.font = '11px -apple-system,sans-serif';
-    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-    ctx.fillText(PERIODS[p].label, gLeft, ry + BAR_ROW_H / 2);
-
-    if (total === 0) {
-      ctx.fillStyle = 'rgba(255,255,255,0.06)';
-      roundRect(ctx, barLeft, ry, barW_full, BAR_ROW_H, 5); ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,0.2)';
-      ctx.font = '10px -apple-system,sans-serif';
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('—', barLeft + barW_full / 2, ry + BAR_ROW_H / 2);
-      continue;
-    }
-
-    var fracs = [pz.glucose / total, pz.mixed / total, pz.fat / total];
-
-    var bx = barLeft;
-    for (var z = 0; z < 3; z++) {
-      var segW = fracs[z] * barW_full;
-      if (segW < 0.5) continue;
-
-      ctx.fillStyle = ZONE_COLORS[z];
-      ctx.globalAlpha = 0.7;
-      ctx.fillRect(bx, ry, segW, BAR_ROW_H);
-
-      var pctStr = Math.round(fracs[z] * 100) + '%';
-      ctx.globalAlpha = 1;
-      ctx.font = 'bold 11px -apple-system,sans-serif';
-      var pctW = ctx.measureText(pctStr).width;
-      if (segW > pctW + 8) {
-        ctx.fillStyle = '#fff';
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(pctStr, bx + segW / 2, ry + BAR_ROW_H / 2);
-      }
-
-      bx += segW;
-    }
-    ctx.globalAlpha = 1;
-
-    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-    ctx.lineWidth = 0.75;
-    roundRect(ctx, barLeft, ry, barW_full, BAR_ROW_H, 5); ctx.stroke();
-
-    ctx.fillStyle = '#111';
-    ctx.beginPath();
-    ctx.moveTo(barLeft, ry);
-    ctx.lineTo(barLeft + 5, ry);
-    ctx.quadraticCurveTo(barLeft, ry, barLeft, ry + 5);
-    ctx.closePath(); ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(barLeft, ry + BAR_ROW_H);
-    ctx.lineTo(barLeft + 5, ry + BAR_ROW_H);
-    ctx.quadraticCurveTo(barLeft, ry + BAR_ROW_H, barLeft, ry + BAR_ROW_H - 5);
-    ctx.closePath(); ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(barRight, ry);
-    ctx.lineTo(barRight - 5, ry);
-    ctx.quadraticCurveTo(barRight, ry, barRight, ry + 5);
-    ctx.closePath(); ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(barRight, ry + BAR_ROW_H);
-    ctx.lineTo(barRight - 5, ry + BAR_ROW_H);
-    ctx.quadraticCurveTo(barRight, ry + BAR_ROW_H, barRight, ry + BAR_ROW_H - 5);
-    ctx.closePath(); ctx.fill();
-  }
-
-  var legendY = curY + PERIODS.length * (BAR_ROW_H + BAR_GAP) + 4;
-  var legendGap = 8;
-  ctx.font = '10px -apple-system,sans-serif';
-  var totalLegendW = 0;
-  for (var z = 0; z < 3; z++) {
-    totalLegendW += 8 + 4 + ctx.measureText(ZONE_NAMES[z]).width + legendGap;
-  }
-  totalLegendW -= legendGap;
-  var lx = gLeft + (gW - totalLegendW) / 2;
-  for (var z = 0; z < 3; z++) {
-    ctx.fillStyle = ZONE_COLORS[z];
-    ctx.globalAlpha = 0.7;
-    roundRect(ctx, lx, legendY, 8, 8, 2); ctx.fill();
-    ctx.globalAlpha = 1;
-    lx += 12;
+    // Week label — top inside bar
     ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.font = '15px -apple-system,sans-serif';
     ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-    ctx.fillText(ZONE_NAMES[z], lx, legendY - 1);
-    lx += ctx.measureText(ZONE_NAMES[z]).width + legendGap;
+    ctx.fillText(wkLabels[w], bx + 7, curY + 6);
+
+    // Score value — bottom inside bar, big
+    if (weekAvgAUC[w] > 0) {
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 18px -apple-system,sans-serif';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+      ctx.fillText(Math.round(weekAvgAUC[w]), bx + 7, curY + MOM_BAR_H - 5);
+    } else {
+      ctx.fillStyle = 'rgba(255,255,255,0.2)';
+      ctx.font = '15px -apple-system,sans-serif';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+      ctx.fillText('—', bx + 7, curY + MOM_BAR_H - 5);
+    }
   }
 
-  var todBottom = legendY + 14;
-  curY = todBottom + SECTION_GAP;
+  // "avg score / day" caption centred below bars
+  curY += MOM_BAR_H + 5;
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.font = '15px -apple-system,sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  ctx.fillText('avg score / day', gLeft + gW / 2, curY);
+  curY += 16;
+
+  // Verdict
+  var verdictIcon = momentumVerdict === 'Improving' ? '↑' : momentumVerdict === 'Slipping' ? '↓' : '→';
+  var verdictStr  = verdictIcon + '  ' + momentumVerdict + (momentumPct !== null ? '  (' + (momentumPct >= 0 ? '+' : '') + momentumPct + '%)' : '');
+  ctx.fillStyle = 'rgba(255,255,255,0.75)';
+  ctx.font = 'bold 17px -apple-system,sans-serif';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  ctx.fillText(verdictStr, gLeft, curY);
+  curY += MOM_VERDICT_H + SECTION_GAP;
 
   // ════════════════════════════════════════════════════════════════
-  // SECTION 2: Daily Shape Classification
+  // SECTION 2: Daily Patterns
   // ════════════════════════════════════════════════════════════════
   curY = drawSectionTitle(curY, 'Daily Patterns');
 
   var SHAPE_COLORS = {
-    'Rising':  '#4ADE80',
-    'Falling': '#22D3EE',
-    'Peak':    '#A855F7',
-    'Valley':  '#f5c842',
-    'Flat':    'rgba(255,255,255,0.4)',
-    'Single':  'rgba(255,255,255,0.25)'
+    'Rising': '#4ADE80', 'Falling': '#22D3EE', 'Peak': '#A855F7',
+    'Valley': '#f5c842', 'Flat': 'rgba(255,255,255,0.4)', 'Single': 'rgba(255,255,255,0.25)'
   };
-
-  var SHAPE_ICONS = {
-    'Rising':  '↗',
-    'Falling': '↘',
-    'Peak':    '⌃',
-    'Valley':  '⌄',
-    'Flat':    '→',
-    'Single':  '·'
-  };
+  var SHAPE_ICONS = { 'Rising': '↗', 'Falling': '↘', 'Peak': '⌃', 'Valley': '⌄', 'Flat': '→', 'Single': '·' };
 
   function classifyDay(dayIdx) {
-    // Sample the actual spline curve across the full 24-hour period
     var dayStart = windowStart + dayIdx * 86400;
-    var pts = days[dayIdx].epochs;
-    var vals = days[dayIdx].vals;
-    
+    var pts = days[dayIdx].epochs, vals = days[dayIdx].vals;
     if (pts.length === 0) return null;
-    
-    // Build spline arrays (same as device)
-    var xVals = [];
-    var yVals = [];
-    
-    // Compute midnight anchor using device's extrapolation logic
+    var xVals = [], yVals = [];
     var firstMinute = (pts[0] - dayStart) / 60;
     if (firstMinute > 0) {
-      // Find last point from previous day
       var lastPrev = null;
-      for (var d = dayIdx - 1; d >= 0; d--) {
-        if (days[d].epochs.length > 0) {
-          var lastIdx = days[d].epochs.length - 1;
-          lastPrev = {
-            epoch: days[d].epochs[lastIdx],
-            val: days[d].vals[lastIdx]
-          };
+      for (var di = dayIdx - 1; di >= 0; di--) {
+        if (days[di].epochs.length > 0) {
+          var li = days[di].epochs.length - 1;
+          lastPrev = { epoch: days[di].epochs[li], val: days[di].vals[li] };
           break;
         }
       }
-      
-      var midnightValue;
+      var midV;
       if (lastPrev && (dayStart - lastPrev.epoch) <= 1440 * 60) {
-        // Extrapolate from previous day's last point to today's first point
         var prevMin = (lastPrev.epoch - dayStart) / 60;
-        var currMin = firstMinute;
-        var slope = (vals[0] - lastPrev.val) / (currMin - prevMin);
-        midnightValue = vals[0] - slope * currMin;
-        midnightValue = Math.max(0, Math.min(30, midnightValue));
-      } else {
-        // No previous day data or gap too large - use first measurement
-        midnightValue = vals[0];
-      }
-      
-      xVals.push(0);
-      yVals.push(midnightValue);
+        var slope = (vals[0] - lastPrev.val) / (firstMinute - prevMin);
+        midV = Math.max(0, Math.min(30, vals[0] - slope * firstMinute));
+      } else { midV = vals[0]; }
+      xVals.push(0); yVals.push(midV);
     }
-    
-    // Add all measurements
     for (var i = 0; i < pts.length; i++) {
-      var minute = (pts[i] - dayStart) / 60;
-      xVals.push(minute);
-      yVals.push(vals[i]);
+      xVals.push((pts[i] - dayStart) / 60); yVals.push(vals[i]);
     }
-    
     if (xVals.length < 2) return 'Single';
-    
-    // Sample spline at regular intervals (every 2 hours)
-    var sampledVals = [];
     derivCache = {};
-    var lastMinute = Math.min(xVals[xVals.length - 1], 1440); // Don't go past midnight
-    
-    for (var minute = 0; minute <= lastMinute; minute += 120) {
+    var sampledVals = [], lastMin = Math.min(xVals[xVals.length - 1], 1440);
+    for (var minute = 0; minute <= lastMin; minute += 120) {
       var ppm = constrainedSpline(xVals, yVals, xVals.length, minute);
-      if (!isNaN(ppm)) {
-        sampledVals.push(Math.max(0, ppm));
-      }
+      if (!isNaN(ppm)) sampledVals.push(Math.max(0, ppm));
     }
-    
-    // Classify based on sampled curve
     if (sampledVals.length === 0) return null;
     if (sampledVals.length === 1) return 'Single';
-    
     if (sampledVals.length === 2) {
       var diff = sampledVals[1] - sampledVals[0];
-      if (Math.abs(diff) < 1.5) return 'Flat';
-      return diff > 0 ? 'Rising' : 'Falling';
+      return Math.abs(diff) < 1.5 ? 'Flat' : diff > 0 ? 'Rising' : 'Falling';
     }
-    
-    // 3+ sampled points: check shape
     var first = sampledVals[0], last = sampledVals[sampledVals.length - 1];
     var maxVal = sampledVals[0], minVal = sampledVals[0], maxI = 0, minI = 0;
     for (var i = 1; i < sampledVals.length; i++) {
@@ -1712,354 +1599,318 @@ function buildInsightsCard() {
     }
     var range = maxVal - minVal;
     if (range < 1.5) return 'Flat';
-    // Peak: max is in the middle (not first or last)
     if (maxI > 0 && maxI < sampledVals.length - 1 && (maxVal - first) > range * 0.3 && (maxVal - last) > range * 0.3) return 'Peak';
-    // Valley: min is in the middle
     if (minI > 0 && minI < sampledVals.length - 1 && (first - minVal) > range * 0.3 && (last - minVal) > range * 0.3) return 'Valley';
-    // Rising or falling
     var netDiff = last - first;
     if (netDiff > range * 0.2) return 'Rising';
     if (netDiff < -range * 0.2) return 'Falling';
     return 'Flat';
   }
 
-  // Collect all patterns and find examples
-  var patternCounts = {};
-  var patternExamples = {}; // Store first example of each pattern
-  var dailyPatterns = []; // Store all daily patterns for detail view
-  var totalPatterned = 0;
-  
+  var patternCounts = {}, patternExamples = {}, dailyPatterns = [], totalPatterned = 0;
   for (var d = 0; d < totalDays; d++) {
     if (days[d].vals.length === 0) continue;
-    var shape = classifyDay(d);
-    totalPatterned++;
-    
+    var shape = classifyDay(d); totalPatterned++;
     dailyPatterns.push({ dayIdx: d, shape: shape });
-    
-    if (!patternCounts[shape]) {
-      patternCounts[shape] = 0;
-      patternExamples[shape] = d; // Store day index of first example
-    }
+    if (!patternCounts[shape]) { patternCounts[shape] = 0; patternExamples[shape] = d; }
     patternCounts[shape]++;
   }
-
-  // Sort patterns by frequency (descending)
   var patternList = [];
-  for (var p in patternCounts) {
-    patternList.push({ pattern: p, count: patternCounts[p], example: patternExamples[p] });
-  }
+  for (var p in patternCounts) patternList.push({ pattern: p, count: patternCounts[p], example: patternExamples[p] });
   patternList.sort(function(a, b) { return b.count - a.count; });
 
   var dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var months   = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-  // Toggle button (right side of section header)
-  var btnW = 80;
-  var btnH = 24;
-  var btnX = gRight - btnW;
-  var btnY = curY - SECTION_TITLE_H + (SECTION_TITLE_H - btnH) / 2;
-  
+  // Toggle button
+  var btnW = 80, btnH = 24;
+  var btnX = gRight - btnW, btnY = curY - SECTION_TITLE_H + (SECTION_TITLE_H - btnH) / 2;
   ctx.fillStyle = 'rgba(255,255,255,0.1)';
   roundRect(ctx, btnX, btnY, btnW, btnH, btnH / 2); ctx.fill();
   ctx.fillStyle = 'rgba(255,255,255,0.5)';
-  ctx.font = '10px -apple-system,sans-serif';
+  ctx.font = '15px -apple-system,sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText('Show All', btnX + btnW / 2, btnY + btnH / 2);
-  
-  // Store hitbox for click detection
-  window.patternToggleHitbox = { x: btnX, y: btnY, w: btnW, h: btnH };
-  
-  // Default to summary view
+  ctx.fillText(window.showPatternDetail ? 'Summary' : 'Show All', btnX + btnW / 2, btnY + btnH / 2);
+  window.patternToggleHitbox = { x: btnX * SCALE, y: btnY * SCALE, w: btnW * SCALE, h: btnH * SCALE };
   if (window.showPatternDetail === undefined) window.showPatternDetail = false;
 
-  // Draw based on current mode
-  if (window.showPatternDetail) {
-    // Detail view: show all days
-    for (var pi = 0; pi < dailyPatterns.length; pi++) {
-      var pData = dailyPatterns[pi];
-      var d = pData.dayIdx;
-      var shape = pData.shape;
-      
-      var ry = curY + pi * SHAPE_ROW_H;
-      var shapeColor = SHAPE_COLORS[shape] || '#fff';
-
-      // Date label
-      var epochD = new Date((windowStart + d * 86400) * 1000);
-      var dateLabel = dayNames[epochD.getUTCDay()] + ' ' + months[epochD.getUTCMonth()] + ' ' + epochD.getUTCDate();
-      ctx.fillStyle = 'rgba(255,255,255,0.5)';
-      ctx.font = '11px -apple-system,sans-serif';
-      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-      ctx.fillText(dateLabel, gLeft, ry + SHAPE_ROW_H / 2);
-
-      // Mini sparkline
-      var sparkLeft = gLeft + 90;
-      var sparkRight = gRight - 80;
-      var sparkW = sparkRight - sparkLeft;
-      var sparkH = SHAPE_ROW_H - 8;
-      var sparkMid = ry + SHAPE_ROW_H / 2;
-      var sparkBot = sparkMid + sparkH / 2;
-
-      if (days[d].vals.length >= 2) {
-        var dayStart = windowStart + d * 86400;
-        var vMin = days[d].vals[0], vMax = days[d].vals[0];
-        for (var i = 1; i < days[d].vals.length; i++) {
-          if (days[d].vals[i] < vMin) vMin = days[d].vals[i];
-          if (days[d].vals[i] > vMax) vMax = days[d].vals[i];
+  function sparkPts(d, sparkLeft, sparkW, sparkBot, sparkH) {
+    var dayStart = windowStart + d * 86400;
+    var epochs = days[d].epochs, vals = days[d].vals;
+    var firstMinute = (epochs[0] - dayStart) / 60;
+    var midnightVal;
+    if (firstMinute > 0) {
+      var lastPrev = null;
+      for (var di = d - 1; di >= 0; di--) {
+        if (days[di].epochs.length > 0) {
+          var li = days[di].epochs.length - 1;
+          lastPrev = { epoch: days[di].epochs[li], val: days[di].vals[li] };
+          break;
         }
-        var vRange = vMax - vMin;
-        if (vRange < 1) vRange = 1;
-
-        ctx.strokeStyle = shapeColor;
-        ctx.lineWidth = 1.5;
-        ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-        ctx.beginPath();
-        for (var i = 0; i < days[d].vals.length; i++) {
-          var mx = (days[d].epochs[i] - dayStart) / 86400;
-          var px = sparkLeft + mx * sparkW;
-          var py = sparkBot - ((days[d].vals[i] - vMin) / vRange) * sparkH;
-          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-        }
-        ctx.stroke();
-
-        for (var i = 0; i < days[d].vals.length; i++) {
-          var mx = (days[d].epochs[i] - dayStart) / 86400;
-          var px = sparkLeft + mx * sparkW;
-          var py = sparkBot - ((days[d].vals[i] - vMin) / vRange) * sparkH;
-          ctx.beginPath(); ctx.arc(px, py, 2, 0, Math.PI * 2);
-          ctx.fillStyle = shapeColor; ctx.fill();
-        }
-      } else {
-        ctx.beginPath(); ctx.arc(sparkLeft + sparkW / 2, sparkMid, 3, 0, Math.PI * 2);
-        ctx.fillStyle = shapeColor; ctx.fill();
       }
-
-      ctx.fillStyle = shapeColor;
-      ctx.font = 'bold 11px -apple-system,sans-serif';
-      ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-      ctx.fillText(SHAPE_ICONS[shape] + ' ' + shape, gRight, ry + SHAPE_ROW_H / 2);
-
-      if (pi > 0) {
-        ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-        ctx.lineWidth = 0.5;
-        ctx.beginPath(); ctx.moveTo(gLeft, ry); ctx.lineTo(gRight, ry); ctx.stroke();
-      }
+      if (lastPrev && (dayStart - lastPrev.epoch) <= 1440 * 60) {
+        var prevMin = (lastPrev.epoch - dayStart) / 60;
+        var slope = (vals[0] - lastPrev.val) / (firstMinute - prevMin);
+        midnightVal = Math.max(0, Math.min(30, vals[0] - slope * firstMinute));
+      } else { midnightVal = vals[0]; }
+    } else { midnightVal = vals[0]; }
+    var allEpochs = [dayStart].concat(epochs), allVals = [midnightVal].concat(vals);
+    var vMin = allVals[0], vMax = allVals[0];
+    for (var i = 1; i < allVals.length; i++) {
+      if (allVals[i] < vMin) vMin = allVals[i];
+      if (allVals[i] > vMax) vMax = allVals[i];
     }
+    var vRange = vMax - vMin; if (vRange < 1) vRange = 1;
+    var pts = [];
+    for (var i = 0; i < allEpochs.length; i++) {
+      var mx = (allEpochs[i] - dayStart) / 86400;
+      pts.push({ x: sparkLeft + mx * sparkW, y: sparkBot - ((allVals[i] - vMin) / vRange) * sparkH, isMidnight: i === 0 });
+    }
+    return pts;
+  }
 
-    curY += dailyPatterns.length * SHAPE_ROW_H + 8 + SECTION_GAP;
-    
-  } else {
-    // Summary view: show pattern percentages
-  // Draw one row per unique pattern
-  for (var pi = 0; pi < patternList.length; pi++) {
-    var pInfo = patternList[pi];
-    var shape = pInfo.pattern;
-    var d = pInfo.example;
-    var pct = Math.round((pInfo.count / totalPatterned) * 100);
-    
-    var ry = curY + pi * SHAPE_ROW_H;
-    var shapeColor = SHAPE_COLORS[shape] || '#fff';
-
-    // Percentage label (left)
-    ctx.fillStyle = 'rgba(255,255,255,0.6)';
-    ctx.font = 'bold 12px -apple-system,sans-serif';
-    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-    ctx.fillText(pct + '%', gLeft, ry + SHAPE_ROW_H / 2);
-
-    // Mini sparkline (example pattern)
-    var sparkLeft = gLeft + 48;
-    var sparkRight = gRight - 80;
+  function drawSparkline(d, sparkLeft, sparkRight, ry, shapeColor) {
     var sparkW = sparkRight - sparkLeft;
-    var sparkH = SHAPE_ROW_H - 8;
+    var sparkH = SHAPE_ROW_H - 10;
     var sparkMid = ry + SHAPE_ROW_H / 2;
-    var sparkTop = sparkMid - sparkH / 2;
     var sparkBot = sparkMid + sparkH / 2;
-
-    if (days[d].vals.length >= 2) {
-      var dayStart = windowStart + d * 86400;
-      var vMin = days[d].vals[0], vMax = days[d].vals[0];
-      for (var i = 1; i < days[d].vals.length; i++) {
-        if (days[d].vals[i] < vMin) vMin = days[d].vals[i];
-        if (days[d].vals[i] > vMax) vMax = days[d].vals[i];
-      }
-      var vRange = vMax - vMin;
-      if (vRange < 1) vRange = 1;
-
-      ctx.strokeStyle = shapeColor;
-      ctx.lineWidth = 1.5;
+    if (days[d].vals.length >= 1) {
+      var sPts = sparkPts(d, sparkLeft, sparkW, sparkBot, sparkH);
+      ctx.strokeStyle = shapeColor; ctx.lineWidth = 1.5;
       ctx.lineJoin = 'round'; ctx.lineCap = 'round';
       ctx.beginPath();
-      for (var i = 0; i < days[d].vals.length; i++) {
-        var mx = (days[d].epochs[i] - dayStart) / 86400;
-        var px = sparkLeft + mx * sparkW;
-        var py = sparkBot - ((days[d].vals[i] - vMin) / vRange) * sparkH;
-        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      for (var i = 0; i < sPts.length; i++) {
+        if (i === 0) ctx.moveTo(sPts[i].x, sPts[i].y); else ctx.lineTo(sPts[i].x, sPts[i].y);
       }
       ctx.stroke();
-
-      // Dots
-      for (var i = 0; i < days[d].vals.length; i++) {
-        var mx = (days[d].epochs[i] - dayStart) / 86400;
-        var px = sparkLeft + mx * sparkW;
-        var py = sparkBot - ((days[d].vals[i] - vMin) / vRange) * sparkH;
-        ctx.beginPath(); ctx.arc(px, py, 2, 0, Math.PI * 2);
+      for (var i = 0; i < sPts.length; i++) {
+        if (sPts[i].isMidnight) continue;
+        ctx.beginPath(); ctx.arc(sPts[i].x, sPts[i].y, 2.5, 0, Math.PI * 2);
         ctx.fillStyle = shapeColor; ctx.fill();
       }
     } else {
-      // Single point — just a dot in the middle
       ctx.beginPath(); ctx.arc(sparkLeft + sparkW / 2, sparkMid, 3, 0, Math.PI * 2);
       ctx.fillStyle = shapeColor; ctx.fill();
     }
-
-    // Shape label + icon
-    ctx.fillStyle = shapeColor;
-    ctx.font = 'bold 11px -apple-system,sans-serif';
-    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-    ctx.fillText(SHAPE_ICONS[shape] + ' ' + shape, gRight, ry + SHAPE_ROW_H / 2);
-
-    // Subtle separator
-    if (pi > 0) {
-      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-      ctx.lineWidth = 0.5;
-      ctx.beginPath(); ctx.moveTo(gLeft, ry); ctx.lineTo(gRight, ry); ctx.stroke();
-    }
   }
 
-  curY += patternList.length * SHAPE_ROW_H + 8 + SECTION_GAP;
-  }
-
-  // ════════════════════════════════════════════════════════════════
-  // SECTION 3: Week-over-Week Trend (sparklines)
-  // ════════════════════════════════════════════════════════════════
-  curY = drawSectionTitle(curY, 'Weekly Trend');
-
-  var weekStats = [];
-  for (var w = 0; w < 3; w++) {
-    var wDays = 0, wSum = 0, wAUC = 0, wPeak = 0;
-    for (var d = w * 7; d < (w + 1) * 7 && d < totalDays; d++) {
-      if (days[d].vals.length > 0) {
-        wDays++;
-        for (var i = 0; i < days[d].vals.length; i++) {
-          wSum += days[d].vals[i];
-          if (days[d].vals[i] > wPeak) wPeak = days[d].vals[i];
-        }
-        wAUC += days[d].auc;
+  if (window.showPatternDetail) {
+    for (var pi = 0; pi < dailyPatterns.length; pi++) {
+      var pData = dailyPatterns[pi], d = pData.dayIdx, shape = pData.shape;
+      var ry = curY + pi * SHAPE_ROW_H;
+      var shapeColor = SHAPE_COLORS[shape] || '#fff';
+      var epochD = new Date((windowStart + d * 86400) * 1000);
+      var dateLabel = dayNames[epochD.getUTCDay()] + ' ' + months[epochD.getUTCMonth()] + ' ' + epochD.getUTCDate();
+      ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.font = '15px -apple-system,sans-serif';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillText(dateLabel, gLeft, ry + SHAPE_ROW_H / 2);
+      drawSparkline(d, gLeft + 96, gRight - 88, ry, shapeColor);
+      ctx.fillStyle = shapeColor; ctx.font = 'bold 15px -apple-system,sans-serif';
+      ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      ctx.fillText(SHAPE_ICONS[shape] + ' ' + shape, gRight, ry + SHAPE_ROW_H / 2);
+      if (pi > 0) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 0.5;
+        ctx.beginPath(); ctx.moveTo(gLeft, ry); ctx.lineTo(gRight, ry); ctx.stroke();
       }
     }
-    var wMeasCount = 0;
-    for (var d = w * 7; d < (w + 1) * 7 && d < totalDays; d++) {
-      wMeasCount += days[d].vals.length;
+    curY += dailyPatterns.length * SHAPE_ROW_H + 8 + SECTION_GAP;
+  } else {
+    for (var pi = 0; pi < patternList.length; pi++) {
+      var pInfo = patternList[pi], shape = pInfo.pattern, d = pInfo.example;
+      var pct = Math.round((pInfo.count / totalPatterned) * 100);
+      var ry = curY + pi * SHAPE_ROW_H;
+      var shapeColor = SHAPE_COLORS[shape] || '#fff';
+      ctx.fillStyle = 'rgba(255,255,255,0.65)'; ctx.font = 'bold 15px -apple-system,sans-serif';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillText(pct + '%', gLeft, ry + SHAPE_ROW_H / 2);
+      drawSparkline(d, gLeft + 52, gRight - 88, ry, shapeColor);
+      ctx.fillStyle = shapeColor; ctx.font = 'bold 15px -apple-system,sans-serif';
+      ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      ctx.fillText(SHAPE_ICONS[shape] + ' ' + shape, gRight, ry + SHAPE_ROW_H / 2);
+      if (pi > 0) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 0.5;
+        ctx.beginPath(); ctx.moveTo(gLeft, ry); ctx.lineTo(gRight, ry); ctx.stroke();
+      }
     }
-    weekStats.push({
-      avg: wMeasCount > 0 ? wSum / wMeasCount : 0,
-      avgAUC: wDays > 0 ? wAUC / wDays : 0,
-      peak: wPeak,
-      days: wDays
-    });
+    curY += patternList.length * SHAPE_ROW_H + 8 + SECTION_GAP;
   }
 
-  var weekLabels = ['Wk 1', 'Wk 2', 'Wk 3'];
-  var BAR_AREA_H = 100;
-  var BAR_LABEL_H = 30;
-  var BAR_WEEK_H = 14;
+  // ════════════════════════════════════════════════════════════════
+  // SECTION 3: Personal Bests
+  // ════════════════════════════════════════════════════════════════
+  curY = drawSectionTitle(curY, 'Personal Bests');
 
-  function trendArrow(v1, v2) {
-    if (v2 === 0 || v1 === 0) return '';
-    var pct = ((v2 - v1) / v1) * 100;
-    if (Math.abs(pct) < 5) return '  →';
-    return pct > 0 ? '  ↑' + Math.round(Math.abs(pct)) + '%' : '  ↓' + Math.round(Math.abs(pct)) + '%';
-  }
-
-  var metrics = [
-    { label: 'Avg', values: [weekStats[0].avg, weekStats[1].avg, weekStats[2].avg], color: 'rgba(245,200,66,{a})' },
-    { label: 'Peak', values: [weekStats[0].peak, weekStats[1].peak, weekStats[2].peak], color: 'rgba(168,85,247,{a})' },
-    { label: 'AUC', values: [weekStats[0].avgAUC, weekStats[1].avgAUC, weekStats[2].avgAUC], color: 'rgba(34,211,238,{a})' }
+  var bests = [
+    {
+      label: 'Best day',
+      value: bestDayAUC > 0 ? String(Math.round(bestDayAUC)) : '—',
+      sub: bestDayIdx >= 0 ? (function() {
+        var e = new Date((windowStart + bestDayIdx * 86400) * 1000);
+        return dayNames[e.getUTCDay()] + ' ' + months[e.getUTCMonth()] + ' ' + e.getUTCDate();
+      })() : '',
+      color: '#f5c842'
+    },
+    {
+      label: 'Best reading',
+      value: bestReading > 0 ? (showPPM ? bestReading.toFixed(1) : String(Math.round(bestReading))) : '—',
+      sub: bestReading > 0 ? (showPPM ? 'ppm' : 'level') : '',
+      color: '#A855F7'
+    },
+    {
+      label: 'Best streak',
+      value: bestStreak > 0 ? String(bestStreak) : '—',
+      sub: bestStreak > 0 ? (bestStreak === 1 ? 'day' : 'days') : '',
+      color: '#4ADE80'
+    }
   ];
 
-  var groupW = gW / 3;
-  var barGap = 4;
-  var barsPerGroup = 3;
-  var barW = (groupW - barGap * (barsPerGroup + 1)) / barsPerGroup;
-  if (barW > 28) barW = 28;
-  var barsBlockW = barsPerGroup * barW + (barsPerGroup - 1) * barGap;
-
-  var barTop = curY + BAR_LABEL_H;
-  var barBot = curY + BAR_LABEL_H + BAR_AREA_H;
-
-  for (var m = 0; m < metrics.length; m++) {
-    var met = metrics[m];
-    var groupLeft = gLeft + m * groupW;
-    var groupCX = groupLeft + groupW / 2;
-    var barsLeft = groupCX - barsBlockW / 2;
-
-    var vMax = 0;
-    for (var w = 0; w < 3; w++) {
-      if (met.values[w] > vMax) vMax = met.values[w];
-    }
-    if (vMax < 1) vMax = 1;
-
-    ctx.fillStyle = 'rgba(255,255,255,0.5)';
-    ctx.font = 'bold 11px -apple-system,sans-serif';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-    ctx.fillText(met.label, groupCX, curY);
-
-    var hasW1W3 = weekStats[0].days > 0 && weekStats[2].days > 0;
-    if (hasW1W3) {
-      var arrow = trendArrow(met.values[0], met.values[2]);
-      if (arrow) {
-        var isUp = arrow.indexOf('↑') >= 0;
-        var isDown = arrow.indexOf('↓') >= 0;
-        ctx.fillStyle = isUp ? '#4ADE80' : isDown ? '#22D3EE' : 'rgba(255,255,255,0.35)';
-        ctx.font = 'bold 10px -apple-system,sans-serif';
-        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-        ctx.fillText(arrow.trim(), groupCX, curY + 14);
-      }
-    }
-
-    if (m > 0) {
-      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-      ctx.lineWidth = 0.5;
+  var colW = gW / 3;
+  for (var b = 0; b < bests.length; b++) {
+    var cx = gLeft + colW * b + colW / 2;
+    if (b > 0) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 0.75;
       ctx.beginPath();
-      ctx.moveTo(groupLeft, curY);
-      ctx.lineTo(groupLeft, barBot + BAR_WEEK_H);
+      ctx.moveTo(gLeft + colW * b, curY);
+      ctx.lineTo(gLeft + colW * b, curY + BEST_ROW_H);
       ctx.stroke();
     }
-
-    var barAlphas = [0.35, 0.55, 0.85];
-    for (var w = 0; w < 3; w++) {
-      var bx = barsLeft + w * (barW + barGap);
-      var val = met.values[w];
-      var bh = vMax > 0 ? (val / vMax) * BAR_AREA_H : 0;
-      if (val > 0 && bh < 4) bh = 4;
-      var by = barBot - bh;
-      var br = Math.min(4, bh / 2, barW / 2);
-
-      ctx.fillStyle = 'rgba(255,255,255,0.04)';
-      roundRect(ctx, bx, barTop, barW, BAR_AREA_H, 4); ctx.fill();
-
-      if (val > 0) {
-        ctx.fillStyle = met.color.replace('{a}', String(barAlphas[w]));
-        roundRect(ctx, bx, by, barW, bh, br); ctx.fill();
-      }
-
-      var valStr = showPPM ? val.toFixed(1) : String(Math.round(val));
-      var valFS = 11;
-      ctx.font = 'bold ' + valFS + 'px -apple-system,sans-serif';
-      ctx.textAlign = 'center';
-      if (bh > valFS + 6 && val > 0) {
-        ctx.fillStyle = '#fff';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(valStr, bx + barW / 2, by + bh / 2);
-      } else if (val > 0) {
-        ctx.fillStyle = 'rgba(255,255,255,0.7)';
-        ctx.textBaseline = 'bottom';
-        ctx.fillText(valStr, bx + barW / 2, by - 2);
-      }
-
+    var ty = curY;
+    // Label
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = BEST_LABEL_FS + 'px -apple-system,sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.fillText(bests[b].label, cx, ty); ty += BEST_LABEL_FS + 4;
+    // Value
+    ctx.fillStyle = bests[b].color;
+    ctx.font = 'bold ' + BEST_VALUE_FS + 'px -apple-system,sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    ctx.fillText(bests[b].value, cx, ty); ty += BEST_VALUE_FS + 4;
+    // Sub
+    if (bests[b].sub) {
       ctx.fillStyle = 'rgba(255,255,255,0.35)';
-      ctx.font = '8px -apple-system,sans-serif';
+      ctx.font = BEST_SUB_FS + 'px -apple-system,sans-serif';
       ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-      ctx.fillText(weekLabels[w], bx + barW / 2, barBot + 3);
+      ctx.fillText(bests[b].sub, cx, ty);
     }
+  }
+  curY += BEST_ROW_H + 8 + SECTION_GAP;
+
+  // ════════════════════════════════════════════════════════════════
+  // SECTION 4: Weekly Fuel Breakdown
+  // ════════════════════════════════════════════════════════════════
+  curY = drawSectionTitle(curY, 'Fuel Balance');
+
+  function weekZoneTimes(w) {
+    var glucose = 0, mixed = 0, fat = 0;
+    for (var d = w * 7; d < (w + 1) * 7 && d < totalDays; d++) {
+      if (days[d].zoneTimes) {
+        glucose += days[d].zoneTimes.glucose;
+        mixed   += days[d].zoneTimes.mixed;
+        fat     += days[d].zoneTimes.fat;
+      }
+    }
+    return { glucose: glucose, mixed: mixed, fat: fat };
+  }
+
+  function fuelSummary(fatPct) {
+    if (fatPct < 0.1)  return 'Little fat burning detected';
+    if (fatPct < 0.25) return 'Mostly glucose-burning, brief fat windows';
+    if (fatPct < 0.5)  return 'Building fat-burning consistency';
+    if (fatPct < 0.7)  return 'Spending most measured time in fat zone';
+    return 'Strong fat burner — glucose spikes are brief';
+  }
+
+  function drawStackedBar(x, y, w, h, glucose, mixed, fat, r) {
+    var total = glucose + mixed + fat || 1;
+    var zones = [
+      { pct: glucose / total, color: '#22D3EE' },
+      { pct: mixed   / total, color: '#4ADE80' },
+      { pct: fat     / total, color: '#A855F7' }
+    ];
+    // Background
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    roundRect(ctx, x, y, w, h, r); ctx.fill();
+
+    var bx = x, drawnFirst = false;
+    for (var z = 0; z < zones.length; z++) {
+      var segW = zones[z].pct * w;
+      if (segW < 1) continue;
+      var isFirst = !drawnFirst;
+      var remaining = 0;
+      for (var zz = z + 1; zz < zones.length; zz++) remaining += zones[zz].pct * w;
+      var isLast = remaining < 1;
+      ctx.fillStyle = zones[z].color;
+      ctx.globalAlpha = 0.8;
+      if (isFirst && isLast) {
+        roundRect(ctx, bx, y, segW, h, r); ctx.fill();
+      } else if (isFirst) {
+        roundRect(ctx, bx, y, segW, h, r); ctx.fill();
+        ctx.fillRect(bx + segW - r, y, r, h);
+      } else if (isLast) {
+        roundRect(ctx, bx, y, segW, h, r); ctx.fill();
+        ctx.fillRect(bx, y, r, h);
+      } else {
+        ctx.fillRect(bx, y, segW, h);
+      }
+      ctx.globalAlpha = 1;
+      drawnFirst = true;
+      bx += segW;
+    }
+    return zones;
+  }
+
+  var wkNames = ['Week 1', 'Week 2', 'Week 3'];
+  for (var w = 0; w < 3; w++) {
+    var wzt = weekZoneTimes(w);
+    var total = wzt.glucose + wzt.mixed + wzt.fat;
+    var hasData = total > 0;
+    var fatPct = hasData ? wzt.fat / total : 0;
+
+    // Week label
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.font = '15px -apple-system,sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillText(wkNames[w], gLeft, curY);
+
+    // Fat % right-aligned
+    if (hasData) {
+      ctx.fillStyle = '#A855F7';
+      ctx.font = 'bold 15px -apple-system,sans-serif';
+      ctx.textAlign = 'right'; ctx.textBaseline = 'top';
+      ctx.fillText(Math.round(fatPct * 100) + '% fat', gRight, curY);
+    }
+    curY += 21;
+
+    // Stacked bar
+    if (hasData) {
+      var zones = drawStackedBar(gLeft, curY, gW, FT_BAR_H, wzt.glucose, wzt.mixed, wzt.fat, 5);
+
+      // Pct labels below segments
+      var lx = gLeft;
+      curY += FT_BAR_H + 6;
+      for (var z = 0; z < zones.length; z++) {
+        var segW = zones[z].pct * gW;
+        if (segW < 20) { lx += segW; continue; }
+        var ZONE_NAMES = ['Glucose', 'Mixed', 'Fat'];
+        ctx.fillStyle = zones[z].color;
+        ctx.font = FT_LABEL_FS + 'px -apple-system,sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.fillText(Math.round(zones[z].pct * 100) + '%', lx + segW / 2, curY);
+        lx += segW;
+      }
+      curY += FT_LABEL_FS + 8;
+    } else {
+      ctx.fillStyle = 'rgba(255,255,255,0.06)';
+      roundRect(ctx, gLeft, curY, gW, FT_BAR_H, 5); ctx.fill();
+      curY += FT_BAR_H + FT_LABEL_FS + 14;
+    }
+
+    // Summary sentence
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.font = 'italic ' + FT_SUMMARY_FS + 'px -apple-system,sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillText(hasData ? fuelSummary(fatPct) : 'No data this week', gLeft, curY);
+    curY += FT_SUMMARY_FS + 15;
   }
 
   // ── Watermark ─────────────────────────────────────────────────
@@ -2070,6 +1921,7 @@ function buildInsightsCard() {
 
   return canvas;
 }
+
 
 function shareInsights() {
   if (!insightsCanvas) return;
@@ -2336,7 +2188,7 @@ window.addEventListener('load', function() {
   }
 
   function showPopup(dot, clientX, clientY) {
-    popupVal.textContent  = showPPM ? dot.val.toFixed(1) + ' ppm' : 'Zone ' + Math.round(dot.val);
+    popupVal.textContent  = showPPM ? dot.val.toFixed(1) + ' ppm' : 'Level ' + Math.round(dot.val);
     popupTime.textContent = fmtPopupTime(dot.epoch);
     popup.style.display = 'block';
     var rect = dest.getBoundingClientRect();
@@ -2376,7 +2228,7 @@ window.addEventListener('load', function() {
     if (dot) {
       selectedDot = dot;
       renderCard();
-      showPopup(dot);
+      requestAnimationFrame(function() { showPopup(dot); });
     } else {
       hidePopup();
     }
@@ -2452,7 +2304,7 @@ window.addEventListener('load', function() {
   }
 
   function showFuelPopup(dot) {
-    popupFVal.textContent  = showPPM ? dot.val.toFixed(1) + ' ppm' : 'Zone ' + Math.round(dot.val);
+    popupFVal.textContent  = showPPM ? dot.val.toFixed(1) + ' ppm' : 'Level ' + Math.round(dot.val);
     popupFTime.textContent = fmtTime(dot.epoch);
     popupF.style.display = 'block';
     var rect = destF.getBoundingClientRect();
@@ -2481,7 +2333,7 @@ window.addEventListener('load', function() {
     if (dot) {
       selectedDot = dot;
       renderCard();
-      showFuelPopup(dot);
+      requestAnimationFrame(function() { showFuelPopup(dot); });
     } else {
       hideFuelPopup();
     }
@@ -2523,7 +2375,7 @@ function drawPopupOnCanvas(canvas, dot) {
   var h = d.getHours(), m = d.getMinutes();
   var ampm = h >= 12 ? 'pm' : 'am'; h = h % 12 || 12;
   var ms = m < 10 ? '0'+m : String(m);
-  var line1 = showPPM ? dot.val.toFixed(1) + ' ppm' : 'Zone ' + Math.round(dot.val);
+  var line1 = showPPM ? dot.val.toFixed(1) + ' ppm' : 'Level ' + Math.round(dot.val);
   var line2  = DAYS_S[d.getDay()] + ' ' + MONS[d.getMonth()] + ' ' + d.getDate() + '  ' + h + ':' + ms + ampm;
 
   var fs1 = 15 * S, fs2 = 11 * S;
@@ -2592,6 +2444,19 @@ function shareGraph() {
   }
 }
 
+function shareFuel() {
+  if (!fuelCanvas) return;
+  if (selectedDot) {
+    var copy = document.createElement('canvas');
+    copy.width = fuelCanvas.width; copy.height = fuelCanvas.height;
+    copy.getContext('2d').drawImage(fuelCanvas, 0, 0);
+    drawPopupOnCanvas(copy, selectedDot);
+    doShare(copy);
+  } else {
+    doShare(fuelCanvas);
+  }
+}
+
 function shareStreaks() {
   if (!streakCanvas) return;
   doShare(streakCanvas);
@@ -2602,7 +2467,7 @@ var currentPage = 0;
 
 function handleBottomShare() {
   if (currentPage === 0) shareGraph();
-  else if (currentPage === 1) { if (fuelCanvas) doShare(fuelCanvas); }
+  else if (currentPage === 1) shareFuel();
   else if (currentPage === 2) shareStreaks();
   else shareInsights();
 }
@@ -2615,6 +2480,12 @@ function handleBottomShare() {
     if (idx === currentPage) return;
     currentPage = idx;
     for (var i = 0; i < tabs.length; i++) tabs[i].classList.toggle('active', i === idx);
+    // Clear any open popups when switching pages
+    var p1 = document.getElementById('dot-popup');
+    var p2 = document.getElementById('dot-popup-fuel');
+    if (p1) p1.style.display = 'none';
+    if (p2) p2.style.display = 'none';
+    if (selectedDot) { selectedDot = null; renderCard(); }
   }
 
   scroller.addEventListener('scroll', function() {
