@@ -2466,10 +2466,33 @@ function shareStreaks() {
 var currentPage = 0;
 
 function handleBottomShare() {
-  if (currentPage === 0) shareGraph();
-  else if (currentPage === 1) shareFuel();
-  else if (currentPage === 2) shareStreaks();
-  else shareInsights();
+  var canvases = [graphCanvas, fuelCanvas, streakCanvas, insightsCanvas];
+  var valid = canvases.filter(function(c) { return c && c.width > 0 && c.height > 0; });
+  if (valid.length === 0) return;
+
+  // Use the width of the first canvas as the common width
+  var W = valid[0].width;
+  var GAP = Math.round(W * 0.02); // small gap between cards
+  var totalH = 0;
+  // Scale each canvas to width W, sum heights
+  var heights = valid.map(function(c) { return Math.round(c.height * W / c.width); });
+  for (var i = 0; i < heights.length; i++) totalH += heights[i];
+  totalH += GAP * (valid.length - 1);
+
+  var combined = document.createElement('canvas');
+  combined.width = W;
+  combined.height = totalH;
+  var ctx = combined.getContext('2d');
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, W, totalH);
+
+  var y = 0;
+  for (var i = 0; i < valid.length; i++) {
+    ctx.drawImage(valid[i], 0, y, W, heights[i]);
+    y += heights[i] + (i < valid.length - 1 ? GAP : 0);
+  }
+
+  doShare(combined);
 }
 
 (function() {
