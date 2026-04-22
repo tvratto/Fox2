@@ -2466,30 +2466,12 @@ function shareStreaks() {
 var currentPage = 0;
 
 function handleBottomShare() {
-  var canvases = [graphCanvas, fuelCanvas, streakCanvas, insightsCanvas];
-  var valid = canvases.filter(function(c) { return c && c.width > 0 && c.height > 0; });
-  if (valid.length === 0) return;
-
-  // Find the tallest card (in its natural aspect ratio at tileW width)
-  var tileW = valid[0].width;
-  var tileH = 0;
-  var heights = valid.map(function(c) { return Math.round(c.height * tileW / c.width); });
-  for (var i = 0; i < heights.length; i++) tileH = Math.max(tileH, heights[i]);
-
-  var combined = document.createElement('canvas');
-  combined.width = tileW * valid.length;
-  combined.height = tileH;
-  var ctx = combined.getContext('2d');
-  ctx.fillStyle = '#000';
-  ctx.fillRect(0, 0, combined.width, combined.height);
-
-  for (var i = 0; i < valid.length; i++) {
-    // Center each card vertically within the tile
-    var offsetY = Math.round((tileH - heights[i]) / 2);
-    ctx.drawImage(valid[i], i * tileW, offsetY, tileW, heights[i]);
+  var url = window.location.href;
+  if (navigator.share) {
+    navigator.share({ title: 'FOX2 Results', url: url }).catch(function() {});
+  } else {
+    navigator.clipboard && navigator.clipboard.writeText(url);
   }
-
-  doShare(combined);
 }
 
 (function() {
