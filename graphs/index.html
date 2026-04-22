@@ -2470,26 +2470,23 @@ function handleBottomShare() {
   var valid = canvases.filter(function(c) { return c && c.width > 0 && c.height > 0; });
   if (valid.length === 0) return;
 
-  // Use the width of the first canvas as the common width
-  var W = valid[0].width;
-  var GAP = Math.round(W * 0.02); // small gap between cards
-  var totalH = 0;
-  // Scale each canvas to width W, sum heights
-  var heights = valid.map(function(c) { return Math.round(c.height * W / c.width); });
-  for (var i = 0; i < heights.length; i++) totalH += heights[i];
-  totalH += GAP * (valid.length - 1);
+  // Each card gets a square tile (width = height = tallest card's width)
+  var tileW = valid[0].width;
+  var tileH = tileW; // square tiles so they page naturally in photo viewers
 
   var combined = document.createElement('canvas');
-  combined.width = W;
-  combined.height = totalH;
+  combined.width = tileW * valid.length;
+  combined.height = tileH;
   var ctx = combined.getContext('2d');
   ctx.fillStyle = '#000';
-  ctx.fillRect(0, 0, W, totalH);
+  ctx.fillRect(0, 0, combined.width, combined.height);
 
-  var y = 0;
   for (var i = 0; i < valid.length; i++) {
-    ctx.drawImage(valid[i], 0, y, W, heights[i]);
-    y += heights[i] + (i < valid.length - 1 ? GAP : 0);
+    // Scale card to fit tile width, center vertically
+    var scale = tileW / valid[i].width;
+    var drawH = Math.round(valid[i].height * scale);
+    var offsetY = Math.round((tileH - drawH) / 2);
+    ctx.drawImage(valid[i], i * tileW, offsetY, tileW, drawH);
   }
 
   doShare(combined);
