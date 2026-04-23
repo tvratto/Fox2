@@ -2199,7 +2199,7 @@ window.addEventListener('load', function() {
   var popupTime= document.getElementById('dot-popup-time');
   var touchStartTime = 0, touchStartX = 0, touchStartY = 0, touchCount = 0;
   var lastTouch = 0;
-  var HIT_RADIUS = 22;
+  var HIT_RADIUS = 30;
 
   var DAYS_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   var MONTHS     = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -2231,23 +2231,27 @@ window.addEventListener('load', function() {
     return best;
   }
 
-  function showPopup(dot, clientX, clientY) {
-    popupVal.textContent  = showPPM ? dot.val.toFixed(1) + ' ppm' : 'Level ' + Math.round(dot.val);
-    popupTime.textContent = fmtPopupTime(dot.epoch);
-    popup.style.display = 'block';
+  function positionPopup(dot) {
     var rect = dest.getBoundingClientRect();
     var wrap = dest.parentElement.getBoundingClientRect();
     var logicalW = dest.width / graphScale;
     var cssScale  = rect.width / logicalW;
     var dotCssX = dot.cx * cssScale + (rect.left - wrap.left);
     var dotCssY = dot.cy * cssScale + (rect.top  - wrap.top);
-    popup.style.left = '0'; popup.style.top = '0';
-    var pw = popup.offsetWidth, ph = popup.offsetHeight;
+    var pw = popup.offsetWidth || 90, ph = popup.offsetHeight || 44;
     var GAP = 10;
     var px = Math.max(4, Math.min(dotCssX - pw/2, wrap.width - pw - 4));
     var py = Math.max(4, dotCssY - ph - GAP);
     popup.style.left = px + 'px';
     popup.style.top  = py + 'px';
+  }
+
+  function showPopup(dot) {
+    popupVal.textContent  = showPPM ? dot.val.toFixed(1) + ' ppm' : 'Level ' + Math.round(dot.val);
+    popupTime.textContent = fmtPopupTime(dot.epoch);
+    popup.style.cssText = 'display:block;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;left:0;top:0;';
+    void popup.offsetWidth;
+    positionPopup(dot);
   }
 
   function hidePopup() {
@@ -2315,7 +2319,7 @@ window.addEventListener('load', function() {
   var popupFTime= document.getElementById('dot-popup-fuel-time');
   var touchStartTime = 0, touchStartX = 0, touchStartY = 0, touchCount = 0;
   var lastTouch = 0;
-  var HIT_RADIUS = 22;
+  var HIT_RADIUS = 30;
 
   var DAYS_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   var MONTHS     = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -2347,23 +2351,27 @@ window.addEventListener('load', function() {
     return best;
   }
 
-  function showFuelPopup(dot) {
-    popupFVal.textContent  = showPPM ? dot.val.toFixed(1) + ' ppm' : 'Level ' + Math.round(dot.val);
-    popupFTime.textContent = fmtTime(dot.epoch);
-    popupF.style.display = 'block';
+  function positionFuelPopup(dot) {
     var rect = destF.getBoundingClientRect();
     var wrap = destF.parentElement.getBoundingClientRect();
     var logicalW = destF.width / graphScale;
     var cssScale  = rect.width / logicalW;
     var dotCssX = dot.cx * cssScale + (rect.left - wrap.left);
     var dotCssY = dot.cy * cssScale + (rect.top  - wrap.top);
-    popupF.style.left = '0'; popupF.style.top = '0';
-    var pw = popupF.offsetWidth, ph = popupF.offsetHeight;
+    var pw = popupF.offsetWidth || 90, ph = popupF.offsetHeight || 44;
     var GAP = 10;
     var px = Math.max(4, Math.min(dotCssX - pw/2, wrap.width - pw - 4));
     var py = Math.max(4, dotCssY - ph - GAP);
     popupF.style.left = px + 'px';
     popupF.style.top  = py + 'px';
+  }
+
+  function showFuelPopup(dot) {
+    popupFVal.textContent  = showPPM ? dot.val.toFixed(1) + ' ppm' : 'Level ' + Math.round(dot.val);
+    popupFTime.textContent = fmtTime(dot.epoch);
+    popupF.style.cssText = 'display:block;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;left:0;top:0;';
+    void popupF.offsetWidth;
+    positionFuelPopup(dot);
   }
 
   function hideFuelPopup() {
