@@ -108,7 +108,7 @@ html, body {
 <div class="scroll-x" id="scroller">
   <div class="page">
     <div class="card-wrap" style="position:relative;">
-      <canvas id="card-graph" style="cursor:pointer;touch-action:none;"></canvas>
+      <canvas id="card-graph" style="cursor:pointer;"></canvas>
       <div id="dot-popup" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;">
         <div id="dot-popup-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div>
         <div id="dot-popup-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div>
@@ -117,7 +117,7 @@ html, body {
   </div>
   <div class="page">
     <div class="card-wrap" style="position:relative;">
-      <canvas id="card-fuel" style="cursor:pointer;touch-action:none;"></canvas>
+      <canvas id="card-fuel" style="cursor:pointer;"></canvas>
       <div id="dot-popup-fuel" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;">
         <div id="dot-popup-fuel-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div>
         <div id="dot-popup-fuel-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div>
@@ -2289,7 +2289,7 @@ window.addEventListener('load', function() {
       touchStartX = e.touches[0].clientX;
       touchStartY = e.touches[0].clientY;
     }
-  }, { passive: true });
+  }, { passive: false });
 
   dest.addEventListener('touchend', function(e) {
     if (touchCount > 1) { touchCount = 0; hidePopup(); return; }
@@ -2297,11 +2297,12 @@ window.addEventListener('load', function() {
     var dx = Math.abs(e.changedTouches[0].clientX - touchStartX);
     var dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
     if (dt < 250 && dx < 10 && dy < 10) {
+      e.preventDefault();
       lastTouch = Date.now();
       handleTap(touchStartX, touchStartY);
     }
     touchCount = 0;
-  }, { passive: true });
+  }, { passive: false });
 
   dest.addEventListener('click', function(e) {
     if (Date.now() - lastTouch < 500) return;
@@ -2398,7 +2399,7 @@ window.addEventListener('load', function() {
       touchStartX = e.touches[0].clientX;
       touchStartY = e.touches[0].clientY;
     }
-  }, { passive: true });
+  }, { passive: false });
 
   destF.addEventListener('touchend', function(e) {
     if (touchCount > 1) { touchCount = 0; hideFuelPopup(); return; }
@@ -2406,11 +2407,12 @@ window.addEventListener('load', function() {
     var dx = Math.abs(e.changedTouches[0].clientX - touchStartX);
     var dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
     if (dt < 250 && dx < 10 && dy < 10) {
+      e.preventDefault();
       lastTouch = Date.now();
       handleFuelTap(touchStartX, touchStartY);
     }
     touchCount = 0;
-  }, { passive: true });
+  }, { passive: false });
 
   destF.addEventListener('click', function(e) {
     if (Date.now() - lastTouch < 500) return;
