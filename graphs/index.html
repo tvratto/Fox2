@@ -1416,7 +1416,7 @@ function buildInsightsCard() {
   var BOX_R = 10;
   var SECTION_TITLE_FS = 15;
   var SECTION_TITLE_H = 26;
-  var SHAPE_ROW_H = 38;
+  var SHAPE_ROW_H = 56;
   var FOOTER_H = 14;
 
   var gLeft  = PAD + BOX_PAD;
@@ -1513,7 +1513,7 @@ function buildInsightsCard() {
   var PATTERN_SUGG_FS = 13;
   var PATTERN_BLOCK_H = 18 + 4 + PATTERN_DESC_FS * 2 + 4 + PATTERN_SUGG_FS * 2 + 10;
   var PATTERN_GAP = 28;
-  var PATTERN_INSIGHTS_H = PATTERN_BLOCK_H * 2 + PATTERN_GAP;
+  var PATTERN_INSIGHTS_H = PATTERN_BLOCK_H * 3 + PATTERN_GAP * 2;
 
   var FT_BAR_H    = 18;
   var FT_LABEL_FS = 15;
@@ -1658,12 +1658,13 @@ function buildInsightsCard() {
 
   var SHAPE_COLORS = {
     'Rising': '#4ADE80', 'Falling': '#22D3EE', 'Peak': '#A855F7',
-    'Valley': '#f5c842', 'Flat': 'rgba(255,255,255,0.4)', 'Single': 'rgba(255,255,255,0.25)'
+    'Valley': '#f5c842', 'Wave': '#fb923c', 'Flat': 'rgba(255,255,255,0.4)', 'Single': 'rgba(255,255,255,0.25)'
   };
-  var SHAPE_ICONS = { 'Rising': '↗', 'Falling': '↘', 'Peak': '⌃', 'Valley': '⌄', 'Flat': '→', 'Single': '·' };
+  var SHAPE_ICONS = { 'Rising': '↗', 'Falling': '↘', 'Peak': '⌃', 'Valley': '⌄', 'Wave': '〜', 'Flat': '→', 'Single': '·' };
 
   function classifyDay(dayIdx) {
     var dayStart = windowStart + dayIdx * 86400;
+    var dayEnd   = dayStart + 1440 * 60; // midnight end of this day
     var pts = days[dayIdx].epochs, vals = days[dayIdx].vals;
     if (pts.length === 0) return null;
     var xVals = [], yVals = [];
@@ -1688,33 +1689,95 @@ function buildInsightsCard() {
     for (var i = 0; i < pts.length; i++) {
       xVals.push((pts[i] - dayStart) / 60); yVals.push(vals[i]);
     }
+
+    // ── End-of-day extension: use first measurement of next day ──
+    // Mirror of the midnight anchor logic, but for the trailing end.
+    // Skip for todayIdx (no next-day data yet).
+    if (dayIdx < todayIdx) {
+      var firstNext = null;
+      for (var di = dayIdx + 1; di < totalDays; di++) {
+        if (days[di].epochs.length > 0) {
+          firstNext = { epoch: days[di].epochs[0], val: days[di].vals[0] };
+          break;
+        }
+      }
+      if (firstNext && (firstNext.epoch - dayEnd) <= 1440 * 60) {
+        var nextMin  = (firstNext.epoch - dayStart) / 60; // may be > 1440
+        var lastMin2 = xVals[xVals.length - 1];
+        var lastVal2 = yVals[yVals.length - 1];
+        var slope2   = (firstNext.val - lastVal2) / (nextMin - lastMin2);
+        var midnightV = Math.max(0, Math.min(30, lastVal2 + slope2 * (1440 - lastMin2)));
+        xVals.push(1440); yVals.push(midnightV);
+      }
+    }
+
     if (xVals.length < 2) return 'Single';
     derivCache = {};
-    var sampledVals = [], lastMin = Math.min(xVals[xVals.length - 1], 1440);
+    var sv = [], lastMin = Math.min(xVals[xVals.length - 1], 1440);
     for (var minute = 0; minute <= lastMin; minute += 120) {
       var ppm = constrainedSpline(xVals, yVals, xVals.length, minute);
-      if (!isNaN(ppm)) sampledVals.push(Math.max(0, ppm));
+      if (!isNaN(ppm)) sv.push(Math.max(0, ppm));
     }
-    if (sampledVals.length === 0) return null;
-    if (sampledVals.length === 1) return 'Single';
-    if (sampledVals.length === 2) {
-      var diff = sampledVals[1] - sampledVals[0];
-      return Math.abs(diff) < 1.5 ? 'Flat' : diff > 0 ? 'Rising' : 'Falling';
-    }
-    var first = sampledVals[0], last = sampledVals[sampledVals.length - 1];
-    var maxVal = sampledVals[0], minVal = sampledVals[0], maxI = 0, minI = 0;
-    for (var i = 1; i < sampledVals.length; i++) {
-      if (sampledVals[i] > maxVal) { maxVal = sampledVals[i]; maxI = i; }
-      if (sampledVals[i] < minVal) { minVal = sampledVals[i]; minI = i; }
-    }
-    var range = maxVal - minVal;
+    if (sv.length === 0) return null;
+    if (sv.length === 1) return 'Single';
+
+    var range = Math.max.apply(null, sv) - Math.min.apply(null, sv);
     if (range < 1.5) return 'Flat';
-    if (maxI > 0 && maxI < sampledVals.length - 1 && (maxVal - first) > range * 0.3 && (maxVal - last) > range * 0.3) return 'Peak';
-    if (minI > 0 && minI < sampledVals.length - 1 && (first - minVal) > range * 0.3 && (last - minVal) > range * 0.3) return 'Valley';
-    var netDiff = last - first;
-    if (netDiff > range * 0.2) return 'Rising';
-    if (netDiff < -range * 0.2) return 'Falling';
-    return 'Flat';
+
+    // Find significant turning points using threshold = 25% of range.
+    // A direction reversal only counts if it exceeds the threshold,
+    // filtering out noise and small wiggles.
+    var sigThresh = range * 0.25;
+    var turns = [sv[0]];
+    var extreme = sv[0], lastTurnVal = sv[0], curDir = 0;
+    for (var i = 1; i < sv.length; i++) {
+      if (curDir === 0) {
+        if (Math.abs(sv[i] - lastTurnVal) >= sigThresh) {
+          curDir = sv[i] > lastTurnVal ? 1 : -1;
+          extreme = sv[i];
+        }
+      } else if (curDir === 1) {
+        if (sv[i] > extreme) extreme = sv[i];
+        if (extreme - sv[i] >= sigThresh) {
+          turns.push(extreme); lastTurnVal = extreme; extreme = sv[i]; curDir = -1;
+        }
+      } else {
+        if (sv[i] < extreme) extreme = sv[i];
+        if (sv[i] - extreme >= sigThresh) {
+          turns.push(extreme); lastTurnVal = extreme; extreme = sv[i]; curDir = 1;
+        }
+      }
+    }
+    turns.push(sv[sv.length - 1]);
+
+    // Simple case: no interior turns detected
+    if (turns.length <= 2) {
+      var net = sv[sv.length - 1] - sv[0];
+      return Math.abs(net) < sigThresh ? 'Flat' : net > 0 ? 'Rising' : 'Falling';
+    }
+
+    // Check for interior peak or valley relative to both endpoints
+    var tFirst = turns[0], tLast = turns[turns.length - 1];
+    var interior = turns.slice(1, turns.length - 1);
+    var iMin = Math.min.apply(null, interior);
+    var iMax = Math.max.apply(null, interior);
+    var h = sigThresh * 0.3; // smaller margin for interior detection
+
+    // Peak only if the first significant move is upward
+    var firstMoveUp = turns.length > 1 && turns[1] > turns[0];
+    var isPeak   = firstMoveUp && iMax > tFirst + h && iMax > tLast + h;
+    var isValley = iMin < tFirst - h && iMin < tLast - h;
+    // Wave: down-up-down — starts with fall, has an interior peak above
+    // the end, and the curve ends lower than that interior peak
+    var isWave = !firstMoveUp && iMax > tFirst + h && iMax > tLast + h && iMin < tFirst - h && tFirst - tLast > h;
+
+    if (isWave)   return 'Wave';
+    if (isPeak && isValley) return 'Valley';
+    if (isPeak)   return 'Peak';
+    if (isValley) return 'Valley';
+
+    var net = tLast - tFirst;
+    return Math.abs(net) < sigThresh ? 'Flat' : net > 0 ? 'Rising' : 'Falling';
   }
 
   var patternCounts = {}, patternExamples = {}, dailyPatterns = [], totalPatterned = 0;
@@ -1741,7 +1804,7 @@ function buildInsightsCard() {
   ctx.font = '15px -apple-system,sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(window.showPatternDetail ? 'Summary' : 'Show All', btnX + btnW / 2, btnY + btnH / 2);
-  window.patternToggleHitbox = { x: btnX * SCALE, y: btnY * SCALE, w: btnW * SCALE, h: btnH * SCALE };
+  window.patternToggleHitbox = { x: btnX, y: btnY, w: btnW, h: btnH };
   if (window.showPatternDetail === undefined) window.showPatternDetail = false;
 
   function sparkPts(d, sparkLeft, sparkW, sparkBot, sparkH) {
@@ -1764,17 +1827,36 @@ function buildInsightsCard() {
         midnightVal = Math.max(0, Math.min(30, vals[0] - slope * firstMinute));
       } else { midnightVal = vals[0]; }
     } else { midnightVal = vals[0]; }
-    var allEpochs = [dayStart].concat(epochs), allVals = [midnightVal].concat(vals);
-    var vMin = allVals[0], vMax = allVals[0];
-    for (var i = 1; i < allVals.length; i++) {
-      if (allVals[i] < vMin) vMin = allVals[i];
-      if (allVals[i] > vMax) vMax = allVals[i];
+    // ── End-of-day extension: mirror of start-of-day midnight anchor ──
+    var endEpochs = epochs.slice(), endVals = vals.slice();
+    if (d < todayIdx) {
+      var firstNext = null;
+      for (var di = d + 1; di < totalDays; di++) {
+        if (days[di].epochs.length > 0) {
+          firstNext = { epoch: days[di].epochs[0], val: days[di].vals[0] };
+          break;
+        }
+      }
+      var dayEnd = dayStart + 86400;
+      if (firstNext && (firstNext.epoch - dayEnd) <= 1440 * 60) {
+        var lastEp  = endEpochs[endEpochs.length - 1];
+        var lastV   = endVals[endVals.length - 1];
+        var slope2  = (firstNext.val - lastV) / (firstNext.epoch - lastEp);
+        var midnightEndV = Math.max(0, Math.min(30, lastV + slope2 * (dayEnd - lastEp)));
+        endEpochs.push(dayEnd);
+        endVals.push(midnightEndV);
+      }
     }
-    var vRange = vMax - vMin; if (vRange < 1) vRange = 1;
+    var allEpochs = [dayStart].concat(endEpochs), allVals = [midnightVal].concat(endVals);
+    // Per-day zero-based scale, floored at 5 so low-flat days aren't over-stretched
+    var vMax = 5;
+    for (var i = 0; i < allVals.length; i++) { if (allVals[i] > vMax) vMax = allVals[i]; }
+    var hasMidnightEnd = endEpochs.length > epochs.length;
     var pts = [];
     for (var i = 0; i < allEpochs.length; i++) {
       var mx = (allEpochs[i] - dayStart) / 86400;
-      pts.push({ x: sparkLeft + mx * sparkW, y: sparkBot - ((allVals[i] - vMin) / vRange) * sparkH, isMidnight: i === 0 });
+      var isMidnightEnd = hasMidnightEnd && (i === allEpochs.length - 1);
+      pts.push({ x: sparkLeft + mx * sparkW, y: sparkBot - (allVals[i] / vMax) * sparkH, isMidnight: i === 0, isMidnightEnd: isMidnightEnd });
     }
     return pts;
   }
@@ -1788,15 +1870,36 @@ function buildInsightsCard() {
       var sPts = sparkPts(d, sparkLeft, sparkW, sparkBot, sparkH);
       ctx.strokeStyle = shapeColor; ctx.lineWidth = 1.5;
       ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+
+      var lastMeasIdx = sPts.length - 1;
+      if (sPts[sPts.length - 1].isMidnightEnd) lastMeasIdx = sPts.length - 2;
+
       ctx.beginPath();
-      for (var i = 0; i < sPts.length; i++) {
+      for (var i = 0; i <= lastMeasIdx; i++) {
         if (i === 0) ctx.moveTo(sPts[i].x, sPts[i].y); else ctx.lineTo(sPts[i].x, sPts[i].y);
       }
       ctx.stroke();
+
+      if (sPts[sPts.length - 1].isMidnightEnd) {
+        ctx.setLineDash([2, 2]);
+        ctx.globalAlpha = 0.55;
+        ctx.beginPath();
+        ctx.moveTo(sPts[lastMeasIdx].x, sPts[lastMeasIdx].y);
+        ctx.lineTo(sPts[sPts.length - 1].x, sPts[sPts.length - 1].y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.globalAlpha = 1;
+      }
+
       for (var i = 0; i < sPts.length; i++) {
         if (sPts[i].isMidnight) continue;
-        ctx.beginPath(); ctx.arc(sPts[i].x, sPts[i].y, 2.5, 0, Math.PI * 2);
-        ctx.fillStyle = shapeColor; ctx.fill();
+        if (sPts[i].isMidnightEnd) {
+          ctx.beginPath(); ctx.arc(sPts[i].x, sPts[i].y, 2.5, 0, Math.PI * 2);
+          ctx.strokeStyle = shapeColor; ctx.lineWidth = 1.5; ctx.stroke();
+        } else {
+          ctx.beginPath(); ctx.arc(sPts[i].x, sPts[i].y, 2.5, 0, Math.PI * 2);
+          ctx.fillStyle = shapeColor; ctx.fill();
+        }
       }
     } else {
       ctx.beginPath(); ctx.arc(sparkLeft + sparkW / 2, sparkMid, 3, 0, Math.PI * 2);
@@ -1864,6 +1967,7 @@ function buildInsightsCard() {
     'Peak':    'Fat-burning builds through the day and then comes back down, possibly from eating or evening activity.',
     'Rising':  'Fat-burning deepens steadily as the day goes on and glucose gets used up without being replaced.',
     'Flat':    'Readings stay similar all day. Whether that\'s good or not depends on the level — high and flat means you\'re consistently burning fat, low and flat suggests glucose is staying elevated throughout the day.',
+    'Wave':    'Starts elevated from overnight fat-burning, dips in the morning, recovers mid-day, then drops again toward evening.',
     'Single':  'Only one reading for the day, so no pattern can be determined.'
   };
   var PATTERN_SUGGESTIONS = {
@@ -1872,6 +1976,7 @@ function buildInsightsCard() {
     'Peak':    'If the peak is earlier in the day, extending your fast or staying active afterward could help sustain it longer.',
     'Rising':  'Already trending in the right direction. Eating earlier or reducing carbs or calories at dinner would likely push your morning reading even higher.',
     'Flat':    'Reducing carbs, particularly at breakfast and lunch, would likely start shifting this pattern.',
+    'Wave':    'The afternoon drop may reflect too many carbs or calories at lunch. Try eating lighter at lunch, or exercising after lunch.',
     'Single':  'Try to measure at least twice a day — once on waking and once in the evening — to start seeing your pattern emerge.'
   };
 
@@ -2257,9 +2362,9 @@ window.addEventListener('load', function() {
       // Click handler for pattern toggle button
       destI.addEventListener('click', function(e) {
         var rect = destI.getBoundingClientRect();
-        var scale = (destI.width / 2) / rect.width; // insightsCanvas uses 2x scale
+        var scale = 400 / rect.width; // map CSS px → logical canvas coords (0..400)
         var clickX = (e.clientX - rect.left) * scale;
-        var clickY = (e.clientY - rect.top) * scale;
+        var clickY = (e.clientY - rect.top)  * scale;
         
         // Check if click is on pattern toggle button
         var btn = window.patternToggleHitbox;
