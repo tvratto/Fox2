@@ -1981,7 +1981,7 @@ function buildInsightsCard() {
   };
 
   var insightPatterns = [];
-  for (var pi = 0; pi < patternList.length && insightPatterns.length < 2; pi++) {
+  for (var pi = 0; pi < patternList.length && insightPatterns.length < 3; pi++) {
     if (patternList[pi].pattern !== 'Single' || patternList.length === 1) {
       insightPatterns.push(patternList[pi]);
     }
@@ -2011,7 +2011,7 @@ function buildInsightsCard() {
     ctx.font = PATTERN_SUGG_FS + 'px -apple-system,sans-serif';
     curY = wrapText(ctx, sugg, gLeft, curY, gW, PATTERN_SUGG_FS + 3);
 
-    if (pi === 0 && insightPatterns.length > 1) {
+    if (pi < insightPatterns.length - 1) {
       ctx.strokeStyle = 'rgba(255,255,255,0.15)';
       ctx.lineWidth = 0.75;
       ctx.beginPath();
