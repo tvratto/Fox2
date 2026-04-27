@@ -156,5 +156,30 @@
     Make sure your FOX2 device is powered on and showing the setup screen before connecting.
   </div>
 
+  <script>
+    // When the user returns to this page after the captive portal
+    // closes, redirect them to the FOX2 dashboard
+    var connected = false;
+
+    document.querySelector('.btn-connect').addEventListener('click', function() {
+      connected = true;
+    });
+
+    function handleReturn() {
+      if (connected) {
+        window.location.replace('https://tvratto.github.io/Fox2/');
+      }
+    }
+
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'visible') handleReturn();
+    });
+
+    window.addEventListener('pageshow', function(e) {
+      if (e.persisted) handleReturn();
+    });
+
+    window.addEventListener('focus', handleReturn);
+  </script>
 </body>
 </html>
