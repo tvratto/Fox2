@@ -103,9 +103,9 @@ h height: 100px;
 
 /* Mobile: give it breathing room again */
 @media (max-width: 480px) {
-  .state6-content {
-    flex: 1;
-    padding-bottom: 18px;
+  .content-area {
+    justify-content: flex-start;  /* 👈 THIS is the key */
+    padding-top: 8px;             /* optional fine-tune */
   }
 }
 
