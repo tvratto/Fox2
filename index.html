@@ -86,6 +86,7 @@ body {
 
 .state6-device {
   width: 250px;
+h height: 100px;
 }
 
 .state6-device .photo-screen-overlay {
@@ -1410,7 +1411,7 @@ function render() {
   titleText = 'Taking your first measurement';
 
   content =
-    '<div class="content-area" style="gap:0px;">' +
+    '<div class="content-area" style="gap:0px; flex:0 1 auto; padding-bottom:2px;">' +
 
       // Device graphic at top
       '<div style="flex-shrink:0;display:flex;align-items:center;gap:16px;padding:0 8px;">' +
@@ -1423,13 +1424,14 @@ function render() {
         '<div style="flex:1;font-size:17px;color:#aaa;line-height:1.6;">' +
           '<div style="display:flex;gap:8px;margin-bottom:9px;">' +
             '<span style="color:#00ffff;flex-shrink:0;">&#8226;</span>' +
-            '<span>When you click <strong style="color:#fff;">Ready to go!</strong> below you can take your first measurement!</span>' +
-          '</div>' +
+'<span>FOX2 has everything built right in &#8212; no app required.</span>' +
+'</div>' +
 
-          '<div style="display:flex;gap:8px;">' +
-            '<span style="color:#00ffff;flex-shrink:0;">&#8226;</span>' +
-            '<span>From the menu, use <strong style="background:#ff9800;color:#000;border-radius:6px;padding:1px 8px;font-size:13px;">&#160;&#160;</strong> to navigate and ' +
-            '<strong style="display:inline-block;width:18px;height:18px;background:radial-gradient(circle at 38% 35%,#fff,#c8c8c8);border-radius:50%;vertical-align:middle;box-shadow:0 1px 3px rgba(0,0,0,.4);"></strong> to select.</span>' +
+'<div style="display:flex;gap:8px;">' +
+  '<span style="color:#00ffff;flex-shrink:0;">&#8226;</span>' +
+  '<span>Use <strong style="background:#ff9800;color:#000;border-radius:6px;padding:1px 8px;font-size:13px;">&#160;&#160;</strong> to highlight <strong>Measure</strong>, then press ' +
+  '<strong style="display:inline-block;width:18px;height:18px;background:radial-gradient(circle at 38% 35%,#fff,#c8c8c8);border-radius:50%;vertical-align:middle;box-shadow:0 1px 3px rgba(0,0,0,.4);"></strong> to start a measurement.</span>' +
+'</div>' +
           '</div>' +
         '</div>' +
 
