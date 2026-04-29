@@ -1482,9 +1482,9 @@ function render() {
 
     '</div>';
 
-  buttons =
-    '<button class="btn btn-secondary" onclick="back()">&#8249; Back</button>' +
-    '<button class="btn btn-primary" style="flex:1;" onclick="doneOnboarding()">Ready to go!</button>';
+buttons =
+  '<button class="btn btn-secondary" onclick="back()">&#8249; Back</button>' +
+  '<button class="btn btn-primary" style="flex:1;" onclick="contact()">Contact</button>';
 }
 
   // Update DOM
@@ -2104,23 +2104,26 @@ function startTodayAnimation(todayData, newValue) {
   }, 600));
 }
 
-function doneOnboarding() {
-  fetch('/exit', { method: 'POST' })
-    .then(function() {
-      document.body.innerHTML =
-        '<div style="text-align:center;padding:40px;font-size:18px;color:#fff;max-width:480px;margin:0 auto;line-height:1.6;">' +
-          '<div style="font-size:24px;margin-bottom:20px;">You\'re all set!</div>' +
-          '<div style="opacity:0.8;">Your FOX2 is ready to use.</div>' +
-        '</div>';
-    })
-    .catch(function() {
-      document.body.innerHTML =
-        '<div style="text-align:center;padding:40px;font-size:18px;color:#fff;max-width:480px;margin:0 auto;line-height:1.6;">' +
-          '<div style="font-size:24px;margin-bottom:20px;">You\'re all set!</div>' +
-          '<div style="opacity:0.8;">Your FOX2 is ready to use.</div>' +
-        '</div>';
-    });
+function contact() {
+  document.body.innerHTML =
+    '<div style="text-align:center;padding:24px;font-size:18px;color:#fff;max-width:480px;margin:0 auto;line-height:1.6;">' +
+
+      '<div style="font-size:24px;margin-bottom:16px;">Contact FOX2</div>' +
+
+      '<div style="opacity:0.8;margin-bottom:16px;">Have a question or feedback?</div>' +
+
+      '<textarea id="contactMsg" placeholder="Type your message..." ' +
+        'style="width:100%;height:120px;border-radius:10px;border:1px solid #333;background:#111;color:#fff;padding:12px;font-size:16px;margin-bottom:16px;"></textarea>' +
+
+      '<div style="display:flex;gap:12px;">' +
+        '<button class="btn btn-secondary" style="flex:1;" onclick="location.reload()">Cancel</button>' +
+
+        '<button class="btn btn-primary" style="flex:1;" onclick="sendContact()">Send</button>' +
+      '</div>' +
+
+    '</div>';
 }
+
 
 render();
 </script>
