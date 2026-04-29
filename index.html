@@ -2121,11 +2121,36 @@ function contact() {
       '</div>' +
 
       // 👇 PUT IT RIGHT HERE
-      '<div style="margin-top:12px;font-size:14px;color:#777;">' +
-        'Or email us directly at <strong>tim@fox2.info</strong>' +
-      '</div>' +
+'<div style="margin-top:12px;font-size:14px;color:#777;">' +
+  'Or email us directly at <strong>tim@fox2.info</strong>' +
+'</div>' +
+
+'<div id="mailtoFallback"></div>' +
 
     '</div>';
+}
+
+function sendContact() {
+  var msgEl = document.getElementById('contactMsg');
+  var msg = msgEl ? msgEl.value : '';
+
+  var subject = encodeURIComponent('FOX2 Question');
+  var body = encodeURIComponent(msg);
+
+  var mailto =
+    'mailto:tim@fox2.info?subject=' + subject + '&body=' + body;
+
+  window.location.href = mailto;
+
+  var fallback = document.getElementById('mailtoFallback');
+  if (fallback) {
+    fallback.innerHTML =
+      '<div style="margin-top:16px;font-size:14px;color:#777;line-height:1.5;">' +
+        'If your email app did not open, copy this address:<br>' +
+        '<strong style="color:#00ffff;">tim@fox2.info</strong><br><br>' +
+        '<a href="' + mailto + '" style="color:#00ffff;text-decoration:underline;">Try opening email again</a>' +
+      '</div>';
+  }
 }
 
 
