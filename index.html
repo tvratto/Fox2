@@ -1724,6 +1724,34 @@ function next() { stopAllAnimations(); if (state < TOTAL_SCREENS-1) { state++; r
 function back() { stopAllAnimations(); if (state > 0) { state--; render(); } }
 function goTo(s) { stopAllAnimations(); state = s; render(); }
 
+// -- Swipe navigation --
+var swipeStartX = 0;
+var swipeStartY = 0;
+var swipeStartTime = 0;
+
+document.addEventListener('touchstart', function(e) {
+  if (!e.touches || e.touches.length !== 1) return;
+
+  swipeStartX = e.touches[0].clientX;
+  swipeStartY = e.touches[0].clientY;
+  swipeStartTime = Date.now();
+}, { passive: true });
+
+document.addEventListener('touchend', function(e) {
+  if (!e.changedTouches || e.changedTouches.length !== 1) return;
+
+  var dx = e.changedTouches[0].clientX - swipeStartX;
+  var dy = e.changedTouches[0].clientY - swipeStartY;
+  var dt = Date.now() - swipeStartTime;
+
+  if (dt > 700) return;
+  if (Math.abs(dx) < 60) return;
+  if (Math.abs(dy) > 50) return;
+
+  if (dx < 0) next();   // swipe left
+  else back();          // swipe right
+}, { passive: true });
+
 function adjustCustom(delta) {
   customVal = Math.max(10, customVal + delta);
   var el = document.getElementById('adjVal');
