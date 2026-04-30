@@ -13,49 +13,11 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  overflow: hidden;
-  position: fixed;
-  inset: 0;
+  overflow: hidden; position: fixed; inset: 0;
 }
-
 .container {
   max-width: 480px; margin: 0 auto; padding: 12px;
-  height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-#screenContent {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-  
-#screenContent {
-  transition: transform 220ms ease, opacity 220ms ease;
-  will-change: transform, opacity;
-}
-
-.slide-out-left {
-  transform: translateX(-100%);
-  opacity: 0;
-}
-
-.slide-out-right {
-  transform: translateX(100%);
-  opacity: 0;
-}
-
-.slide-in-from-right {
-  transform: translateX(100%);
-  opacity: 0;
-}
-
-.slide-in-from-left {
-  transform: translateX(-100%);
-  opacity: 0;
+  height: 100dvh; display: flex; flex-direction: column; gap: 8px;
 }
 .title {
   font-size: 28px; font-weight: 700; text-align: center;
@@ -298,7 +260,7 @@ body {
 <body>
 <div class="container">
   <div class="title" id="pageTitle" style="display:none;"></div>
-  <div id="screenContent" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;"></div>
+  <div id="screenContent" style="flex:1;display:flex;flex-direction:column;min-height:0;"></div>
   <div class="dots" id="dots"></div>
   <div class="btn-row" id="buttons"></div>
 </div>
@@ -1748,90 +1710,6 @@ function startArcAnimation() {
 function next() { stopAllAnimations(); if (state < TOTAL_SCREENS-1) { state++; render(); } }
 function back() { stopAllAnimations(); if (state > 0) { state--; render(); } }
 function goTo(s) { stopAllAnimations(); state = s; render(); }
-
-function animatedNext() {
-  if (state >= TOTAL_SCREENS - 1) return;
-
-  stopAllAnimations();
-
-  var el = document.getElementById('screenContent');
-  if (!el) {
-    next();
-    return;
-  }
-
-  el.classList.add('slide-out-left');
-
-  setTimeout(function() {
-    state++;
-    render();
-
-    var newEl = document.getElementById('screenContent');
-    if (!newEl) return;
-
-    newEl.classList.add('slide-in-from-right');
-
-    requestAnimationFrame(function() {
-      newEl.classList.remove('slide-in-from-right');
-    });
-  }, 220);
-}
-
-function animatedBack() {
-  if (state <= 0) return;
-
-  stopAllAnimations();
-
-  var el = document.getElementById('screenContent');
-  if (!el) {
-    back();
-    return;
-  }
-
-  el.classList.add('slide-out-right');
-
-  setTimeout(function() {
-    state--;
-    render();
-
-    var newEl = document.getElementById('screenContent');
-    if (!newEl) return;
-
-    newEl.classList.add('slide-in-from-left');
-
-    requestAnimationFrame(function() {
-      newEl.classList.remove('slide-in-from-left');
-    });
-  }, 220);
-}
-
-// -- Swipe navigation --
-var swipeStartX = 0;
-var swipeStartY = 0;
-var swipeStartTime = 0;
-
-document.addEventListener('touchstart', function(e) {
-  if (!e.touches || e.touches.length !== 1) return;
-
-  swipeStartX = e.touches[0].clientX;
-  swipeStartY = e.touches[0].clientY;
-  swipeStartTime = Date.now();
-}, { passive: true });
-
-document.addEventListener('touchend', function(e) {
-  if (!e.changedTouches || e.changedTouches.length !== 1) return;
-
-  var dx = e.changedTouches[0].clientX - swipeStartX;
-  var dy = e.changedTouches[0].clientY - swipeStartY;
-  var dt = Date.now() - swipeStartTime;
-
-  if (dt > 700) return;
-  if (Math.abs(dx) < 60) return;
-  if (Math.abs(dy) > Math.abs(dx)) return;
-
-if (dx < 0) animatedNext();
-else animatedBack();
-}, { passive: true });
 
 function adjustCustom(delta) {
   customVal = Math.max(10, customVal + delta);
