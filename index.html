@@ -13,14 +13,11 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-   overflow-y: auto;
-  overflow-x: hidden;
-  position: static;
-  min-height: 100dvh;
+  overflow: hidden; position: fixed; inset: 0;
 }
 .container {
   max-width: 480px; margin: 0 auto; padding: 12px;
-  min-height: 100dvh; display: flex; flex-direction: column; gap: 8px;
+  height: 100dvh; display: flex; flex-direction: column; gap: 8px;
 }
 .title {
   font-size: 28px; font-weight: 700; text-align: center;
@@ -48,7 +45,7 @@ body {
   position: relative;
   width: 350px;
   height: 450px;        /* controls crop */
-  /*overflow: hidden;
+  overflow: hidden;
 
   margin: 0 auto;
 
