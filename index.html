@@ -39,6 +39,27 @@ body {
 .btn-primary { background:#00ffff; color:#000; }
 .btn-secondary { background:#222; color:#fff; }
 
+#screenContent {
+  transition: transform 220ms ease;
+  will-change: transform;
+}
+
+.slide-out-left {
+  transform: translateX(-100%);
+}
+
+.slide-out-right {
+  transform: translateX(100%);
+}
+
+.slide-in-from-right {
+  transform: translateX(100%);
+}
+
+.slide-in-from-left {
+  transform: translateX(-100%);
+}
+
 /* -- JPG device with screen overlay -- */
 /* crop window */
 .photo-device-wrap {
@@ -1738,9 +1759,71 @@ document.addEventListener('touchend', function(e) {
   if (Math.abs(dx) < 60) return;
   if (Math.abs(dy) > Math.abs(dx)) return;
 
-  if (dx < 0) next();
-  else back();
+if (dx < 0) animatedNext();
+else animatedBack();
 }, { passive: true });
+
+ function animatedNext() {
+  if (state >= TOTAL_SCREENS - 1) return;
+
+  stopAllAnimations();
+
+  var el = document.getElementById('screenContent');
+  if (!el) return next();
+
+  el.classList.remove('slide-in-from-left', 'slide-in-from-right', 'slide-out-left', 'slide-out-right');
+  el.classList.add('slide-out-left');
+
+  setTimeout(function() {
+    state++;
+    render();
+
+    var newEl = document.getElementById('screenContent');
+    if (!newEl) return;
+
+    newEl.classList.remove('slide-out-left', 'slide-out-right');
+    newEl.style.transition = 'none';
+    newEl.classList.add('slide-in-from-right');
+
+    newEl.offsetHeight; // force layout
+
+    newEl.style.transition = '';
+    requestAnimationFrame(function() {
+      newEl.classList.remove('slide-in-from-right');
+    });
+  }, 220);
+}
+
+function animatedBack() {
+  if (state <= 0) return;
+
+  stopAllAnimations();
+
+  var el = document.getElementById('screenContent');
+  if (!el) return back();
+
+  el.classList.remove('slide-in-from-left', 'slide-in-from-right', 'slide-out-left', 'slide-out-right');
+  el.classList.add('slide-out-right');
+
+  setTimeout(function() {
+    state--;
+    render();
+
+    var newEl = document.getElementById('screenContent');
+    if (!newEl) return;
+
+    newEl.classList.remove('slide-out-left', 'slide-out-right');
+    newEl.style.transition = 'none';
+    newEl.classList.add('slide-in-from-left');
+
+    newEl.offsetHeight; // force layout
+
+    newEl.style.transition = '';
+    requestAnimationFrame(function() {
+      newEl.classList.remove('slide-in-from-left');
+    });
+  }, 220);
+} 
 
 function adjustCustom(delta) {
   customVal = Math.max(10, customVal + delta);
