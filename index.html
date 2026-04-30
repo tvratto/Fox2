@@ -1746,7 +1746,7 @@ document.addEventListener('touchend', function(e) {
 
   if (dt > 700) return;
   if (Math.abs(dx) < 60) return;
-  if (Math.abs(dy) > 50) return;
+  if (Math.abs(dy) > Math.abs(dx)) return;
 
   if (dx < 0) next();   // swipe left
   else back();          // swipe right
