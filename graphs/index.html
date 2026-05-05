@@ -617,7 +617,7 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
       }
 
       // ── Draw ───────────────────────────────────────────────────
-      if (pts.length < 2) return; // guard: need at least 2 pts for spline
+      if (pts.length < 2) return null; // guard: single point, skip drawing
       var p0  = { x: 2*pts[0].x - pts[1].x, y: 2*pts[0].y - pts[1].y };
       var pN  = { x: 2*pts[pts.length-1].x - pts[pts.length-2].x,
                   y: 2*pts[pts.length-1].y - pts[pts.length-2].y };
@@ -779,6 +779,18 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
 
     var globalI = 0;
     for (var si = 0; si < segments.length; si++) {
+      if (!segmentPts[si]) {
+        // Single point — no spline, but still draw the dot
+        for (var j = 0; j < segments[si].length; j++) {
+          var ap = allPts[globalI++];
+          var px = wx(ap.epoch), py = wy(ap.val);
+          var dotRounded = Math.round(ap.val);
+          var dc = dotRounded <= 2 ? '#22D3EE' : dotRounded <= 4 ? '#4ADE80' : '#A855F7';
+          filledDot(ctx, px, py, 3, dc);
+          dotHits.push({ cx: px, cy: py, val: ap.val, epoch: ap.epoch });
+        }
+        continue;
+      }
       var sPts = segmentPts[si].pts;
       var dOff = segmentPts[si].dataOffset;
       for (var j = 0; j < segments[si].length; j++) {
