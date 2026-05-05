@@ -2250,8 +2250,25 @@ function calcZoneTimes() {
     // Clear derivative cache for this day
     derivCache = {};
     
-    // ── Sample the curve every minute up to last measurement ──────
-    var lastMinute = xVals[xVals.length - 1];
+    // ── Extend to midnight for completed days ────────────────────
+    var localTodayIdx = 0;
+    for (var td = 0; td < totalDays; td++) { if (days[td].vals.length > 0) localTodayIdx = td; }
+    if (d < localTodayIdx) {
+      // Find next day's first measurement to extrapolate toward midnight
+      var nextDay = d + 1;
+      while (nextDay < totalDays && days[nextDay].vals.length === 0) nextDay++;
+      if (nextDay < totalDays) {
+        var fn = days[nextDay];
+        var nm = (fn.epochs[0] - dayStart) / 60;
+        var lm2 = xVals[xVals.length - 1], lv2 = yVals[yVals.length - 1];
+        var sl2 = (fn.vals[0] - lv2) / (nm - lm2);
+        var midnightV = Math.max(0, Math.min(30, lv2 + sl2 * (1440 - lm2)));
+        xVals.push(1440); yVals.push(midnightV);
+      } else {
+        xVals.push(1440); yVals.push(0);
+      }
+    }
+    var lastMinute = (d < localTodayIdx) ? 1440 : xVals[xVals.length - 1];
     
     for (var minute = 0; minute < lastMinute; minute++) {
       // Use ConstrainedSpline (exact device algorithm)
