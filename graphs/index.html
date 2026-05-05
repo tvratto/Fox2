@@ -1180,7 +1180,7 @@ function buildStreakCard() {
   var PAD      = 14;
   var PILL_H   = 28;
   var PILL_PAD = 8;
-  var DATE_W   = 52;  // Width for date labels
+  var DATE_W   = 62;  // Width for date labels
   var BAR_H    = 16;  // Height of each bar
   var BAR_GAP  = 4;   // Gap between bars
   var FOOTER_H = 14;
@@ -1264,16 +1264,16 @@ function buildStreakCard() {
     var dateLabel = months[dateObj.getUTCMonth()].substring(0, 3) + ' ' + dateObj.getUTCDate();
     var dayLabel = daysOfWeek[dateObj.getUTCDay()];
     
+    // Day of week left-aligned, date right-aligned — same vertical centre
+    ctx.fillStyle = isToday ? 'rgba(245,200,66,0.6)' : 'rgba(255,255,255,0.3)';
+    ctx.font = (isToday ? 'bold ' : '') + '9px -apple-system,sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText(dayLabel, PAD, barY + BAR_H / 2);
+
     ctx.fillStyle = isToday ? '#f5c842' : 'rgba(255,255,255,0.5)';
     ctx.font = (isToday ? 'bold ' : '') + '11px -apple-system,sans-serif';
     ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
     ctx.fillText(dateLabel, PAD + DATE_W - 2, barY + BAR_H / 2);
-    
-    // Day of week (smaller, lighter)
-    ctx.fillStyle = isToday ? 'rgba(245,200,66,0.6)' : 'rgba(255,255,255,0.3)';
-    ctx.font = '9px -apple-system,sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText(dayLabel, PAD + DATE_W + 4, barY + BAR_H / 2);
 
     // Bar dimensions
     var bx = barLeft;
