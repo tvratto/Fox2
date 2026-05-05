@@ -2279,10 +2279,26 @@ function calcDayZoneTimes(dayIdx) {
   var xVals = [];
   var yVals = [];
   
+  // Leading midnight anchor — extrapolate from previous day's last measurement
+  // using slope toward first measurement of this day (same as graph rendering)
   var firstMinute = (pts[0] - dayStart) / 60;
   if (firstMinute > 0) {
+    var midV = vals[0]; // fallback: hold first value
+    for (var di = dayIdx - 1; di >= 0; di--) {
+      if (days[di].vals.length > 0) {
+        var li = days[di].epochs.length - 1;
+        var prevEpoch = days[di].epochs[li];
+        var prevVal   = days[di].vals[li];
+        if ((dayStart - prevEpoch) <= 1440 * 60) {
+          var prevMin = (prevEpoch - dayStart) / 60; // negative
+          var slope   = (vals[0] - prevVal) / (firstMinute - prevMin);
+          midV = Math.max(0, Math.min(30, vals[0] - slope * firstMinute));
+        }
+        break;
+      }
+    }
     xVals.push(0);
-    yVals.push(vals[0]);
+    yVals.push(midV);
   }
   
   for (var i = 0; i < pts.length; i++) {
