@@ -2214,13 +2214,25 @@ function calcZoneTimes() {
     var xVals = [];
     var yVals = [];
     
-    // Add midnight anchor if needed (device adds this during graph prep)
+    // Add midnight anchor if needed — extrapolate from previous day's last measurement
     var firstMinute = (pts[0] - dayStart) / 60;
     if (firstMinute > 0) {
-      // Add a midnight point - use first measurement value for simplicity
-      // (device has more complex logic with previous day, but this matches the visual better)
+      var midV = vals[0]; // fallback
+      for (var di = d - 1; di >= 0; di--) {
+        if (days[di].vals.length > 0) {
+          var li = days[di].epochs.length - 1;
+          var prevEpoch = days[di].epochs[li];
+          var prevVal   = days[di].vals[li];
+          if ((dayStart - prevEpoch) <= 1440 * 60) {
+            var prevMin = (prevEpoch - dayStart) / 60;
+            var slope   = (vals[0] - prevVal) / (firstMinute - prevMin);
+            midV = Math.max(0, Math.min(30, vals[0] - slope * firstMinute));
+          }
+          break;
+        }
+      }
       xVals.push(0);
-      yVals.push(vals[0]);
+      yVals.push(midV);
     }
     
     // Add all measurements
