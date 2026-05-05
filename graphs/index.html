@@ -617,6 +617,7 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
       }
 
       // ── Draw ───────────────────────────────────────────────────
+      if (pts.length < 2) return; // guard: need at least 2 pts for spline
       var p0  = { x: 2*pts[0].x - pts[1].x, y: 2*pts[0].y - pts[1].y };
       var pN  = { x: 2*pts[pts.length-1].x - pts[pts.length-2].x,
                   y: 2*pts[pts.length-1].y - pts[pts.length-2].y };
@@ -1510,8 +1511,8 @@ function buildInsightsCard() {
 
   var SHAPE_SECTION_H = SECTION_TITLE_H + (window.showPatternDetail ? Math.min(daysWithData, 21) : 4) * SHAPE_ROW_H + 8;
 
-  var PATTERN_DESC_FS = 13;
-  var PATTERN_SUGG_FS = 13;
+  var PATTERN_DESC_FS = 15;
+  var PATTERN_SUGG_FS = 15;
   var PATTERN_BLOCK_H = 18 + 4 + PATTERN_DESC_FS * 2 + 4 + PATTERN_SUGG_FS * 2 + 10;
   var PATTERN_GAP = 28;
   var PATTERN_INSIGHTS_H = PATTERN_BLOCK_H * 3 + PATTERN_GAP * 2;
