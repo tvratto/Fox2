@@ -757,7 +757,7 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
         ctx.stroke();
       }
 
-      return { pts: pts, dataOffset: (isFirst && prevPt && (firstEpoch - prevPt.epoch) <= GAP_LIMIT) ? 1 : 0 };
+      return { pts: pts, dataOffset: 1 };
     }
 
     // Clip to row bounds so ghost points don't bleed outside
