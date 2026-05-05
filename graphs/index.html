@@ -174,9 +174,10 @@ var sParam    = params.get('s') || '';
 var windowStart = (function() {
   var now = new Date();
   var dow = now.getUTCDay(); // 0=Sun, 6=Sat
-  // Days SINCE the most recent Saturday (0 if today is Sat, 1 if Sun, etc.)
-  var daysSinceSat = (dow - 6 + 7) % 7;
-  var weekEndMs = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) - daysSinceSat * 86400000;
+  // Days TO the next/current Saturday (0 if today is Sat, forward otherwise)
+  // This matches the device which anchors the window to the current week's Saturday
+  var daysToSat = (6 - dow + 7) % 7;
+  var weekEndMs = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) + daysToSat * 86400000;
   return Math.floor(weekEndMs / 1000) - 20 * 86400;
 })();
 
