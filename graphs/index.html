@@ -609,11 +609,16 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
         pts.push({ x: wx(nextPt.epoch), y: wy(nextPt.val) });
         fillEndX = wx(nextPt.epoch);
       } else if (isLast && isLastWeek) {
-        // Last week last segment — extend to midnight of the last day so single
-        // points have a trailing anchor and the spline can be drawn
+        var lastDayIdx = segPts[segPts.length-1].dayIdx + dayOffset;
         var lastMidnight = weekStartEpoch + (segPts[segPts.length-1].dayIdx + 1) * 86400;
-        pts.push({ x: wx(lastMidnight), y: wy(0) });
-        fillEndX = wx(lastMidnight);
+        if (lastDayIdx < todayIdx) {
+          // Completed day — extend to midnight so the day is fully represented
+          pts.push({ x: wx(lastMidnight), y: wy(0) });
+          fillEndX = wx(lastMidnight);
+        } else {
+          // Today — stop at the last measurement, don't project to midnight
+          fillEndX = pts[pts.length-1].x;
+        }
       } else {
         // Mid-week gap or end of non-final row: trail to next midnight at zero
         var nextMidnight = weekStartEpoch + (segPts[segPts.length-1].dayIdx + 1) * 86400;
