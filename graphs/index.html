@@ -105,24 +105,23 @@ html, body {
   </div>
 </div>
 
-<div id="dot-popup" style="display:none;position:fixed;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:100;white-space:nowrap;">
-  <div id="dot-popup-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div>
-  <div id="dot-popup-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div>
-</div>
-<div id="dot-popup-fuel" style="display:none;position:fixed;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:100;white-space:nowrap;">
-  <div id="dot-popup-fuel-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div>
-  <div id="dot-popup-fuel-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div>
-</div>
-
 <div class="scroll-x" id="scroller">
   <div class="page">
-    <div class="card-wrap">
+    <div class="card-wrap" style="position:relative;">
       <canvas id="card-graph" style="cursor:pointer;"></canvas>
+      <div id="dot-popup" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;">
+        <div id="dot-popup-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div>
+        <div id="dot-popup-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div>
+      </div>
     </div>
   </div>
   <div class="page">
-    <div class="card-wrap">
+    <div class="card-wrap" style="position:relative;">
       <canvas id="card-fuel" style="cursor:pointer;"></canvas>
+      <div id="dot-popup-fuel" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;">
+        <div id="dot-popup-fuel-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div>
+        <div id="dot-popup-fuel-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div>
+      </div>
     </div>
   </div>
   <div class="page">
@@ -268,6 +267,116 @@ if (!dParam || totalDays === 0) {
   document.getElementById('scroller').style.display = 'none';
   document.getElementById('no-data').style.display  = 'block';
 }
+
+// ─── Supabase write ───────────────────────────────────────────────
+// Fires silently on page load — patient sees nothing, no UI impact.
+// Populates three tables: readings, daily_scores, devices.
+// All writes fail silently if Supabase is unavailable.
+(function() {
+  var pParam  = params.get('p')  || '';
+  var cParam  = params.get('c')  || '';
+  var idParam = params.get('id') || '';
+
+  // Only write if there is actual measurement data
+  if (!dParam || totalDays === 0) return;
+
+  var SUPABASE_URL = 'https://byysvwdsbpmbypflqcjs.supabase.co';
+  var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ5eXN2d2RzYnBtYnlwZmxxY2pzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MTEwNTYsImV4cCI6MjA5NDE4NzA1Nn0.uAKOkd9vNhtN7umEGrVLcQLNjWOnn33n-xKVT25mFzw';
+
+  var deviceId  = idParam || ('unknown_' + cParam + '_' + pParam);
+  var patientId = pParam  || null;
+  var clinicId  = cParam  || null;
+
+  // Parse streaks from sParam
+  var sParts = sParam ? sParam.split(',') : [];
+  var streakCurrent = sParts.length > 0 ? parseInt(sParts[0], 10) : 0;
+  var streakBest    = sParts.length > 1 ? parseInt(sParts[1], 10) : 0;
+
+  var headers = {
+    'Content-Type':  'application/json',
+    'apikey':        SUPABASE_KEY,
+    'Authorization': 'Bearer ' + SUPABASE_KEY,
+    'Prefer':        'return=minimal'
+  };
+
+  // ── 1. readings — one row per ppm measurement, ignore exact duplicates
+  var readingRows = [];
+  var dayBlocks = dParam.split('|');
+  for (var d = 0; d < dayBlocks.length; d++) {
+    var block  = dayBlocks[d];
+    var colon1 = block.indexOf(':');
+    var rest   = colon1 >= 0 ? block.substring(colon1 + 1) : '';
+    var dayStartEpoch = windowStart + d * 86400;
+    var i = 0;
+    while (i + 4 <= rest.length) {
+      var minuteOffset = parseInt(rest.substring(i,   i+2), 36);
+      var ppmTimes10   = parseInt(rest.substring(i+2, i+4), 36);
+      var ppm          = ppmTimes10 / 10.0;
+      var ts           = new Date((dayStartEpoch + minuteOffset * 60) * 1000).toISOString();
+      readingRows.push({
+        device_id:  deviceId,
+        patient_id: patientId,
+        clinic_id:  clinicId,
+        target_auc: targetAUC || null,
+        reading_ts: ts,
+        ppm:        ppm
+      });
+      i += 4;
+    }
+  }
+
+  if (readingRows.length > 0) {
+    fetch(SUPABASE_URL + '/rest/v1/readings?on_conflict=device_id,reading_ts', {
+      method:  'POST',
+      headers: Object.assign({}, headers, { 'Prefer': 'resolution=ignore-duplicates,return=minimal' }),
+      body:    JSON.stringify(readingRows)
+    }).catch(function() {});
+  }
+
+  // ── 2. daily_scores — one row per device per day, overwrite on rescan
+  var scoreRows = [];
+  if (aParam) {
+    // New fixed-width base36 format: 21 slots, 2 chars each
+    for (var ai = 0; ai * 2 + 2 <= aParam.length; ai++) {
+      var auc = parseInt(aParam.substring(ai * 2, ai * 2 + 2), 36);
+      if (auc === 0) continue;
+      var dayEpoch = windowStart + ai * 86400;
+      var dayDate  = new Date(dayEpoch * 1000).toISOString().substring(0, 10);
+      scoreRows.push({
+        device_id:  deviceId,
+        patient_id: patientId,
+        clinic_id:  clinicId,
+        day_date:   dayDate,
+        auc_score:  auc,
+        target_auc: targetAUC || null
+      });
+    }
+  }
+
+  if (scoreRows.length > 0) {
+    fetch(SUPABASE_URL + '/rest/v1/daily_scores?on_conflict=device_id,day_date', {
+      method:  'POST',
+      headers: Object.assign({}, headers, { 'Prefer': 'resolution=merge-duplicates,return=minimal' }),
+      body:    JSON.stringify(scoreRows)
+    }).catch(function() {});
+  }
+
+  // ── 3. devices — always overwrite with latest state
+  fetch(SUPABASE_URL + '/rest/v1/devices?on_conflict=device_id', {
+    method:  'POST',
+    headers: Object.assign({}, headers, { 'Prefer': 'resolution=merge-duplicates,return=minimal' }),
+    body:    JSON.stringify({
+      device_id:      deviceId,
+      patient_id:     patientId,
+      clinic_id:      clinicId,
+      target_auc:     targetAUC || null,
+      streak_current: streakCurrent,
+      streak_best:    streakBest,
+      last_scan_at:   new Date().toISOString()
+    })
+  }).catch(function() {});
+
+})();
 
 // ─── PPM toggle ──────────────────────────────────────────────────
 var showPPM = false;
@@ -2177,6 +2286,7 @@ function shareInsights() {
 var graphCanvas, fuelCanvas, streakCanvas, insightsCanvas;
 var graphDotHits = [], fuelDotHits = [];
 var dotHits = graphDotHits; // legacy alias used inside buildGraphCard
+var dotHits = [];
 var selectedDot = null;
 var graphScale = 2;
 var summaryView = 'stats'; // 'stats' | 'zones'
@@ -2485,14 +2595,15 @@ window.addEventListener('load', function() {
 
   function positionPopup(dot) {
     var rect = dest.getBoundingClientRect();
+    var wrap = dest.parentElement.getBoundingClientRect();
     var logicalW = dest.width / graphScale;
     var cssScale  = rect.width / logicalW;
-    var dotViewX = dot.cx * cssScale + rect.left;
-    var dotViewY = dot.cy * cssScale + rect.top;
+    var dotCssX = dot.cx * cssScale + (rect.left - wrap.left);
+    var dotCssY = dot.cy * cssScale + (rect.top  - wrap.top);
     var pw = popup.offsetWidth || 90, ph = popup.offsetHeight || 44;
     var GAP = 10;
-    var px = Math.max(4, Math.min(dotViewX - pw/2, window.innerWidth - pw - 4));
-    var py = Math.max(4, dotViewY - ph - GAP);
+    var px = Math.max(4, Math.min(dotCssX - pw/2, wrap.width - pw - 4));
+    var py = Math.max(4, dotCssY - ph - GAP);
     popup.style.left = px + 'px';
     popup.style.top  = py + 'px';
   }
@@ -2500,7 +2611,7 @@ window.addEventListener('load', function() {
   function showPopup(dot) {
     popupVal.textContent  = showPPM ? dot.val.toFixed(1) + ' ppm' : 'Level ' + Math.round(dot.val);
     popupTime.textContent = fmtPopupTime(dot.epoch);
-    popup.style.cssText = 'display:block;position:fixed;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:100;white-space:nowrap;left:0;top:0;';
+    popup.style.cssText = 'display:block;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;left:0;top:0;';
     void popup.offsetWidth;
     positionPopup(dot);
   }
@@ -2604,14 +2715,15 @@ window.addEventListener('load', function() {
 
   function positionFuelPopup(dot) {
     var rect = destF.getBoundingClientRect();
+    var wrap = destF.parentElement.getBoundingClientRect();
     var logicalW = destF.width / graphScale;
     var cssScale  = rect.width / logicalW;
-    var dotViewX = dot.cx * cssScale + rect.left;
-    var dotViewY = dot.cy * cssScale + rect.top;
+    var dotCssX = dot.cx * cssScale + (rect.left - wrap.left);
+    var dotCssY = dot.cy * cssScale + (rect.top  - wrap.top);
     var pw = popupF.offsetWidth || 90, ph = popupF.offsetHeight || 44;
     var GAP = 10;
-    var px = Math.max(4, Math.min(dotViewX - pw/2, window.innerWidth - pw - 4));
-    var py = Math.max(4, dotViewY - ph - GAP);
+    var px = Math.max(4, Math.min(dotCssX - pw/2, wrap.width - pw - 4));
+    var py = Math.max(4, dotCssY - ph - GAP);
     popupF.style.left = px + 'px';
     popupF.style.top  = py + 'px';
   }
@@ -2619,7 +2731,7 @@ window.addEventListener('load', function() {
   function showFuelPopup(dot) {
     popupFVal.textContent  = showPPM ? dot.val.toFixed(1) + ' ppm' : 'Level ' + Math.round(dot.val);
     popupFTime.textContent = fmtTime(dot.epoch);
-    popupF.style.cssText = 'display:block;position:fixed;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:100;white-space:nowrap;left:0;top:0;';
+    popupF.style.cssText = 'display:block;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;left:0;top:0;';
     void popupF.offsetWidth;
     positionFuelPopup(dot);
   }
