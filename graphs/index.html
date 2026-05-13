@@ -375,6 +375,13 @@ if (!dParam || totalDays === 0) {
   }
 
   // ── 3. devices — always overwrite with latest state
+  // Compute zone percentages using the same calcZoneTimes() the fuel page uses
+  var ztDb    = calcZoneTimes();
+  var ztTotal = ztDb.glucose + ztDb.mixed + ztDb.fat || 1;
+  var pctGlucose = Math.round(ztDb.glucose / ztTotal * 100);
+  var pctMixed   = Math.round(ztDb.mixed   / ztTotal * 100);
+  var pctFat     = Math.round(ztDb.fat     / ztTotal * 100);
+
   fetch(SUPABASE_URL + '/rest/v1/devices?on_conflict=device_id', {
     method:  'POST',
     headers: Object.assign({}, headers, { 'Prefer': 'resolution=merge-duplicates,return=minimal' }),
@@ -391,7 +398,10 @@ if (!dParam || totalDays === 0) {
       last_t_param:   params.get('t') || null,
       last_d_param:   dParam         || null,
       last_a_param:   aParam         || null,
-      last_s_param:   sParam         || null
+      last_s_param:   sParam         || null,
+      pct_glucose:    pctGlucose,
+      pct_mixed:      pctMixed,
+      pct_fat:        pctFat
     })
   }).catch(function() {});
 
