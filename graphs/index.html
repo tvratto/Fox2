@@ -103,6 +103,7 @@ html, body {
     <button class="nav-tab" data-page="2">Daily Scores</button>
     <button class="nav-tab" data-page="3">Insights</button>
   </div>
+  <div id="debug-bar" style="font-size:10px;color:rgba(255,255,255,0.25);font-family:monospace;padding:2px 20px 6px;letter-spacing:0.05em;"></div>
 </div>
 
 <div class="scroll-x" id="scroller">
@@ -169,6 +170,16 @@ var targetAUC = parseInt(params.get('t') || '0', 36);  // base36 encoded
 var dParam    = params.get('d') || '';
 var aParam    = params.get('a') || '';
 var sParam    = params.get('s') || '';
+
+// ─── Debug bar ────────────────────────────────────────────────────
+(function() {
+  var id = params.get('id') || '—';
+  var v  = params.get('v')  || '—';
+  var p  = params.get('p')  || '—';
+  var c  = params.get('c')  || '—';
+  var el = document.getElementById('debug-bar');
+  if (el) el.textContent = 'id:' + id + '  v:' + v + '  patient:' + p + '  clinic:' + c;
+})();
 
 // Derive windowStart: 3 weeks ending on the most recent Saturday (same logic as device)
 var windowStart = (function() {
