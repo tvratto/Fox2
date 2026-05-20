@@ -1000,9 +1000,13 @@ function buildGraphCard(forcedView) {
   var gLeft  = PAD + 6;
   var gRight = CW - PAD - 4;
 
-  // ── Compute shared y scale across ALL 21 days ─────────────────
+  var DAYS_PER_WEEK = 7;
+  var WEEKS   = 3;
+  var chunkStart = Math.max(0, totalDays - WEEKS * DAYS_PER_WEEK);
+
+  // ── Compute shared y scale across displayed 21 days only ─────
   var rawMax = 0;
-  for (var d = 0; d < totalDays; d++) {
+  for (var d = chunkStart; d < totalDays; d++) {
     for (var i = 0; i < days[d].vals.length; i++) {
       if (days[d].vals[i] > rawMax) rawMax = days[d].vals[i];
     }
@@ -1027,7 +1031,6 @@ function buildGraphCard(forcedView) {
   }
 
   // ── Draw 3 week rows (most recent 21 days) ───────────────────
-  var chunkStart = Math.max(0, totalDays - WEEKS * DAYS_PER_WEEK);
   var rowTop = PAD + PILL_H + PILL_PAD;
   for (var w = 0; w < WEEKS; w++) {
     var dayOffset  = chunkStart + w * DAYS_PER_WEEK;
@@ -1126,7 +1129,7 @@ function buildGraphCard(forcedView) {
   if (activeView === 'stats') {
     // ── Stats view: Range / Avg / Target% ──────────────────────
     var allVals = [], daysWithData = 0, daysOnTarget = 0, totalAUC = 0;
-    for (var d = 0; d < totalDays; d++) {
+    for (var d = chunkStart; d < totalDays; d++) {
       for (var i = 0; i < days[d].vals.length; i++) allVals.push(days[d].vals[i]);
       if (days[d].vals.length > 0) {
         daysWithData++;
