@@ -1540,13 +1540,14 @@ function buildInsightsCard() {
   }
 
   // ── 3-day rolling average bars ───────────────────────────────────
-  // 7 bars evenly spaced ending at todayIdx, each a 3-day window avg.
+  // 7 bars evenly spaced across the last 21 days
   var NUM_BARS = 7;
   var MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   var momBars = [];
+  var momEnd = totalDays - 1;
   for (var b = 0; b < NUM_BARS; b++) {
-    var centerDay = Math.round((todayIdx / (NUM_BARS - 1)) * b);
-    var winStart  = Math.max(0, centerDay - 1);
+    var centerDay = insightsStart + Math.round(((momEnd - insightsStart) / (NUM_BARS - 1)) * b);
+    var winStart  = Math.max(insightsStart, centerDay - 1);
     var winEnd    = Math.min(totalDays - 1, centerDay + 1);
     var winAUC = 0, winDays = 0;
     for (var d = winStart; d <= winEnd; d++) {
@@ -2138,8 +2139,9 @@ function buildInsightsCard() {
   curY = drawSectionTitle(curY, 'Fuel Balance');
 
   function weekZoneTimes(w) {
+    var fuelChunkStart = Math.max(0, totalDays - 21);
     var glucose = 0, mixed = 0, fat = 0;
-    for (var d = w * 7; d < (w + 1) * 7 && d < totalDays; d++) {
+    for (var d = fuelChunkStart + w * 7; d < fuelChunkStart + (w + 1) * 7 && d < totalDays; d++) {
       if (days[d].zoneTimes) {
         glucose += days[d].zoneTimes.glucose;
         mixed   += days[d].zoneTimes.mixed;
