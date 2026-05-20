@@ -181,7 +181,10 @@ var sParam    = params.get('s') || '';
   if (el) el.textContent = 'id:' + id + '  v:' + v + '  patient:' + p + '  clinic:' + c;
 })();
 
-// Derive windowStart: 3 weeks ending on the most recent Saturday (same logic as device)
+// Count day blocks first so windowStart can span the full payload
+var numDaysInPayload = dParam ? dParam.split('|').length : 21;
+
+// Derive windowStart: window ending on the most recent Saturday, spanning all payload days
 var windowStart = (function() {
   var now = new Date();
   var dow = now.getUTCDay(); // 0=Sun, 6=Sat
@@ -189,7 +192,7 @@ var windowStart = (function() {
   // This matches the device which anchors the window to the current week's Saturday
   var daysToSat = (6 - dow + 7) % 7;
   var weekEndMs = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) + daysToSat * 86400000;
-  return Math.floor(weekEndMs / 1000) - 20 * 86400;
+  return Math.floor(weekEndMs / 1000) - (numDaysInPayload - 1) * 86400;
 })();
 
 // Parse injected AUCs — fixed 21-slot, 2-char base36 each, no separators
@@ -294,9 +297,13 @@ if (!dParam || totalDays === 0) {
   var SUPABASE_URL = 'https://byysvwdsbpmbypflqcjs.supabase.co';
   var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ5eXN2d2RzYnBtYnlwZmxxY2pzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MTEwNTYsImV4cCI6MjA5NDE4NzA1Nn0.uAKOkd9vNhtN7umEGrVLcQLNjWOnn33n-xKVT25mFzw';
 
-  var deviceId  = idParam || ('unknown_' + cParam + '_' + pParam);
-  var patientId = pParam  || null;
-  var clinicId  = cParam  || null;
+  var deviceId   = idParam || ('unknown_' + cParam + '_' + pParam);
+  var patientId  = pParam  || null;
+  var clinicId   = cParam  || null;
+  // src=qr → QR code scan; src=nfc → NFC tap; default 'v2' for unknown/future
+  var payloadVer = params.get('src') === 'nfc' ? 'nfc_v1'
+                 : params.get('src') === 'qr'  ? 'qr_v1'
+                 : (totalDays <= 21             ? 'qr_v1' : 'nfc_v1');
 
   // Parse streaks from sParam
   var sParts = sParam ? sParam.split(',') : [];
@@ -331,7 +338,7 @@ if (!dParam || totalDays === 0) {
         target_auc:  targetAUC || null,
         reading_ts:  ts,
         ppm:         ppm,
-        payload_ver: 'qr_v1'
+        payload_ver: payloadVer
       });
       i += 4;
     }
@@ -361,7 +368,7 @@ if (!dParam || totalDays === 0) {
         day_date:    dayDate,
         auc_score:   auc,
         target_auc:  targetAUC || null,
-        payload_ver: 'qr_v1'
+        payload_ver: payloadVer
       });
     }
   }
@@ -403,7 +410,7 @@ if (!dParam || totalDays === 0) {
       streak_best:          streakBest,
       last_scan_at:         new Date().toISOString(),
       last_measurement_at:  lastMeasurementAt,
-      payload_ver:          'qr_v1',
+      payload_ver:          payloadVer,
       firmware_ver:         params.get('v') || null,
       last_t_param:         params.get('t') || null,
       last_d_param:         dParam         || null,
@@ -1005,11 +1012,8 @@ function buildGraphCard(forcedView) {
   var maxY = Math.ceil(rawMax * 1.15 / step) * step;
   if (maxY < 2) maxY = 2;
 
-  // Today = last day with any measurements
-  var todayIdx = 0;
-  for (var d = 0; d < totalDays; d++) {
-    if (days[d].vals.length > 0) todayIdx = d;
-  }
+  // Today = last day of payload
+  var todayIdx = totalDays - 1;
 
   // ── Zone gradient stop fractions (for zones view fill) ───────
   var activeView = forcedView || summaryView;
@@ -1022,10 +1026,11 @@ function buildGraphCard(forcedView) {
     zoneGrad = { s3: s3, s5: s5 };
   }
 
-  // ── Draw 3 week rows ─────────────────────────────────────────
+  // ── Draw 3 week rows (most recent 21 days) ───────────────────
+  var chunkStart = Math.max(0, totalDays - WEEKS * DAYS_PER_WEEK);
   var rowTop = PAD + PILL_H + PILL_PAD;
   for (var w = 0; w < WEEKS; w++) {
-    var dayOffset  = w * DAYS_PER_WEEK;
+    var dayOffset  = chunkStart + w * DAYS_PER_WEEK;
     var weekDays   = days.slice(dayOffset, dayOffset + DAYS_PER_WEEK);
     var gTop       = rowTop;
     var gBottom    = gTop + GRAPH_H;
@@ -1033,7 +1038,7 @@ function buildGraphCard(forcedView) {
     // Last measurement from previous week
     var prevPt = null;
     if (w > 0) {
-      for (var pd = w * DAYS_PER_WEEK - 1; pd >= (w-1) * DAYS_PER_WEEK; pd--) {
+      for (var pd = chunkStart + w * DAYS_PER_WEEK - 1; pd >= chunkStart + (w-1) * DAYS_PER_WEEK; pd--) {
         if (days[pd] && days[pd].epochs.length > 0) {
           var ei = days[pd].epochs.length - 1;
           prevPt = { epoch: days[pd].epochs[ei], val: days[pd].vals[ei] };
@@ -1045,7 +1050,7 @@ function buildGraphCard(forcedView) {
     // First measurement from next week
     var nextPt = null;
     if (w < WEEKS - 1) {
-      for (var nd = (w+1) * DAYS_PER_WEEK; nd < (w+2) * DAYS_PER_WEEK; nd++) {
+      for (var nd = chunkStart + (w+1) * DAYS_PER_WEEK; nd < chunkStart + (w+2) * DAYS_PER_WEEK; nd++) {
         if (days[nd] && days[nd].epochs.length > 0) {
           nextPt = { epoch: days[nd].epochs[0], val: days[nd].vals[0] };
           break;
@@ -1223,7 +1228,7 @@ function buildGraphCard(forcedView) {
     var d = new Date(epoch * 1000);
     return months[d.getUTCMonth()] + ' ' + d.getUTCDate();
   }
-  var rangeStr = fmtDate(windowStart) + ' – ' + fmtDate(windowStart + 20 * 86400);
+  var rangeStr = fmtDate(windowStart + chunkStart * 86400) + ' – ' + fmtDate(windowStart + (chunkStart + 20) * 86400);
   var pillW = 220, pillH = PILL_H, pillCY = PAD + pillH / 2;
   var pillLeft = CW/2 - pillW/2, pillRight = CW/2 + pillW/2;
   ctx.fillStyle = '#f5c842';
@@ -1270,14 +1275,14 @@ function buildStreakCard() {
   var BAR_GAP  = 4;   // Gap between bars
   var FOOTER_H = 14;
 
-  // Count days with data
-  var daysWithData = 0;
-  for (var d = 0; d < totalDays; d++) {
-    if (days[d].vals.length > 0) daysWithData++;
-  }
+  // Show only most recent 21 days
+  var streakStart = Math.max(0, totalDays - 21);
+
+  // Count days with data in that window
+  var windowDays = totalDays - streakStart;  // always 21 (or fewer if payload < 21)
 
   var CH = PAD + PILL_H + PILL_PAD + 8
-         + daysWithData * (BAR_H + BAR_GAP)
+         + windowDays * (BAR_H + BAR_GAP)
          + PAD + FOOTER_H;
 
   var canvas = document.createElement('canvas');
@@ -1293,19 +1298,16 @@ function buildStreakCard() {
   var barRight = CW - PAD - 4;
   var barW     = barRight - barLeft;
 
-  // Find max AUC for scaling
+  // Find max AUC for scaling (within window only)
   var maxAUC = targetAUC > 0 ? targetAUC : 0;
-  for (var d = 0; d < totalDays; d++) {
+  for (var d = streakStart; d < totalDays; d++) {
     if (days[d].auc > maxAUC) maxAUC = days[d].auc;
   }
   maxAUC *= 1.05;
   if (maxAUC < 40) maxAUC = 40;
 
-  // Today = last day with data
-  var todayIdx = 0;
-  for (var d = 0; d < totalDays; d++) {
-    if (days[d].vals.length > 0) todayIdx = d;
-  }
+  // Today = last day of payload
+  var todayIdx = totalDays - 1;
 
   // ── Pill title ────────────────────────────────────────────────
   var pillCX = CW / 2;
@@ -1321,8 +1323,8 @@ function buildStreakCard() {
   ctx.fillRect(pillCX - 1, pillCY - PILL_H/2 + 6, 1, PILL_H - 12);
 
   var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  var d0 = new Date(windowStart * 1000);
-  var d1 = new Date((windowStart + 20 * 86400) * 1000);
+  var d0 = new Date((windowStart + streakStart * 86400) * 1000);
+  var d1 = new Date((windowStart + (totalDays - 1) * 86400) * 1000);
   var dateStr = months[d0.getUTCMonth()] + ' ' + d0.getUTCDate()
               + ' – ' + months[d1.getUTCMonth()] + ' ' + d1.getUTCDate();
   ctx.fillStyle = '#1a1a2e';
@@ -1335,9 +1337,9 @@ function buildStreakCard() {
   var barRow = 0;
   var daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  for (var d = 0; d < totalDays; d++) {
+  for (var d = streakStart; d < totalDays; d++) {
     var day = days[d];
-    if (day.vals.length === 0) continue;  // Skip days without data
+    var isEmpty = day.vals.length === 0;
 
     var isToday = (d === todayIdx);
     var auc = day.auc;
@@ -1348,17 +1350,26 @@ function buildStreakCard() {
     var dateObj = new Date((windowStart + d * 86400) * 1000);
     var dateLabel = months[dateObj.getUTCMonth()].substring(0, 3) + ' ' + dateObj.getUTCDate();
     var dayLabel = daysOfWeek[dateObj.getUTCDay()];
-    
+
     // Day of week left-aligned, date right-aligned — same vertical centre
-    ctx.fillStyle = isToday ? 'rgba(245,200,66,0.6)' : 'rgba(255,255,255,0.3)';
+    ctx.fillStyle = isEmpty ? 'rgba(255,255,255,0.12)' : (isToday ? 'rgba(245,200,66,0.6)' : 'rgba(255,255,255,0.3)');
     ctx.font = (isToday ? 'bold ' : '') + '9px -apple-system,sans-serif';
     ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
     ctx.fillText(dayLabel, PAD, barY + BAR_H / 2);
 
-    ctx.fillStyle = isToday ? '#f5c842' : 'rgba(255,255,255,0.5)';
+    ctx.fillStyle = isEmpty ? 'rgba(255,255,255,0.15)' : (isToday ? '#f5c842' : 'rgba(255,255,255,0.5)');
     ctx.font = (isToday ? 'bold ' : '') + '11px -apple-system,sans-serif';
     ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
     ctx.fillText(dateLabel, PAD + DATE_W - 2, barY + BAR_H / 2);
+
+    if (isEmpty) {
+      // Draw a dim placeholder track the full width
+      ctx.fillStyle = 'rgba(255,255,255,0.05)';
+      roundRect(ctx, barLeft, barY, barW, BAR_H, Math.min(4, BAR_H / 2));
+      ctx.fill();
+      barY += BAR_H + BAR_GAP;
+      continue;
+    }
 
     // Bar dimensions
     var bx = barLeft;
@@ -1519,8 +1530,9 @@ function buildInsightsCard() {
   for (var d = 0; d < totalDays; d++) {
     if (days[d].vals.length > 0) todayIdx = d;
   }
+  var insightsStart = Math.max(0, totalDays - 21);
   var daysWithData = 0;
-  for (var d = 0; d < totalDays; d++) {
+  for (var d = insightsStart; d < totalDays; d++) {
     if (days[d].vals.length > 0) daysWithData++;
   }
 
@@ -1872,7 +1884,7 @@ function buildInsightsCard() {
   }
 
   var patternCounts = {}, patternExamples = {}, dailyPatterns = [], totalPatterned = 0;
-  for (var d = 0; d < totalDays; d++) {
+  for (var d = insightsStart; d < totalDays; d++) {
     if (days[d].vals.length === 0) continue;
     var shape = classifyDay(d); totalPatterned++;
     dailyPatterns.push({ dayIdx: d, shape: shape });
