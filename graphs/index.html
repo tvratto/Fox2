@@ -103,7 +103,7 @@ html, body {
     <button class="nav-tab" data-page="2">Daily Scores</button>
     <button class="nav-tab" data-page="3">Insights</button>
   </div>
-  <div id="debug-bar" style="font-size:10px;color:rgba(255,255,255,0.25);font-family:monospace;padding:2px 20px 6px;letter-spacing:0.05em;">v1.1</div>
+  <div id="debug-bar" style="font-size:10px;color:rgba(255,255,255,0.25);font-family:monospace;padding:2px 20px 6px;letter-spacing:0.05em;">v1.3</div>
 </div>
 
 <div class="scroll-x" id="scroller">
@@ -178,7 +178,7 @@ var sParam    = params.get('s') || '';
   var p  = params.get('p')  || '—';
   var c  = params.get('c')  || '—';
   var el = document.getElementById('debug-bar');
-  if (el) el.textContent = 'id:' + id + '  v:' + v + '  patient:' + p + '  clinic:' + c + '  [web v1.2]';
+  if (el) el.textContent = 'id:' + id + '  v:' + v + '  patient:' + p + '  clinic:' + c + '  [web v1.3]';
 })();
 
 // Count day blocks first so windowStart can span the full payload
@@ -1016,8 +1016,11 @@ function buildGraphCard(forcedView) {
   var maxY = Math.ceil(rawMax * 1.15 / step) * step;
   if (maxY < 2) maxY = 2;
 
-  // Today = last day of payload
+  // Today = last day that actually has measurements (trailing empty slots don't count)
   var todayIdx = totalDays - 1;
+  for (var ti = totalDays - 1; ti >= 0; ti--) {
+    if (days[ti] && days[ti].vals.length > 0) { todayIdx = ti; break; }
+  }
 
   // ── Zone gradient stop fractions (for zones view fill) ───────
   var activeView = forcedView || summaryView;
