@@ -1177,6 +1177,56 @@ html, body {
 
 
 .ghostGraphCanvas{display:block;width:100%;height:100%;}
+
+/* Stable rendered pager panels */
+.ghostRenderedCard{
+  width:100%;
+  height:100%;
+}
+
+.ghostDateFull{
+  font-size:inherit;
+  font-weight:inherit;
+  letter-spacing:inherit;
+  line-height:inherit;
+  margin-bottom:inherit;
+}
+
+.ghostDailyScore{
+  font-size:inherit;
+  line-height:inherit;
+  color:var(--orange);
+  font-weight:950;
+  letter-spacing:-.085em;
+  font-variant-numeric:tabular-nums;
+  text-shadow:0 0 28px rgba(251,146,60,.18);
+}
+
+.ghostGraphWrap{
+  position:relative;
+  flex:1;
+  min-height:inherit;
+  width:100%;
+}
+
+.ghostGraphCanvas{
+  position:absolute;
+  inset:0;
+  display:block;
+  width:100%;
+  height:100%;
+}
+
+.ghostPrevDayLabel{
+  left:4.167%;
+  transform:translateX(-50%);
+}
+
+.ghostNextDayLabel{
+  left:95.833%;
+  transform:translateX(-50%);
+}
+
 </style>
 </head>
 <body>
@@ -1303,7 +1353,7 @@ var sParam    = params.get('s') || '';
   var p  = params.get('p')  || '—';
   var c  = params.get('c')  || '—';
   var el = document.getElementById('debug-bar');
-  if (el) el.textContent = 'id:' + id + '  v:' + v + '  patient:' + p + '  clinic:' + c + '  [web build 2117 pager-ghost-redraw]';
+  if (el) el.textContent = 'id:' + id + '  v:' + v + '  patient:' + p + '  clinic:' + c + '  [web build 2136 real-pager-panels]';
 })();
 
 // Count day blocks first so windowStart can span the full payload
@@ -4855,59 +4905,76 @@ function drawGraphToCanvas(targetCanvas,targetWrap,dayIdx,drawLabels){
     ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(Math.round(p.v),p.x,p.y-10);
   });
 }
+function axisHTMLForPanel(){
+  return '<div class="axis">'
+    + '<span style="left:8.333%;">12a</span>'
+    + '<span style="left:29.167%;">6a</span>'
+    + '<span style="left:50%;">12p</span>'
+    + '<span style="left:70.833%;">6p</span>'
+    + '<span style="left:91.667%;">12a</span>'
+    + '</div>';
+}
+
+function renderDayCardHTML(dayIdx){
+  const d=DAYS[Math.max(0,Math.min(TODAY_IDX,dayIdx))];
+  const prev=DAYS[dayIdx-1];
+  const next=DAYS[dayIdx+1];
+
+  const nextLabel=(dayIdx!==TODAY_IDX && next) ? next.dow : '';
+  const prevLabel=prev ? prev.dow : '';
+
+  return `
+    <main class="card ghostRenderedCard">
+      <div class="cardbody">
+        <section class="summaryTop">
+          <div class="summaryLeft">
+            <div class="kicker">${d.dow}</div>
+            <div class="ghostDateFull">${d.dateStr}</div>
+            <div class="scoreLabel">Daily Score</div>
+            <div class="ghostDailyScore">${d.score}</div>
+          </div>
+        </section>
+
+        <section class="graphSide">
+          <div class="ghostGraphWrap">
+            <canvas class="ghostGraphCanvas"></canvas>
+            <div class="graph-day-label ghostPrevDayLabel">${prevLabel}</div>
+            <div class="graph-day-label ghostNextDayLabel">${nextLabel}</div>
+          </div>
+          ${axisHTMLForPanel()}
+        </section>
+      </div>
+    </main>`;
+}
+
 function buildDayPanel(dayIdx, kind){
-  const source=document.getElementById('card');
   const panel=document.createElement('div');
   panel.className='dayPanel '+kind+'Panel';
   panel.dataset.dayIdx=String(Math.max(0,Math.min(TODAY_IDX,dayIdx)));
 
-  if(!source){
-    return panel;
-  }
-
-  const cardClone=source.cloneNode(true);
-  cardClone.removeAttribute('id');
-  cardClone.classList.remove('card-dragging');
-
-  // Remove IDs from the clone so the live card remains the only interactive card.
-  cardClone.querySelectorAll('[id]').forEach(el=>{
-    el.removeAttribute('id');
-  });
-
-  const d=DAYS[Number(panel.dataset.dayIdx)];
-
-  const todayLabel=cardClone.querySelector('[data-role="todayLabel"]') || cardClone.querySelector('.kicker');
-  const dateFull=cardClone.querySelector('[data-role="dateFull"]') || cardClone.querySelector('.summaryLeft > div:nth-child(2)');
-  const dailyScore=cardClone.querySelector('[data-role="dailyScore"]') || cardClone.querySelector('.summaryLeft > div:nth-child(4)');
-
-  if(todayLabel)todayLabel.textContent=d.dow;
-  if(dateFull)dateFull.textContent=d.dateStr;
-  if(dailyScore)dailyScore.textContent=d.score;
-
-  const graphWrap=cardClone.querySelector('.graphSide > div');
-  const canvas=cardClone.querySelector('canvas');
-
-  if(graphWrap){
-    graphWrap.querySelectorAll('#eventLayer,.placed-tag,#prevGraphDayLabel,#nextGraphDayLabel,.graph-day-label').forEach(el=>el.remove());
-  }
-
-  if(canvas){
-    canvas.removeAttribute('id');
-    canvas.classList.add('ghostGraphCanvas');
-  }
-
-  panel.appendChild(cardClone);
+  // Do NOT clone the live card. Render a stable, independent ghost card.
+  // The old clone-based approach caused the adjacent canvas to paint late
+  // on mobile Safari, so the new day appeared only after another touch/reflow.
+  panel.innerHTML=renderDayCardHTML(Number(panel.dataset.dayIdx));
   return panel;
 }
 
 function redrawPagerGhostCanvases(){
   document.querySelectorAll('#cardTrack .ghostPanel').forEach(panel=>{
     const dayIdx=Number(panel.dataset.dayIdx);
-    const wrap=panel.querySelector('.graphSide > div');
-    const canvas=panel.querySelector('canvas');
+    const wrap=panel.querySelector('.ghostGraphWrap');
+    const canvas=panel.querySelector('.ghostGraphCanvas');
     if(wrap && canvas){
       drawGraphToCanvas(canvas, wrap, dayIdx, false);
     }
+  });
+}
+
+function schedulePagerGhostRedraw(){
+  requestAnimationFrame(()=>{
+    redrawPagerGhostCanvases();
+    setTimeout(redrawPagerGhostCanvases,40);
+    setTimeout(redrawPagerGhostCanvases,140);
   });
 }
 
@@ -4952,7 +5019,7 @@ function installDayPager(){
   requestAnimationFrame(()=>{
     drawGraph();
     renderEvents();
-    redrawPagerGhostCanvases();
+    schedulePagerGhostRedraw();
   });
 
   enableGraphDayPager();
@@ -4979,12 +5046,12 @@ function refreshDayPagerGhosts(){
 
   drawGraph();
   renderEvents();
-  redrawPagerGhostCanvases();
+  schedulePagerGhostRedraw();
 
   requestAnimationFrame(()=>{
     track.classList.remove('dragging');
     track.style.transform='translateX(-100%)';
-    redrawPagerGhostCanvases();
+    schedulePagerGhostRedraw();
   });
 }
 
