@@ -1116,6 +1116,16 @@ html, body {
   touch-action:none;
 }
 
+
+/* Stronger mobile graph-card day swipe */
+.card{
+  touch-action:pan-y;
+  overscroll-behavior:contain;
+}
+.card.card-dragging{
+  transition:none !important;
+}
+
 </style>
 </head>
 <body>
@@ -4528,123 +4538,181 @@ function buildTags(){
 
 
 
+
 function enableGraphDaySwipe(){
   const card=document.getElementById('card');
-  const wrap=document.getElementById('graphWrap');
   if(!card || card._graphSwipeReady)return;
   card._graphSwipeReady=true;
 
-  let down=false;
-  let startX=0,startY=0,lastX=0,lastT=0,velocity=0,locked=null;
+  let active=false;
+  let startX=0,startY=0,lastX=0,lastT=0,velocity=0;
+  let locked=null;
+  let committedDay=selectedDay;
+  let previewDay=selectedDay;
 
-  function setCardOffset(px){
-    const limit=Math.min(92,window.innerWidth*.24);
-    const eased=Math.max(-limit,Math.min(limit,px));
+  function canStart(e){
+    const target=e.target || (e.touches&&e.touches[0]&&e.touches[0].target);
+    if(target && target.closest){
+      if(target.closest('.placed-tag'))return false;
+      if(target.closest('#tagsScroll'))return false;
+      if(target.closest('.tag'))return false;
+      if(target.closest('input,button,a'))return false;
+    }
+    return true;
+  }
+
+  function pointFromTouch(e){
+    const t=e.touches&&e.touches[0] ? e.touches[0] : e.changedTouches&&e.changedTouches[0];
+    return t ? {x:t.clientX,y:t.clientY} : null;
+  }
+
+  function maxOffset(){
+    return Math.min(110,Math.max(70,card.clientWidth*.26));
+  }
+
+  function setCardOffset(dx){
+    const limit=maxOffset();
+    const eased=Math.max(-limit,Math.min(limit,dx*.58));
     card.style.transform='translateX('+eased+'px)';
   }
 
-  function resetCardOffset(){
+  function resetCard(){
     card.classList.remove('card-dragging');
     card.style.transform='translateX(0)';
   }
 
-  function finishSwipe(clientX){
-    const dx=clientX-startX;
-    const threshold=Math.min(90,Math.max(42,card.clientWidth*0.18));
-    const fast=Math.abs(velocity)>0.85 && Math.abs(dx)>24;
-
-    let nextIdx=selectedDay;
-    if((dx>threshold || (fast && velocity>0)) && selectedDay>0){
-      nextIdx=selectedDay-1;
-    }else if((dx<-threshold || (fast && velocity<0)) && selectedDay<TODAY_IDX){
-      nextIdx=selectedDay+1;
+  function maybePreview(dx){
+    const nextIdx=dx<0 ? committedDay+1 : committedDay-1;
+    if(Math.abs(dx)<28 || nextIdx<0 || nextIdx>TODAY_IDX){
+      if(previewDay!==committedDay){
+        previewDay=committedDay;
+        selectDay(committedDay);
+      }
+      return;
     }
 
-    if(nextIdx!==selectedDay){
-      // Finish the physical movement in the swipe direction, then snap the new day in.
-      const dir=nextIdx>selectedDay?-1:1;
-      card.classList.remove('card-dragging');
-      card.style.transform='translateX('+(dir*card.clientWidth*.22)+'px)';
-
-      setTimeout(()=>{
-        card.classList.add('card-dragging');
-        card.style.transform='translateX('+(-dir*card.clientWidth*.18)+'px)';
-        selectDay(nextIdx);
-        ensureSelectedDayVisible();
-
-        requestAnimationFrame(()=>{
-          card.classList.remove('card-dragging');
-          card.style.transform='translateX(0)';
-        });
-      },115);
-    }else{
-      resetCardOffset();
+    if(previewDay!==nextIdx){
+      previewDay=nextIdx;
+      selectDay(nextIdx);
+      ensureSelectedDayVisible();
     }
   }
 
-  function begin(e){
-    if(e.target && e.target.closest && e.target.closest('.placed-tag'))return;
-    if(card.setPointerCapture && e.pointerId!=null){
-      try{card.setPointerCapture(e.pointerId);}catch(_){}
-    }
-    down=true;
-    startX=e.clientX;
-    startY=e.clientY;
-    lastX=e.clientX;
-    lastT=performance.now();
+  function beginAt(x,y){
+    active=true;
+    startX=x;startY=y;
+    lastX=x;lastT=performance.now();
     velocity=0;
     locked=null;
+    committedDay=selectedDay;
+    previewDay=selectedDay;
     card.classList.add('card-dragging');
   }
 
-  function move(e){
-    if(!down)return;
+  function moveAt(x,y,ev){
+    if(!active)return;
 
-    const dx=e.clientX-startX;
-    const dy=e.clientY-startY;
+    const dx=x-startX;
+    const dy=y-startY;
     const adx=Math.abs(dx),ady=Math.abs(dy);
 
     if(!locked){
-      if(adx>10 && adx>ady*1.15){locked='x';card.classList.add('card-dragging');e.preventDefault();}
-      else if(ady>10 && ady>adx*1.15)locked='y';
+      if(adx>8 && adx>ady*1.08)locked='x';
+      else if(ady>10 && ady>adx*1.08)locked='y';
     }
 
     if(locked==='x'){
+      if(ev && ev.cancelable)ev.preventDefault();
+
       const now=performance.now();
       const dt=Math.max(1,now-lastT);
-      velocity=(e.clientX-lastX)/dt*16.7;
-      lastX=e.clientX;
-      lastT=now;
+      velocity=(x-lastX)/dt*16.7;
+      lastX=x;lastT=now;
 
-      setCardOffset(dx*.55);
-      e.preventDefault();
+      maybePreview(dx);
+      setCardOffset(dx);
     }
   }
 
-  function end(e){
-    if(!down)return;
-    down=false;
+  function finishAt(x){
+    if(!active)return;
+    active=false;
 
-    if(locked==='x')finishSwipe(e.clientX);
-    else resetCardOffset();
+    const dx=x-startX;
+    const threshold=Math.min(95,Math.max(44,card.clientWidth*.18));
+    const fast=Math.abs(velocity)>0.75 && Math.abs(dx)>22;
 
+    let finalDay=committedDay;
+    if((dx>threshold || (fast && velocity>0)) && committedDay>0){
+      finalDay=committedDay-1;
+    }else if((dx<-threshold || (fast && velocity<0)) && committedDay<TODAY_IDX){
+      finalDay=committedDay+1;
+    }
+
+    if(finalDay!==selectedDay){
+      selectDay(finalDay);
+      ensureSelectedDayVisible();
+    }else if(finalDay!==committedDay){
+      // already previewing final day
+      ensureSelectedDayVisible();
+    }else if(previewDay!==committedDay){
+      selectDay(committedDay);
+      ensureSelectedDayVisible();
+    }
+
+    resetCard();
     locked=null;
   }
 
-  // Pointer events work for mouse and touch.
-  card.addEventListener('pointerdown',begin,{passive:false});
-  window.addEventListener('pointermove',move,{passive:false});
-  window.addEventListener('pointerup',end,{passive:false});
-  window.addEventListener('pointercancel',()=>{
-    down=false;locked=null;resetCardOffset();
+  // Pointer events for desktop/mouse.
+  card.addEventListener('pointerdown',e=>{
+    if(e.pointerType==='touch')return; // handled by explicit touch events below
+    if(!canStart(e))return;
+    beginAt(e.clientX,e.clientY);
   },{passive:true});
-}
 
-function ensureSelectedDayVisible(){
-  const active=document.querySelector('.day.active');
-  if(active){
-    active.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
-  }
+  window.addEventListener('pointermove',e=>{
+    if(!active)return;
+    moveAt(e.clientX,e.clientY,e);
+  },{passive:false});
+
+  window.addEventListener('pointerup',e=>{
+    if(!active)return;
+    finishAt(e.clientX);
+  },{passive:false});
+
+  window.addEventListener('pointercancel',()=>{
+    if(previewDay!==committedDay)selectDay(committedDay);
+    active=false;locked=null;resetCard();
+  },{passive:true});
+
+  // Explicit touch handlers for iOS Safari, because the outer horizontal scroller
+  // can otherwise steal the gesture before pointer events get useful movement.
+  card.addEventListener('touchstart',e=>{
+    if(!canStart(e))return;
+    const p=pointFromTouch(e);
+    if(!p)return;
+    beginAt(p.x,p.y);
+  },{passive:true});
+
+  card.addEventListener('touchmove',e=>{
+    if(!active)return;
+    const p=pointFromTouch(e);
+    if(!p)return;
+    moveAt(p.x,p.y,e);
+  },{passive:false});
+
+  card.addEventListener('touchend',e=>{
+    if(!active)return;
+    const p=pointFromTouch(e);
+    if(!p){resetCard();return;}
+    finishAt(p.x);
+  },{passive:false});
+
+  card.addEventListener('touchcancel',()=>{
+    if(previewDay!==committedDay)selectDay(committedDay);
+    active=false;locked=null;resetCard();
+  },{passive:true});
 }
 
 
