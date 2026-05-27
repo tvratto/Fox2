@@ -912,11 +912,12 @@ html, body {
 
 
 
-/* --- Desktop / large-screen containment, scoped to the actual app shell --- */
+
+/* --- Desktop / large-screen containment, centered app shell --- */
 @media (hover:hover) and (pointer:fine) and (min-width: 800px){
   html, body{
     width:100%;
-    min-height:100%;
+    height:100%;
     overflow:hidden;
     background:
       radial-gradient(circle at 50% 0%, rgba(255,210,60,.07), transparent 34%),
@@ -924,22 +925,29 @@ html, body {
   }
 
   .top-header,
-  .bottom-bar,
-  .scroll-x{
-    left:50%;
+  .bottom-bar{
+    position:fixed;
+    left:calc((100vw - min(430px, 100vw)) / 2);
     right:auto;
     width:min(430px, 100vw);
-    transform:translateX(-50%);
+    transform:none;
   }
 
   .scroll-x{
+    position:relative;
+    width:min(430px, 100vw);
+    height:100dvh;
+    margin-left:auto;
+    margin-right:auto;
+    transform:none;
+    left:auto;
+    right:auto;
+    border-radius:28px;
     box-shadow:
       0 0 0 1px rgba(255,255,255,.06),
       0 18px 60px rgba(0,0,0,.55);
-    border-radius:28px;
     overflow-x:auto;
     overflow-y:hidden;
-    height:100dvh;
   }
 
   .page{
