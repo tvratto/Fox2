@@ -4018,8 +4018,8 @@ function updateCard(){
   document.getElementById('dateFull').textContent=d.dateStr;
   document.getElementById('dailyScore').textContent=d.score;
   const v=getVerdict(d,isToday);
-  document.getElementById('verdict').textContent=v[0];
-  document.getElementById('subtext').textContent=v[1];
+  const verdictEl=document.getElementById('verdict'); if(verdictEl) verdictEl.textContent=v[0];
+  const subtextEl=document.getElementById('subtext'); if(subtextEl) subtextEl.textContent=v[1];
   document.getElementById('tagsLabel').textContent=isToday?'Tags for today':'Tags for '+d.dateStr;
 }
 function buildTags(){
