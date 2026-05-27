@@ -902,7 +902,7 @@ html, body {
     <div class="bank" id="bank" title="Tap to replay deposit animation">
       <div class="cell" id="contribCell"><div class="label">Contribution</div><div class="num" id="contribNum">+140</div><div class="sub" id="contribSub">tap to deposit</div></div>
       <div class="sep"></div>
-      <div class="cell" id="totalCell"><div class="label">Total</div><div class="num" id="totalNum">12,480</div><div class="sub" id="added">+140 today</div><div class="sub" id="archiveStatus" style="font-size:9px;letter-spacing:.04em;">Archived ✓</div></div>
+      <div class="cell" id="totalCell"><div class="label">Total</div><div class="num" id="totalNum">12,480</div><div class="sub" id="added">+0 today</div><div class="sub" id="archiveStatus" style="font-size:9px;letter-spacing:.04em;">Archived ✓</div></div>
     </div>
   </section>
 
@@ -4437,8 +4437,16 @@ function flow(fromEl,toEl,dur){
   requestAnimationFrame(emit);
 }
 
-function reset(){hasDeposited=false;bank.classList.remove('depositing');bank.classList.remove('streaming');contribCell.classList.remove('glow');totalCell.classList.remove('totalGlow');contribNum.classList.remove('pulse');totalNum.classList.remove('pop');added.classList.remove('show');archiveStatus.classList.remove('show');card.classList.remove('sealed');contribNum.textContent='+'+DAILY_SCORE;totalNum.textContent=fmt(TOTAL_BEFORE);contribSub.textContent='tap to deposit'}
-function deposit(){if(hasDeposited)return;hasDeposited=true;bank.classList.add('streaming');contribCell.classList.add('glow');contribNum.classList.add('pulse');contribSub.textContent='ready';setTimeout(()=>{contribSub.textContent='depositing';flow(contribCell,totalCell,4000);counter(contribNum,DAILY_SCORE,0,4000,v=>'+'+Math.max(0,Math.round(v)));counter(totalNum,TOTAL_BEFORE,TOTAL_AFTER,4000,v=>fmt(v),()=>{contribNum.classList.remove('pulse');contribCell.classList.remove('glow');totalCell.classList.add('totalGlow');totalNum.classList.add('pop');bank.classList.remove('streaming');contribSub.textContent='complete';added.classList.add('show');archiveStatus.classList.add('show');card.classList.add('sealed');burst(totalNum,'rgba(110,231,135,.95)',34);setTimeout(()=>{totalCell.classList.remove('totalGlow');totalNum.classList.remove('pop')},1100)})},700)}
+
+function updateAddedLabel(amount){
+  const el=document.getElementById('added');
+  if(!el)return;
+  amount=Math.max(0,Math.round(amount||0));
+  el.textContent='+'+amount.toLocaleString()+' today';
+}
+
+function reset(){updateAddedLabel(DAILY_SCORE);hasDeposited=false;bank.classList.remove('depositing');bank.classList.remove('streaming');contribCell.classList.remove('glow');totalCell.classList.remove('totalGlow');contribNum.classList.remove('pulse');totalNum.classList.remove('pop');added.classList.remove('show');archiveStatus.classList.remove('show');card.classList.remove('sealed');contribNum.textContent='+'+DAILY_SCORE;totalNum.textContent=fmt(TOTAL_BEFORE);updateAddedLabel(DAILY_SCORE);contribSub.textContent='tap to deposit'}
+function deposit(){if(hasDeposited)return;hasDeposited=true;bank.classList.add('streaming');contribCell.classList.add('glow');contribNum.classList.add('pulse');contribSub.textContent='ready';setTimeout(()=>{contribSub.textContent='depositing';flow(contribCell,totalCell,4000);counter(contribNum,DAILY_SCORE,0,4000,v=>'+'+Math.max(0,Math.round(v)));counter(totalNum,TOTAL_BEFORE,TOTAL_AFTER,4000,v=>fmt(v),()=>{contribNum.classList.remove('pulse');contribCell.classList.remove('glow');totalCell.classList.add('totalGlow');totalNum.classList.add('pop');bank.classList.remove('streaming');contribSub.textContent='complete';updateAddedLabel(DAILY_SCORE);added.classList.add('show');archiveStatus.classList.add('show');card.classList.add('sealed');burst(totalNum,'rgba(110,231,135,.95)',34);setTimeout(()=>{totalCell.classList.remove('totalGlow');totalNum.classList.remove('pop')},1100)})},700)}
 bank.onclick=()=>{reset();setTimeout(deposit,250)}
 
 // ── Supabase tag save ─────────────────────────────────────────────
@@ -4484,7 +4492,7 @@ function saveNote(){
 })();
 
 // ── Show already-deposited state immediately ──────────────────────
-function showDeposited(){
+function showDeposited(){updateAddedLabel(DAILY_SCORE);
   hasDeposited=true;
   contribNum.textContent='+'+DAILY_SCORE;
   contribSub.textContent='complete';
@@ -4674,7 +4682,7 @@ function renderEvents(){
   });
 }
 
-function initResultsPage(){
+function initResultsPage(){updateAddedLabel(DAILY_SCORE);
   resizeP();loop();buildRail();updateCard();buildTags();updateNote();
   setTimeout(function(){drawGraph();renderEvents();},80);
   setTimeout(deposit,900);
