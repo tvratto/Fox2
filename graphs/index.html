@@ -864,6 +864,26 @@ html, body {
 /* Hide particles canvas when not on results page */
 #particles { transition: opacity 0.2s; }
 
+
+.graph-day-label{
+  position:absolute;
+  top:4px;
+  z-index:5;
+  color:var(--gold);
+  font-size:10px;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  font-weight:950;
+  pointer-events:none;
+  opacity:.78;
+}
+#prevGraphDayLabel{
+  left:10px;
+}
+#nextGraphDayLabel{
+  right:10px;
+}
+
 </style>
 </head>
 <body>
@@ -915,8 +935,8 @@ html, body {
       </section>
 
       <section class="graphSide">
-        <div id="graphWrap"><canvas id="graph"></canvas><div id="eventLayer"><div class="event-rail"></div><div class="event-hint">Drag tags here</div></div></div>
-        <div class="axis"><span style="left:0%;">9:36p</span><span style="left:8.333%;">12a</span><span style="left:29.167%;">6a</span><span style="left:50%;">12p</span><span style="left:70.833%;">6p</span><span style="left:91.667%;">12a</span><span style="left:100%;">2:24a</span></div>
+        <div id="graphWrap"><canvas id="graph"></canvas><div id="prevGraphDayLabel" class="graph-day-label"></div><div id="nextGraphDayLabel" class="graph-day-label"></div><div id="eventLayer"><div class="event-rail"></div><div class="event-hint">Drag tags here</div></div></div>
+        <div class="axis"><span style="left:8.333%;">12a</span><span style="left:29.167%;">6a</span><span style="left:50%;">12p</span><span style="left:70.833%;">6p</span><span style="left:91.667%;">12a</span></div>
       </section>
 
     </div>
@@ -4140,7 +4160,21 @@ function buildTags(){
   wrap.appendChild(add);
 }
 
+
+function updateGraphDayLabels(){
+  const prevEl=document.getElementById('prevGraphDayLabel');
+  const nextEl=document.getElementById('nextGraphDayLabel');
+  if(!prevEl||!nextEl)return;
+
+  const prev=DAYS[selectedDay-1];
+  const next=DAYS[selectedDay+1];
+
+  prevEl.textContent=prev ? prev.dow : '';
+  nextEl.textContent=(selectedDay!==TODAY_IDX && next) ? next.dow : '';
+}
+
 function drawGraph(){
+  updateGraphDayLabels();
   const c=document.getElementById('graph'),wrap=document.getElementById('graphWrap'),W=wrap.clientWidth,H=wrap.clientHeight,dpr=devicePixelRatio||1;
   if(!W||!H)return;
   c.width=W*dpr;c.height=H*dpr;c.style.width=W+'px';c.style.height=H+'px';
@@ -4826,4 +4860,5 @@ addEventListener('resize',()=>{resizeP();drawGraph();renderEvents()})
 </script>
 </body>
 </html>
+
 
