@@ -1056,6 +1056,29 @@ html, body {
   }
 }
 
+
+/* Desktop: reserve enough vertical room for graph axis */
+@media (hover:hover) and (pointer:fine) and (min-width:800px){
+  .cardbody{
+    padding-bottom:26px !important;
+  }
+
+  .axis{
+    height:24px !important;
+    flex-shrink:0 !important;
+    margin-top:2px !important;
+  }
+
+  .graphSide{
+    min-height:0 !important;
+    overflow:visible !important;
+  }
+
+  #graphWrap{
+    min-height:150px !important;
+  }
+}
+
 </style>
 </head>
 <body>
