@@ -128,7 +128,8 @@ html, body {
   display:flex;
   align-items:center;
   justify-content:center;
-  gap:18px;
+  flex-direction:column;
+  gap:0;
   padding:0 2px 4px;
 }
 
@@ -208,7 +209,7 @@ html, body {
 .pulse{animation:pulse .85s ease-in-out infinite alternate}@keyframes pulse{from{filter:drop-shadow(0 0 4px rgba(251,146,60,.2));transform:scale(1)}to{filter:drop-shadow(0 0 22px rgba(251,146,60,.55));transform:scale(1.035)}}
 .pop{animation:pop .52s cubic-bezier(.2,1.7,.35,1)}@keyframes pop{0%{transform:scale(1)}42%{transform:scale(1.12)}100%{transform:scale(1)}}
 .sealed #graph{opacity:.72;filter:saturate(.74)}.sealed #dailyScore{opacity:.58}
-@media(max-width:760px){.rp-screen{padding:14px 0}.topbar{padding:0 20px}.logo{display:none}.rp-tabs .rp-tab:nth-child(n+4){display:none}.rp-control{display:flex;flex-direction:column;padding:0 12px}.rail{order:2;width:100%}.bank{order:1;width:100%}.card{border-radius:24px;border-left:0;border-right:0}.cardbody{padding:18px 18px 12px}.summaryTop{flex-direction:column;align-items:flex-start;gap:8px}#dateFull{font-size:27px;margin-bottom:12px}#dailyScore{font-size:54px}.graphSide{width:100%}#graphWrap{min-height:220px}.tags{padding:0 18px}.note{margin:0 18px}.tag{flex-basis:84px}}
+@media(max-width:760px){.rp-screen{padding:14px 0}.topbar{padding:0 20px}.logo{display:none}.rp-tabs .rp-tab:nth-child(n+4){display:none}.rp-control{display:flex;flex-direction:column;padding:0 12px}.rail{order:2;width:100%}.bank{order:1;width:100%}.card{border-radius:24px;border-left:0;border-right:0}.cardbody{padding:18px 18px 12px}#dateFull{font-size:27px;margin-bottom:12px}#dailyScore{font-size:54px}.graphSide{width:100%}#graphWrap{min-height:220px}.tags{padding:0 18px}.note{margin:0 18px}.tag{flex-basis:84px}}
 @media(max-height:720px){.note{display:none}.tags{min-height:82px}.tag{height:56px}#graphWrap{min-height:130px}}
 
 /* Compact mode for short phones like iPhone SE */
@@ -279,16 +280,6 @@ html, body {
     gap:6px;
   }
 
-  .summaryTop{
-    flex-direction:row;
-    align-items:flex-end;
-    gap:10px;
-    padding-bottom:0;
-  }
-
-  .summaryLeft{
-    min-width:92px;
-  }
 
   .kicker{
     font-size:8px;
@@ -300,12 +291,21 @@ html, body {
     margin-bottom:8px;
   }
 
+  .ghostDateFull{
+    font-size:21px;
+    margin-bottom:8px;
+  }
+
   .scoreLabel{
     font-size:10px;
     margin-bottom:2px;
   }
 
   #dailyScore{
+    font-size:39px;
+  }
+
+  .ghostDailyScore{
     font-size:39px;
   }
 
@@ -412,7 +412,15 @@ html, body {
     font-size:20px;
   }
 
+  .ghostDateFull{
+    font-size:20px;
+  }
+
   #dailyScore{
+    font-size:36px;
+  }
+
+  .ghostDailyScore{
     font-size:36px;
   }
 
@@ -475,21 +483,13 @@ html, body {
     padding:16px 16px 9px;
   }
 
-  .summaryTop{
-    flex:0 0 auto;
-    flex-direction:row;
-    align-items:flex-end;
-    justify-content:space-between;
-    gap:12px;
-  }
-
-  .summaryLeft{
-    min-width:108px;
-    align-items:center;
-    text-align:center;
-  }
 
   #dateFull{
+    font-size:25px;
+    margin-bottom:10px;
+  }
+
+  .ghostDateFull{
     font-size:25px;
     margin-bottom:10px;
   }
@@ -500,6 +500,10 @@ html, body {
   }
 
   #dailyScore{
+    font-size:48px;
+  }
+
+  .ghostDailyScore{
     font-size:48px;
   }
 
@@ -612,7 +616,16 @@ html, body {
     margin-bottom:12px;
   }
 
+  .ghostDateFull{
+    font-size:30px;
+    margin-bottom:12px;
+  }
+
   #dailyScore{
+    font-size:56px;
+  }
+
+  .ghostDailyScore{
     font-size:56px;
   }
 
@@ -644,7 +657,15 @@ html, body {
     font-size:32px;
   }
 
+  .ghostDateFull{
+    font-size:32px;
+  }
+
   #dailyScore{
+    font-size:60px;
+  }
+
+  .ghostDailyScore{
     font-size:60px;
   }
 
@@ -671,7 +692,15 @@ html, body {
     font-size:22px;
   }
 
+  .ghostDateFull{
+    font-size:22px;
+  }
+
   #dailyScore{
+    font-size:40px;
+  }
+
+  .ghostDailyScore{
     font-size:40px;
   }
 
@@ -1184,17 +1213,23 @@ html, body {
   height:100%;
 }
 
+/* Cards inside the pager viewport: let the viewport handle border-radius uniformly */
+#cardViewport .card{
+  border-radius:0 !important;
+}
+
+/* Ghost card typography — mirrors #dateFull / #dailyScore at every breakpoint */
 .ghostDateFull{
-  font-size:inherit;
-  font-weight:inherit;
-  letter-spacing:inherit;
-  line-height:inherit;
-  margin-bottom:inherit;
+  font-size:31px;
+  font-weight:950;
+  letter-spacing:-.075em;
+  line-height:.98;
+  margin-bottom:30px;
 }
 
 .ghostDailyScore{
-  font-size:inherit;
-  line-height:inherit;
+  font-size:58px;
+  line-height:.9;
   color:var(--orange);
   font-weight:950;
   letter-spacing:-.085em;
@@ -4270,6 +4305,11 @@ function renderSelectedDayUI(){
   drawGraph();
   ensureSelectedDayVisible();
   setTimeout(renderEvents,0);
+}
+
+function ensureSelectedDayVisible(){
+  const el = document.querySelector('.day.active');
+  if(el) el.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
 }
 
 function selectDay(i){
