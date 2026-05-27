@@ -128,8 +128,7 @@ html, body {
   display:flex;
   align-items:center;
   justify-content:center;
-  flex-direction:column;
-  gap:0;
+  gap:18px;
   padding:0 2px 4px;
 }
 
@@ -146,17 +145,7 @@ html, body {
   margin-bottom:14px;
 }
 
-.ghostDateFull{
-  font-size:30px;
-  margin-bottom:14px;
-}
-
 #dailyScore{
-  font-size:64px;
-  line-height:.88;
-}
-
-.ghostDailyScore{
   font-size:64px;
   line-height:.88;
 }
@@ -219,7 +208,7 @@ html, body {
 .pulse{animation:pulse .85s ease-in-out infinite alternate}@keyframes pulse{from{filter:drop-shadow(0 0 4px rgba(251,146,60,.2));transform:scale(1)}to{filter:drop-shadow(0 0 22px rgba(251,146,60,.55));transform:scale(1.035)}}
 .pop{animation:pop .52s cubic-bezier(.2,1.7,.35,1)}@keyframes pop{0%{transform:scale(1)}42%{transform:scale(1.12)}100%{transform:scale(1)}}
 .sealed #graph{opacity:.72;filter:saturate(.74)}.sealed #dailyScore{opacity:.58}
-@media(max-width:760px){.rp-screen{padding:14px 0}.topbar{padding:0 20px}.logo{display:none}.rp-tabs .rp-tab:nth-child(n+4){display:none}.rp-control{display:flex;flex-direction:column;padding:0 12px}.rail{order:2;width:100%}.bank{order:1;width:100%}.card{border-radius:24px;border-left:0;border-right:0}.cardbody{padding:18px 18px 12px}#dateFull{font-size:27px;margin-bottom:12px}.ghostDateFull{font-size:27px;margin-bottom:12px}#dailyScore{font-size:54px}.ghostDailyScore{font-size:54px}.graphSide{width:100%}#graphWrap{min-height:220px}.tags{padding:0 18px}.note{margin:0 18px}.tag{flex-basis:84px}}
+@media(max-width:760px){.rp-screen{padding:14px 0}.topbar{padding:0 20px}.logo{display:none}.rp-tabs .rp-tab:nth-child(n+4){display:none}.rp-control{display:flex;flex-direction:column;padding:0 12px}.rail{order:2;width:100%}.bank{order:1;width:100%}.card{border-radius:24px;border-left:0;border-right:0}.cardbody{padding:18px 18px 12px}.summaryTop{flex-direction:column;align-items:flex-start;gap:8px}#dateFull{font-size:27px;margin-bottom:12px}#dailyScore{font-size:54px}.graphSide{width:100%}#graphWrap{min-height:220px}.tags{padding:0 18px}.note{margin:0 18px}.tag{flex-basis:84px}}
 @media(max-height:720px){.note{display:none}.tags{min-height:82px}.tag{height:56px}#graphWrap{min-height:130px}}
 
 /* Compact mode for short phones like iPhone SE */
@@ -290,6 +279,16 @@ html, body {
     gap:6px;
   }
 
+  .summaryTop{
+    flex-direction:row;
+    align-items:flex-end;
+    gap:10px;
+    padding-bottom:0;
+  }
+
+  .summaryLeft{
+    min-width:92px;
+  }
 
   .kicker{
     font-size:8px;
@@ -301,21 +300,12 @@ html, body {
     margin-bottom:8px;
   }
 
-  .ghostDateFull{
-    font-size:21px;
-    margin-bottom:8px;
-  }
-
   .scoreLabel{
     font-size:10px;
     margin-bottom:2px;
   }
 
   #dailyScore{
-    font-size:39px;
-  }
-
-  .ghostDailyScore{
     font-size:39px;
   }
 
@@ -422,15 +412,7 @@ html, body {
     font-size:20px;
   }
 
-  .ghostDateFull{
-    font-size:20px;
-  }
-
   #dailyScore{
-    font-size:36px;
-  }
-
-  .ghostDailyScore{
     font-size:36px;
   }
 
@@ -493,13 +475,21 @@ html, body {
     padding:16px 16px 9px;
   }
 
-
-  #dateFull{
-    font-size:25px;
-    margin-bottom:10px;
+  .summaryTop{
+    flex:0 0 auto;
+    flex-direction:row;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:12px;
   }
 
-  .ghostDateFull{
+  .summaryLeft{
+    min-width:108px;
+    align-items:center;
+    text-align:center;
+  }
+
+  #dateFull{
     font-size:25px;
     margin-bottom:10px;
   }
@@ -510,10 +500,6 @@ html, body {
   }
 
   #dailyScore{
-    font-size:48px;
-  }
-
-  .ghostDailyScore{
     font-size:48px;
   }
 
@@ -626,16 +612,7 @@ html, body {
     margin-bottom:12px;
   }
 
-  .ghostDateFull{
-    font-size:30px;
-    margin-bottom:12px;
-  }
-
   #dailyScore{
-    font-size:56px;
-  }
-
-  .ghostDailyScore{
     font-size:56px;
   }
 
@@ -667,15 +644,7 @@ html, body {
     font-size:32px;
   }
 
-  .ghostDateFull{
-    font-size:32px;
-  }
-
   #dailyScore{
-    font-size:60px;
-  }
-
-  .ghostDailyScore{
     font-size:60px;
   }
 
@@ -702,15 +671,7 @@ html, body {
     font-size:22px;
   }
 
-  .ghostDateFull{
-    font-size:22px;
-  }
-
   #dailyScore{
-    font-size:40px;
-  }
-
-  .ghostDailyScore{
     font-size:40px;
   }
 
@@ -1199,6 +1160,7 @@ html, body {
 }
 
 .ghostPanel{
+  opacity:.92;
 }
 
 @media(max-width:760px){
@@ -1222,23 +1184,17 @@ html, body {
   height:100%;
 }
 
-/* Cards inside the pager viewport: let the viewport handle border-radius uniformly */
-#cardViewport .card{
-  border-radius:0 !important;
-}
-
-/* Ghost card typography — mirrors #dateFull / #dailyScore at every breakpoint */
 .ghostDateFull{
-  font-size:31px;
-  font-weight:950;
-  letter-spacing:-.075em;
-  line-height:.98;
-  margin-bottom:30px;
+  font-size:inherit;
+  font-weight:inherit;
+  letter-spacing:inherit;
+  line-height:inherit;
+  margin-bottom:inherit;
 }
 
 .ghostDailyScore{
-  font-size:58px;
-  line-height:.9;
+  font-size:inherit;
+  line-height:inherit;
   color:var(--orange);
   font-weight:950;
   letter-spacing:-.085em;
@@ -1322,14 +1278,14 @@ html, body {
       </section>
 
       <section class="graphSide">
-        <div id="graphWrap"><canvas id="graph"></canvas><div id="prevGraphDayLabel" class="graph-day-label"></div><div id="nextGraphDayLabel" class="graph-day-label"></div><div id="eventLayer"><div class="event-rail"></div><div class="event-hint">Drag tags here</div></div></div>
+        <div id="graphWrap"><canvas id="graph"></canvas><div id="prevGraphDayLabel" class="graph-day-label"></div><div id="nextGraphDayLabel" class="graph-day-label"></div><div id="day-graph-popup" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;"><div id="day-graph-popup-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div><div id="day-graph-popup-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div></div><div id="eventLayer"><div class="event-rail"></div><div class="event-hint">Drag tags here</div></div></div>
         <div class="axis"><span style="left:8.333%;">12a</span><span style="left:29.167%;">6a</span><span style="left:50%;">12p</span><span style="left:70.833%;">6p</span><span style="left:91.667%;">12a</span></div>
       </section>
 
     </div>
   </main>
 
-  <section class="tags"><div class="sectionLabel" id="tagsLabel">Tags for today</div><div id="tagsScroll"></div></section>
+  <section class="tags"><div id="tagsScroll"></div></section>
 
   <section class="note"><span style="opacity:.35">✎</span><input id="noteInput" placeholder="Add a note..." /><button id="noteBtn">Save</button></section>
 </div>
@@ -4313,14 +4269,12 @@ function renderSelectedDayUI(){
   updateNote();
   drawGraph();
   ensureSelectedDayVisible();
-  // Refresh cached styles so ghost panels built after this have correct values
-  window._ghostStyles = ghostInfoStyles();
   setTimeout(renderEvents,0);
 }
 
 function ensureSelectedDayVisible(){
-  const el = document.querySelector('.day.active');
-  if(el) el.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
+  const el=document.querySelector('.day.active');
+  if(el) el.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
 }
 
 function selectDay(i){
@@ -4475,7 +4429,6 @@ function updateCard(){
   const v=getVerdict(d,isToday);
   const verdictEl=document.getElementById('verdict'); if(verdictEl) verdictEl.textContent=v[0];
   const subtextEl=document.getElementById('subtext'); if(subtextEl) subtextEl.textContent=v[1];
-  document.getElementById('tagsLabel').textContent=isToday?'Tags for today':'Tags for '+d.dateStr;
 }
 
 
@@ -4966,51 +4919,6 @@ function axisHTMLForPanel(){
     + '</div>';
 }
 
-function ghostCardBottomPad(){
-  const viewport = document.getElementById('cardViewport');
-  const card = document.getElementById('card');
-  if(!viewport || !card) return 0;
-  const vBot = viewport.getBoundingClientRect().bottom;
-  const cBot = card.getBoundingClientRect().bottom;
-  return Math.max(0, Math.round(vBot - cBot));
-}
-
-function applyGhostBottomPad(){
-  const pad = ghostCardBottomPad();
-  document.querySelectorAll('#cardTrack .ghostPanel').forEach(el=>{
-    let spacer = el.querySelector('.ghost-bottom-spacer');
-    if(!spacer){
-      spacer = document.createElement('div');
-      spacer.className = 'ghost-bottom-spacer';
-      spacer.style.cssText = 'flex:0 0 auto;width:100%;';
-      el.querySelector('.cardbody').appendChild(spacer);
-    }
-    spacer.style.height = pad + 'px';
-  });
-}
-
-function ghostInfoStyles(){
-  const dateEl  = document.getElementById('dateFull');
-  const scoreEl = document.getElementById('dailyScore');
-  const kickEl  = document.querySelector('#card .kicker');
-  const slEl    = document.querySelector('#card .scoreLabel');
-
-  function inlineStyle(el){
-    if(!el) return '';
-    const cs = getComputedStyle(el);
-    return `font-size:${cs.fontSize};font-weight:${cs.fontWeight};`
-         + `letter-spacing:${cs.letterSpacing};line-height:${cs.lineHeight};`
-         + `margin-bottom:${cs.marginBottom};margin-top:${cs.marginTop};`;
-  }
-
-  return {
-    date:       inlineStyle(dateEl),
-    score:      inlineStyle(scoreEl),
-    kicker:     inlineStyle(kickEl),
-    scoreLabel: inlineStyle(slEl),
-  };
-}
-
 function renderDayCardHTML(dayIdx){
   const d=DAYS[Math.max(0,Math.min(TODAY_IDX,dayIdx))];
   const prev=DAYS[dayIdx-1];
@@ -5019,17 +4927,15 @@ function renderDayCardHTML(dayIdx){
   const nextLabel=(dayIdx!==TODAY_IDX && next) ? next.dow : '';
   const prevLabel=prev ? prev.dow : '';
 
-  const s = window._ghostStyles || ghostInfoStyles();
-
   return `
     <main class="card ghostRenderedCard">
       <div class="cardbody">
         <section class="summaryTop">
           <div class="summaryLeft">
-            <div class="kicker" style="${s.kicker}">${d.dow}</div>
-            <div class="ghostDateFull" style="${s.date}">${d.dateStr}</div>
-            <div class="scoreLabel" style="${s.scoreLabel}">Daily Score</div>
-            <div class="ghostDailyScore" style="${s.score}">${d.score}</div>
+            <div class="kicker">${d.dow}</div>
+            <div class="ghostDateFull">${d.dateStr}</div>
+            <div class="scoreLabel">Daily Score</div>
+            <div class="ghostDailyScore">${d.score}</div>
           </div>
         </section>
 
@@ -5083,9 +4989,6 @@ function installDayPager(){
   const card=document.getElementById('card');
   if(!card || !card.parentElement)return;
 
-  // Snapshot computed styles BEFORE detaching card from DOM
-  window._ghostStyles = ghostInfoStyles();
-
   // Add data roles to the live card once so ghost cards can find fields safely.
   const kicker=card.querySelector('#todayLabel');
   const date=card.querySelector('#dateFull');
@@ -5120,7 +5023,6 @@ function installDayPager(){
   requestAnimationFrame(()=>{
     drawGraph();
     renderEvents();
-    requestAnimationFrame(applyGhostBottomPad);
     schedulePagerGhostRedraw();
   });
 
@@ -5131,9 +5033,6 @@ function refreshDayPagerGhosts(){
   const track=document.getElementById('cardTrack');
   const liveCard=document.getElementById('card');
   if(!track || !liveCard)return;
-
-  // Snapshot computed styles from live card BEFORE detaching it from DOM
-  window._ghostStyles = ghostInfoStyles();
 
   track.innerHTML='';
 
@@ -5151,7 +5050,6 @@ function refreshDayPagerGhosts(){
 
   drawGraph();
   renderEvents();
-  requestAnimationFrame(applyGhostBottomPad);
   schedulePagerGhostRedraw();
 
   requestAnimationFrame(()=>{
@@ -5589,14 +5487,20 @@ function drawGraph(){
     }
   }
 
-  // Measurement dots and labels only for today’s actual readings.
+  // Measurement dots and labels only for today's actual readings.
+  window._dayGraphDots = [];
+  if(!window._dayGraphPopupInited){window._dayGraphPopupInited=true;initDayGraphPopup();}
   pts.forEach(p=>{
     if(!p.meas)return;
     ctx.beginPath();ctx.arc(p.x,p.y,7,0,Math.PI*2);ctx.fillStyle=col(p.v);ctx.shadowColor=col(p.v);ctx.shadowBlur=14;ctx.fill();
     ctx.shadowBlur=0;ctx.fillStyle='#fff';ctx.font='800 14px -apple-system,BlinkMacSystemFont,sans-serif';
     ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(Math.round(p.v),p.x,p.y-10);
+    const dayObj=DAYS[selectedDay];
+    const midnight=new Date(dayObj.isoDate+'T00:00:00').getTime()/1000;
+    window._dayGraphDots.push({cx:p.x,cy:p.y,v:p.v,epoch:midnight+p.rel*60});
   });
 }
+
 const pc=document.getElementById('particles'),px=pc.getContext('2d');
 let particles=[];
 let activeTransfers=[];
@@ -6070,6 +5974,67 @@ function initResultsPage(){updateAddedLabel(DAILY_SCORE);
 }
 if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initResultsPage);}else{setTimeout(initResultsPage,50);}
 addEventListener('resize',()=>{resizeP();drawGraph();renderEvents();updateTagWheelScale()})
+
+function initDayGraphPopup(){
+  const wrap    = document.getElementById('graphWrap');
+  const popup   = document.getElementById('day-graph-popup');
+  const popVal  = document.getElementById('day-graph-popup-val');
+  const popTime = document.getElementById('day-graph-popup-time');
+  if(!wrap || !popup) return;
+  const HIT_R = 28;
+  let touchStartX=0, touchStartY=0, touchStartTime=0, lastTouch=0;
+  function fmtDayGraphTime(epoch){
+    const d=new Date(epoch*1000);
+    let h=d.getHours(), m=d.getMinutes();
+    const ampm=h>=12?'pm':'am'; h=h%12||12;
+    return h+':'+(m<10?'0'+m:String(m))+ampm;
+  }
+  function findNearestDot(clientX, clientY){
+    const rect=wrap.getBoundingClientRect();
+    const canvas=document.getElementById('graph');
+    if(!canvas||!window._dayGraphDots||!window._dayGraphDots.length) return null;
+    const dpr=window.devicePixelRatio||1;
+    const scaleX=canvas.clientWidth/(canvas.width/dpr);
+    const scaleY=canvas.clientHeight/(canvas.height/dpr);
+    const x=clientX-rect.left, y=clientY-rect.top;
+    let best=null, bestD=HIT_R*HIT_R;
+    window._dayGraphDots.forEach(dot=>{
+      const dx=dot.cx*scaleX-x, dy=dot.cy*scaleY-y;
+      const d2=dx*dx+dy*dy;
+      if(d2<bestD){bestD=d2;best=dot;}
+    });
+    return best;
+  }
+  function showPopup(dot, clientX, clientY){
+    const c=dot.v<=2?'#22D3EE':dot.v<=4?'#4ADE80':'#A855F7';
+    popVal.textContent=dot.v.toFixed(1)+' ppm'; popVal.style.color=c;
+    popTime.textContent=fmtDayGraphTime(dot.epoch);
+    popup.style.display='block'; popup.style.left='0'; popup.style.top='0';
+    void popup.offsetWidth;
+    const rect=wrap.getBoundingClientRect();
+    const pw=popup.offsetWidth, ph=popup.offsetHeight, GAP=10;
+    const px=Math.max(4,Math.min(clientX-rect.left-pw/2, rect.width-pw-4));
+    const pyAbove=clientY-rect.top-ph-GAP;
+    popup.style.left=px+'px'; popup.style.top=(pyAbove>=4?pyAbove:clientY-rect.top+GAP+14)+'px';
+  }
+  function hidePopup(){ popup.style.display='none'; }
+  function handleTap(clientX, clientY){
+    const dot=findNearestDot(clientX,clientY);
+    dot?showPopup(dot,clientX,clientY):hidePopup();
+  }
+  wrap.addEventListener('touchstart',e=>{
+    if(e.touches.length!==1){hidePopup();return;}
+    touchStartX=e.touches[0].clientX; touchStartY=e.touches[0].clientY; touchStartTime=Date.now();
+  },{passive:true});
+  wrap.addEventListener('touchend',e=>{
+    const dt=Date.now()-touchStartTime;
+    const dx=Math.abs(e.changedTouches[0].clientX-touchStartX);
+    const dy=Math.abs(e.changedTouches[0].clientY-touchStartY);
+    if(dt<250&&dx<12&&dy<12){lastTouch=Date.now();handleTap(e.changedTouches[0].clientX,e.changedTouches[0].clientY);}
+  },{passive:true});
+  wrap.addEventListener('click',e=>{ if(Date.now()-lastTouch<500)return; handleTap(e.clientX,e.clientY); });
+}
+
 </script>
 </body>
 </html>
