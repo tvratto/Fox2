@@ -146,7 +146,17 @@ html, body {
   margin-bottom:14px;
 }
 
+.ghostDateFull{
+  font-size:30px;
+  margin-bottom:14px;
+}
+
 #dailyScore{
+  font-size:64px;
+  line-height:.88;
+}
+
+.ghostDailyScore{
   font-size:64px;
   line-height:.88;
 }
@@ -209,7 +219,7 @@ html, body {
 .pulse{animation:pulse .85s ease-in-out infinite alternate}@keyframes pulse{from{filter:drop-shadow(0 0 4px rgba(251,146,60,.2));transform:scale(1)}to{filter:drop-shadow(0 0 22px rgba(251,146,60,.55));transform:scale(1.035)}}
 .pop{animation:pop .52s cubic-bezier(.2,1.7,.35,1)}@keyframes pop{0%{transform:scale(1)}42%{transform:scale(1.12)}100%{transform:scale(1)}}
 .sealed #graph{opacity:.72;filter:saturate(.74)}.sealed #dailyScore{opacity:.58}
-@media(max-width:760px){.rp-screen{padding:14px 0}.topbar{padding:0 20px}.logo{display:none}.rp-tabs .rp-tab:nth-child(n+4){display:none}.rp-control{display:flex;flex-direction:column;padding:0 12px}.rail{order:2;width:100%}.bank{order:1;width:100%}.card{border-radius:24px;border-left:0;border-right:0}.cardbody{padding:18px 18px 12px}#dateFull{font-size:27px;margin-bottom:12px}#dailyScore{font-size:54px}.graphSide{width:100%}#graphWrap{min-height:220px}.tags{padding:0 18px}.note{margin:0 18px}.tag{flex-basis:84px}}
+@media(max-width:760px){.rp-screen{padding:14px 0}.topbar{padding:0 20px}.logo{display:none}.rp-tabs .rp-tab:nth-child(n+4){display:none}.rp-control{display:flex;flex-direction:column;padding:0 12px}.rail{order:2;width:100%}.bank{order:1;width:100%}.card{border-radius:24px;border-left:0;border-right:0}.cardbody{padding:18px 18px 12px}#dateFull{font-size:27px;margin-bottom:12px}.ghostDateFull{font-size:27px;margin-bottom:12px}#dailyScore{font-size:54px}.ghostDailyScore{font-size:54px}.graphSide{width:100%}#graphWrap{min-height:220px}.tags{padding:0 18px}.note{margin:0 18px}.tag{flex-basis:84px}}
 @media(max-height:720px){.note{display:none}.tags{min-height:82px}.tag{height:56px}#graphWrap{min-height:130px}}
 
 /* Compact mode for short phones like iPhone SE */
@@ -1189,7 +1199,6 @@ html, body {
 }
 
 .ghostPanel{
-  opacity:.92;
 }
 
 @media(max-width:760px){
@@ -4304,6 +4313,8 @@ function renderSelectedDayUI(){
   updateNote();
   drawGraph();
   ensureSelectedDayVisible();
+  // Refresh cached styles so ghost panels built after this have correct values
+  window._ghostStyles = ghostInfoStyles();
   setTimeout(renderEvents,0);
 }
 
@@ -4955,6 +4966,51 @@ function axisHTMLForPanel(){
     + '</div>';
 }
 
+function ghostCardBottomPad(){
+  const viewport = document.getElementById('cardViewport');
+  const card = document.getElementById('card');
+  if(!viewport || !card) return 0;
+  const vBot = viewport.getBoundingClientRect().bottom;
+  const cBot = card.getBoundingClientRect().bottom;
+  return Math.max(0, Math.round(vBot - cBot));
+}
+
+function applyGhostBottomPad(){
+  const pad = ghostCardBottomPad();
+  document.querySelectorAll('#cardTrack .ghostPanel').forEach(el=>{
+    let spacer = el.querySelector('.ghost-bottom-spacer');
+    if(!spacer){
+      spacer = document.createElement('div');
+      spacer.className = 'ghost-bottom-spacer';
+      spacer.style.cssText = 'flex:0 0 auto;width:100%;';
+      el.querySelector('.cardbody').appendChild(spacer);
+    }
+    spacer.style.height = pad + 'px';
+  });
+}
+
+function ghostInfoStyles(){
+  const dateEl  = document.getElementById('dateFull');
+  const scoreEl = document.getElementById('dailyScore');
+  const kickEl  = document.querySelector('#card .kicker');
+  const slEl    = document.querySelector('#card .scoreLabel');
+
+  function inlineStyle(el){
+    if(!el) return '';
+    const cs = getComputedStyle(el);
+    return `font-size:${cs.fontSize};font-weight:${cs.fontWeight};`
+         + `letter-spacing:${cs.letterSpacing};line-height:${cs.lineHeight};`
+         + `margin-bottom:${cs.marginBottom};margin-top:${cs.marginTop};`;
+  }
+
+  return {
+    date:       inlineStyle(dateEl),
+    score:      inlineStyle(scoreEl),
+    kicker:     inlineStyle(kickEl),
+    scoreLabel: inlineStyle(slEl),
+  };
+}
+
 function renderDayCardHTML(dayIdx){
   const d=DAYS[Math.max(0,Math.min(TODAY_IDX,dayIdx))];
   const prev=DAYS[dayIdx-1];
@@ -4963,15 +5019,17 @@ function renderDayCardHTML(dayIdx){
   const nextLabel=(dayIdx!==TODAY_IDX && next) ? next.dow : '';
   const prevLabel=prev ? prev.dow : '';
 
+  const s = window._ghostStyles || ghostInfoStyles();
+
   return `
     <main class="card ghostRenderedCard">
       <div class="cardbody">
         <section class="summaryTop">
           <div class="summaryLeft">
-            <div class="kicker">${d.dow}</div>
-            <div class="ghostDateFull">${d.dateStr}</div>
-            <div class="scoreLabel">Daily Score</div>
-            <div class="ghostDailyScore">${d.score}</div>
+            <div class="kicker" style="${s.kicker}">${d.dow}</div>
+            <div class="ghostDateFull" style="${s.date}">${d.dateStr}</div>
+            <div class="scoreLabel" style="${s.scoreLabel}">Daily Score</div>
+            <div class="ghostDailyScore" style="${s.score}">${d.score}</div>
           </div>
         </section>
 
@@ -5025,6 +5083,9 @@ function installDayPager(){
   const card=document.getElementById('card');
   if(!card || !card.parentElement)return;
 
+  // Snapshot computed styles BEFORE detaching card from DOM
+  window._ghostStyles = ghostInfoStyles();
+
   // Add data roles to the live card once so ghost cards can find fields safely.
   const kicker=card.querySelector('#todayLabel');
   const date=card.querySelector('#dateFull');
@@ -5059,6 +5120,7 @@ function installDayPager(){
   requestAnimationFrame(()=>{
     drawGraph();
     renderEvents();
+    requestAnimationFrame(applyGhostBottomPad);
     schedulePagerGhostRedraw();
   });
 
@@ -5069,6 +5131,9 @@ function refreshDayPagerGhosts(){
   const track=document.getElementById('cardTrack');
   const liveCard=document.getElementById('card');
   if(!track || !liveCard)return;
+
+  // Snapshot computed styles from live card BEFORE detaching it from DOM
+  window._ghostStyles = ghostInfoStyles();
 
   track.innerHTML='';
 
@@ -5086,6 +5151,7 @@ function refreshDayPagerGhosts(){
 
   drawGraph();
   renderEvents();
+  requestAnimationFrame(applyGhostBottomPad);
   schedulePagerGhostRedraw();
 
   requestAnimationFrame(()=>{
