@@ -1126,6 +1126,49 @@ html, body {
   transition:none !important;
 }
 
+
+/* Real 3-panel pager for day graph card */
+#cardViewport{
+  position:relative;
+  overflow:hidden;
+  border-radius:28px;
+  flex:1;
+  min-height:0;
+}
+
+#cardTrack{
+  height:100%;
+  display:flex;
+  transform:translateX(-100%);
+  transition:transform .26s cubic-bezier(.2,1,.25,1);
+  will-change:transform;
+}
+
+#cardTrack.dragging{
+  transition:none;
+}
+
+.dayPanel{
+  flex:0 0 100%;
+  width:100%;
+  height:100%;
+  min-width:0;
+}
+
+.dayPanel .card{
+  height:100%;
+}
+
+.ghostPanel{
+  opacity:.92;
+}
+
+@media(max-width:760px){
+  #cardViewport{
+    border-radius:24px;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -1239,7 +1282,7 @@ html, body {
 <script>
 
 // ─── Parse URL params ─────────────────────────────────────────────
-var params    = new URLSearchParams(window.location.search);
+var params = new URLSearchParams('t=1o&d=s:cp28vf2i%7Cm:cd2izz1e%7Ct:bc14fy14i114j31evg14yg1ezz1e%7Cw:d20kru0uxw14zz14%7Ct:bv0zhu0ul60unc0upt0uuj0uz314%7Cf:bf1ecp1efx1ejp14mv0usu0uw00u%7Cs:bz14%7Cs:br14mw14si14%7Cm:aq1eip14ub0uya0uzz0u%7Ct:as0un80ku314xr14%7Cw:ad14ek0uly14pr0uu714%7Ct:bf14t90uw90uxr0u%7Cf:bw1ege14ib0ks014%7Cs:cx1e%7Cs:%7Cm:sa0uwk0u%7Ct:d00uk70usc0u%7Cw:%7Ct:%7Cf:%7Cs:&a=5k4y2y232c2m2m2q2m222i2d2n112o0l1f00000000&s=0,26&c=TR-1&id=E079DEDB5110&v=3.051');
 var targetAUC = parseInt(params.get('t') || '0', 36);  // base36 encoded
 var dParam    = params.get('d') || '';
 var aParam    = params.get('a') || '';
@@ -1265,18 +1308,23 @@ var windowStart = (function() {
   var satMidnightMs;
 
   if (tzParam !== null) {
+    // Device-supplied timezone offset (JS convention: minutes west of UTC)
+    // e.g. UTC-8 (California PST) = 480, UTC+5:30 = -330
     var tzOffsetMin = parseInt(tzParam, 10);
+    // Current UTC ms, shifted to device-local time
     var nowUtcMs = Date.now();
     var localMs  = nowUtcMs - tzOffsetMin * 60000;
     var localDate = new Date(localMs);
-    var dow = localDate.getUTCDay();
+    var dow = localDate.getUTCDay(); // day-of-week in device-local time
     daysToSat = (6 - dow + 7) % 7;
+    // Midnight of target Saturday in device-local time, expressed as UTC ms
     var localMidnightMs = localMs - (localDate.getUTCHours() * 3600000
                                    + localDate.getUTCMinutes() * 60000
                                    + localDate.getUTCSeconds() * 1000
                                    + localDate.getUTCMilliseconds());
     satMidnightMs = localMidnightMs + daysToSat * 86400000;
   } else {
+    // Fallback: use browser local timezone
     var now = new Date();
     var dow = now.getDay();
     daysToSat = (6 - dow + 7) % 7;
@@ -1385,6 +1433,17 @@ if (!dParam || totalDays === 0) {
 
   // Only write if there is actual measurement data
   if (!dParam || totalDays === 0) return;
+
+  // ── TEST MODE: skip all Supabase reads/writes ──
+  setTimeout(function(){
+    TOTAL_BEFORE = 1240;
+    TOTAL_AFTER  = TOTAL_BEFORE + DAILY_SCORE;
+    _sbDeviceId  = 'TEST';
+    contribNum.textContent = '+' + DAILY_SCORE;
+    totalNum.textContent   = fmt(TOTAL_BEFORE);
+    _doInit(false);
+  }, 100);
+  return;
 
   var SUPABASE_URL = 'https://byysvwdsbpmbypflqcjs.supabase.co';
   var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ5eXN2d2RzYnBtYnlwZmxxY2pzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MTEwNTYsImV4cCI6MjA5NDE4NzA1Nn0.uAKOkd9vNhtN7umEGrVLcQLNjWOnn33n-xKVT25mFzw';
@@ -2413,7 +2472,7 @@ function buildGraphCard(forcedView) {
   var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   function fmtDate(epoch) {
     var d = new Date(epoch * 1000);
-    return months[d.getUTCMonth()] + ' ' + d.getUTCDate();
+    return months[d.getMonth()] + ' ' + d.getDate();
   }
   var rangeStr = fmtDate(windowStart + chunkStart * 86400) + ' – ' + fmtDate(windowStart + (chunkStart + 20) * 86400);
   var pillW = 220, pillH = PILL_H, pillCY = PAD + pillH / 2;
@@ -2512,8 +2571,8 @@ function buildStreakCard() {
   var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   var d0 = new Date((windowStart + streakStart * 86400) * 1000);
   var d1 = new Date((windowStart + (totalDays - 1) * 86400) * 1000);
-  var dateStr = months[d0.getUTCMonth()] + ' ' + d0.getUTCDate()
-              + ' – ' + months[d1.getUTCMonth()] + ' ' + d1.getUTCDate();
+  var dateStr = months[d0.getMonth()] + ' ' + d0.getDate()
+              + ' – ' + months[d1.getMonth()] + ' ' + d1.getDate();
   ctx.fillStyle = '#1a1a2e';
   ctx.font = '15px -apple-system,sans-serif';
   ctx.textAlign = 'right';
@@ -2535,8 +2594,8 @@ function buildStreakCard() {
 
     // Date label
     var dateObj = new Date((windowStart + d * 86400) * 1000);
-    var dateLabel = months[dateObj.getUTCMonth()].substring(0, 3) + ' ' + dateObj.getUTCDate();
-    var dayLabel = daysOfWeek[dateObj.getUTCDay()];
+    var dateLabel = months[dateObj.getMonth()].substring(0, 3) + ' ' + dateObj.getDate();
+    var dayLabel = daysOfWeek[dateObj.getDay()];
 
     // Day of week left-aligned, date right-aligned — same vertical centre
     ctx.fillStyle = isEmpty ? 'rgba(255,255,255,0.12)' : (isToday ? 'rgba(245,200,66,0.6)' : 'rgba(255,255,255,0.3)');
@@ -2739,14 +2798,14 @@ function buildInsightsCard() {
     }
     var d0 = new Date((windowStart + winStart * 86400) * 1000);
     var d1 = new Date((windowStart + winEnd   * 86400) * 1000);
-    var rangeLabel = MONTHS_SHORT[d0.getUTCMonth()] + ' ' + d0.getUTCDate()
-                   + '–' + d1.getUTCDate();
+    var rangeLabel = MONTHS_SHORT[d0.getMonth()] + ' ' + d0.getDate()
+                   + '–' + d1.getDate();
     momBars.push({
       avg:        winDays > 0 ? winAUC / winDays : 0,
       rangeLabel: rangeLabel,
-      startDay:   d0.getUTCDate(),
-      endDay:     d1.getUTCDate(),
-      startMonth: d0.getUTCMonth(),
+      startDay:   d0.getDate(),
+      endDay:     d1.getDate(),
+      startMonth: d0.getMonth(),
       isLatest:   b === NUM_BARS - 1
     });
   }
@@ -3204,7 +3263,7 @@ function buildInsightsCard() {
       var ry = curY + pi * SHAPE_ROW_H;
       var shapeColor = SHAPE_COLORS[shape] || '#fff';
       var epochD = new Date((windowStart + d * 86400) * 1000);
-      var dateLabel = dayNames[epochD.getUTCDay()] + ' ' + months[epochD.getUTCMonth()] + ' ' + epochD.getUTCDate();
+      var dateLabel = dayNames[epochD.getDay()] + ' ' + months[epochD.getMonth()] + ' ' + epochD.getDate();
       ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.font = '15px -apple-system,sans-serif';
       ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
       ctx.fillText(dateLabel, gLeft, ry + SHAPE_ROW_H / 2);
@@ -4539,16 +4598,647 @@ function buildTags(){
 
 
 
-function enableGraphDaySwipe(){
+function drawGraphToCanvas(targetCanvas,targetWrap,dayIdx,drawLabels){
+
+  const c=targetCanvas,wrap=targetWrap,W=wrap.clientWidth,H=wrap.clientHeight,dpr=devicePixelRatio||1;
+  if(!W||!H)return;
+  c.width=W*dpr;c.height=H*dpr;c.style.width=W+'px';c.style.height=H+'px';
+  const ctx=c.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);
+
+  const day=DAYS[dayIdx],padL=6,padR=6,padT=10,padB=8,gTop=padT,gBot=H-padB,gH=gBot-gTop;
+
+  // Visible time window:
+  //   -144..0     = last 10% of yesterday
+  //    0..1440    = all of today
+  //    1440..1584 = first 10% of tomorrow
+  const REL_START=-144;
+  const REL_END=1584;
+  const TOTAL_REL=REL_END-REL_START;
+  const xSep0=relToX(0);
+  const xSep1=relToX(1440);
+
+  function relToX(rel){
+    return padL+(rel-REL_START)/TOTAL_REL*(W-padL-padR);
+  }
+
+  // Include adjacent days when autoscaling, so boundary estimates do not clip.
+  const scaleVals=[];
+  [dayIdx-1,dayIdx,dayIdx+1].forEach(idx=>{
+    const d=DAYS[idx];
+    if(d&&d.pts)d.pts.forEach(p=>scaleVals.push(p[1]));
+  });
+  const rawMax=scaleVals.length?Math.max(...scaleVals):4;
+  const maxV=Math.max(4.5,Math.ceil(rawMax*1.28));
+
+  const gy=v=>gBot-Math.max(0,Math.min(maxV,v))/maxV*gH;
+  const col=v=>Math.round(v)<=2?'#22D3EE':Math.round(v)<=4?'#6EE787':'#A855F7';
+
+  function estimateStartValue(dayIdx){
+    const d=DAYS[dayIdx]; if(!d||!d.pts||!d.pts.length)return 0;
+    const first=d.pts[0], prev=DAYS[dayIdx-1];
+    if(prev&&prev.pts&&prev.pts.length){
+      const lastPrev=prev.pts[prev.pts.length-1];
+      const prevMinute=lastPrev[0]-1440, firstMinute=first[0], dt=firstMinute-prevMinute;
+      if(dt>0){
+        const slope=(first[1]-lastPrev[1])/dt;
+        return Math.max(0,Math.min(maxV,first[1]-slope*firstMinute));
+      }
+    }
+    return Math.max(0,Math.min(maxV,first[1]));
+  }
+
+  function estimateEndValue(dayIdx){
+    const d=DAYS[dayIdx]; if(!d||!d.pts||!d.pts.length)return 0;
+    const last=d.pts[d.pts.length-1], next=DAYS[dayIdx+1];
+    if(next&&next.pts&&next.pts.length){
+      const firstNext=next.pts[0];
+      const nextMinute=1440+firstNext[0], lastMinute=last[0], dt=nextMinute-lastMinute;
+      if(dt>0){
+        const slope=(firstNext[1]-last[1])/dt;
+        return Math.max(0,Math.min(maxV,last[1]+slope*(1440-lastMinute)));
+      }
+    }
+    return Math.max(0,Math.min(maxV,last[1]));
+  }
+
+  function estimatePrevWindowStartValue(){
+    const prev=DAYS[dayIdx-1];
+    const startV=estimateStartValue(dayIdx);
+
+    if(!prev||!prev.pts||!prev.pts.length)return startV;
+
+    const tail=prev.pts.filter(p=>p[0]>=1296);
+    if(tail.length){
+      const firstTail=tail[0];
+      if(firstTail[0]===1296)return firstTail[1];
+
+      // Interpolate/extrapolate from prior point to first tail point if possible.
+      const before=prev.pts.slice().reverse().find(p=>p[0]<1296);
+      if(before){
+        const dt=firstTail[0]-before[0];
+        if(dt>0){
+          const slope=(firstTail[1]-before[1])/dt;
+          return Math.max(0,Math.min(maxV,before[1]+slope*(1296-before[0])));
+        }
+      }
+      return firstTail[1];
+    }
+
+    const lastPrev=prev.pts[prev.pts.length-1];
+    const dt=1440-lastPrev[0];
+    if(dt>0){
+      const slope=(startV-lastPrev[1])/dt;
+      return Math.max(0,Math.min(maxV,lastPrev[1]+slope*(1296-lastPrev[0])));
+    }
+    return lastPrev[1];
+  }
+
+  function estimateNextWindowEndValue(){
+    const next=DAYS[dayIdx+1];
+    const endV=estimateEndValue(dayIdx);
+
+    if(!next||!next.pts||!next.pts.length)return endV;
+
+    const head=next.pts.filter(p=>p[0]<=144);
+    if(head.length){
+      const lastHead=head[head.length-1];
+      if(lastHead[0]===144)return lastHead[1];
+
+      const after=next.pts.find(p=>p[0]>144);
+      if(after){
+        const dt=after[0]-lastHead[0];
+        if(dt>0){
+          const slope=(after[1]-lastHead[1])/dt;
+          return Math.max(0,Math.min(maxV,lastHead[1]+slope*(144-lastHead[0])));
+        }
+      }
+      return lastHead[1];
+    }
+
+    const firstNext=next.pts[0];
+    if(firstNext[0]>0){
+      const slope=(firstNext[1]-endV)/firstNext[0];
+      return Math.max(0,Math.min(maxV,endV+slope*144));
+    }
+    return firstNext[1];
+  }
+
+  let pts=[];
+
+  // Previous-day context starts exactly at 9:36pm yesterday.
+  const prev=DAYS[dayIdx-1];
+  if(prev&&prev.pts&&prev.pts.length){
+    pts.push({rel:-144,x:relToX(-144),y:gy(estimatePrevWindowStartValue()),v:estimatePrevWindowStartValue(),meas:false,context:true});
+    prev.pts.filter(p=>p[0]>=1296).forEach(p=>{
+      pts.push({rel:p[0]-1440,x:relToX(p[0]-1440),y:gy(p[1]),v:p[1],meas:false,context:true});
+    });
+  }
+
+  // Midnight separator: estimated value, shared by yesterday/today.
+  const startV=estimateStartValue(dayIdx);
+  pts.push({rel:0,x:relToX(0),y:gy(startV),v:startV,meas:false,boundary:true});
+
+  // Today's real measurements.
+  day.pts.forEach(p=>{
+    pts.push({rel:p[0],x:relToX(p[0]),y:gy(p[1]),v:p[1],meas:true});
+  });
+
+  if(dayIdx!==TODAY_IDX){
+    // Midnight separator: estimated value, shared by today/tomorrow.
+    const endV=estimateEndValue(dayIdx);
+    pts.push({rel:1440,x:relToX(1440),y:gy(endV),v:endV,meas:false,boundary:true});
+
+    const next=DAYS[dayIdx+1];
+    if(next&&next.pts&&next.pts.length){
+      next.pts.filter(p=>p[0]<=144).forEach(p=>{
+        pts.push({rel:1440+p[0],x:relToX(1440+p[0]),y:gy(p[1]),v:p[1],meas:false,context:true});
+      });
+      pts.push({rel:1584,x:relToX(1584),y:gy(estimateNextWindowEndValue()),v:estimateNextWindowEndValue(),meas:false,context:true});
+    }
+  }
+
+  pts=pts.filter(p=>p.rel>=REL_START&&p.rel<=REL_END).sort((a,b)=>a.rel-b.rel);
+
+  // De-duplicate identical x/rel points.
+  pts=pts.filter((p,i)=>i===0 || Math.abs(p.rel-pts[i-1].rel)>0.001);
+
+  if(pts.length<2)return;
+
+  // Gridlines for today's 6-hour marks.
+  ctx.strokeStyle='rgba(255,255,255,.065)';ctx.lineWidth=1;
+  [360,720,1080].forEach(m=>{
+    const x=relToX(m);
+    ctx.beginPath();ctx.moveTo(x,gTop+10);ctx.lineTo(x,gBot);ctx.stroke();
+  });
+
+  // Baseline across the whole visible window.
+  ctx.strokeStyle='rgba(255,255,255,.14)';ctx.beginPath();ctx.moveTo(padL,gBot);ctx.lineTo(W-padR,gBot);ctx.stroke();
+
+  // Midnight separators between days.
+  ctx.strokeStyle='rgba(255,255,255,.24)';
+  ctx.lineWidth=1;
+  ctx.setLineDash([4,6]);
+  [xSep0,xSep1].forEach(x=>{
+    ctx.beginPath();ctx.moveTo(x,gTop+4);ctx.lineTo(x,gBot);ctx.stroke();
+  });
+  ctx.setLineDash([]);
+
+  // Catmull-Rom sample continuously across the full visible window.
+  let samples=[];
+  for(let i=0;i<pts.length-1;i++){
+    const p0=pts[Math.max(0,i-1)],p1=pts[i],p2=pts[i+1],p3=pts[Math.min(pts.length-1,i+2)];
+    const steps=Math.max(16,Math.round((p2.x-p1.x)/3));
+    for(let s=0;s<=steps;s++){
+      const t=s/steps,t2=t*t,t3=t2*t;
+      const x=.5*((2*p1.x)+(-p0.x+p2.x)*t+(2*p0.x-5*p1.x+4*p2.x-p3.x)*t2+(-p0.x+3*p1.x-3*p2.x+p3.x)*t3);
+      const y=.5*((2*p1.y)+(-p0.y+p2.y)*t+(2*p0.y-5*p1.y+4*p2.y-p3.y)*t2+(-p0.y+3*p1.y-3*p2.y+p3.y)*t3);
+      samples.push({x,y,v:(gBot-y)/gH*maxV});
+    }
+  }
+  if(!samples.length)return;
+
+  // Continuous fill under the whole curve.
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(samples[0].x,gBot);
+  ctx.lineTo(samples[0].x,samples[0].y);
+  samples.forEach(p=>ctx.lineTo(p.x,p.y));
+  ctx.lineTo(samples[samples.length-1].x,gBot);
+  ctx.closePath();
+  ctx.clip();
+
+  let grad=ctx.createLinearGradient(0,gTop,0,gBot);
+  grad.addColorStop(0,'rgba(168,85,247,.48)');
+  grad.addColorStop(.48,'rgba(110,231,135,.34)');
+  grad.addColorStop(1,'rgba(251,146,60,.28)');
+  ctx.fillStyle=grad;
+  ctx.fillRect(0,gTop,W,gH);
+  ctx.restore();
+
+  // Continuous zone-colored stroke.
+  ctx.lineWidth=3;ctx.lineCap='round';ctx.shadowBlur=12;
+  for(let j=0;j<samples.length-1;j++){
+    ctx.strokeStyle=col((samples[j].v+samples[j+1].v)/2);
+    ctx.shadowColor=ctx.strokeStyle;
+    ctx.beginPath();ctx.moveTo(samples[j].x,samples[j].y);ctx.lineTo(samples[j+1].x,samples[j+1].y);ctx.stroke();
+  }
+  ctx.shadowBlur=0;
+
+  // Today projection line, from last actual today reading to today/tomorrow separator.
+  if(dayIdx===TODAY_IDX && day.pts.length){
+    const lastMeas=pts.filter(p=>p.meas).at(-1);
+    if(lastMeas){
+      ctx.setLineDash([5,7]);ctx.strokeStyle='rgba(255,255,255,.26)';ctx.lineWidth=1.2;
+      ctx.beginPath();ctx.moveTo(lastMeas.x,lastMeas.y);ctx.lineTo(xSep1,lastMeas.y);ctx.stroke();ctx.setLineDash([]);
+    }
+  }
+
+  // Measurement dots and labels only for today’s actual readings.
+  pts.forEach(p=>{
+    if(!p.meas)return;
+    ctx.beginPath();ctx.arc(p.x,p.y,7,0,Math.PI*2);ctx.fillStyle=col(p.v);ctx.shadowColor=col(p.v);ctx.shadowBlur=14;ctx.fill();
+    ctx.shadowBlur=0;ctx.fillStyle='#fff';ctx.font='800 14px -apple-system,BlinkMacSystemFont,sans-serif';
+    ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(Math.round(p.v),p.x,p.y-10);
+  });
+}
+const pc=document.getElementById('particles'),px=pc.getContext('2d');
+let particles=[];
+let activeTransfers=[];
+
+function resizeP(){
+  const d=devicePixelRatio||1;
+  pc.width=innerWidth*d;
+  pc.height=innerHeight*d;
+  pc.style.width=innerWidth+'px';
+  pc.style.height=innerHeight+'px';
+  px.setTransform(d,0,0,d,0,0);
+}
+
+function spawn(x,y,vx,vy,size,color,life){
+  particles.push({x,y,vx,vy,size,color,life,age:0});
+}
+
+function bezier(p0,p1,p2,p3,t){
+  const u=1-t;
+  return {
+    x:u*u*u*p0.x+3*u*u*t*p1.x+3*u*t*t*p2.x+t*t*t*p3.x,
+    y:u*u*u*p0.y+3*u*u*t*p1.y+3*u*t*t*p2.y+t*t*t*p3.y
+  };
+}
+
+function loop(now){
+  px.clearRect(0,0,innerWidth,innerHeight);
+
+  for(let i=activeTransfers.length-1;i>=0;i--){
+    let tr=activeTransfers[i];
+    let age=now-tr.start;
+
+    if(age>tr.life){
+      activeTransfers.splice(i,1);
+      continue;
+    }
+
+    let t=Math.min(1,Math.max(0,age/tr.travel));
+    let p=bezier(tr.p0,tr.p1,tr.p2,tr.p3,t);
+
+    // Add a little directional tail by drawing a few previous positions.
+    for(let k=5;k>=0;k--){
+      let tt=Math.max(0,t-k*.025);
+      let q=bezier(tr.p0,tr.p1,tr.p2,tr.p3,tt);
+      let a=(1-k/6)*Math.min(1,(tr.life-age)/220);
+      px.save();
+      px.globalAlpha=a*.8;
+      px.beginPath();
+      px.arc(q.x,q.y,tr.size*(1-k*.10),0,Math.PI*2);
+      px.fillStyle=tr.color;
+      px.shadowColor=tr.color;
+      px.shadowBlur=18;
+      px.fill();
+      px.restore();
+    }
+
+    // Bright head particle
+    px.save();
+    px.globalAlpha=Math.min(1,(tr.life-age)/220);
+    px.beginPath();
+    px.arc(p.x,p.y,tr.size*1.15,0,Math.PI*2);
+    px.fillStyle='rgba(255,232,140,.98)';
+    px.shadowColor='rgba(255,170,35,.98)';
+    px.shadowBlur=26;
+    px.fill();
+    px.restore();
+
+    // Impact sparkles near the target as each particle lands
+    if(!tr.landed && t>=.96){
+      tr.landed=true;
+      for(let s=0;s<4;s++){
+        let a=Math.random()*Math.PI*2;
+        let sp=1+Math.random()*2.2;
+        spawn(
+          tr.p3.x,
+          tr.p3.y,
+          Math.cos(a)*sp,
+          Math.sin(a)*sp,
+          .9+Math.random()*1.8,
+          Math.random()>.35?'rgba(110,231,135,.92)':'rgba(255,200,80,.9)',
+          260+Math.random()*280
+        );
+      }
+    }
+  }
+
+  for(let i=particles.length-1;i>=0;i--){
+    let p=particles[i];
+    p.age+=16;
+    p.x+=p.vx;
+    p.y+=p.vy;
+    p.vy+=.01;
+
+    let a=Math.max(0,1-p.age/p.life);
+    if(a<=0){particles.splice(i,1);continue}
+
+    px.globalAlpha=a;
+    px.beginPath();
+    px.arc(p.x,p.y,p.size*a,0,Math.PI*2);
+    px.fillStyle=p.color;
+    px.shadowColor=p.color;
+    px.shadowBlur=18;
+    px.fill();
+  }
+
+  px.globalAlpha=1;
+  px.shadowBlur=0;
+  requestAnimationFrame(loop);
+}
+
+function burst(el,color,n){
+  const r=el.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
+  for(let i=0;i<n;i++){
+    let a=Math.random()*Math.PI*2,s=1.5+Math.random()*4;
+    spawn(x,y,Math.cos(a)*s,Math.sin(a)*s,1.5+Math.random()*2.5,color,500+Math.random()*500)
+  }
+}
+
+function counter(el,from,to,dur,format,done){
+  let st=null;
+  function step(ts){
+    if(!st)st=ts;
+    let t=Math.min(1,(ts-st)/dur),e=ease(t);
+    el.textContent=format(from+(to-from)*e);
+    if(t<1)requestAnimationFrame(step);
+    else{el.textContent=format(to);done&&done()}
+  }
+  requestAnimationFrame(step)
+}
+
+function flow(fromEl,toEl,dur){
+  const contribRect=document.getElementById('contribNum').getBoundingClientRect();
+  const totalRect=document.getElementById('totalNum').getBoundingClientRect();
+
+  const startX=contribRect.left+contribRect.width*.52;
+  const startY=contribRect.top+contribRect.height*.55;
+  const endX=totalRect.left+totalRect.width*.48;
+  const endY=totalRect.top+totalRect.height*.55;
+  const dx=endX-startX;
+
+  activeTransfers=[];
+
+  let startTime=performance.now();
+  let emitted=0;
+  const count=96;          // number of additive packets
+  const emitEvery=dur/count;
+  const travel=520;        // fast movement across the gap
+
+  function emit(){
+    const now=performance.now();
+    const elapsed=now-startTime;
+
+    // Emit packets for 4 seconds, so transport is clearly additive.
+    while(emitted<count && emitted*emitEvery<=elapsed){
+      const n=emitted/(count-1);
+      const arcFamily=emitted%5;
+      const offset=(arcFamily-2)*5.5;
+
+      // Two clean one-way paths: an upper arc and a lower arc.
+      // Alternating packets use opposite arcs so it reads like a continuous transfer,
+      // not a single connected ribbon.
+      const arcHeight=34+arcFamily*7+Math.random()*8;
+      const arcDir=(emitted%2===0)?-1:1; // -1 = top arc, +1 = bottom arc
+      const arcSpread=arcDir*arcHeight;
+
+      const p0={x:startX+(Math.random()-.5)*8,y:startY+offset+(Math.random()-.5)*3};
+      const p1={x:startX+dx*.32,y:startY+arcSpread+offset};
+      const p2={x:startX+dx*.68,y:endY+arcSpread-offset*.25};
+      const p3={x:endX+(Math.random()-.5)*8,y:endY-offset*.25+(Math.random()-.5)*3};
+
+      activeTransfers.push({
+        p0,p1,p2,p3,
+        start:now,
+        travel:travel+Math.random()*120,
+        life:travel+420,
+        size:2.8+Math.random()*2.5,
+        color:Math.random()>.35?'rgba(255,165,35,.95)':'rgba(255,220,95,.98)',
+        landed:false
+      });
+
+      emitted++;
+    }
+
+    if(elapsed<dur) requestAnimationFrame(emit);
+  }
+
+  requestAnimationFrame(emit);
+}
+
+
+function updateAddedLabel(amount){
+  const el=document.getElementById('added');
+  if(!el)return;
+  amount=Math.max(0,Math.round(amount||0));
+  el.textContent='+'+amount.toLocaleString()+' today';
+}
+
+function reset(){updateAddedLabel(DAILY_SCORE);hasDeposited=false;bank.classList.remove('depositing');bank.classList.remove('streaming');contribCell.classList.remove('glow');totalCell.classList.remove('totalGlow');contribNum.classList.remove('pulse');totalNum.classList.remove('pop');added.classList.remove('show');archiveStatus.classList.remove('show');card.classList.remove('sealed');contribNum.textContent='+'+DAILY_SCORE;totalNum.textContent=fmt(TOTAL_BEFORE);updateAddedLabel(DAILY_SCORE);contribSub.textContent='tap to deposit'}
+function deposit(){if(hasDeposited)return;hasDeposited=true;bank.classList.add('streaming');contribCell.classList.add('glow');contribNum.classList.add('pulse');contribSub.textContent='ready';setTimeout(()=>{contribSub.textContent='depositing';flow(contribCell,totalCell,4000);counter(contribNum,DAILY_SCORE,0,4000,v=>'+'+Math.max(0,Math.round(v)));counter(totalNum,TOTAL_BEFORE,TOTAL_AFTER,4000,v=>fmt(v),()=>{contribNum.classList.remove('pulse');contribCell.classList.remove('glow');totalCell.classList.add('totalGlow');totalNum.classList.add('pop');bank.classList.remove('streaming');contribSub.textContent='complete';updateAddedLabel(DAILY_SCORE);added.classList.add('show');archiveStatus.classList.add('show');card.classList.add('sealed');burst(totalNum,'rgba(110,231,135,.95)',34);setTimeout(()=>{totalCell.classList.remove('totalGlow');totalNum.classList.remove('pop')},1100)})},700)}
+bank.onclick=()=>{reset();setTimeout(deposit,250)}
+
+// ── Supabase tag save ─────────────────────────────────────────────
+var _tagSaveTimer={};
+function saveTagsForDay(idx){
+  if(!_sbDeviceId)return;
+  clearTimeout(_tagSaveTimer[idx]);
+  _tagSaveTimer[idx]=setTimeout(function(){
+    var d=DAYS[idx];
+    fetch(_sbUrl+'/rest/v1/day_tags?on_conflict=device_id,day_date',{
+      method:'POST',
+      headers:Object.assign({},_sbHeaders,{'Prefer':'resolution=merge-duplicates,return=minimal'}),
+      body:JSON.stringify({
+        device_id: _sbDeviceId,
+        day_date:  d.isoDate,
+        events:    d.events,
+        tray_tags: d.tags,
+        note:      d.note||'',
+        updated_at: new Date().toISOString()
+      })
+    }).catch(function(){});
+  },400);
+}
+
+// ── Note field ────────────────────────────────────────────────────
+function updateNote(){
+  var inp=document.getElementById('noteInput');
+  if(inp) inp.value=DAYS[dayIdx].note||'';
+}
+function saveNote(){
+  var inp=document.getElementById('noteInput');
+  if(!inp)return;
+  DAYS[dayIdx].note=inp.value.trim();
+  saveTagsForDay(dayIdx);
+  var btn=document.getElementById('noteBtn');
+  if(btn){btn.textContent='\u2713';setTimeout(function(){btn.textContent='Save';},1000);}
+}
+(function(){
+  var btn=document.getElementById('noteBtn');
+  var inp=document.getElementById('noteInput');
+  if(btn) btn.addEventListener('click',saveNote);
+  if(inp) inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();saveNote();}});
+})();
+
+// ── Show already-deposited state immediately ──────────────────────
+function showDeposited(){updateAddedLabel(DAILY_SCORE);
+  hasDeposited=true;
+  contribNum.textContent='+'+DAILY_SCORE;
+  contribSub.textContent='complete';
+  totalNum.textContent=fmt(TOTAL_AFTER);
+  added.classList.add('show');
+  archiveStatus.classList.add('show');
+  card.classList.add('sealed');
+}
+
+// ── Supabase read + init ──────────────────────────────────────────
+var _sbUrl='',_sbHeaders={},_sbDeviceId='';
+
+function initWithSupabase(sbUrl,sbHeaders,deviceId,preRead){
+  _sbUrl=sbUrl;_sbHeaders=sbHeaders;_sbDeviceId=deviceId;
+  var alreadyDeposited=preRead.alreadyDeposited;
+  var tagRows=preRead.tagRows||[];
+  TOTAL_BEFORE=preRead.totalBefore;
+  TOTAL_AFTER=preRead.totalAfter;
+  contribNum.textContent='+'+DAILY_SCORE;
+  totalNum.textContent=fmt(TOTAL_BEFORE);
+  var tagLookup={};
+  tagRows.forEach(function(row){tagLookup[row.day_date]=row;});
+  DAYS.forEach(function(d){
+    var row=tagLookup[d.isoDate];
+    if(row){
+      d.events=Array.isArray(row.events)?row.events:[];
+      d.tags=Array.isArray(row.tray_tags)?row.tray_tags:[];
+      d.note=row.note||'';
+    }
+  });
+  _doInit(alreadyDeposited);
+}
+
+function _doInit(alreadyDeposited){
+  resizeP();loop();buildRail();updateCard();buildTags();updateNote();enableGraphDaySwipe();enableGraphDaySwipe();
+  setTimeout(function(){drawGraph();renderEvents();},80);
+  if(alreadyDeposited){setTimeout(showDeposited,200);}
+  else{setTimeout(deposit,900);}
+}
+
+let activeDrag=null
+}
+
+function buildDayPanel(dayIdx, kind){
+  const source=document.getElementById('card');
+  const panel=document.createElement('div');
+  panel.className='dayPanel '+kind+'Panel';
+
+  if(!source){
+    return panel;
+  }
+
+  const cardClone=source.cloneNode(true);
+  cardClone.removeAttribute('id');
+  cardClone.querySelectorAll('[id]').forEach(el=>{
+    el.removeAttribute('id');
+  });
+
+  const d=DAYS[Math.max(0,Math.min(TODAY_IDX,dayIdx))];
+  const todayLabel=cardClone.querySelector('[data-role="todayLabel"]') || cardClone.querySelector('.kicker');
+  const dateFull=cardClone.querySelector('[data-role="dateFull"]') || cardClone.querySelector('.summaryLeft > div:nth-child(2)');
+  const dailyScore=cardClone.querySelector('[data-role="dailyScore"]') || cardClone.querySelector('.summaryLeft > div:nth-child(4)');
+
+  if(todayLabel)todayLabel.textContent=d.dow;
+  if(dateFull)dateFull.textContent=d.dateStr;
+  if(dailyScore)dailyScore.textContent=d.score;
+
+  const graphWrap=cardClone.querySelector('#graphWrap,.graphSide > div');
+  const canvas=cardClone.querySelector('canvas');
+
+  if(graphWrap && canvas){
+    // Remove interactive overlay from ghost panels; it belongs only to the live center card.
+    graphWrap.querySelectorAll('#eventLayer,.placed-tag,#prevGraphDayLabel,#nextGraphDayLabel,#timeCursor,#dragGhost').forEach(el=>el.remove());
+    canvas.removeAttribute('id');
+
+    requestAnimationFrame(()=>{
+      drawGraphToCanvas(canvas, graphWrap, dayIdx, false);
+    });
+  }
+
+  panel.appendChild(cardClone);
+  return panel;
+}
+
+function installDayPager(){
+  if(window._dayPagerInstalled)return;
+  window._dayPagerInstalled=true;
+
   const card=document.getElementById('card');
-  if(!card || card._graphSwipeReady)return;
-  card._graphSwipeReady=true;
+  if(!card || !card.parentElement)return;
+
+  // Add data roles to the live card once so ghost cards can find fields safely.
+  const kicker=card.querySelector('#todayLabel');
+  const date=card.querySelector('#dateFull');
+  const score=card.querySelector('#dailyScore');
+  if(kicker)kicker.dataset.role='todayLabel';
+  if(date)date.dataset.role='dateFull';
+  if(score)score.dataset.role='dailyScore';
+
+  const viewport=document.createElement('div');
+  viewport.id='cardViewport';
+
+  const track=document.createElement('div');
+  track.id='cardTrack';
+
+  const parent=card.parentElement;
+  parent.insertBefore(viewport,card);
+  viewport.appendChild(track);
+
+  // Move the live card into the center panel.
+  const centerPanel=document.createElement('div');
+  centerPanel.className='dayPanel centerPanel';
+  centerPanel.appendChild(card);
+
+  track.appendChild(buildDayPanel(Math.max(0,selectedDay-1),'ghost'));
+  track.appendChild(centerPanel);
+  track.appendChild(buildDayPanel(Math.min(TODAY_IDX,selectedDay+1),'ghost'));
+
+  enableGraphDayPager();
+}
+
+function refreshDayPagerGhosts(){
+  const track=document.getElementById('cardTrack');
+  const liveCard=document.getElementById('card');
+  if(!track || !liveCard)return;
+
+  track.innerHTML='';
+
+  const centerPanel=document.createElement('div');
+  centerPanel.className='dayPanel centerPanel';
+
+  track.appendChild(buildDayPanel(Math.max(0,selectedDay-1),'ghost'));
+  centerPanel.appendChild(liveCard);
+  track.appendChild(centerPanel);
+  track.appendChild(buildDayPanel(Math.min(TODAY_IDX,selectedDay+1),'ghost'));
+
+  track.classList.add('dragging');
+  track.style.transform='translateX(-100%)';
+  requestAnimationFrame(()=>track.classList.remove('dragging'));
+}
+
+function enableGraphDaySwipe(){
+  installDayPager();
+}
+
+function enableGraphDayPager(){
+  const viewport=document.getElementById('cardViewport');
+  const track=document.getElementById('cardTrack');
+  if(!viewport || !track || viewport._pagerReady)return;
+  viewport._pagerReady=true;
 
   let active=false;
-  let startX=0,startY=0,lastX=0,lastT=0,velocity=0;
-  let locked=null;
-  let committedDay=selectedDay;
-  let previewDay=selectedDay;
+  let startX=0,startY=0,lastX=0,lastT=0,velocity=0,locked=null;
 
   function canStart(e){
     const target=e.target || (e.touches&&e.touches[0]&&e.touches[0].target);
@@ -4561,59 +5251,38 @@ function enableGraphDaySwipe(){
     return true;
   }
 
-  function pointFromTouch(e){
+  function pFromTouch(e){
     const t=e.touches&&e.touches[0] ? e.touches[0] : e.changedTouches&&e.changedTouches[0];
     return t ? {x:t.clientX,y:t.clientY} : null;
   }
 
-  function maxOffset(){
-    return Math.min(110,Math.max(70,card.clientWidth*.26));
+  function setOffset(dx){
+    track.style.transform='translateX(calc(-100% + '+dx+'px))';
   }
 
-  function setCardOffset(dx){
-    const limit=maxOffset();
-    const eased=Math.max(-limit,Math.min(limit,dx*.58));
-    card.style.transform='translateX('+eased+'px)';
+  function snapTo(offset,cb){
+    track.classList.remove('dragging');
+    track.style.transform='translateX('+offset+')';
+    const done=()=>{
+      track.removeEventListener('transitionend',done);
+      if(cb)cb();
+    };
+    track.addEventListener('transitionend',done);
+    setTimeout(done,360);
   }
 
-  function resetCard(){
-    card.classList.remove('card-dragging');
-    card.style.transform='translateX(0)';
-  }
-
-  function maybePreview(dx){
-    const nextIdx=dx<0 ? committedDay+1 : committedDay-1;
-    if(Math.abs(dx)<28 || nextIdx<0 || nextIdx>TODAY_IDX){
-      if(previewDay!==committedDay){
-        previewDay=committedDay;
-        selectDay(committedDay);
-      }
-      return;
-    }
-
-    if(previewDay!==nextIdx){
-      previewDay=nextIdx;
-      selectDay(nextIdx);
-      ensureSelectedDayVisible();
-    }
-  }
-
-  function beginAt(x,y){
+  function begin(x,y){
     active=true;
     startX=x;startY=y;
     lastX=x;lastT=performance.now();
-    velocity=0;
-    locked=null;
-    committedDay=selectedDay;
-    previewDay=selectedDay;
-    card.classList.add('card-dragging');
+    velocity=0;locked=null;
+    track.classList.add('dragging');
   }
 
-  function moveAt(x,y,ev){
+  function move(x,y,e){
     if(!active)return;
 
-    const dx=x-startX;
-    const dy=y-startY;
+    const dx=x-startX,dy=y-startY;
     const adx=Math.abs(dx),ady=Math.abs(dy);
 
     if(!locked){
@@ -4622,97 +5291,109 @@ function enableGraphDaySwipe(){
     }
 
     if(locked==='x'){
-      if(ev && ev.cancelable)ev.preventDefault();
-
+      if(e && e.cancelable)e.preventDefault();
       const now=performance.now();
       const dt=Math.max(1,now-lastT);
       velocity=(x-lastX)/dt*16.7;
       lastX=x;lastT=now;
 
-      maybePreview(dx);
-      setCardOffset(dx);
+      // Resist dragging past beginning/end.
+      let dragDx=dx;
+      if((selectedDay<=0 && dx>0) || (selectedDay>=TODAY_IDX && dx<0)){
+        dragDx=dx*.28;
+      }
+      setOffset(dragDx);
     }
   }
 
-  function finishAt(x){
+  function finish(x){
     if(!active)return;
     active=false;
 
     const dx=x-startX;
-    const threshold=Math.min(95,Math.max(44,card.clientWidth*.18));
-    const fast=Math.abs(velocity)>0.75 && Math.abs(dx)>22;
+    const threshold=Math.min(110,Math.max(50,viewport.clientWidth*.22));
+    const fast=Math.abs(velocity)>0.8 && Math.abs(dx)>24;
 
-    let finalDay=committedDay;
-    if((dx>threshold || (fast && velocity>0)) && committedDay>0){
-      finalDay=committedDay-1;
-    }else if((dx<-threshold || (fast && velocity<0)) && committedDay<TODAY_IDX){
-      finalDay=committedDay+1;
+    let target=selectedDay;
+    let snap='-100%';
+
+    if((dx>threshold || (fast && velocity>0)) && selectedDay>0){
+      target=selectedDay-1;
+      snap='0%';
+    }else if((dx<-threshold || (fast && velocity<0)) && selectedDay<TODAY_IDX){
+      target=selectedDay+1;
+      snap='-200%';
     }
 
-    if(finalDay!==selectedDay){
-      selectDay(finalDay);
-      ensureSelectedDayVisible();
-    }else if(finalDay!==committedDay){
-      // already previewing final day
-      ensureSelectedDayVisible();
-    }else if(previewDay!==committedDay){
-      selectDay(committedDay);
-      ensureSelectedDayVisible();
+    if(target!==selectedDay){
+      snapTo(snap,()=>{
+        selectedDay=target;
+        updateRollerAndCardForPager();
+        refreshDayPagerGhosts();
+      });
+    }else{
+      snapTo('-100%');
     }
 
-    resetCard();
     locked=null;
   }
 
-  // Pointer events for desktop/mouse.
-  card.addEventListener('pointerdown',e=>{
-    if(e.pointerType==='touch')return; // handled by explicit touch events below
+  function cancel(){
+    active=false;locked=null;
+    snapTo('-100%');
+  }
+
+  viewport.addEventListener('pointerdown',e=>{
+    if(e.pointerType==='touch')return;
     if(!canStart(e))return;
-    beginAt(e.clientX,e.clientY);
+    begin(e.clientX,e.clientY);
   },{passive:true});
 
   window.addEventListener('pointermove',e=>{
     if(!active)return;
-    moveAt(e.clientX,e.clientY,e);
+    move(e.clientX,e.clientY,e);
   },{passive:false});
 
   window.addEventListener('pointerup',e=>{
     if(!active)return;
-    finishAt(e.clientX);
+    finish(e.clientX);
   },{passive:false});
 
-  window.addEventListener('pointercancel',()=>{
-    if(previewDay!==committedDay)selectDay(committedDay);
-    active=false;locked=null;resetCard();
-  },{passive:true});
+  window.addEventListener('pointercancel',cancel,{passive:true});
 
-  // Explicit touch handlers for iOS Safari, because the outer horizontal scroller
-  // can otherwise steal the gesture before pointer events get useful movement.
-  card.addEventListener('touchstart',e=>{
+  viewport.addEventListener('touchstart',e=>{
     if(!canStart(e))return;
-    const p=pointFromTouch(e);
-    if(!p)return;
-    beginAt(p.x,p.y);
+    const p=pFromTouch(e);
+    if(p)begin(p.x,p.y);
   },{passive:true});
 
-  card.addEventListener('touchmove',e=>{
+  viewport.addEventListener('touchmove',e=>{
     if(!active)return;
-    const p=pointFromTouch(e);
-    if(!p)return;
-    moveAt(p.x,p.y,e);
+    const p=pFromTouch(e);
+    if(p)move(p.x,p.y,e);
   },{passive:false});
 
-  card.addEventListener('touchend',e=>{
+  viewport.addEventListener('touchend',e=>{
     if(!active)return;
-    const p=pointFromTouch(e);
-    if(!p){resetCard();return;}
-    finishAt(p.x);
+    const p=pFromTouch(e);
+    if(p)finish(p.x);
+    else cancel();
   },{passive:false});
 
-  card.addEventListener('touchcancel',()=>{
-    if(previewDay!==committedDay)selectDay(committedDay);
-    active=false;locked=null;resetCard();
-  },{passive:true});
+  viewport.addEventListener('touchcancel',cancel,{passive:true});
+}
+
+function updateRollerAndCardForPager(){
+  document.querySelectorAll('.day').forEach(el=>{
+    const idx=Number(el.dataset.idx);
+    el.classList.toggle('active',idx===selectedDay);
+  });
+  updateCard();
+  buildTags();
+  updateNote();
+  drawGraph();
+  ensureSelectedDayVisible();
+  setTimeout(renderEvents,0);
 }
 
 
