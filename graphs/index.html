@@ -4148,8 +4148,6 @@ function buildTags(){
   const d=DAYS[selectedDay],wrap=document.getElementById('tagsScroll');
   wrap.innerHTML='';
 
-  // Three copies make the tray feel continuous. We keep the scroll position
-  // in the middle copy in tuneTagWheel().
   Array.from({length:ALL_TAGS.length*3},(_,wheelIdx)=>ALL_TAGS[wheelIdx%ALL_TAGS.length]).forEach(([icon,name],wheelIdx)=>{
     const applied=d.tags.includes(icon);
     const el=document.createElement('div');
@@ -4189,14 +4187,13 @@ function buildTags(){
       const ady=Math.abs(dy);
 
       if(!dragStarted){
-        // Horizontal intent: let the native tag bar scroll/inertia own it.
+        // Horizontal intent: let the native scroller keep the gesture.
         if(adx>8 && adx>ady*1.15){
           horizontalScroll=true;
           return;
         }
 
         // Upward intent: pull the tag out of the tray.
-        // This is what makes mobile feel like "swipe bar sideways, pull tag upward."
         if(dy<-10 && ady>adx*.85){
           ev.preventDefault();
           beginDrag(ev.clientX,ev.clientY);
@@ -4218,7 +4215,6 @@ function buildTags(){
         ev.preventDefault();
         endTagDrag(ev.clientX,ev.clientY);
       }else if(!horizontalScroll){
-        // Tap still toggles the tray chip.
         applied?d.tags=d.tags.filter(t=>t!==icon):d.tags.push(icon);
         buildTags();
         saveTagsForDay(selectedDay);
@@ -4233,7 +4229,8 @@ function buildTags(){
     }
 
     el.addEventListener('pointerdown',ev=>{
-      // Do not preventDefault here. That lets horizontal swipes scroll naturally.
+      // Important: no preventDefault here, otherwise the tag owns horizontal swipes
+      // and the tray cannot scroll with momentum.
       pressed=true;
       dragStarted=false;
       horizontalScroll=false;
@@ -4245,7 +4242,6 @@ function buildTags(){
       document.addEventListener('pointercancel',onDocCancel,{passive:false});
     },{passive:true});
 
-    // Prevent native browser drag ghost on desktop.
     el.addEventListener('dragstart',ev=>ev.preventDefault());
 
     wrap.appendChild(el);
@@ -4941,3 +4937,4 @@ addEventListener('resize',()=>{resizeP();drawGraph();renderEvents();updateTagWhe
 </script>
 </body>
 </html>
+
