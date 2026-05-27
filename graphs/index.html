@@ -867,7 +867,7 @@ html, body {
 
 .graph-day-label{
   position:absolute;
-  top:4px;
+  top:-18px;
   z-index:5;
   color:var(--gold);
   font-size:10px;
@@ -878,10 +878,36 @@ html, body {
   opacity:.78;
 }
 #prevGraphDayLabel{
-  left:10px;
+  left:8.333%;
+  transform:translateX(-50%);
 }
 #nextGraphDayLabel{
-  right:10px;
+  left:91.667%;
+  transform:translateX(-50%);
+}
+
+
+/* Momentum wheel-style tag tray */
+#tagsScroll{
+  scroll-behavior:auto;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-x:contain;
+  mask-image:linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%);
+  -webkit-mask-image:linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%);
+}
+
+.tag{
+  transition:transform .18s ease, opacity .18s ease, background .15s ease, border-color .15s ease;
+}
+
+.tag.wheel-side{
+  opacity:.58;
+  transform:scale(.92);
+}
+
+.tag.wheel-center{
+  opacity:1;
+  transform:scale(1.04);
 }
 
 </style>
@@ -4061,15 +4087,74 @@ function updateCard(){
   const subtextEl=document.getElementById('subtext'); if(subtextEl) subtextEl.textContent=v[1];
   document.getElementById('tagsLabel').textContent=isToday?'Tags for today':'Tags for '+d.dateStr;
 }
+
+function tuneTagWheel(){
+  const wrap=document.getElementById('tagsScroll');
+  if(!wrap || !wrap.children.length)return;
+
+  const baseCount=ALL_TAGS.length;
+  const first=wrap.querySelector('.tag[data-base-index]');
+  if(!first)return;
+
+  const itemW=first.getBoundingClientRect().width + 10; // tag width + gap
+  const cycleW=itemW*baseCount;
+
+  if(!wrap._wheelReady){
+    wrap._wheelReady=true;
+    wrap._wheelRAF=null;
+
+    wrap.addEventListener('scroll',()=>{
+      if(wrap._wheelRAF)cancelAnimationFrame(wrap._wheelRAF);
+      wrap._wheelRAF=requestAnimationFrame(()=>{
+        const min=cycleW*.55;
+        const max=cycleW*1.55;
+
+        // Seamless loop: keep the scroll position in the middle copy.
+        if(wrap.scrollLeft<min)wrap.scrollLeft+=cycleW;
+        else if(wrap.scrollLeft>max)wrap.scrollLeft-=cycleW;
+
+        updateTagWheelScale();
+      });
+    },{passive:true});
+  }
+
+  // Start in the middle copy so the user can swipe either direction.
+  if(!wrap._wheelPositioned){
+    wrap._wheelPositioned=true;
+    setTimeout(()=>{
+      wrap.scrollLeft=cycleW;
+      updateTagWheelScale();
+    },0);
+  }else{
+    updateTagWheelScale();
+  }
+}
+
+function updateTagWheelScale(){
+  const wrap=document.getElementById('tagsScroll');
+  if(!wrap)return;
+
+  const center=wrap.getBoundingClientRect().left+wrap.clientWidth/2;
+  wrap.querySelectorAll('.tag[data-base-index]').forEach(el=>{
+    const r=el.getBoundingClientRect();
+    const elCenter=r.left+r.width/2;
+    const dist=Math.abs(elCenter-center);
+    el.classList.toggle('wheel-center',dist<r.width*.55);
+    el.classList.toggle('wheel-side',dist>r.width*1.35);
+  });
+}
+
 function buildTags(){
   const d=DAYS[selectedDay],wrap=document.getElementById('tagsScroll');
   wrap.innerHTML='';
 
-  ALL_TAGS.forEach(([icon,name])=>{
+  Array.from({length:ALL_TAGS.length*3},(_,wheelIdx)=>ALL_TAGS[wheelIdx%ALL_TAGS.length]).forEach(([icon,name],wheelIdx)=>{
     const applied=d.tags.includes(icon);
     const el=document.createElement('div');
     el.className='tag'+(applied?' applied':'');
     el.setAttribute('draggable','false');
+    el.dataset.baseIndex=String(wheelIdx%ALL_TAGS.length);
+    el.dataset.wheelIndex=String(wheelIdx);
     el.innerHTML=`<div class="tagIcon">${icon}</div><div class="tagName">${name}</div>${applied?'<div class="check">✓</div>':''}`;
 
     let downX=0,downY=0,dragStarted=false,pressed=false;
@@ -4150,14 +4235,7 @@ function buildTags(){
 
     wrap.appendChild(el);
   });
-
-  const add=document.createElement('div');
-  add.className='tag';
-  add.style.flexBasis='74px';
-  add.style.borderStyle='dashed';
-  add.style.fontSize='26px';
-  add.textContent='+';
-  wrap.appendChild(add);
+  tuneTagWheel();
 }
 
 
@@ -4856,9 +4934,7 @@ function initResultsPage(){updateAddedLabel(DAILY_SCORE);
   setTimeout(deposit,900);
 }
 if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initResultsPage);}else{setTimeout(initResultsPage,50);}
-addEventListener('resize',()=>{resizeP();drawGraph();renderEvents()})
+addEventListener('resize',()=>{resizeP();drawGraph();renderEvents();updateTagWheelScale()})
 </script>
 </body>
 </html>
-
-
