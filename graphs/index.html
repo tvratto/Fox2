@@ -4250,6 +4250,19 @@ function buildTags(){
   tuneTagWheel();
 }
 
+
+function updateGraphDayLabels(){
+  const prevEl=document.getElementById('prevGraphDayLabel');
+  const nextEl=document.getElementById('nextGraphDayLabel');
+  if(!prevEl||!nextEl)return;
+
+  const prev=DAYS[selectedDay-1];
+  const next=DAYS[selectedDay+1];
+
+  prevEl.textContent=prev ? prev.dow : '';
+  nextEl.textContent=(selectedDay!==TODAY_IDX && next) ? next.dow : '';
+}
+
 function drawGraph(){
   updateGraphDayLabels();
   const c=document.getElementById('graph'),wrap=document.getElementById('graphWrap'),W=wrap.clientWidth,H=wrap.clientHeight,dpr=devicePixelRatio||1;
@@ -4937,4 +4950,5 @@ addEventListener('resize',()=>{resizeP();drawGraph();renderEvents();updateTagWhe
 </script>
 </body>
 </html>
+
 
