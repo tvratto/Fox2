@@ -122,12 +122,12 @@ html, body {
 #dateFull{font-size:31px;font-weight:950;letter-spacing:-.075em;line-height:.98;margin-bottom:30px}
 .scoreLabel{font-size:13px;font-weight:700;color:rgba(255,255,255,.55);margin-bottom:6px}
 #dailyScore{font-size:58px;line-height:.9;color:var(--orange);font-weight:950;letter-spacing:-.085em;font-variant-numeric:tabular-nums;text-shadow:0 0 28px rgba(251,146,60,.18)}
-#verdict{margin-top:18px;font-size:15px;font-weight:850}.rule{width:44px;height:3px;border-radius:99px;background:var(--orange);margin:13px 0 12px;box-shadow:0 0 12px rgba(251,146,60,.35)}
+#verdict{margin-top:18px;font-size:15px;font-weight:850}.rule{width:44px;height:3px;border-radius:99px;background:var(--orange);margin:13px auto 12px;box-shadow:0 0 12px rgba(251,146,60,.35)}
 #subtext{max-width:122px;color:rgba(255,255,255,.48);font-size:12px;line-height:1.42;font-weight:520}
 .summaryTop{
   display:flex;
-  align-items:flex-end;
-  justify-content:space-between;
+  align-items:center;
+  justify-content:center;
   gap:18px;
   padding:0 2px 4px;
 }
@@ -135,16 +135,9 @@ html, body {
 .summaryLeft{
   display:flex;
   flex-direction:column;
+  align-items:center;
+  text-align:center;
   min-width:0;
-}
-
-.summaryRight{
-  display:flex;
-  flex-direction:column;
-  align-items:flex-end;
-  text-align:right;
-  max-width:220px;
-  padding-bottom:8px;
 }
 
 #dateFull{
@@ -196,7 +189,7 @@ html, body {
 .pulse{animation:pulse .85s ease-in-out infinite alternate}@keyframes pulse{from{filter:drop-shadow(0 0 4px rgba(251,146,60,.2));transform:scale(1)}to{filter:drop-shadow(0 0 22px rgba(251,146,60,.55));transform:scale(1.035)}}
 .pop{animation:pop .52s cubic-bezier(.2,1.7,.35,1)}@keyframes pop{0%{transform:scale(1)}42%{transform:scale(1.12)}100%{transform:scale(1)}}
 .sealed #graph{opacity:.72;filter:saturate(.74)}.sealed #dailyScore{opacity:.58}
-@media(max-width:760px){.rp-screen{padding:14px 0}.topbar{padding:0 20px}.logo{display:none}.rp-tabs .rp-tab:nth-child(n+4){display:none}.rp-control{display:flex;flex-direction:column;padding:0 12px}.rail{order:2;width:100%}.bank{order:1;width:100%}.card{border-radius:24px;border-left:0;border-right:0}.cardbody{padding:18px 18px 12px}.summaryTop{flex-direction:column;align-items:flex-start;gap:8px}.summaryRight{align-items:flex-start;text-align:left;max-width:none;padding-bottom:0}#dateFull{font-size:27px;margin-bottom:12px}#dailyScore{font-size:54px}.graphSide{width:100%}#graphWrap{min-height:220px}.tags{padding:0 18px}.note{margin:0 18px}.tag{flex-basis:84px}}
+@media(max-width:760px){.rp-screen{padding:14px 0}.topbar{padding:0 20px}.logo{display:none}.rp-tabs .rp-tab:nth-child(n+4){display:none}.rp-control{display:flex;flex-direction:column;padding:0 12px}.rail{order:2;width:100%}.bank{order:1;width:100%}.card{border-radius:24px;border-left:0;border-right:0}.cardbody{padding:18px 18px 12px}.summaryTop{flex-direction:column;align-items:flex-start;gap:8px}#dateFull{font-size:27px;margin-bottom:12px}#dailyScore{font-size:54px}.graphSide{width:100%}#graphWrap{min-height:220px}.tags{padding:0 18px}.note{margin:0 18px}.tag{flex-basis:84px}}
 @media(max-height:720px){.note{display:none}.tags{min-height:82px}.tag{height:56px}#graphWrap{min-height:130px}}
 
 /* Compact mode for short phones like iPhone SE */
@@ -276,13 +269,6 @@ html, body {
 
   .summaryLeft{
     min-width:92px;
-  }
-
-  .summaryRight{
-    align-items:flex-end;
-    text-align:right;
-    max-width:170px;
-    padding-bottom:3px;
   }
 
   .kicker{
@@ -480,13 +466,8 @@ html, body {
 
   .summaryLeft{
     min-width:108px;
-  }
-
-  .summaryRight{
-    align-items:flex-end;
-    text-align:right;
-    max-width:190px;
-    padding-bottom:4px;
+    align-items:center;
+    text-align:center;
   }
 
   #dateFull{
@@ -614,10 +595,6 @@ html, body {
 
   #dailyScore{
     font-size:56px;
-  }
-
-  .summaryRight{
-    max-width:205px;
   }
 
   #verdict{
@@ -916,16 +893,11 @@ html, body {
           <div class="scoreLabel">Daily Score</div>
           <div id="dailyScore">140</div>
         </div>
-        <div class="summaryRight">
-          <div id="verdict">Good day</div>
-          <div class="rule"></div>
-          <div id="subtext">You stayed mostly in fat-burning mode.</div>
-        </div>
       </section>
 
       <section class="graphSide">
         <div id="graphWrap"><canvas id="graph"></canvas><div id="eventLayer"><div class="event-rail"></div><div class="event-hint">Drag tags here</div></div></div>
-        <div class="axis"><span>12a</span><span>12p</span><span>12a</span><span>12p</span><span>12a</span><span>12p</span><span>12a</span></div>
+        <div class="axis"><span>9:36p</span><span>12a</span><span>6a</span><span>12p</span><span>6p</span><span>12a</span><span>2:24a</span></div>
       </section>
 
     </div>
@@ -4157,6 +4129,17 @@ function drawGraph(){
 
   const day=DAYS[selectedDay],padL=6,padR=6,padT=10,padB=8,gTop=padT,gBot=H-padB,gH=gBot-gTop;
 
+  // Visible x-window:
+  //   0–10%   = last 10% of yesterday
+  //   10–90%  = all of today
+  //   90–100% = first 10% of tomorrow
+  const prevStart=1440*0.90;
+  const nextEnd=1440*0.10;
+  const xPrev0=padL;
+  const xToday0=padL+(W-padL-padR)*0.10;
+  const xToday1=padL+(W-padL-padR)*0.90;
+  const xNext1=W-padR;
+
   const scaleVals=[];
   [selectedDay-1,selectedDay,selectedDay+1].forEach(idx=>{
     const d=DAYS[idx];
@@ -4165,7 +4148,9 @@ function drawGraph(){
   const rawMax=scaleVals.length?Math.max(...scaleVals):4;
   const maxV=Math.max(4.5,Math.ceil(rawMax*1.28));
 
-  const gx=m=>padL+m/1440*(W-padL-padR);
+  const gxToday=m=>xToday0+m/1440*(xToday1-xToday0);
+  const gxPrev=m=>xPrev0+(m-prevStart)/(1440-prevStart)*(xToday0-xPrev0);
+  const gxNext=m=>xToday1+m/nextEnd*(xNext1-xToday1);
   const gy=v=>gBot-Math.max(0,Math.min(maxV,v))/maxV*gH;
   const col=v=>Math.round(v)<=2?'#22D3EE':Math.round(v)<=4?'#6EE787':'#A855F7';
 
@@ -4197,18 +4182,48 @@ function drawGraph(){
     return Math.max(0,Math.min(maxV,last[1]));
   }
 
-  let pts=[{x:gx(0),y:gy(estimateStartValue(selectedDay)),v:estimateStartValue(selectedDay),meas:false},
-           ...day.pts.map(p=>({x:gx(p[0]),y:gy(p[1]),v:p[1],meas:true}))];
+  let pts=[];
+
+  const prevDay=DAYS[selectedDay-1];
+  if(prevDay&&prevDay.pts&&prevDay.pts.length){
+    prevDay.pts
+      .filter(p=>p[0]>=prevStart)
+      .forEach(p=>pts.push({x:gxPrev(p[0]),y:gy(p[1]),v:p[1],meas:false,context:true}));
+  }
+  pts.push({x:xToday0,y:gy(estimateStartValue(selectedDay)),v:estimateStartValue(selectedDay),meas:false,boundary:true});
+  day.pts.forEach(p=>pts.push({x:gxToday(p[0]),y:gy(p[1]),v:p[1],meas:true}));
 
   if(selectedDay!==TODAY_IDX){
     const endV=estimateEndValue(selectedDay);
-    pts.push({x:gx(1440),y:gy(endV),v:endV,meas:false});
+    pts.push({x:xToday1,y:gy(endV),v:endV,meas:false,boundary:true});
+    const nextDay=DAYS[selectedDay+1];
+    if(nextDay&&nextDay.pts&&nextDay.pts.length){
+      nextDay.pts
+        .filter(p=>p[0]<=nextEnd)
+        .forEach(p=>pts.push({x:gxNext(p[0]),y:gy(p[1]),v:p[1],meas:false,context:true}));
+    }
+  }else{
+    // For today, keep the projection line ending at the today/tomorrow separator.
   }
+
+  pts.sort((a,b)=>a.x-b.x);
   if(pts.length<2)return;
 
   ctx.strokeStyle='rgba(255,255,255,.065)';ctx.lineWidth=1;
-  [360,720,1080].forEach(m=>{ctx.beginPath();ctx.moveTo(gx(m),gTop+10);ctx.lineTo(gx(m),gBot);ctx.stroke()});
-  ctx.strokeStyle='rgba(255,255,255,.14)';ctx.beginPath();ctx.moveTo(gx(0),gBot);ctx.lineTo(gx(1440),gBot);ctx.stroke();
+  [360,720,1080].forEach(m=>{ctx.beginPath();ctx.moveTo(gxToday(m),gTop+10);ctx.lineTo(gxToday(m),gBot);ctx.stroke()});
+  ctx.strokeStyle='rgba(255,255,255,.14)';ctx.beginPath();ctx.moveTo(padL,gBot);ctx.lineTo(W-padR,gBot);ctx.stroke();
+
+  // Midnight separators between yesterday/today and today/tomorrow.
+  ctx.strokeStyle='rgba(255,255,255,.22)';
+  ctx.lineWidth=1;
+  ctx.setLineDash([4,6]);
+  [xToday0,xToday1].forEach(x=>{
+    ctx.beginPath();
+    ctx.moveTo(x,gTop+4);
+    ctx.lineTo(x,gBot);
+    ctx.stroke();
+  });
+  ctx.setLineDash([]);
 
   let samples=[];
   for(let i=0;i<pts.length-1;i++){
@@ -4238,7 +4253,7 @@ function drawGraph(){
 
   if(selectedDay===TODAY_IDX){
     const lp=pts.at(-1);ctx.setLineDash([5,7]);ctx.strokeStyle='rgba(255,255,255,.26)';ctx.lineWidth=1.2;
-    ctx.beginPath();ctx.moveTo(lp.x,lp.y);ctx.lineTo(gx(1440),lp.y);ctx.stroke();ctx.setLineDash([]);
+    ctx.beginPath();ctx.moveTo(lp.x,lp.y);ctx.lineTo(xToday1,lp.y);ctx.stroke();ctx.setLineDash([]);
   }
 
   pts.forEach(p=>{
@@ -4692,3 +4707,4 @@ addEventListener('resize',()=>{resizeP();drawGraph();renderEvents()})
 </script>
 </body>
 </html>
+
