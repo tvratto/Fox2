@@ -990,6 +990,55 @@ html, body {
   }
 }
 
+
+/* Visual repeat markers for infinite tag wheel */
+.tag-repeat-marker{
+  flex:0 0 18px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  opacity:.22;
+  pointer-events:none;
+}
+
+.tag-repeat-marker::before{
+  content:'';
+  width:2px;
+  height:32px;
+  border-radius:2px;
+  background:linear-gradient(to bottom, transparent, rgba(255,255,255,.9), transparent);
+}
+
+
+/* --- Desktop header stacking fix --- */
+@media (hover:hover) and (pointer:fine) and (min-width: 800px){
+
+  .top-header{
+    z-index:300 !important;
+  }
+
+  .contrib-bar,
+  .contribution-bar,
+  .total-bar,
+  .today-strip,
+  .date-strip{
+    z-index:120 !important;
+  }
+
+  .scroll-x{
+    padding-top:112px !important;
+    box-sizing:border-box;
+  }
+
+  .page{
+    padding-top:0 !important;
+  }
+
+  #results-page{
+    margin-top:0 !important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -4169,6 +4218,13 @@ function updateCard(){
 }
 
 
+
+function appendTagRepeatMarker(wrap){
+  const marker=document.createElement('div');
+  marker.className='tag-repeat-marker';
+  wrap.appendChild(marker);
+}
+
 function enableMouseTagWheel(){
   const wrap=document.getElementById('tagsScroll');
   if(!wrap || wrap._mouseWheelReady)return;
@@ -4287,6 +4343,10 @@ function buildTags(){
   wrap.innerHTML='';
 
   Array.from({length:ALL_TAGS.length*3},(_,wheelIdx)=>ALL_TAGS[wheelIdx%ALL_TAGS.length]).forEach(([icon,name],wheelIdx)=>{
+
+    if(wheelIdx>0 && wheelIdx%ALL_TAGS.length===0){
+      appendTagRepeatMarker(wrap);
+    }
     const applied=d.tags.includes(icon);
     const el=document.createElement('div');
     el.className='tag'+(applied?' applied':'');
