@@ -910,52 +910,6 @@ html, body {
   transform:scale(1.04);
 }
 
-
-
-/* --- Desktop / large-screen containment, scoped to the actual app shell --- */
-@media (hover:hover) and (pointer:fine) and (min-width: 800px){
-  html, body{
-    width:100%;
-    min-height:100%;
-    overflow:hidden;
-    background:
-      radial-gradient(circle at 50% 0%, rgba(255,210,60,.07), transparent 34%),
-      #000;
-  }
-
-  .top-header,
-  .bottom-bar,
-  .scroll-x{
-    left:50%;
-    right:auto;
-    width:min(430px, 100vw);
-    transform:translateX(-50%);
-  }
-
-  .scroll-x{
-    box-shadow:
-      0 0 0 1px rgba(255,255,255,.06),
-      0 18px 60px rgba(0,0,0,.55);
-    border-radius:28px;
-    overflow-x:auto;
-    overflow-y:hidden;
-    height:100dvh;
-  }
-
-  .page{
-    flex:0 0 min(430px, 100vw);
-    width:min(430px, 100vw);
-  }
-
-  .rp-screen{
-    width:100%;
-  }
-
-  #graphWrap{
-    width:100%;
-  }
-}
-
 </style>
 </head>
 <body>
@@ -1069,7 +1023,7 @@ html, body {
 <script>
 
 // ─── Parse URL params ─────────────────────────────────────────────
-var params = new URLSearchParams('t=1o&d=s:cp28vf2i%7Cm:cd2izz1e%7Ct:bc14fy14i114j31evg14yg1ezz1e%7Cw:d20kru0uxw14zz14%7Ct:bv0zhu0ul60unc0upt0uuj0uz314%7Cf:bf1ecp1efx1ejp14mv0usu0uw00u%7Cs:bz14%7Cs:br14mw14si14%7Cm:aq1eip14ub0uya0uzz0u%7Ct:as0un80ku314xr14%7Cw:ad14ek0uly14pr0uu714%7Ct:bf14t90uw90uxr0u%7Cf:bw1ege14ib0ks014%7Cs:cx1e%7Cs:%7Cm:sa0uwk0u%7Ct:d00uk70usc0u%7Cw:%7Ct:%7Cf:%7Cs:&a=5k4y2y232c2m2m2q2m222i2d2n112o0l1f00000000&s=0,26&c=TR-1&id=E079DEDB5110&v=3.051');
+var params    = new URLSearchParams(window.location.search);
 var targetAUC = parseInt(params.get('t') || '0', 36);  // base36 encoded
 var dParam    = params.get('d') || '';
 var aParam    = params.get('a') || '';
@@ -1095,23 +1049,18 @@ var windowStart = (function() {
   var satMidnightMs;
 
   if (tzParam !== null) {
-    // Device-supplied timezone offset (JS convention: minutes west of UTC)
-    // e.g. UTC-8 (California PST) = 480, UTC+5:30 = -330
     var tzOffsetMin = parseInt(tzParam, 10);
-    // Current UTC ms, shifted to device-local time
     var nowUtcMs = Date.now();
     var localMs  = nowUtcMs - tzOffsetMin * 60000;
     var localDate = new Date(localMs);
-    var dow = localDate.getUTCDay(); // day-of-week in device-local time
+    var dow = localDate.getUTCDay();
     daysToSat = (6 - dow + 7) % 7;
-    // Midnight of target Saturday in device-local time, expressed as UTC ms
     var localMidnightMs = localMs - (localDate.getUTCHours() * 3600000
                                    + localDate.getUTCMinutes() * 60000
                                    + localDate.getUTCSeconds() * 1000
                                    + localDate.getUTCMilliseconds());
     satMidnightMs = localMidnightMs + daysToSat * 86400000;
   } else {
-    // Fallback: use browser local timezone
     var now = new Date();
     var dow = now.getDay();
     daysToSat = (6 - dow + 7) % 7;
@@ -1220,17 +1169,6 @@ if (!dParam || totalDays === 0) {
 
   // Only write if there is actual measurement data
   if (!dParam || totalDays === 0) return;
-
-  // ── TEST MODE: skip all Supabase reads/writes ──
-  setTimeout(function(){
-    TOTAL_BEFORE = 1240;
-    TOTAL_AFTER  = TOTAL_BEFORE + DAILY_SCORE;
-    _sbDeviceId  = 'TEST';
-    contribNum.textContent = '+' + DAILY_SCORE;
-    totalNum.textContent   = fmt(TOTAL_BEFORE);
-    _doInit(false);
-  }, 100);
-  return;
 
   var SUPABASE_URL = 'https://byysvwdsbpmbypflqcjs.supabase.co';
   var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ5eXN2d2RzYnBtYnlwZmxxY2pzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MTEwNTYsImV4cCI6MjA5NDE4NzA1Nn0.uAKOkd9vNhtN7umEGrVLcQLNjWOnn33n-xKVT25mFzw';
@@ -2259,7 +2197,7 @@ function buildGraphCard(forcedView) {
   var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   function fmtDate(epoch) {
     var d = new Date(epoch * 1000);
-    return months[d.getMonth()] + ' ' + d.getDate();
+    return months[d.getUTCMonth()] + ' ' + d.getUTCDate();
   }
   var rangeStr = fmtDate(windowStart + chunkStart * 86400) + ' – ' + fmtDate(windowStart + (chunkStart + 20) * 86400);
   var pillW = 220, pillH = PILL_H, pillCY = PAD + pillH / 2;
@@ -2358,8 +2296,8 @@ function buildStreakCard() {
   var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   var d0 = new Date((windowStart + streakStart * 86400) * 1000);
   var d1 = new Date((windowStart + (totalDays - 1) * 86400) * 1000);
-  var dateStr = months[d0.getMonth()] + ' ' + d0.getDate()
-              + ' – ' + months[d1.getMonth()] + ' ' + d1.getDate();
+  var dateStr = months[d0.getUTCMonth()] + ' ' + d0.getUTCDate()
+              + ' – ' + months[d1.getUTCMonth()] + ' ' + d1.getUTCDate();
   ctx.fillStyle = '#1a1a2e';
   ctx.font = '15px -apple-system,sans-serif';
   ctx.textAlign = 'right';
@@ -2381,8 +2319,8 @@ function buildStreakCard() {
 
     // Date label
     var dateObj = new Date((windowStart + d * 86400) * 1000);
-    var dateLabel = months[dateObj.getMonth()].substring(0, 3) + ' ' + dateObj.getDate();
-    var dayLabel = daysOfWeek[dateObj.getDay()];
+    var dateLabel = months[dateObj.getUTCMonth()].substring(0, 3) + ' ' + dateObj.getUTCDate();
+    var dayLabel = daysOfWeek[dateObj.getUTCDay()];
 
     // Day of week left-aligned, date right-aligned — same vertical centre
     ctx.fillStyle = isEmpty ? 'rgba(255,255,255,0.12)' : (isToday ? 'rgba(245,200,66,0.6)' : 'rgba(255,255,255,0.3)');
@@ -2585,14 +2523,14 @@ function buildInsightsCard() {
     }
     var d0 = new Date((windowStart + winStart * 86400) * 1000);
     var d1 = new Date((windowStart + winEnd   * 86400) * 1000);
-    var rangeLabel = MONTHS_SHORT[d0.getMonth()] + ' ' + d0.getDate()
-                   + '–' + d1.getDate();
+    var rangeLabel = MONTHS_SHORT[d0.getUTCMonth()] + ' ' + d0.getUTCDate()
+                   + '–' + d1.getUTCDate();
     momBars.push({
       avg:        winDays > 0 ? winAUC / winDays : 0,
       rangeLabel: rangeLabel,
-      startDay:   d0.getDate(),
-      endDay:     d1.getDate(),
-      startMonth: d0.getMonth(),
+      startDay:   d0.getUTCDate(),
+      endDay:     d1.getUTCDate(),
+      startMonth: d0.getUTCMonth(),
       isLatest:   b === NUM_BARS - 1
     });
   }
@@ -3050,7 +2988,7 @@ function buildInsightsCard() {
       var ry = curY + pi * SHAPE_ROW_H;
       var shapeColor = SHAPE_COLORS[shape] || '#fff';
       var epochD = new Date((windowStart + d * 86400) * 1000);
-      var dateLabel = dayNames[epochD.getDay()] + ' ' + months[epochD.getMonth()] + ' ' + epochD.getDate();
+      var dateLabel = dayNames[epochD.getUTCDay()] + ' ' + months[epochD.getUTCMonth()] + ' ' + epochD.getUTCDate();
       ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.font = '15px -apple-system,sans-serif';
       ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
       ctx.fillText(dateLabel, gLeft, ry + SHAPE_ROW_H / 2);
