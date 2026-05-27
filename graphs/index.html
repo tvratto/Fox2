@@ -1353,7 +1353,7 @@ var sParam    = params.get('s') || '';
   var p  = params.get('p')  || '—';
   var c  = params.get('c')  || '—';
   var el = document.getElementById('debug-bar');
-  if (el) el.textContent = 'id:' + id + '  v:' + v + '  patient:' + p + '  clinic:' + c + '  [web build 2136 real-pager-panels]';
+  if (el) el.textContent = 'id:' + id + '  v:' + v + '  patient:' + p + '  clinic:' + c + '  [web build 2147 pager-target-fixed]';
 })();
 
 // Count day blocks first so windowStart can span the full payload
@@ -5092,16 +5092,12 @@ function enableGraphDayPager(){
     track.classList.remove('dragging');
     track.style.transform='translateX('+offset+')';
 
-    let fired=false;
-    const done=()=>{
-      if(fired)return;
-      fired=true;
-      track.removeEventListener('transitionend',done);
-      if(cb)cb();
-    };
-
-    track.addEventListener('transitionend',done);
-    setTimeout(done,340);
+    // Use a deterministic timer instead of relying on transitionend.
+    // Mobile Safari can skip transitionend when the track is rebuilt or if
+    // layout is interrupted, which leaves selectedDay stale.
+    if(cb){
+      setTimeout(cb,280);
+    }
   }
 
   function begin(x,y){
@@ -5163,15 +5159,28 @@ function enableGraphDayPager(){
     }
 
     if(target!==selectedDay){
+      const targetDay=target;
       snapTo(snap,()=>{
         window._pagerInternalUpdate=true;
-        selectedDay=target;
+        selectedDay=targetDay;
         updateRollerAndCardForPager();
         window._pagerInternalUpdate=false;
+
+        // Rebuild the side panels around the newly selected day.
         refreshDayPagerGhosts();
+
+        // Extra redraw catches delayed mobile layout after panel rebuild.
+        setTimeout(()=>{
+          drawGraph();
+          renderEvents();
+          redrawPagerGhostCanvases();
+          ensureSelectedDayVisible();
+        },60);
       });
     }else{
-      snapTo('-100%');
+      snapTo('-100%',()=>{
+        refreshDayPagerGhosts();
+      });
     }
 
     locked=null;
