@@ -1100,6 +1100,22 @@ html, body {
   transition:none;
 }
 
+
+/* Mobile/touch day swipe: card owns horizontal movement, page keeps vertical scroll */
+.card,
+.card *{
+  -webkit-user-select:none;
+  user-select:none;
+}
+
+.card{
+  touch-action:pan-y;
+}
+
+.card.card-dragging{
+  touch-action:none;
+}
+
 </style>
 </head>
 <body>
@@ -4568,6 +4584,9 @@ function enableGraphDaySwipe(){
 
   function begin(e){
     if(e.target && e.target.closest && e.target.closest('.placed-tag'))return;
+    if(card.setPointerCapture && e.pointerId!=null){
+      try{card.setPointerCapture(e.pointerId);}catch(_){}
+    }
     down=true;
     startX=e.clientX;
     startY=e.clientY;
@@ -4586,7 +4605,7 @@ function enableGraphDaySwipe(){
     const adx=Math.abs(dx),ady=Math.abs(dy);
 
     if(!locked){
-      if(adx>10 && adx>ady*1.15)locked='x';
+      if(adx>10 && adx>ady*1.15){locked='x';card.classList.add('card-dragging');e.preventDefault();}
       else if(ady>10 && ady>adx*1.15)locked='y';
     }
 
@@ -4613,7 +4632,7 @@ function enableGraphDaySwipe(){
   }
 
   // Pointer events work for mouse and touch.
-  card.addEventListener('pointerdown',begin,{passive:true});
+  card.addEventListener('pointerdown',begin,{passive:false});
   window.addEventListener('pointermove',move,{passive:false});
   window.addEventListener('pointerup',end,{passive:false});
   window.addEventListener('pointercancel',()=>{
@@ -5209,6 +5228,18 @@ function startTagDrag(icon,name,x,y,sourceEl,eventIndex){
   moveTagDrag(x,y);
 }
 
+
+function updateDragDeleteHint(x,y){
+  const ghostName=document.getElementById('ghostName');
+  if(!ghostName || !activeDrag)return;
+
+  if(activeDrag.eventIndex!=null && !clientInGraph(x,y)){
+    ghostName.textContent='Release to delete';
+  }else{
+    ghostName.textContent=activeDrag.name;
+  }
+}
+
 function moveTagDrag(x,y){
   if(!activeDrag)return;
   const ghost=document.getElementById("dragGhost");
@@ -5236,19 +5267,39 @@ function moveTagDrag(x,y){
 
 function endTagDrag(x,y){
   if(!activeDrag)return;
+
   const d=DAYS[selectedDay];
-  if(clientInGraph(x,y)){
+  const droppedInGraph=clientInGraph(x,y);
+
+  if(droppedInGraph){
     const minute=minuteFromClientX(x);
+
     if(activeDrag.eventIndex!=null){
       d.events[activeDrag.eventIndex].minute=minute;
     }else{
-      d.events.push({icon:activeDrag.icon,name:activeDrag.name,minute:minute});
+      d.events.push({
+        icon:activeDrag.icon,
+        name:activeDrag.name,
+        minute:minute
+      });
       if(!d.tags.includes(activeDrag.icon))d.tags.push(activeDrag.icon);
     }
+
+    renderEvents();
+    buildTags();
+    saveTagsForDay(selectedDay);
+
+  }else if(activeDrag.eventIndex!=null){
+    // Dragging an existing placed tag off the graph deletes it.
+    d.events.splice(activeDrag.eventIndex,1);
+
+    // If no placed events and no tray selection remain for this icon, keep tray state as-is.
+    // The saved Supabase row is updated with the reduced events array.
     renderEvents();
     buildTags();
     saveTagsForDay(selectedDay);
   }
+
   cancelTagDrag();
 }
 
