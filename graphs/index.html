@@ -175,7 +175,26 @@ html, body {
 
 .graphSide{display:flex;flex-direction:column;min-width:0;min-height:0}
 #graphWrap{position:relative;flex:1;min-height:260px}#graph{position:absolute;inset:0;width:100%;height:100%}
-.axis{display:grid;grid-template-columns:repeat(7,1fr);padding:5px 4px 0;color:rgba(255,255,255,.32);font-size:10px;font-weight:650}.axis span{text-align:center}.axis span:first-child{text-align:left}.axis span:last-child{text-align:right}
+.axis{
+  position:relative;
+  height:18px;
+  padding:5px 6px 0;
+  color:rgba(255,255,255,.32);
+  font-size:10px;
+  font-weight:650;
+}
+.axis span{
+  position:absolute;
+  top:5px;
+  transform:translateX(-50%);
+  white-space:nowrap;
+}
+.axis span:first-child{
+  transform:translateX(0);
+}
+.axis span:last-child{
+  transform:translateX(-100%);
+}
 #archiveStatus{color:var(--green);opacity:0;transform:translateY(2px);transition:.35s}#archiveStatus.show{opacity:1;transform:translateY(0)}
 .tags{min-height:116px}.sectionLabel{padding:0 4px 10px;color:rgba(255,255,255,.37);font-size:11px;font-weight:950;letter-spacing:.14em;text-transform:uppercase}
 #tagsScroll{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding:0 2px 2px}#tagsScroll::-webkit-scrollbar{display:none}
@@ -897,7 +916,7 @@ html, body {
 
       <section class="graphSide">
         <div id="graphWrap"><canvas id="graph"></canvas><div id="eventLayer"><div class="event-rail"></div><div class="event-hint">Drag tags here</div></div></div>
-        <div class="axis"><span>9:36p</span><span>12a</span><span>6a</span><span>12p</span><span>6p</span><span>12a</span><span>2:24a</span></div>
+        <div class="axis"><span style="left:0%;">9:36p</span><span style="left:8.333%;">12a</span><span style="left:29.167%;">6a</span><span style="left:50%;">12p</span><span style="left:70.833%;">6p</span><span style="left:91.667%;">12a</span><span style="left:100%;">2:24a</span></div>
       </section>
 
     </div>
@@ -4129,17 +4148,21 @@ function drawGraph(){
 
   const day=DAYS[selectedDay],padL=6,padR=6,padT=10,padB=8,gTop=padT,gBot=H-padB,gH=gBot-gTop;
 
-  // Visible x-window:
-  //   0–10%   = last 10% of yesterday
-  //   10–90%  = all of today
-  //   90–100% = first 10% of tomorrow
-  const prevStart=1440*0.90;
-  const nextEnd=1440*0.10;
-  const xPrev0=padL;
-  const xToday0=padL+(W-padL-padR)*0.10;
-  const xToday1=padL+(W-padL-padR)*0.90;
-  const xNext1=W-padR;
+  // Visible time window:
+  //   -144..0     = last 10% of yesterday
+  //    0..1440    = all of today
+  //    1440..1584 = first 10% of tomorrow
+  const REL_START=-144;
+  const REL_END=1584;
+  const TOTAL_REL=REL_END-REL_START;
+  const xSep0=relToX(0);
+  const xSep1=relToX(1440);
 
+  function relToX(rel){
+    return padL+(rel-REL_START)/TOTAL_REL*(W-padL-padR);
+  }
+
+  // Include adjacent days when autoscaling, so boundary estimates do not clip.
   const scaleVals=[];
   [selectedDay-1,selectedDay,selectedDay+1].forEach(idx=>{
     const d=DAYS[idx];
@@ -4148,9 +4171,6 @@ function drawGraph(){
   const rawMax=scaleVals.length?Math.max(...scaleVals):4;
   const maxV=Math.max(4.5,Math.ceil(rawMax*1.28));
 
-  const gxToday=m=>xToday0+m/1440*(xToday1-xToday0);
-  const gxPrev=m=>xPrev0+(m-prevStart)/(1440-prevStart)*(xToday0-xPrev0);
-  const gxNext=m=>xToday1+m/nextEnd*(xNext1-xToday1);
   const gy=v=>gBot-Math.max(0,Math.min(maxV,v))/maxV*gH;
   const col=v=>Math.round(v)<=2?'#22D3EE':Math.round(v)<=4?'#6EE787':'#A855F7';
 
@@ -4182,53 +4202,133 @@ function drawGraph(){
     return Math.max(0,Math.min(maxV,last[1]));
   }
 
+  function estimatePrevWindowStartValue(){
+    const prev=DAYS[selectedDay-1];
+    const startV=estimateStartValue(selectedDay);
+
+    if(!prev||!prev.pts||!prev.pts.length)return startV;
+
+    const tail=prev.pts.filter(p=>p[0]>=1296);
+    if(tail.length){
+      const firstTail=tail[0];
+      if(firstTail[0]===1296)return firstTail[1];
+
+      // Interpolate/extrapolate from prior point to first tail point if possible.
+      const before=prev.pts.slice().reverse().find(p=>p[0]<1296);
+      if(before){
+        const dt=firstTail[0]-before[0];
+        if(dt>0){
+          const slope=(firstTail[1]-before[1])/dt;
+          return Math.max(0,Math.min(maxV,before[1]+slope*(1296-before[0])));
+        }
+      }
+      return firstTail[1];
+    }
+
+    const lastPrev=prev.pts[prev.pts.length-1];
+    const dt=1440-lastPrev[0];
+    if(dt>0){
+      const slope=(startV-lastPrev[1])/dt;
+      return Math.max(0,Math.min(maxV,lastPrev[1]+slope*(1296-lastPrev[0])));
+    }
+    return lastPrev[1];
+  }
+
+  function estimateNextWindowEndValue(){
+    const next=DAYS[selectedDay+1];
+    const endV=estimateEndValue(selectedDay);
+
+    if(!next||!next.pts||!next.pts.length)return endV;
+
+    const head=next.pts.filter(p=>p[0]<=144);
+    if(head.length){
+      const lastHead=head[head.length-1];
+      if(lastHead[0]===144)return lastHead[1];
+
+      const after=next.pts.find(p=>p[0]>144);
+      if(after){
+        const dt=after[0]-lastHead[0];
+        if(dt>0){
+          const slope=(after[1]-lastHead[1])/dt;
+          return Math.max(0,Math.min(maxV,lastHead[1]+slope*(144-lastHead[0])));
+        }
+      }
+      return lastHead[1];
+    }
+
+    const firstNext=next.pts[0];
+    if(firstNext[0]>0){
+      const slope=(firstNext[1]-endV)/firstNext[0];
+      return Math.max(0,Math.min(maxV,endV+slope*144));
+    }
+    return firstNext[1];
+  }
+
   let pts=[];
 
-  const prevDay=DAYS[selectedDay-1];
-  if(prevDay&&prevDay.pts&&prevDay.pts.length){
-    prevDay.pts
-      .filter(p=>p[0]>=prevStart)
-      .forEach(p=>pts.push({x:gxPrev(p[0]),y:gy(p[1]),v:p[1],meas:false,context:true}));
+  // Previous-day context starts exactly at 9:36pm yesterday.
+  const prev=DAYS[selectedDay-1];
+  if(prev&&prev.pts&&prev.pts.length){
+    pts.push({rel:-144,x:relToX(-144),y:gy(estimatePrevWindowStartValue()),v:estimatePrevWindowStartValue(),meas:false,context:true});
+    prev.pts.filter(p=>p[0]>=1296).forEach(p=>{
+      pts.push({rel:p[0]-1440,x:relToX(p[0]-1440),y:gy(p[1]),v:p[1],meas:false,context:true});
+    });
   }
-  pts.push({x:xToday0,y:gy(estimateStartValue(selectedDay)),v:estimateStartValue(selectedDay),meas:false,boundary:true});
-  day.pts.forEach(p=>pts.push({x:gxToday(p[0]),y:gy(p[1]),v:p[1],meas:true}));
+
+  // Midnight separator: estimated value, shared by yesterday/today.
+  const startV=estimateStartValue(selectedDay);
+  pts.push({rel:0,x:relToX(0),y:gy(startV),v:startV,meas:false,boundary:true});
+
+  // Today's real measurements.
+  day.pts.forEach(p=>{
+    pts.push({rel:p[0],x:relToX(p[0]),y:gy(p[1]),v:p[1],meas:true});
+  });
 
   if(selectedDay!==TODAY_IDX){
+    // Midnight separator: estimated value, shared by today/tomorrow.
     const endV=estimateEndValue(selectedDay);
-    pts.push({x:xToday1,y:gy(endV),v:endV,meas:false,boundary:true});
-    const nextDay=DAYS[selectedDay+1];
-    if(nextDay&&nextDay.pts&&nextDay.pts.length){
-      nextDay.pts
-        .filter(p=>p[0]<=nextEnd)
-        .forEach(p=>pts.push({x:gxNext(p[0]),y:gy(p[1]),v:p[1],meas:false,context:true}));
+    pts.push({rel:1440,x:relToX(1440),y:gy(endV),v:endV,meas:false,boundary:true});
+
+    const next=DAYS[selectedDay+1];
+    if(next&&next.pts&&next.pts.length){
+      next.pts.filter(p=>p[0]<=144).forEach(p=>{
+        pts.push({rel:1440+p[0],x:relToX(1440+p[0]),y:gy(p[1]),v:p[1],meas:false,context:true});
+      });
+      pts.push({rel:1584,x:relToX(1584),y:gy(estimateNextWindowEndValue()),v:estimateNextWindowEndValue(),meas:false,context:true});
     }
-  }else{
-    // For today, keep the projection line ending at the today/tomorrow separator.
   }
 
-  pts.sort((a,b)=>a.x-b.x);
+  pts=pts.filter(p=>p.rel>=REL_START&&p.rel<=REL_END).sort((a,b)=>a.rel-b.rel);
+
+  // De-duplicate identical x/rel points.
+  pts=pts.filter((p,i)=>i===0 || Math.abs(p.rel-pts[i-1].rel)>0.001);
+
   if(pts.length<2)return;
 
+  // Gridlines for today's 6-hour marks.
   ctx.strokeStyle='rgba(255,255,255,.065)';ctx.lineWidth=1;
-  [360,720,1080].forEach(m=>{ctx.beginPath();ctx.moveTo(gxToday(m),gTop+10);ctx.lineTo(gxToday(m),gBot);ctx.stroke()});
+  [360,720,1080].forEach(m=>{
+    const x=relToX(m);
+    ctx.beginPath();ctx.moveTo(x,gTop+10);ctx.lineTo(x,gBot);ctx.stroke();
+  });
+
+  // Baseline across the whole visible window.
   ctx.strokeStyle='rgba(255,255,255,.14)';ctx.beginPath();ctx.moveTo(padL,gBot);ctx.lineTo(W-padR,gBot);ctx.stroke();
 
-  // Midnight separators between yesterday/today and today/tomorrow.
-  ctx.strokeStyle='rgba(255,255,255,.22)';
+  // Midnight separators between days.
+  ctx.strokeStyle='rgba(255,255,255,.24)';
   ctx.lineWidth=1;
   ctx.setLineDash([4,6]);
-  [xToday0,xToday1].forEach(x=>{
-    ctx.beginPath();
-    ctx.moveTo(x,gTop+4);
-    ctx.lineTo(x,gBot);
-    ctx.stroke();
+  [xSep0,xSep1].forEach(x=>{
+    ctx.beginPath();ctx.moveTo(x,gTop+4);ctx.lineTo(x,gBot);ctx.stroke();
   });
   ctx.setLineDash([]);
 
+  // Catmull-Rom sample continuously across the full visible window.
   let samples=[];
   for(let i=0;i<pts.length-1;i++){
     const p0=pts[Math.max(0,i-1)],p1=pts[i],p2=pts[i+1],p3=pts[Math.min(pts.length-1,i+2)];
-    const steps=Math.max(16,Math.round((p2.x-p1.x)/4));
+    const steps=Math.max(16,Math.round((p2.x-p1.x)/3));
     for(let s=0;s<=steps;s++){
       const t=s/steps,t2=t*t,t3=t2*t;
       const x=.5*((2*p1.x)+(-p0.x+p2.x)*t+(2*p0.x-5*p1.x+4*p2.x-p3.x)*t2+(-p0.x+3*p1.x-3*p2.x+p3.x)*t3);
@@ -4238,24 +4338,43 @@ function drawGraph(){
   }
   if(!samples.length)return;
 
-  ctx.save();ctx.beginPath();ctx.moveTo(samples[0].x,gBot);ctx.lineTo(samples[0].x,samples[0].y);
-  samples.forEach(p=>ctx.lineTo(p.x,p.y));ctx.lineTo(samples.at(-1).x,gBot);ctx.closePath();ctx.clip();
-  let grad=ctx.createLinearGradient(0,gTop,0,gBot);
-  grad.addColorStop(0,'rgba(168,85,247,.48)');grad.addColorStop(.48,'rgba(110,231,135,.34)');grad.addColorStop(1,'rgba(251,146,60,.28)');
-  ctx.fillStyle=grad;ctx.fillRect(0,gTop,W,gH);ctx.restore();
+  // Continuous fill under the whole curve.
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(samples[0].x,gBot);
+  ctx.lineTo(samples[0].x,samples[0].y);
+  samples.forEach(p=>ctx.lineTo(p.x,p.y));
+  ctx.lineTo(samples[samples.length-1].x,gBot);
+  ctx.closePath();
+  ctx.clip();
 
+  let grad=ctx.createLinearGradient(0,gTop,0,gBot);
+  grad.addColorStop(0,'rgba(168,85,247,.48)');
+  grad.addColorStop(.48,'rgba(110,231,135,.34)');
+  grad.addColorStop(1,'rgba(251,146,60,.28)');
+  ctx.fillStyle=grad;
+  ctx.fillRect(0,gTop,W,gH);
+  ctx.restore();
+
+  // Continuous zone-colored stroke.
   ctx.lineWidth=3;ctx.lineCap='round';ctx.shadowBlur=12;
   for(let j=0;j<samples.length-1;j++){
-    ctx.strokeStyle=col((samples[j].v+samples[j+1].v)/2);ctx.shadowColor=ctx.strokeStyle;
+    ctx.strokeStyle=col((samples[j].v+samples[j+1].v)/2);
+    ctx.shadowColor=ctx.strokeStyle;
     ctx.beginPath();ctx.moveTo(samples[j].x,samples[j].y);ctx.lineTo(samples[j+1].x,samples[j+1].y);ctx.stroke();
   }
   ctx.shadowBlur=0;
 
-  if(selectedDay===TODAY_IDX){
-    const lp=pts.at(-1);ctx.setLineDash([5,7]);ctx.strokeStyle='rgba(255,255,255,.26)';ctx.lineWidth=1.2;
-    ctx.beginPath();ctx.moveTo(lp.x,lp.y);ctx.lineTo(xToday1,lp.y);ctx.stroke();ctx.setLineDash([]);
+  // Today projection line, from last actual today reading to today/tomorrow separator.
+  if(selectedDay===TODAY_IDX && day.pts.length){
+    const lastMeas=pts.filter(p=>p.meas).at(-1);
+    if(lastMeas){
+      ctx.setLineDash([5,7]);ctx.strokeStyle='rgba(255,255,255,.26)';ctx.lineWidth=1.2;
+      ctx.beginPath();ctx.moveTo(lastMeas.x,lastMeas.y);ctx.lineTo(xSep1,lastMeas.y);ctx.stroke();ctx.setLineDash([]);
+    }
   }
 
+  // Measurement dots and labels only for today’s actual readings.
   pts.forEach(p=>{
     if(!p.meas)return;
     ctx.beginPath();ctx.arc(p.x,p.y,7,0,Math.PI*2);ctx.fillStyle=col(p.v);ctx.shadowColor=col(p.v);ctx.shadowBlur=14;ctx.fill();
