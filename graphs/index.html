@@ -1175,6 +1175,8 @@ html, body {
   transform:none !important;
 }
 
+
+.ghostGraphCanvas{display:block;width:100%;height:100%;}
 </style>
 </head>
 <body>
@@ -1301,7 +1303,7 @@ var sParam    = params.get('s') || '';
   var p  = params.get('p')  || '—';
   var c  = params.get('c')  || '—';
   var el = document.getElementById('debug-bar');
-  if (el) el.textContent = 'id:' + id + '  v:' + v + '  patient:' + p + '  clinic:' + c + '  [web build 2105 pager-refresh-fixed]';
+  if (el) el.textContent = 'id:' + id + '  v:' + v + '  patient:' + p + '  clinic:' + c + '  [web build 2117 pager-ghost-redraw]';
 })();
 
 // Count day blocks first so windowStart can span the full payload
@@ -4857,6 +4859,7 @@ function buildDayPanel(dayIdx, kind){
   const source=document.getElementById('card');
   const panel=document.createElement('div');
   panel.className='dayPanel '+kind+'Panel';
+  panel.dataset.dayIdx=String(Math.max(0,Math.min(TODAY_IDX,dayIdx)));
 
   if(!source){
     return panel;
@@ -4864,11 +4867,15 @@ function buildDayPanel(dayIdx, kind){
 
   const cardClone=source.cloneNode(true);
   cardClone.removeAttribute('id');
+  cardClone.classList.remove('card-dragging');
+
+  // Remove IDs from the clone so the live card remains the only interactive card.
   cardClone.querySelectorAll('[id]').forEach(el=>{
     el.removeAttribute('id');
   });
 
-  const d=DAYS[Math.max(0,Math.min(TODAY_IDX,dayIdx))];
+  const d=DAYS[Number(panel.dataset.dayIdx)];
+
   const todayLabel=cardClone.querySelector('[data-role="todayLabel"]') || cardClone.querySelector('.kicker');
   const dateFull=cardClone.querySelector('[data-role="dateFull"]') || cardClone.querySelector('.summaryLeft > div:nth-child(2)');
   const dailyScore=cardClone.querySelector('[data-role="dailyScore"]') || cardClone.querySelector('.summaryLeft > div:nth-child(4)');
@@ -4877,21 +4884,31 @@ function buildDayPanel(dayIdx, kind){
   if(dateFull)dateFull.textContent=d.dateStr;
   if(dailyScore)dailyScore.textContent=d.score;
 
-  const graphWrap=cardClone.querySelector('#graphWrap,.graphSide > div');
+  const graphWrap=cardClone.querySelector('.graphSide > div');
   const canvas=cardClone.querySelector('canvas');
 
-  if(graphWrap && canvas){
-    // Remove interactive overlay from ghost panels; it belongs only to the live center card.
-    graphWrap.querySelectorAll('#eventLayer,.placed-tag,#prevGraphDayLabel,#nextGraphDayLabel,#timeCursor,#dragGhost').forEach(el=>el.remove());
-    canvas.removeAttribute('id');
+  if(graphWrap){
+    graphWrap.querySelectorAll('#eventLayer,.placed-tag,#prevGraphDayLabel,#nextGraphDayLabel,.graph-day-label').forEach(el=>el.remove());
+  }
 
-    requestAnimationFrame(()=>{
-      drawGraphToCanvas(canvas, graphWrap, dayIdx, false);
-    });
+  if(canvas){
+    canvas.removeAttribute('id');
+    canvas.classList.add('ghostGraphCanvas');
   }
 
   panel.appendChild(cardClone);
   return panel;
+}
+
+function redrawPagerGhostCanvases(){
+  document.querySelectorAll('#cardTrack .ghostPanel').forEach(panel=>{
+    const dayIdx=Number(panel.dataset.dayIdx);
+    const wrap=panel.querySelector('.graphSide > div');
+    const canvas=panel.querySelector('canvas');
+    if(wrap && canvas){
+      drawGraphToCanvas(canvas, wrap, dayIdx, false);
+    }
+  });
 }
 
 function installDayPager(){
@@ -4919,7 +4936,6 @@ function installDayPager(){
   parent.insertBefore(viewport,card);
   viewport.appendChild(track);
 
-  // Move the live card into the center panel.
   const centerPanel=document.createElement('div');
   centerPanel.className='dayPanel centerPanel';
   centerPanel.appendChild(card);
@@ -4928,9 +4944,19 @@ function installDayPager(){
   track.appendChild(centerPanel);
   track.appendChild(buildDayPanel(selectedDay<TODAY_IDX ? selectedDay+1 : selectedDay,'ghost'));
 
+  track.classList.add('dragging');
+  track.style.transform='translateX(-100%)';
+  void track.offsetWidth;
+  track.classList.remove('dragging');
+
+  requestAnimationFrame(()=>{
+    drawGraph();
+    renderEvents();
+    redrawPagerGhostCanvases();
+  });
+
   enableGraphDayPager();
 }
-
 
 function refreshDayPagerGhosts(){
   const track=document.getElementById('cardTrack');
@@ -4947,20 +4973,18 @@ function refreshDayPagerGhosts(){
   track.appendChild(centerPanel);
   track.appendChild(buildDayPanel(selectedDay<TODAY_IDX ? selectedDay+1 : selectedDay,'ghost'));
 
-  // Force the rebuilt pager back to the center panel immediately.
   track.classList.add('dragging');
   track.style.transform='translateX(-100%)';
   void track.offsetWidth;
 
-  // Redraw live center graph now that it has been moved in the DOM.
   drawGraph();
   renderEvents();
+  redrawPagerGhostCanvases();
 
   requestAnimationFrame(()=>{
-    requestAnimationFrame(()=>{
-      track.classList.remove('dragging');
-      track.style.transform='translateX(-100%)';
-    });
+    track.classList.remove('dragging');
+    track.style.transform='translateX(-100%)';
+    redrawPagerGhostCanvases();
   });
 }
 
