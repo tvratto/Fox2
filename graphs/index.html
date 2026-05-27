@@ -910,6 +910,48 @@ html, body {
   transform:scale(1.04);
 }
 
+
+/* --- Desktop / large-screen containment --- */
+:root{
+  --phone-max-width: 430px;
+}
+
+body{
+  display:flex;
+  justify-content:center;
+  background:#000;
+}
+
+#app,
+.app,
+main{
+  width:100%;
+}
+
+@media (min-width: 700px){
+
+  body{
+    padding:24px 0;
+  }
+
+  #app,
+  .app,
+  main{
+    max-width:var(--phone-max-width);
+    min-height:calc(100vh - 48px);
+    border-radius:28px;
+    overflow:hidden;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,.06),
+      0 18px 60px rgba(0,0,0,.55);
+  }
+
+  /* Keep graph aspect feeling phone-like on desktop */
+  #graphWrap{
+    aspect-ratio: 1 / 1.08;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -4950,5 +4992,3 @@ addEventListener('resize',()=>{resizeP();drawGraph();renderEvents();updateTagWhe
 </script>
 </body>
 </html>
-
-
