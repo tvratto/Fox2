@@ -1169,6 +1169,12 @@ html, body {
   }
 }
 
+
+/* Pager owns horizontal movement now; live card itself should stay centered */
+#card{
+  transform:none !important;
+}
+
 </style>
 </head>
 <body>
@@ -1295,7 +1301,7 @@ var sParam    = params.get('s') || '';
   var p  = params.get('p')  || '—';
   var c  = params.get('c')  || '—';
   var el = document.getElementById('debug-bar');
-  if (el) el.textContent = 'id:' + id + '  v:' + v + '  patient:' + p + '  clinic:' + c + '  [web build 2057 pager-direction-fixed]';
+  if (el) el.textContent = 'id:' + id + '  v:' + v + '  patient:' + p + '  clinic:' + c + '  [web build 2105 pager-refresh-fixed]';
 })();
 
 // Count day blocks first so windowStart can span the full payload
@@ -4200,7 +4206,29 @@ function fmt(v){return Math.round(v).toLocaleString();}
 function ease(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2}
 
 function buildRail(){const rail=document.getElementById('rail');rail.innerHTML='';for(let i=Math.max(0,TODAY_IDX-8);i<=TODAY_IDX;i++){const d=DAYS[i];const el=document.createElement('div');el.className='day'+(i===selectedDay?' active':'')+(i===TODAY_IDX?' today':'');el.dataset.idx=i;el.innerHTML=`<div class="dow">${d.dow}</div><div class="date">${d.dateStr}</div><div class="dot"></div>`;el.onclick=()=>selectDay(i);rail.appendChild(el)}setTimeout(()=>document.querySelector('.day.active')?.scrollIntoView({behavior:'smooth',inline:'center'}),50)}
-function selectDay(i){selectedDay=Math.max(0,Math.min(TODAY_IDX,i));document.querySelectorAll('.day').forEach(el=>{const idx=Number(el.dataset.idx);el.classList.toggle('active',idx===selectedDay);});updateCard();buildTags();updateNote();drawGraph();ensureSelectedDayVisible();setTimeout(renderEvents,0);}
+
+function renderSelectedDayUI(){
+  document.querySelectorAll('.day').forEach(el=>{
+    const idx=Number(el.dataset.idx);
+    el.classList.toggle('active',idx===selectedDay);
+  });
+  updateCard();
+  buildTags();
+  updateNote();
+  drawGraph();
+  ensureSelectedDayVisible();
+  setTimeout(renderEvents,0);
+}
+
+function selectDay(i){
+  selectedDay=Math.max(0,Math.min(TODAY_IDX,i));
+  renderSelectedDayUI();
+
+  // Date-rail clicks should rebuild the 3-panel pager too.
+  if(window._dayPagerInstalled && !window._pagerInternalUpdate){
+    refreshDayPagerGhosts();
+  }
+}
 function getVerdict(d, isToday) {
   const score = d.score;
   const lastPt = d.pts && d.pts.length ? d.pts[d.pts.length - 1] : null;
@@ -4914,18 +4942,26 @@ function refreshDayPagerGhosts(){
   const centerPanel=document.createElement('div');
   centerPanel.className='dayPanel centerPanel';
 
-  // Correct physical order:
-  // left panel  = previous day
-  // center      = selected/current day
-  // right panel = next day
   track.appendChild(buildDayPanel(selectedDay>0 ? selectedDay-1 : selectedDay,'ghost'));
   centerPanel.appendChild(liveCard);
   track.appendChild(centerPanel);
   track.appendChild(buildDayPanel(selectedDay<TODAY_IDX ? selectedDay+1 : selectedDay,'ghost'));
 
+  // Force the rebuilt pager back to the center panel immediately.
   track.classList.add('dragging');
   track.style.transform='translateX(-100%)';
-  requestAnimationFrame(()=>track.classList.remove('dragging'));
+  void track.offsetWidth;
+
+  // Redraw live center graph now that it has been moved in the DOM.
+  drawGraph();
+  renderEvents();
+
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      track.classList.remove('dragging');
+      track.style.transform='translateX(-100%)';
+    });
+  });
 }
 
 function enableGraphDaySwipe(){
@@ -5037,8 +5073,10 @@ function enableGraphDayPager(){
 
     if(target!==selectedDay){
       snapTo(snap,()=>{
+        window._pagerInternalUpdate=true;
         selectedDay=target;
         updateRollerAndCardForPager();
+        window._pagerInternalUpdate=false;
         refreshDayPagerGhosts();
       });
     }else{
@@ -5094,16 +5132,7 @@ function enableGraphDayPager(){
 }
 
 function updateRollerAndCardForPager(){
-  document.querySelectorAll('.day').forEach(el=>{
-    const idx=Number(el.dataset.idx);
-    el.classList.toggle('active',idx===selectedDay);
-  });
-  updateCard();
-  buildTags();
-  updateNote();
-  drawGraph();
-  ensureSelectedDayVisible();
-  setTimeout(renderEvents,0);
+  renderSelectedDayUI();
 }
 
 
