@@ -1295,7 +1295,7 @@ var sParam    = params.get('s') || '';
   var p  = params.get('p')  || '—';
   var c  = params.get('c')  || '—';
   var el = document.getElementById('debug-bar');
-  if (el) el.textContent = 'id:' + id + '  v:' + v + '  patient:' + p + '  clinic:' + c + '  [web build 2047 syntax-checked]';
+  if (el) el.textContent = 'id:' + id + '  v:' + v + '  patient:' + p + '  clinic:' + c + '  [web build 2057 pager-direction-fixed]';
 })();
 
 // Count day blocks first so windowStart can span the full payload
@@ -4896,12 +4896,13 @@ function installDayPager(){
   centerPanel.className='dayPanel centerPanel';
   centerPanel.appendChild(card);
 
-  track.appendChild(buildDayPanel(Math.max(0,selectedDay-1),'ghost'));
+  track.appendChild(buildDayPanel(selectedDay>0 ? selectedDay-1 : selectedDay,'ghost'));
   track.appendChild(centerPanel);
-  track.appendChild(buildDayPanel(Math.min(TODAY_IDX,selectedDay+1),'ghost'));
+  track.appendChild(buildDayPanel(selectedDay<TODAY_IDX ? selectedDay+1 : selectedDay,'ghost'));
 
   enableGraphDayPager();
 }
+
 
 function refreshDayPagerGhosts(){
   const track=document.getElementById('cardTrack');
@@ -4913,10 +4914,14 @@ function refreshDayPagerGhosts(){
   const centerPanel=document.createElement('div');
   centerPanel.className='dayPanel centerPanel';
 
-  track.appendChild(buildDayPanel(Math.max(0,selectedDay-1),'ghost'));
+  // Correct physical order:
+  // left panel  = previous day
+  // center      = selected/current day
+  // right panel = next day
+  track.appendChild(buildDayPanel(selectedDay>0 ? selectedDay-1 : selectedDay,'ghost'));
   centerPanel.appendChild(liveCard);
   track.appendChild(centerPanel);
-  track.appendChild(buildDayPanel(Math.min(TODAY_IDX,selectedDay+1),'ghost'));
+  track.appendChild(buildDayPanel(selectedDay<TODAY_IDX ? selectedDay+1 : selectedDay,'ghost'));
 
   track.classList.add('dragging');
   track.style.transform='translateX(-100%)';
@@ -4959,12 +4964,17 @@ function enableGraphDayPager(){
   function snapTo(offset,cb){
     track.classList.remove('dragging');
     track.style.transform='translateX('+offset+')';
+
+    let fired=false;
     const done=()=>{
+      if(fired)return;
+      fired=true;
       track.removeEventListener('transitionend',done);
       if(cb)cb();
     };
+
     track.addEventListener('transitionend',done);
-    setTimeout(done,360);
+    setTimeout(done,340);
   }
 
   function begin(x,y){
@@ -4988,16 +4998,17 @@ function enableGraphDayPager(){
 
     if(locked==='x'){
       if(e && e.cancelable)e.preventDefault();
+
       const now=performance.now();
       const dt=Math.max(1,now-lastT);
       velocity=(x-lastX)/dt*16.7;
       lastX=x;lastT=now;
 
-      // Resist dragging past beginning/end.
       let dragDx=dx;
       if((selectedDay<=0 && dx>0) || (selectedDay>=TODAY_IDX && dx<0)){
         dragDx=dx*.28;
       }
+
       setOffset(dragDx);
     }
   }
@@ -5013,10 +5024,13 @@ function enableGraphDayPager(){
     let target=selectedDay;
     let snap='-100%';
 
+    // Drag right reveals the left panel, which is the previous day.
     if((dx>threshold || (fast && velocity>0)) && selectedDay>0){
       target=selectedDay-1;
       snap='0%';
-    }else if((dx<-threshold || (fast && velocity<0)) && selectedDay<TODAY_IDX){
+    }
+    // Drag left reveals the right panel, which is the next day.
+    else if((dx<-threshold || (fast && velocity<0)) && selectedDay<TODAY_IDX){
       target=selectedDay+1;
       snap='-200%';
     }
