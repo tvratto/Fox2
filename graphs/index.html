@@ -198,7 +198,7 @@ html, body {
 #archiveStatus{color:var(--green);opacity:0;transform:translateY(2px);transition:.35s}#archiveStatus.show{opacity:1;transform:translateY(0)}
 .tags{min-height:116px}.sectionLabel{padding:0 4px 10px;color:rgba(255,255,255,.37);font-size:11px;font-weight:950;letter-spacing:.14em;text-transform:uppercase}
 #tagsScroll{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding:0 2px 2px}#tagsScroll::-webkit-scrollbar{display:none}
-.tag{flex:0 0 92px;height:74px;touch-action:none;user-select:none;-webkit-user-select:none;border-radius:18px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.055);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;position:relative;cursor:pointer}
+.tag{flex:0 0 92px;height:74px;touch-action:pan-x;user-select:none;-webkit-user-select:none;border-radius:18px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.055);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;position:relative;cursor:pointer}
 .tag.applied{border-color:rgba(255,210,60,.72);background:linear-gradient(180deg,rgba(255,210,60,.13),rgba(255,255,255,.045))}
 .tagIcon{font-size:24px}.tagName{font-size:12px;color:rgba(255,255,255,.62);white-space:nowrap}.check{position:absolute;right:7px;top:7px;width:17px;height:17px;border-radius:50%;background:var(--gold);color:#111;font-size:10px;font-weight:950;display:flex;align-items:center;justify-content:center}
 .note{height:56px;border-radius:19px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.048);display:flex;align-items:center;gap:12px;padding:0 12px}
@@ -867,7 +867,7 @@ html, body {
 
 .graph-day-label{
   position:absolute;
-  top:-18px;
+  top:6px;
   z-index:5;
   color:var(--gold);
   font-size:10px;
@@ -878,11 +878,11 @@ html, body {
   opacity:.78;
 }
 #prevGraphDayLabel{
-  left:8.333%;
+  left:4.167%;
   transform:translateX(-50%);
 }
 #nextGraphDayLabel{
-  left:91.667%;
+  left:95.833%;
   transform:translateX(-50%);
 }
 
@@ -4148,6 +4148,8 @@ function buildTags(){
   const d=DAYS[selectedDay],wrap=document.getElementById('tagsScroll');
   wrap.innerHTML='';
 
+  // Three copies make the tray feel continuous. We keep the scroll position
+  // in the middle copy in tuneTagWheel().
   Array.from({length:ALL_TAGS.length*3},(_,wheelIdx)=>ALL_TAGS[wheelIdx%ALL_TAGS.length]).forEach(([icon,name],wheelIdx)=>{
     const applied=d.tags.includes(icon);
     const el=document.createElement('div');
@@ -4157,36 +4159,51 @@ function buildTags(){
     el.dataset.wheelIndex=String(wheelIdx);
     el.innerHTML=`<div class="tagIcon">${icon}</div><div class="tagName">${name}</div>${applied?'<div class="check">✓</div>':''}`;
 
-    let downX=0,downY=0,dragStarted=false,pressed=false;
+    let downX=0,downY=0,dragStarted=false,pressed=false,horizontalScroll=false;
 
     function cleanup(){
-      if(dragStarted)cancelTagDrag();
       pressed=false;
       dragStarted=false;
+      horizontalScroll=false;
       clearTimeout(el._pressTimer);
       el.classList.remove('dragging-source');
       document.removeEventListener('pointermove',onDocMove);
       document.removeEventListener('pointerup',onDocUp);
       document.removeEventListener('pointercancel',onDocCancel);
-      document.removeEventListener('pointerleave',onDocLeave);
-    }
-
-    function onDocLeave(ev){
-      if(ev.target===document.documentElement){cancelTagDrag();cleanup();}
+      setTimeout(updateTagWheelScale,0);
     }
 
     function beginDrag(x,y){
       if(dragStarted)return;
       dragStarted=true;
+      horizontalScroll=false;
       startTagDrag(icon,name,x,y,el,null);
     }
 
     function onDocMove(ev){
       if(!pressed)return;
-      const dist=Math.hypot(ev.clientX-downX,ev.clientY-downY);
 
-      // Start drag once the pointer has moved enough.
-      if(dist>5 && !dragStarted)beginDrag(ev.clientX,ev.clientY);
+      const dx=ev.clientX-downX;
+      const dy=ev.clientY-downY;
+      const adx=Math.abs(dx);
+      const ady=Math.abs(dy);
+
+      if(!dragStarted){
+        // Horizontal intent: let the native tag bar scroll/inertia own it.
+        if(adx>8 && adx>ady*1.15){
+          horizontalScroll=true;
+          return;
+        }
+
+        // Upward intent: pull the tag out of the tray.
+        // This is what makes mobile feel like "swipe bar sideways, pull tag upward."
+        if(dy<-10 && ady>adx*.85){
+          ev.preventDefault();
+          beginDrag(ev.clientX,ev.clientY);
+        }else{
+          return;
+        }
+      }
 
       if(dragStarted){
         ev.preventDefault();
@@ -4200,8 +4217,8 @@ function buildTags(){
       if(dragStarted){
         ev.preventDefault();
         endTagDrag(ev.clientX,ev.clientY);
-      }else{
-        // Short tap/click still toggles chip selection.
+      }else if(!horizontalScroll){
+        // Tap still toggles the tray chip.
         applied?d.tags=d.tags.filter(t=>t!==icon):d.tags.push(icon);
         buildTags();
         saveTagsForDay(selectedDay);
@@ -4211,44 +4228,30 @@ function buildTags(){
     }
 
     function onDocCancel(){
+      cancelTagDrag();
       cleanup();
     }
 
     el.addEventListener('pointerdown',ev=>{
-      ev.preventDefault();
+      // Do not preventDefault here. That lets horizontal swipes scroll naturally.
       pressed=true;
       dragStarted=false;
+      horizontalScroll=false;
       downX=ev.clientX;
       downY=ev.clientY;
-
-      // Long press also starts drag, helpful on mobile.
-      el._pressTimer=setTimeout(()=>beginDrag(downX,downY),130);
 
       document.addEventListener('pointermove',onDocMove,{passive:false});
       document.addEventListener('pointerup',onDocUp,{passive:false});
       document.addEventListener('pointercancel',onDocCancel,{passive:false});
-      document.addEventListener('pointerleave',onDocLeave,{passive:false});
-    },{passive:false});
+    },{passive:true});
 
     // Prevent native browser drag ghost on desktop.
     el.addEventListener('dragstart',ev=>ev.preventDefault());
 
     wrap.appendChild(el);
   });
+
   tuneTagWheel();
-}
-
-
-function updateGraphDayLabels(){
-  const prevEl=document.getElementById('prevGraphDayLabel');
-  const nextEl=document.getElementById('nextGraphDayLabel');
-  if(!prevEl||!nextEl)return;
-
-  const prev=DAYS[selectedDay-1];
-  const next=DAYS[selectedDay+1];
-
-  prevEl.textContent=prev ? prev.dow : '';
-  nextEl.textContent=(selectedDay!==TODAY_IDX && next) ? next.dow : '';
 }
 
 function drawGraph(){
