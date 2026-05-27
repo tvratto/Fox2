@@ -1032,6 +1032,30 @@ html, body {
   }
 }
 
+
+/* Desktop: stack contribution/total above the date rail */
+@media (hover:hover) and (pointer:fine) and (min-width:800px){
+  .rp-control{
+    display:flex !important;
+    flex-direction:column !important;
+    gap:10px !important;
+    padding:0 12px !important;
+    align-items:stretch !important;
+  }
+
+  .bank{
+    order:1 !important;
+    width:100% !important;
+    flex-shrink:0 !important;
+  }
+
+  .rail{
+    order:2 !important;
+    width:100% !important;
+    flex-shrink:0 !important;
+  }
+}
+
 </style>
 </head>
 <body>
