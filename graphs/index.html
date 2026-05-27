@@ -910,6 +910,52 @@ html, body {
   transform:scale(1.04);
 }
 
+
+
+/* --- Desktop / large-screen containment, scoped to the actual app shell --- */
+@media (hover:hover) and (pointer:fine) and (min-width: 800px){
+  html, body{
+    width:100%;
+    min-height:100%;
+    overflow:hidden;
+    background:
+      radial-gradient(circle at 50% 0%, rgba(255,210,60,.07), transparent 34%),
+      #000;
+  }
+
+  .top-header,
+  .bottom-bar,
+  .scroll-x{
+    left:50%;
+    right:auto;
+    width:min(430px, 100vw);
+    transform:translateX(-50%);
+  }
+
+  .scroll-x{
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,.06),
+      0 18px 60px rgba(0,0,0,.55);
+    border-radius:28px;
+    overflow-x:auto;
+    overflow-y:hidden;
+    height:100dvh;
+  }
+
+  .page{
+    flex:0 0 min(430px, 100vw);
+    width:min(430px, 100vw);
+  }
+
+  .rp-screen{
+    width:100%;
+  }
+
+  #graphWrap{
+    width:100%;
+  }
+}
+
 </style>
 </head>
 <body>
