@@ -888,6 +888,8 @@ html, body {
 
 
 /* Momentum wheel-style tag tray */
+#tagsScroll.mouse-swiping{cursor:grabbing;}
+#tagsScroll{cursor:grab;}
 #tagsScroll{
   scroll-behavior:auto;
   -webkit-overflow-scrolling:touch;
@@ -961,6 +963,30 @@ html, body {
 
   #graphWrap{
     width:100%;
+  }
+}
+
+
+/* --- Desktop stacking + spacing fix --- */
+@media (hover:hover) and (pointer:fine) and (min-width: 800px){
+  .top-header{
+    z-index:120;
+  }
+
+  .scroll-x{
+    padding-top:0;
+  }
+
+  .page{
+    padding-top:calc(104px + env(safe-area-inset-top));
+  }
+
+  #results-page{
+    height:calc(100dvh - 104px - 56px) !important;
+  }
+
+  .rp-screen{
+    height:100%;
   }
 }
 
@@ -4133,13 +4159,71 @@ function getVerdict(d, isToday) {
 function updateCard(){
   const d=DAYS[selectedDay];
   const isToday=selectedDay===TODAY_IDX;
-  document.getElementById('todayLabel').textContent=isToday?'Today':d.dow;
+  document.getElementById('todayLabel').textContent=d.dow;
   document.getElementById('dateFull').textContent=d.dateStr;
   document.getElementById('dailyScore').textContent=d.score;
   const v=getVerdict(d,isToday);
   const verdictEl=document.getElementById('verdict'); if(verdictEl) verdictEl.textContent=v[0];
   const subtextEl=document.getElementById('subtext'); if(subtextEl) subtextEl.textContent=v[1];
   document.getElementById('tagsLabel').textContent=isToday?'Tags for today':'Tags for '+d.dateStr;
+}
+
+
+function enableMouseTagWheel(){
+  const wrap=document.getElementById('tagsScroll');
+  if(!wrap || wrap._mouseWheelReady)return;
+  wrap._mouseWheelReady=true;
+
+  let isDown=false;
+  let startX=0;
+  let startScroll=0;
+  let lastX=0;
+  let lastT=0;
+  let velocity=0;
+  let raf=null;
+
+  function momentum(){
+    if(Math.abs(velocity)<0.15)return;
+    wrap.scrollLeft-=velocity;
+    velocity*=0.94;
+    updateTagWheelScale();
+    raf=requestAnimationFrame(momentum);
+  }
+
+  wrap.addEventListener('mousedown',e=>{
+    // Only left mouse button.
+    if(e.button!==0)return;
+    isDown=true;
+    startX=e.clientX;
+    lastX=e.clientX;
+    lastT=performance.now();
+    startScroll=wrap.scrollLeft;
+    velocity=0;
+    if(raf)cancelAnimationFrame(raf);
+    wrap.classList.add('mouse-swiping');
+  });
+
+  window.addEventListener('mousemove',e=>{
+    if(!isDown)return;
+    const now=performance.now();
+    const dx=e.clientX-startX;
+    wrap.scrollLeft=startScroll-dx;
+
+    const dt=Math.max(1,now-lastT);
+    velocity=(e.clientX-lastX)/dt*16.7;
+
+    lastX=e.clientX;
+    lastT=now;
+    updateTagWheelScale();
+    e.preventDefault();
+  },{passive:false});
+
+  window.addEventListener('mouseup',()=>{
+    if(!isDown)return;
+    isDown=false;
+    wrap.classList.remove('mouse-swiping');
+    momentum();
+  });
 }
 
 function tuneTagWheel(){
@@ -4302,6 +4386,7 @@ function buildTags(){
   });
 
   tuneTagWheel();
+  enableMouseTagWheel();
 }
 
 
