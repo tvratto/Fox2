@@ -5081,6 +5081,16 @@ function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
   }
   actual.sort((a,b)=>a.rel-b.rel);
 
+  // The open/live edge is the last day that actually has a measurement,
+  // not simply TODAY_IDX or the last payload/date slot. Do not add a
+  // synthetic midnight/zero anchor after the final real measurement.
+  const lastMeasuredGraphDay = actual.length
+    ? actual.reduce((m,p)=>Math.max(m,p.dayIdx), actual[0].dayIdx)
+    : dayIdx;
+  const lastMeasuredGraphRel = actual.length
+    ? actual[actual.length-1].rel
+    : null;
+
   const scaleVals=actual
     .filter(p=>p.rel>=REL_START-1440 && p.rel<=REL_END+1440)
     .map(p=>p.v);
@@ -5129,9 +5139,10 @@ function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
     }
 
     const lastDayEnd=Math.floor(last.rel/1440)*1440+1440;
-    const lastIsSelectedDay=(last.dayIdx===dayIdx);
-    const selectedIsLiveDay=(dayIdx===TODAY_IDX);
-    if(!(lastIsSelectedDay && selectedIsLiveDay) && last.rel<lastDayEnd && lastDayEnd-last.rel<=GAP_LIMIT){
+    const segmentEndsAtFinalMeasurement =
+      lastMeasuredGraphRel != null && Math.abs(last.rel-lastMeasuredGraphRel) < 0.001;
+
+    if(!segmentEndsAtFinalMeasurement && last.rel<lastDayEnd && lastDayEnd-last.rel<=GAP_LIMIT){
       pushAnchorIfMissing(pts, lastDayEnd);
     }
 
@@ -5241,7 +5252,7 @@ function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
   });
 
   const selectedActual=actual.filter(p=>p.dayIdx===dayIdx).sort((a,b)=>a.rel-b.rel);
-  if(dayIdx===TODAY_IDX && selectedActual.length){
+  if(dayIdx===lastMeasuredGraphDay && selectedActual.length){
     const last=selectedActual[selectedActual.length-1];
     const x=relToX(last.rel), y=gy(last.v);
     ctx.setLineDash([5,7]);
