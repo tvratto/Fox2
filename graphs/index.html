@@ -5368,7 +5368,9 @@ function renderGhostEvents(panel){
 }
 
 function redrawPagerGhostCanvases(){
-  document.querySelectorAll('#cardTrack .ghostPanel').forEach(panel=>{
+  const panels=Array.from(document.querySelectorAll('#cardTrack .ghostPanel'));
+
+  function drawOne(panel){
     const dayIdx=Number(panel.dataset.dayIdx);
     const wrap=panel.querySelector('.ghostGraphWrap');
     const canvas=panel.querySelector('.ghostGraphCanvas');
@@ -5376,16 +5378,40 @@ function redrawPagerGhostCanvases(){
       drawGraphToCanvas(canvas, wrap, dayIdx, false);
     }
     renderGhostEvents(panel);
-  });
+  }
+
+  panels.forEach(drawOne);
 }
 
 function schedulePagerGhostRedraw(){
-  requestAnimationFrame(()=>{
-    redrawPagerGhostCanvases();
-    setTimeout(redrawPagerGhostCanvases,40);
-    setTimeout(redrawPagerGhostCanvases,140);
-  });
+  const panels=Array.from(document.querySelectorAll('#cardTrack .ghostPanel'));
+
+  function drawOnePanel(i){
+    if(i>=panels.length)return;
+
+    const panel=panels[i];
+    const dayIdx=Number(panel.dataset.dayIdx);
+    const wrap=panel.querySelector('.ghostGraphWrap');
+    const canvas=panel.querySelector('.ghostGraphCanvas');
+
+    if(wrap && canvas){
+      drawGraphToCanvas(canvas, wrap, dayIdx, false);
+    }
+    renderGhostEvents(panel);
+
+    requestAnimationFrame(()=>drawOnePanel(i+1));
+  }
+
+  const start=()=>requestAnimationFrame(()=>drawOnePanel(0));
+
+  // Keep side-panel redraws out of the snap frame when possible.
+  if('requestIdleCallback' in window){
+    requestIdleCallback(start,{timeout:300});
+  }else{
+    setTimeout(start,40);
+  }
 }
+
 
 function installDayPager(){
   if(window._dayPagerInstalled)return;
@@ -5434,7 +5460,9 @@ function installDayPager(){
   enableGraphDayPager();
 }
 
-function refreshDayPagerGhosts(){
+function refreshDayPagerGhosts(options){
+  options=options||{};
+
   const track=document.getElementById('cardTrack');
   const liveCard=document.getElementById('card');
   if(!track || !liveCard)return;
@@ -5449,18 +5477,26 @@ function refreshDayPagerGhosts(){
   track.appendChild(centerPanel);
   track.appendChild(buildDayPanel(selectedDay<TODAY_IDX ? selectedDay+1 : selectedDay,'ghost'));
 
+  // Reset the pager back to the center panel without animation.
   track.classList.add('dragging');
   track.style.transform='translateX(-100%)';
-  void track.offsetWidth;
 
-  drawGraph();
-  renderEvents();
-  schedulePagerGhostRedraw();
+  // Only redraw the visible graph here if the caller has not already done it.
+  // The swipe commit path draws the live panel first, then rebuilds the offscreen panels.
+  if(!options.liveAlreadyDrawn){
+    drawGraph();
+    renderEvents();
+  }
 
   requestAnimationFrame(()=>{
     track.classList.remove('dragging');
     track.style.transform='translateX(-100%)';
-    schedulePagerGhostRedraw();
+
+    if(options.deferGhosts===false){
+      redrawPagerGhostCanvases();
+    }else{
+      schedulePagerGhostRedraw();
+    }
   });
 }
 
@@ -5570,26 +5606,24 @@ function enableGraphDayPager(){
     if(target!==selectedDay){
       const targetDay=target;
       snapTo(snap,()=>{
+        // Phase 1 after snap: update only the visible/live panel.
         window._pagerInternalUpdate=true;
         selectedDay=targetDay;
         updateRollerAndCardForPager();
         window._pagerInternalUpdate=false;
 
-        // Rebuild the side panels around the newly selected day.
-        refreshDayPagerGhosts();
-
-        // Extra redraw catches delayed mobile layout after panel rebuild.
-        setTimeout(()=>{
-          drawGraph();
-          renderEvents();
-          redrawPagerGhostCanvases();
-          ensureSelectedDayVisible();
-        },60);
+        // Phase 2: recenter/rebuild the pager on the next frame.
+        // Ghost/offscreen graph drawing is deferred inside refreshDayPagerGhosts().
+        requestAnimationFrame(()=>{
+          refreshDayPagerGhosts({
+            liveAlreadyDrawn:true,
+            deferGhosts:true
+          });
+        });
       });
     }else{
-      snapTo('-100%',()=>{
-        refreshDayPagerGhosts();
-      });
+      // No day change: just snap the already-rendered track back to center.
+      snapTo('-100%');
     }
 
     locked=null;
