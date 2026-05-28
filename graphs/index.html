@@ -140,7 +140,7 @@ html, body {
 .rail{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}.rail::-webkit-scrollbar{display:none}
 .day{flex:0 0 58px;height:60px;border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:rgba(255,255,255,.42);border:1px solid transparent;cursor:pointer}
 .day.active{background:linear-gradient(180deg,rgba(255,210,60,.18),rgba(255,210,60,.04));border-color:rgba(255,210,60,.72);color:#fff;box-shadow:0 0 28px rgba(255,210,60,.13)}
-.day .dow{font-size:11px;font-weight:800}.day .date{font-size:12px;font-weight:650}.dot{width:5px;height:5px;border-radius:50%;background:transparent}.day.today .dot{background:var(--gold);box-shadow:0 0 12px var(--gold)}
+.day .dow{font-size:clamp(10px,1.5dvh,13px);font-weight:800}.day .date{font-size:clamp(11px,1.65dvh,14px);font-weight:650}.dot{width:5px;height:5px;border-radius:50%;background:transparent}.day.today .dot{background:var(--gold);box-shadow:0 0 12px var(--gold)}
 .bank{height:78px;border-radius:24px;background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.035));border:1px solid rgba(255,255,255,.16);display:grid;grid-template-columns:1fr 1px 1fr;overflow:hidden;box-shadow:0 20px 80px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.08)}
 .cell{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0}
 .sep{background:rgba(255,255,255,.1);margin:14px 0}
@@ -152,10 +152,10 @@ html, body {
 .glow{background:radial-gradient(circle,rgba(251,146,60,.32),transparent 70%);box-shadow:0 0 60px rgba(251,146,60,.25) inset}.totalGlow{background:radial-gradient(circle,rgba(110,231,135,.18),transparent 68%)}
 .card{flex:1;min-height:0;border-radius:28px;background:linear-gradient(135deg,rgba(255,255,255,.078),rgba(255,255,255,.028)),rgba(7,8,10,.9);border:1px solid rgba(255,255,255,.1);box-shadow:0 20px 80px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.06);overflow:hidden;display:flex;flex-direction:column}
 .cardbody{flex:1;min-height:0;display:flex;flex-direction:column;gap:0;padding:0 0 14px}
-.kicker{color:var(--gold);font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:950;margin-bottom:9px}
-#dateFull{font-size:31px;font-weight:950;letter-spacing:-.075em;line-height:.98;margin-bottom:0}
-.scoreLabel{font-size:13px;font-weight:700;color:rgba(255,255,255,.55);margin-bottom:6px}
-#dailyScore{font-size:58px;line-height:.9;color:var(--orange);font-weight:950;letter-spacing:-.085em;font-variant-numeric:tabular-nums;text-shadow:0 0 28px rgba(251,146,60,.18)}
+.kicker{color:var(--gold);font-size:clamp(9px,1.2dvh,11px);letter-spacing:.16em;text-transform:uppercase;font-weight:950;margin-bottom:9px}
+#dateFull{font-size:clamp(22px,3.8dvh,32px);font-weight:950;letter-spacing:-.075em;line-height:.98;margin-bottom:0}
+.scoreLabel{font-size:clamp(11px,1.5dvh,14px);font-weight:700;color:rgba(255,255,255,.55);margin-bottom:6px}
+#dailyScore{font-size:clamp(38px,7dvh,62px);line-height:.9;color:var(--orange);font-weight:950;letter-spacing:-.085em;font-variant-numeric:tabular-nums;text-shadow:0 0 28px rgba(251,146,60,.18)}
 #verdict{margin-top:18px;font-size:15px;font-weight:850}.rule{width:44px;height:3px;border-radius:99px;background:var(--orange);margin:13px auto 12px;box-shadow:0 0 12px rgba(251,146,60,.35)}
 #subtext{max-width:122px;color:rgba(255,255,255,.48);font-size:12px;line-height:1.42;font-weight:520}
 .summaryTop{
@@ -226,7 +226,7 @@ html, body {
   height:18px;
   padding:5px 6px 0;
   color:rgba(255,255,255,.32);
-  font-size:10px;
+  font-size:clamp(10px,1.4dvh,12px);
   font-weight:650;
 }
 .axis span{
@@ -242,11 +242,11 @@ html, body {
   transform:translateX(-100%);
 }
 #archiveStatus{color:var(--green);opacity:0;transform:translateY(2px);transition:.35s}#archiveStatus.show{opacity:1;transform:translateY(0)}
-.tags{min-height:116px}.sectionLabel{padding:0 4px 10px;color:rgba(255,255,255,.37);font-size:11px;font-weight:950;letter-spacing:.14em;text-transform:uppercase}
+.tags{min-height:116px}.sectionLabel{padding:0 4px 10px;color:rgba(255,255,255,.37);font-size:clamp(10px,1.4dvh,12px);font-weight:950;letter-spacing:.14em;text-transform:uppercase}
 #tagsScroll{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding:0 2px 2px}#tagsScroll::-webkit-scrollbar{display:none}
 .tag{flex:0 0 92px;height:74px;touch-action:pan-x;user-select:none;-webkit-user-select:none;border-radius:18px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.055);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;position:relative;cursor:pointer}
 .tag.applied{border-color:rgba(255,210,60,.72);background:linear-gradient(180deg,rgba(255,210,60,.13),rgba(255,255,255,.045))}
-.tagIcon{font-size:24px}.tagName{font-size:12px;color:rgba(255,255,255,.62);white-space:nowrap}
+.tagIcon{font-size:clamp(18px,2.8dvh,26px)}.tagName{font-size:clamp(10px,1.4dvh,13px);color:rgba(255,255,255,.62);white-space:nowrap}
 .note{height:56px;border-radius:19px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.048);display:flex;align-items:center;gap:12px;padding:0 12px}
 .note input{flex:1;background:transparent;border:none;outline:none;color:rgba(255,255,255,.75);font:inherit;font-size:14px}.note input::placeholder{color:rgba(255,255,255,.33)}
 .note button{border:none;height:38px;min-width:82px;border-radius:999px;background:linear-gradient(180deg,#D6A72A,#9B6C16);color:#111;font-size:13px;font-weight:900}
@@ -254,7 +254,7 @@ html, body {
 .pulse{animation:pulse .85s ease-in-out infinite alternate}@keyframes pulse{from{filter:drop-shadow(0 0 4px rgba(251,146,60,.2));transform:scale(1)}to{filter:drop-shadow(0 0 22px rgba(251,146,60,.55));transform:scale(1.035)}}
 .pop{animation:pop .52s cubic-bezier(.2,1.7,.35,1)}@keyframes pop{0%{transform:scale(1)}42%{transform:scale(1.12)}100%{transform:scale(1)}}
 .sealed #graph{opacity:.72;filter:saturate(.74)}.sealed #dailyScore{opacity:.58}
-@media(max-width:760px){.rp-screen{padding:14px 0}.topbar{padding:0 20px}.logo{display:none}.rp-tabs .rp-tab:nth-child(n+4){display:none}.rp-control{display:flex;flex-direction:column;padding:0 12px}.rail{order:2;width:100%}.bank{order:1;width:100%}.card{border-radius:24px;border-left:0;border-right:0}.cardbody{padding:0 18px 12px}.summaryTop{flex-direction:row;align-items:flex-end;justify-content:space-between}#dateFull{font-size:27px;margin-bottom:0}#dailyScore{font-size:54px}.graphSide{width:100%}#graphWrap{min-height:220px}.tags{padding:0 18px}.note{margin:0 18px}.tag{flex-basis:84px}}
+@media(max-width:760px){.rp-screen{padding:14px 0}.topbar{padding:0 20px}.logo{display:none}.rp-tabs .rp-tab:nth-child(n+4){display:none}.rp-control{display:flex;flex-direction:column;padding:0 12px}.rail{order:2;width:100%}.bank{order:1;width:100%}.card{border-radius:24px;border-left:0;border-right:0}.cardbody{padding:0 18px 12px}.summaryTop{flex-direction:row;align-items:flex-end;justify-content:space-between}#dateFull{margin-bottom:0}#dailyScore{}.graphSide{width:100%}#graphWrap{min-height:220px}.tags{padding:0 18px}.note{margin:0 18px}.tag{flex-basis:84px}}
 @media(max-height:720px){.note{display:none}.tags{min-height:82px}.tag{height:56px}#graphWrap{min-height:130px}}
 
 /* Compact mode for short phones like iPhone SE */
@@ -304,11 +304,9 @@ html, body {
   }
 
   .day .dow{
-    font-size:9px;
   }
 
   .day .date{
-    font-size:10px;
   }
 
   .dot{
@@ -338,22 +336,18 @@ html, body {
   }
 
   .kicker{
-    font-size:8px;
     margin-bottom:5px;
   }
 
   #dateFull{
-    font-size:21px;
     margin-bottom:0;
   }
 
   .scoreLabel{
-    font-size:10px;
     margin-bottom:2px;
   }
 
   #dailyScore{
-    font-size:39px;
   }
 
   #verdict{
@@ -383,7 +377,6 @@ html, body {
   }
 
   .axis{
-    font-size:9px;
     padding-top:2px;
   }
 
@@ -394,7 +387,6 @@ html, body {
 
   .sectionLabel{
     padding-bottom:5px;
-    font-size:9px;
   }
 
   .tag{
@@ -405,11 +397,9 @@ html, body {
   }
 
   .tagIcon{
-    font-size:18px;
   }
 
   .tagName{
-    font-size:9px;
   }
 
 
@@ -450,11 +440,9 @@ html, body {
   }
 
   #dateFull{
-    font-size:20px;
   }
 
   #dailyScore{
-    font-size:36px;
   }
 
   #graphWrap{
@@ -472,11 +460,9 @@ html, body {
   }
 
   .tagIcon{
-    font-size:17px;
   }
 
   .tagName{
-    font-size:8px;
   }
 }
 
@@ -531,17 +517,14 @@ html, body {
   }
 
   #dateFull{
-    font-size:25px;
     margin-bottom:0;
   }
 
   .scoreLabel{
-    font-size:11px;
     margin-bottom:3px;
   }
 
   #dailyScore{
-    font-size:48px;
   }
 
   #verdict{
@@ -589,11 +572,9 @@ html, body {
   }
 
   .tagIcon{
-    font-size:20px;
   }
 
   .tagName{
-    font-size:9px;
   }
 
   .note{
@@ -647,12 +628,10 @@ html, body {
   }
 
   #dateFull{
-    font-size:30px;
     margin-bottom:0;
   }
 
   #dailyScore{
-    font-size:56px;
   }
 
   #verdict{
@@ -680,11 +659,9 @@ html, body {
   }
 
   #dateFull{
-    font-size:32px;
   }
 
   #dailyScore{
-    font-size:60px;
   }
 
   #graphWrap{
@@ -707,11 +684,9 @@ html, body {
   }
 
   #dateFull{
-    font-size:22px;
   }
 
   #dailyScore{
-    font-size:40px;
   }
 
   #graphWrap{
@@ -1698,12 +1673,12 @@ var sParam    = params.get('s') || '';
   var src = params.get('src') || 'qr';
   var days = dParam ? dParam.split('|').length : 0;
   var el = document.getElementById('debug-bar');
-  if (el) el.textContent = 'id:' + id + '  v:' + v + '  patient:' + p + '  clinic:' + c + '  [web build 2147 pager-target-fixed]';
+  if (el) el.textContent = 'id:' + id + '  v:' + v + '  patient:' + p + '  clinic:' + c + '  [web build 2148 fluid-fonts]';
   // Populate info modal
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v1.6 · 2026-05-28 21:48 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v1.7 · 2026-05-28 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
