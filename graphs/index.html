@@ -5169,7 +5169,15 @@ function getCachedResultsCurve(dayIdx){
   const dots=actual
     .filter(p=>p.dayIdx===dayIdx && p.rel>=0 && p.rel<=1440)
     .sort((a,b)=>a.rel-b.rel)
-    .map(p=>({rel:p.rel,v:p.v,minute:p.minute,dayIdx:p.dayIdx}));
+    .map(p=>{
+      const d=DAYS[p.dayIdx];
+      let epoch=null;
+      if(d && d.isoDate){
+        const dayStartMs=new Date(d.isoDate+'T00:00:00').getTime();
+        if(!isNaN(dayStartMs)) epoch=Math.round(dayStartMs/1000)+Math.round(p.minute||0)*60;
+      }
+      return {rel:p.rel,v:p.v,minute:p.minute,dayIdx:p.dayIdx,epoch:epoch};
+    });
 
   const result={
     relStart:REL_START,
@@ -5293,19 +5301,6 @@ function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
     ctx.shadowBlur=0;
   });
 
-  if(dayIdx===data.lastMeasuredGraphDay && data.dots.length){
-    const last=data.dots[data.dots.length-1];
-    const x=relToX(last.rel), y=gy(last.v);
-    ctx.setLineDash([5,7]);
-    ctx.strokeStyle='rgba(255,255,255,.26)';
-    ctx.lineWidth=1.2;
-    ctx.beginPath();
-    ctx.moveTo(x,y);
-    ctx.lineTo(xSep1,y);
-    ctx.stroke();
-    ctx.setLineDash([]);
-  }
-
   if(dayIdx===selectedDay && targetCanvas && targetCanvas.id==='graph'){
     window._dayGraphDots=[];
   }
@@ -5316,7 +5311,7 @@ function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
 
     if(dayIdx===selectedDay && targetCanvas && targetCanvas.id==='graph'){
       if(!window._dayGraphDots)window._dayGraphDots=[];
-      window._dayGraphDots.push({cx:x,cy:y,val:p.v,minute:p.minute,epoch:null});
+      window._dayGraphDots.push({cx:x,cy:y,val:p.v,minute:p.minute,epoch:p.epoch});
     }
 
     ctx.beginPath();
@@ -6236,11 +6231,14 @@ function initDayGraphPopup(){
   if(!wrap || !popup) return;
   const HIT_R = 28;
   let touchStartX=0, touchStartY=0, touchStartTime=0, lastTouch=0;
-  function fmtDayGraphTime(epoch){
-    const d=new Date(epoch*1000);
-    let h=d.getHours(), m=d.getMinutes();
-    const ampm=h>=12?'pm':'am'; h=h%12||12;
-    return h+':'+(m<10?'0'+m:String(m))+ampm;
+  function fmtDayGraphTime(epoch, minute){
+    if(epoch!=null && !isNaN(epoch)){
+      const d=new Date(epoch*1000);
+      let h=d.getHours(), m=d.getMinutes();
+      const ampm=h>=12?'pm':'am'; h=h%12||12;
+      return h+':'+(m<10?'0'+m:String(m))+ampm;
+    }
+    return minuteToTime(minute||0).toLowerCase().replace(' ', '');
   }
   function findNearestDot(clientX, clientY){
     const rect=wrap.getBoundingClientRect();
@@ -6259,9 +6257,10 @@ function initDayGraphPopup(){
     return best;
   }
   function showPopup(dot, clientX, clientY){
-    const c=dot.v<=2?'#22D3EE':dot.v<=4?'#4ADE80':'#A855F7';
-    popVal.textContent=dot.v.toFixed(1)+' ppm'; popVal.style.color=c;
-    popTime.textContent=fmtDayGraphTime(dot.epoch);
+    const vv=(dot.val!=null?dot.val:dot.v);
+    const c=vv<=2?'#22D3EE':vv<=4?'#4ADE80':'#A855F7';
+    popVal.textContent=vv.toFixed(1)+' ppm'; popVal.style.color=c;
+    popTime.textContent=fmtDayGraphTime(dot.epoch,dot.minute);
     popup.style.display='block'; popup.style.left='0'; popup.style.top='0';
     void popup.offsetWidth;
     const rect=wrap.getBoundingClientRect();
