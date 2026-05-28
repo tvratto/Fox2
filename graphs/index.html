@@ -274,7 +274,7 @@ html, body {
 #tagsScroll{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding:0 2px 2px}#tagsScroll::-webkit-scrollbar{display:none}
 .tag{flex:0 0 92px;height:74px;touch-action:pan-x;user-select:none;-webkit-user-select:none;border-radius:18px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.055);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;position:relative;cursor:pointer}
 .tag.applied{border-color:rgba(255,210,60,.72);background:linear-gradient(180deg,rgba(255,210,60,.13),rgba(255,255,255,.045))}
-.tagIcon{font-size:24px}.tagName{font-size:12px;color:rgba(255,255,255,.62);white-space:nowrap}.check{position:absolute;right:7px;top:7px;width:17px;height:17px;border-radius:50%;background:var(--gold);color:#111;font-size:10px;font-weight:950;display:flex;align-items:center;justify-content:center}
+.tagIcon{font-size:24px}.tagName{font-size:12px;color:rgba(255,255,255,.62);white-space:nowrap}
 .note{height:56px;border-radius:19px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.048);display:flex;align-items:center;gap:12px;padding:0 12px}
 .note input{flex:1;background:transparent;border:none;outline:none;color:rgba(255,255,255,.75);font:inherit;font-size:14px}.note input::placeholder{color:rgba(255,255,255,.33)}
 .note button{border:none;height:38px;min-width:82px;border-radius:999px;background:linear-gradient(180deg,#D6A72A,#9B6C16);color:#111;font-size:13px;font-weight:900}
@@ -440,13 +440,7 @@ html, body {
     font-size:9px;
   }
 
-  .check{
-    width:13px;
-    height:13px;
-    font-size:8px;
-    right:5px;
-    top:5px;
-  }
+
 
   .note{
     display:none;
@@ -5044,7 +5038,7 @@ function buildTags(){
     el.setAttribute('draggable','false');
     el.dataset.baseIndex=String(wheelIdx%ALL_TAGS.length);
     el.dataset.wheelIndex=String(wheelIdx);
-    el.innerHTML=`<div class="tagIcon">${icon}</div><div class="tagName">${name}</div>${applied?'<div class="check">✓</div>':''}`;
+    el.innerHTML=`<div class="tagIcon">${icon}</div><div class="tagName">${name}</div>`;
 
     let downX=0,downY=0,dragStarted=false,pressed=false,horizontalScroll=false,activePointerId=null;
 
@@ -5156,14 +5150,7 @@ function updateTagsApplied(){
     const icon=ALL_TAGS[Number(el.dataset.baseIndex)][0];
     const applied=d.tags.includes(icon);
     el.className='tag'+(applied?' applied':'');
-    const existing=el.querySelector('.check');
-    if(applied && !existing){
-      const chk=document.createElement('div');
-      chk.className='check';chk.textContent='✓';
-      el.appendChild(chk);
-    } else if(!applied && existing){
-      existing.remove();
-    }
+
   });
   updateTagWheelScale();
 }
@@ -5643,7 +5630,7 @@ function installDayPager(){
 
   requestAnimationFrame(()=>{
     drawGraph();
-    renderEvents();
+    renderEvents(true);
     schedulePagerGhostRedraw();
   });
 
@@ -5675,7 +5662,7 @@ function refreshDayPagerGhosts(options){
   // The swipe commit path draws the live panel first, then rebuilds the offscreen panels.
   if(!options.liveAlreadyDrawn){
     drawGraph();
-    renderEvents();
+    renderEvents(true);
   }
 
   requestAnimationFrame(()=>{
@@ -6275,7 +6262,7 @@ function endTagDrag(x,y){
       if(!d.tags.includes(activeDrag.icon))d.tags.push(activeDrag.icon);
     }
 
-    renderEvents();
+    renderEvents(true);
     buildTags();
     saveTagsForDay(selectedDay);
 
@@ -6285,7 +6272,7 @@ function endTagDrag(x,y){
 
     // If no placed events and no tray selection remain for this icon, keep tray state as-is.
     // The saved Supabase row is updated with the reduced events array.
-    renderEvents();
+    renderEvents(true);
     buildTags();
     saveTagsForDay(selectedDay);
   }
@@ -6318,13 +6305,16 @@ function showPlacedTagTime(minute){
   showPlacedTagTime._timer=setTimeout(()=>{if(!activeDrag)cursor.classList.remove("show");},1600);
 }
 
-function renderEvents(){
+function renderEvents(force){
   const layer=document.getElementById("eventLayer");
   if(!layer)return;
-  layer.querySelectorAll(".placed-tag").forEach(el=>el.remove());
   const d=DAYS[selectedDay];
-  layer.classList.toggle("has-events",!!(d.events&&d.events.length));
   if(!d.events)d.events=[];
+  const sig=selectedDay+'_'+d.events.length;
+  if(!force && layer._renderSig===sig)return;
+  layer._renderSig=sig;
+  layer.querySelectorAll(".placed-tag").forEach(el=>el.remove());
+  layer.classList.toggle("has-events",!!(d.events&&d.events.length));
   d.events.forEach((ev,idx)=>{
     const chip=document.createElement("div");
     chip.className="placed-tag";
