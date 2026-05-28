@@ -167,14 +167,6 @@ html, body {
   padding:0 2px 4px;
 }
 
-.summaryLeft{
-  display:flex;
-  flex-direction:column;
-  align-items:flex-start;
-  text-align:left;
-  min-width:0;
-}
-
 #dateFull{
   font-size:30px;
   margin-bottom:0;
@@ -203,34 +195,14 @@ html, body {
   flex-shrink:0;
 }
 
-.graphOverlayRow{
-  position:absolute;
-  top:0;
-  left:0;
-  right:0;
-  z-index:3;
-  display:flex;
-  flex-direction:row;
-  align-items:flex-end;
-  justify-content:space-between;
-  pointer-events:none;
-}
-
-.summaryLeft, .summaryRight {
-  position:absolute;
-  top:10px;
-  pointer-events:none;
-}
-
 .summaryLeft {
-  left:50%;
-  transform:translateX(-50%);
+  display:flex;
+  flex-direction:column;
   align-items:center;
   text-align:center;
-}
-
-.summaryRight {
-  right:10px;
+  padding:4px 0 4px;
+  pointer-events:none;
+  width:100%;
 }
 
 
@@ -349,8 +321,8 @@ html, body {
   }
 
   .cardbody{
-    padding:12px 16px 8px;
-    gap:6px;
+    padding:4px 16px 8px;
+    gap:0;
   }
 
   .summaryTop{
@@ -540,8 +512,8 @@ html, body {
     min-height:0;
     display:flex;
     flex-direction:column;
-    gap:8px;
-    padding:16px 16px 9px;
+    gap:0;
+    padding:0 16px 9px;
   }
 
   .summaryTop{
@@ -554,8 +526,8 @@ html, body {
 
   .summaryLeft{
     min-width:0;
-    align-items:flex-start;
-    text-align:left;
+    align-items:center;
+    text-align:center;
   }
 
   #dateFull{
@@ -936,6 +908,7 @@ html, body {
 
 .graph-day-label{
   position:absolute;
+  top:6px;
   z-index:5;
   color:var(--gold);
   font-size:10px;
@@ -944,7 +917,6 @@ html, body {
   font-weight:950;
   pointer-events:none;
   opacity:.78;
-  transform:translateY(-50%);
 }
 #prevGraphDayLabel{
   left:4.167%;
@@ -1370,9 +1342,9 @@ html, body {
 .ghostRenderedCard .summaryLeft{
   display:flex;
   flex-direction:column;
-  align-items:flex-start;
-  text-align:left;
-  min-width:0;
+  align-items:center;
+  text-align:center;
+  width:100%;
 }
 
 .ghostRenderedCard .cardbody{
@@ -1380,8 +1352,8 @@ html, body {
   min-height:0;
   display:flex;
   flex-direction:column;
-  gap:10px;
-  padding:22px 20px 14px;
+  gap:0;
+  padding:0 20px 14px;
 }
 
 .ghostRenderedCard .graphSide{
@@ -1427,7 +1399,7 @@ html, body {
   }
 
   .ghostRenderedCard .cardbody{
-    padding:18px 18px 12px;
+    padding:0 18px 12px;
   }
 
   .ghostRenderedCard .summaryTop{
@@ -1457,8 +1429,8 @@ html, body {
     min-height:0;
     display:flex;
     flex-direction:column;
-    gap:8px;
-    padding:16px 16px 9px;
+    gap:0;
+    padding:0 16px 9px;
   }
 
   .ghostRenderedCard .summaryTop{
@@ -1471,8 +1443,8 @@ html, body {
 
   .ghostRenderedCard .summaryLeft{
     min-width:0;
-    align-items:flex-start;
-    text-align:left;
+    align-items:center;
+    text-align:center;
   }
 
   .ghostDateFull{
@@ -1697,19 +1669,17 @@ html, body {
     <div class="cardbody">
 
       <section class="graphSide">
-        <div id="graphWrap"><canvas id="graph"></canvas><div id="prevGraphDayLabel" class="graph-day-label"></div><div id="nextGraphDayLabel" class="graph-day-label"></div><div id="day-graph-popup" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;"><div id="day-graph-popup-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div><div id="day-graph-popup-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div></div><div id="eventLayer"><div class="event-rail"></div><div class="event-hint">Drag tags here</div></div>
-          <div class="graphOverlayRow">
-            <div class="summaryLeft" id="summaryLeft">
-              <div class="kicker" id="todayLabel">Today</div>
-              <div style="display:flex;align-items:flex-end;gap:18px;">
-                <div id="dateFull">May 26</div>
-                <div style="display:flex;flex-direction:column;align-items:flex-start;">
-                  <div class="scoreLabel">Daily Score</div>
-                  <div id="dailyScore">140</div>
-                </div>
-              </div>
+        <div class="summaryLeft" id="summaryLeft">
+          <div class="kicker" id="todayLabel">Today</div>
+          <div style="display:flex;align-items:flex-end;gap:18px;">
+            <div id="dateFull">May 26</div>
+            <div style="display:flex;flex-direction:column;align-items:flex-start;">
+              <div class="scoreLabel">Daily Score</div>
+              <div id="dailyScore">140</div>
             </div>
           </div>
+        </div>
+        <div id="graphWrap"><canvas id="graph"></canvas><div id="prevGraphDayLabel" class="graph-day-label"></div><div id="nextGraphDayLabel" class="graph-day-label"></div><div id="day-graph-popup" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;"><div id="day-graph-popup-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div><div id="day-graph-popup-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div></div><div id="eventLayer"><div class="event-rail"></div><div class="event-hint">Drag tags here</div></div>
         </div>
         <div class="axis"><span style="left:8.333%;">12a</span><span style="left:29.167%;">6a</span><span style="left:50%;">12p</span><span style="left:70.833%;">6p</span><span style="left:91.667%;">12a</span></div>
       </section>
@@ -1770,7 +1740,7 @@ html, body {
     <div id="info-modal-title">Device Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic ID</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">—</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v1.4 · 2026-05-28 19:57 UTC</span></div>
     <div class="info-row"><span class="info-label">Payload</span><span class="info-value" id="info-payload">—</span></div>
     <div class="info-row"><span class="info-label">Days</span><span class="info-value" id="info-days">—</span></div>
     <button id="info-modal-close" onclick="closeInfoModal()">Close</button>
@@ -4891,6 +4861,15 @@ function updateCard(){
   document.getElementById('todayLabel').textContent=isToday?'Today':d.dow;
   document.getElementById('dateFull').textContent=d.dateStr;
   document.getElementById('dailyScore').textContent=d.score;
+  // sealed only makes sense on today — clear it on past days, restore on today if deposited
+  const card=document.getElementById('card');
+  if(card){
+    if(isToday){
+      card.classList.toggle('sealed',hasDeposited);
+    }else{
+      card.classList.remove('sealed');
+    }
+  }
   const v=getVerdict(d,isToday);
   const verdictEl=document.getElementById('verdict'); if(verdictEl) verdictEl.textContent=v[0];
   const subtextEl=document.getElementById('subtext'); if(subtextEl) subtextEl.textContent=v[1];
@@ -5322,7 +5301,7 @@ function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
 
   const data=getCachedResultsCurve(dayIdx);
 
-  const padL=6,padR=6,padT=72,padB=8,gTop=padT,gBot=H-padB,gH=gBot-gTop;
+  const padL=6,padR=6,padT=12,padB=8,gTop=padT,gBot=H-padB,gH=gBot-gTop;
   const REL_START=data.relStart;
   const REL_END=data.relEnd;
   const TOTAL_REL=REL_END-REL_START;
@@ -5477,23 +5456,21 @@ function renderDayCardHTML(dayIdx){
     <main class="card ghostRenderedCard">
       <div class="cardbody">
         <section class="graphSide">
+          <div class="summaryLeft">
+            <div class="kicker">${d.dow}</div>
+            <div style="display:flex;align-items:flex-end;gap:18px;">
+              <div class="ghostDateFull">${d.dateStr}</div>
+              <div style="display:flex;flex-direction:column;align-items:flex-start;">
+                <div class="scoreLabel">Daily Score</div>
+                <div class="ghostDailyScore">${d.score}</div>
+              </div>
+            </div>
+          </div>
           <div class="ghostGraphWrap">
             <canvas class="ghostGraphCanvas"></canvas>
             <div class="graph-day-label ghostPrevDayLabel">${prevLabel}</div>
             <div class="graph-day-label ghostNextDayLabel">${nextLabel}</div>
             <div class="ghostEventLayer"><div class="event-rail"></div><div class="event-hint">Drag tags here</div></div>
-            <div class="graphOverlayRow">
-              <div class="summaryLeft">
-                <div class="kicker">${d.dow}</div>
-                <div style="display:flex;align-items:flex-end;gap:18px;">
-                  <div class="ghostDateFull">${d.dateStr}</div>
-                  <div style="display:flex;flex-direction:column;align-items:flex-start;">
-                    <div class="scoreLabel">Daily Score</div>
-                    <div class="ghostDailyScore">${d.score}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
           ${axisHTMLForPanel()}
         </section>
@@ -5712,7 +5689,8 @@ function enableGraphDayPager(){
     // Mobile Safari can skip transitionend when the track is rebuilt or if
     // layout is interrupted, which leaves selectedDay stale.
     if(cb){
-      setTimeout(cb,280);
+      if(window._snapTimer) clearTimeout(window._snapTimer);
+      window._snapTimer=setTimeout(()=>{ window._snapTimer=null; cb(); },240);
     }
   }
 
@@ -5722,6 +5700,9 @@ function enableGraphDayPager(){
     lastX=x;lastT=performance.now();
     velocity=0;locked=null;
     track.classList.add('dragging');
+    // Cancel any in-flight snap callback and pending redraw
+    if(window._snapTimer){ clearTimeout(window._snapTimer); window._snapTimer=null; }
+    if(window._redrawTimer){ clearTimeout(window._redrawTimer); window._redrawTimer=null; }
   }
 
   function move(x,y,e){
@@ -5794,20 +5775,26 @@ function enableGraphDayPager(){
       },0);
 
       snapTo(snap,()=>{
-        // Phase 1 after snap: finish full UI update (verdict, tags, note, graph).
+        // Phase 1: always update selectedDay and text immediately.
         window._pagerInternalUpdate=true;
         selectedDay=targetDay;
-        updateRollerAndCardForPager();
         window._pagerInternalUpdate=false;
 
-        // Phase 2: recenter/rebuild the pager on the next frame.
-        // Ghost/offscreen graph drawing is deferred inside refreshDayPagerGhosts().
-        requestAnimationFrame(()=>{
-          refreshDayPagerGhosts({
-            liveAlreadyDrawn:true,
-            deferGhosts:true
+        // Phase 2: debounce the heavy redraw — if another swipe starts within
+        // 120ms we skip this redraw entirely and let the next snap do it.
+        if(window._redrawTimer) clearTimeout(window._redrawTimer);
+        window._redrawTimer=setTimeout(()=>{
+          window._redrawTimer=null;
+          window._pagerInternalUpdate=true;
+          updateRollerAndCardForPager();
+          window._pagerInternalUpdate=false;
+          requestAnimationFrame(()=>{
+            refreshDayPagerGhosts({
+              liveAlreadyDrawn:true,
+              deferGhosts:true
+            });
           });
-        });
+        },120);
       });
     }else{
       // No day change: just snap the already-rendered track back to center.
@@ -6376,33 +6363,19 @@ function closeInfoModal(){
 }
 
 function positionGraphOverlay(panel){
-  function applyPositions(seps, canvasW, wrap){
-    const mid=(seps.x0+seps.x1)/2;
-    const leftEl=wrap.querySelector('.summaryLeft');
-    if(leftEl){
-      leftEl.style.left=mid+'px';
-      leftEl.style.transform='translateX(-50%)';
-      leftEl.style.textAlign='center';
-    }
-    if(seps.midY!=null){
-      const prevLbl=wrap.querySelector('#prevGraphDayLabel,.ghostPrevDayLabel');
-      const nextLbl=wrap.querySelector('#nextGraphDayLabel,.ghostNextDayLabel');
-      [prevLbl,nextLbl].forEach(el=>{
-        if(el) el.style.top=seps.midY+'px';
-      });
-    }
+  function applyPositions(seps, wrap){
   }
   if(panel){
     const canvas=panel.querySelector('.ghostGraphCanvas');
     if(!canvas||!canvas._graphSeps) return;
-    applyPositions(canvas._graphSeps, canvas.clientWidth, panel);
+    applyPositions(canvas._graphSeps, panel);
     return;
   }
   const seps=window._graphSeps;
   if(!seps) return;
   const wrap=document.getElementById('graphWrap');
   if(!wrap) return;
-  applyPositions(seps, null, wrap);
+  applyPositions(seps, wrap);
 }
 
 function initDayGraphPopup(){
