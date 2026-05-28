@@ -74,6 +74,40 @@ html, body {
 }
 .bar-btn:active { background: rgba(255,255,255,0.1); }
 .bar-btn svg { opacity: 0.5; }
+#info-modal-overlay {
+  display: none;
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.7);
+  align-items: flex-end; justify-content: center;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 80px);
+}
+#info-modal-overlay.open { display: flex; }
+#info-modal {
+  background: #111;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 20px;
+  padding: 22px 24px 20px;
+  width: min(340px, calc(100vw - 32px));
+  display: flex; flex-direction: column; gap: 12px;
+}
+#info-modal-title {
+  font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.4);
+  letter-spacing: .1em; text-transform: uppercase;
+}
+.info-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  padding-bottom: 9px; gap: 12px;
+}
+.info-row:last-of-type { border-bottom: none; padding-bottom: 0; }
+.info-label { font-size: 12px; color: rgba(255,255,255,0.38); font-weight: 600; letter-spacing:.04em; }
+.info-value { font-size: 13px; color: rgba(255,255,255,0.82); font-family: monospace; text-align:right; word-break:break-all; }
+#info-modal-close {
+  margin-top: 4px; width: 100%; padding: 9px;
+  border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.5);
+  font: 600 13px -apple-system,sans-serif; cursor: pointer;
+}
 #no-data {
   display: none; text-align: center;
   color: rgba(255,255,255,0.4); font-size: 14px;
@@ -117,32 +151,33 @@ html, body {
 #added{color:var(--green);opacity:0;transform:translateY(-2px);transition:.25s}#added.show{opacity:1;transform:translateY(0)}
 .glow{background:radial-gradient(circle,rgba(251,146,60,.32),transparent 70%);box-shadow:0 0 60px rgba(251,146,60,.25) inset}.totalGlow{background:radial-gradient(circle,rgba(110,231,135,.18),transparent 68%)}
 .card{flex:1;min-height:0;border-radius:28px;background:linear-gradient(135deg,rgba(255,255,255,.078),rgba(255,255,255,.028)),rgba(7,8,10,.9);border:1px solid rgba(255,255,255,.1);box-shadow:0 20px 80px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.06);overflow:hidden;display:flex;flex-direction:column}
-.cardbody{flex:1;min-height:0;display:flex;flex-direction:column;gap:10px;padding:22px 20px 14px}
+.cardbody{flex:1;min-height:0;display:flex;flex-direction:column;gap:0;padding:0 0 14px}
 .kicker{color:var(--gold);font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:950;margin-bottom:9px}
-#dateFull{font-size:31px;font-weight:950;letter-spacing:-.075em;line-height:.98;margin-bottom:30px}
+#dateFull{font-size:31px;font-weight:950;letter-spacing:-.075em;line-height:.98;margin-bottom:0}
 .scoreLabel{font-size:13px;font-weight:700;color:rgba(255,255,255,.55);margin-bottom:6px}
 #dailyScore{font-size:58px;line-height:.9;color:var(--orange);font-weight:950;letter-spacing:-.085em;font-variant-numeric:tabular-nums;text-shadow:0 0 28px rgba(251,146,60,.18)}
 #verdict{margin-top:18px;font-size:15px;font-weight:850}.rule{width:44px;height:3px;border-radius:99px;background:var(--orange);margin:13px auto 12px;box-shadow:0 0 12px rgba(251,146,60,.35)}
 #subtext{max-width:122px;color:rgba(255,255,255,.48);font-size:12px;line-height:1.42;font-weight:520}
 .summaryTop{
   display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:18px;
+  flex-direction:row;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:8px;
   padding:0 2px 4px;
 }
 
 .summaryLeft{
   display:flex;
   flex-direction:column;
-  align-items:center;
-  text-align:center;
+  align-items:flex-start;
+  text-align:left;
   min-width:0;
 }
 
 #dateFull{
   font-size:30px;
-  margin-bottom:14px;
+  margin-bottom:0;
 }
 
 #dailyScore{
@@ -159,6 +194,45 @@ html, body {
   max-width:220px;
   font-size:13px;
 }
+
+.summaryRight{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  text-align:right;
+  flex-shrink:0;
+}
+
+.graphOverlayRow{
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  z-index:3;
+  display:flex;
+  flex-direction:row;
+  align-items:flex-end;
+  justify-content:space-between;
+  pointer-events:none;
+}
+
+.summaryLeft, .summaryRight {
+  position:absolute;
+  top:10px;
+  pointer-events:none;
+}
+
+.summaryLeft {
+  left:50%;
+  transform:translateX(-50%);
+  align-items:center;
+  text-align:center;
+}
+
+.summaryRight {
+  right:10px;
+}
+
 
 .graphSide{
   flex:1;
@@ -208,7 +282,7 @@ html, body {
 .pulse{animation:pulse .85s ease-in-out infinite alternate}@keyframes pulse{from{filter:drop-shadow(0 0 4px rgba(251,146,60,.2));transform:scale(1)}to{filter:drop-shadow(0 0 22px rgba(251,146,60,.55));transform:scale(1.035)}}
 .pop{animation:pop .52s cubic-bezier(.2,1.7,.35,1)}@keyframes pop{0%{transform:scale(1)}42%{transform:scale(1.12)}100%{transform:scale(1)}}
 .sealed #graph{opacity:.72;filter:saturate(.74)}.sealed #dailyScore{opacity:.58}
-@media(max-width:760px){.rp-screen{padding:14px 0}.topbar{padding:0 20px}.logo{display:none}.rp-tabs .rp-tab:nth-child(n+4){display:none}.rp-control{display:flex;flex-direction:column;padding:0 12px}.rail{order:2;width:100%}.bank{order:1;width:100%}.card{border-radius:24px;border-left:0;border-right:0}.cardbody{padding:18px 18px 12px}.summaryTop{flex-direction:column;align-items:flex-start;gap:8px}#dateFull{font-size:27px;margin-bottom:12px}#dailyScore{font-size:54px}.graphSide{width:100%}#graphWrap{min-height:220px}.tags{padding:0 18px}.note{margin:0 18px}.tag{flex-basis:84px}}
+@media(max-width:760px){.rp-screen{padding:14px 0}.topbar{padding:0 20px}.logo{display:none}.rp-tabs .rp-tab:nth-child(n+4){display:none}.rp-control{display:flex;flex-direction:column;padding:0 12px}.rail{order:2;width:100%}.bank{order:1;width:100%}.card{border-radius:24px;border-left:0;border-right:0}.cardbody{padding:18px 18px 12px}.summaryTop{flex-direction:row;align-items:flex-end;justify-content:space-between}#dateFull{font-size:27px;margin-bottom:0}#dailyScore{font-size:54px}.graphSide{width:100%}#graphWrap{min-height:220px}.tags{padding:0 18px}.note{margin:0 18px}.tag{flex-basis:84px}}
 @media(max-height:720px){.note{display:none}.tags{min-height:82px}.tag{height:56px}#graphWrap{min-height:130px}}
 
 /* Compact mode for short phones like iPhone SE */
@@ -282,12 +356,13 @@ html, body {
   .summaryTop{
     flex-direction:row;
     align-items:flex-end;
+    justify-content:space-between;
     gap:10px;
     padding-bottom:0;
   }
 
   .summaryLeft{
-    min-width:92px;
+    min-width:0;
   }
 
   .kicker{
@@ -297,7 +372,7 @@ html, body {
 
   #dateFull{
     font-size:21px;
-    margin-bottom:8px;
+    margin-bottom:0;
   }
 
   .scoreLabel{
@@ -484,14 +559,14 @@ html, body {
   }
 
   .summaryLeft{
-    min-width:108px;
-    align-items:center;
-    text-align:center;
+    min-width:0;
+    align-items:flex-start;
+    text-align:left;
   }
 
   #dateFull{
     font-size:25px;
-    margin-bottom:10px;
+    margin-bottom:0;
   }
 
   .scoreLabel{
@@ -609,7 +684,7 @@ html, body {
 
   #dateFull{
     font-size:30px;
-    margin-bottom:12px;
+    margin-bottom:0;
   }
 
   #dailyScore{
@@ -867,7 +942,6 @@ html, body {
 
 .graph-day-label{
   position:absolute;
-  top:6px;
   z-index:5;
   color:var(--gold);
   font-size:10px;
@@ -876,6 +950,7 @@ html, body {
   font-weight:950;
   pointer-events:none;
   opacity:.78;
+  transform:translateY(-50%);
 }
 #prevGraphDayLabel{
   left:4.167%;
@@ -1297,17 +1372,18 @@ html, body {
 
 .ghostRenderedCard .summaryTop{
   display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:18px;
+  flex-direction:row;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:8px;
   padding:0 2px 4px;
 }
 
 .ghostRenderedCard .summaryLeft{
   display:flex;
   flex-direction:column;
-  align-items:center;
-  text-align:center;
+  align-items:flex-start;
+  text-align:left;
   min-width:0;
 }
 
@@ -1367,14 +1443,15 @@ html, body {
   }
 
   .ghostRenderedCard .summaryTop{
-    flex-direction:column;
-    align-items:flex-start;
+    flex-direction:row;
+    align-items:flex-end;
+    justify-content:space-between;
     gap:8px;
   }
 
   .ghostDateFull{
     font-size:27px;
-    margin-bottom:12px;
+    margin-bottom:0;
   }
 
   .ghostDailyScore{
@@ -1405,14 +1482,14 @@ html, body {
   }
 
   .ghostRenderedCard .summaryLeft{
-    min-width:108px;
-    align-items:center;
-    text-align:center;
+    min-width:0;
+    align-items:flex-start;
+    text-align:left;
   }
 
   .ghostDateFull{
     font-size:30px;
-    margin-bottom:12px;
+    margin-bottom:0;
   }
 
   .ghostDailyScore{
@@ -1446,12 +1523,13 @@ html, body {
   .ghostRenderedCard .summaryTop{
     flex-direction:row;
     align-items:flex-end;
+    justify-content:space-between;
     gap:10px;
     padding-bottom:0;
   }
 
   .ghostRenderedCard .summaryLeft{
-    min-width:92px;
+    min-width:0;
   }
 
   .ghostRenderedCard .kicker{
@@ -1461,7 +1539,7 @@ html, body {
 
   .ghostDateFull{
     font-size:21px;
-    margin-bottom:8px;
+    margin-bottom:0;
   }
 
   .ghostDailyScore{
@@ -1600,7 +1678,7 @@ html, body {
     <button class="nav-tab" data-page="2">Daily Scores</button>
     <button class="nav-tab" data-page="3">Insights</button>
   </div>
-  <div id="debug-bar" style="font-size:10px;color:rgba(255,255,255,0.25);font-family:monospace;padding:2px 20px 6px;letter-spacing:0.05em;">v1.1</div>
+  <div id="debug-bar" style="display:none;">v1.1</div>
 </div>
 
 <div class="scroll-x" id="scroller">
@@ -1630,17 +1708,18 @@ html, body {
   <main class="card" id="card">
     <div class="cardbody">
 
-      <section class="summaryTop">
-        <div class="summaryLeft">
-          <div class="kicker" id="todayLabel">Today</div>
-          <div id="dateFull">May 26</div>
-          <div class="scoreLabel">Daily Score</div>
-          <div id="dailyScore">140</div>
-        </div>
-      </section>
-
       <section class="graphSide">
-        <div id="graphWrap"><canvas id="graph"></canvas><div id="prevGraphDayLabel" class="graph-day-label"></div><div id="nextGraphDayLabel" class="graph-day-label"></div><div id="day-graph-popup" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;"><div id="day-graph-popup-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div><div id="day-graph-popup-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div></div><div id="eventLayer"><div class="event-rail"></div><div class="event-hint">Drag tags here</div></div></div>
+        <div id="graphWrap"><canvas id="graph"></canvas><div id="prevGraphDayLabel" class="graph-day-label"></div><div id="nextGraphDayLabel" class="graph-day-label"></div><div id="day-graph-popup" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;"><div id="day-graph-popup-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div><div id="day-graph-popup-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div></div><div id="eventLayer"><div class="event-rail"></div><div class="event-hint">Drag tags here</div></div>
+          <div class="graphOverlayRow">
+            <div class="summaryLeft" id="summaryLeft">
+              <div class="kicker" id="todayLabel">Today</div>
+              <div style="display:flex;align-items:baseline;gap:18px;">
+                <div id="dateFull">May 26</div>
+                <div id="dailyScore">140</div>
+              </div>
+            </div>
+          </div>
+        </div>
         <div class="axis"><span style="left:8.333%;">12a</span><span style="left:29.167%;">6a</span><span style="left:50%;">12p</span><span style="left:70.833%;">6p</span><span style="left:91.667%;">12a</span></div>
       </section>
 
@@ -1677,6 +1756,14 @@ html, body {
     </svg>
     Share
   </button>
+  <button class="bar-btn" id="bottom-info" onclick="openInfoModal()">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+      <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.8"/>
+      <path d="M8 7v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      <circle cx="8" cy="4.5" r="0.9" fill="currentColor"/>
+    </svg>
+    Info
+  </button>
   <a class="bar-btn" href="https://tvratto.github.io/Fox2/" target="_blank">
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
       <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.8"/>
@@ -1685,6 +1772,18 @@ html, body {
     </svg>
     Guide
   </a>
+</div>
+
+<div id="info-modal-overlay" onclick="if(event.target===this)closeInfoModal()">
+  <div id="info-modal">
+    <div id="info-modal-title">Device Info</div>
+    <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
+    <div class="info-row"><span class="info-label">Clinic ID</span><span class="info-value" id="info-clinic-id">—</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">—</span></div>
+    <div class="info-row"><span class="info-label">Payload</span><span class="info-value" id="info-payload">—</span></div>
+    <div class="info-row"><span class="info-label">Days</span><span class="info-value" id="info-days">—</span></div>
+    <button id="info-modal-close" onclick="closeInfoModal()">Close</button>
+  </div>
 </div>
 
 <div id="loading">
@@ -1708,14 +1807,23 @@ var dParam    = params.get('d') || '';
 var aParam    = params.get('a') || '';
 var sParam    = params.get('s') || '';
 
-// ─── Debug bar ────────────────────────────────────────────────────
+// ─── Debug bar + info modal ────────────────────────────────────────────────────
 (function() {
   var id = params.get('id') || '—';
   var v  = params.get('v')  || '—';
   var p  = params.get('p')  || '—';
   var c  = params.get('c')  || '—';
+  var src = params.get('src') || 'qr';
+  var days = dParam ? dParam.split('|').length : 0;
   var el = document.getElementById('debug-bar');
   if (el) el.textContent = 'id:' + id + '  v:' + v + '  patient:' + p + '  clinic:' + c + '  [web build 2147 pager-target-fixed]';
+  // Populate info modal
+  var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
+  setVal('info-device-id', id);
+  setVal('info-clinic-id', c);
+  setVal('info-version', v !== '—' ? 'v' + v : '—');
+  setVal('info-payload', src.toUpperCase());
+  setVal('info-days', days ? days + ' days' : '—');
 })();
 
 // Count day blocks first so windowStart can span the full payload
@@ -5208,7 +5316,7 @@ function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
 
   const data=getCachedResultsCurve(dayIdx);
 
-  const padL=6,padR=6,padT=10,padB=8,gTop=padT,gBot=H-padB,gH=gBot-gTop;
+  const padL=6,padR=6,padT=72,padB=8,gTop=padT,gBot=H-padB,gH=gBot-gTop;
   const REL_START=data.relStart;
   const REL_END=data.relEnd;
   const TOTAL_REL=REL_END-REL_START;
@@ -5232,6 +5340,11 @@ function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
 
   const xSep0=relToX(0);
   const xSep1=relToX(1440);
+  if(targetCanvas.id==='graph'){
+    window._graphSeps={x0:xSep0, x1:xSep1};
+    positionGraphOverlay();
+  }
+  targetCanvas._graphSeps={x0:xSep0, x1:xSep1};
 
   ctx.strokeStyle='rgba(255,255,255,.065)';
   ctx.lineWidth=1;
@@ -5357,21 +5470,21 @@ function renderDayCardHTML(dayIdx){
   return `
     <main class="card ghostRenderedCard">
       <div class="cardbody">
-        <section class="summaryTop">
-          <div class="summaryLeft">
-            <div class="kicker">${d.dow}</div>
-            <div class="ghostDateFull">${d.dateStr}</div>
-            <div class="scoreLabel">Daily Score</div>
-            <div class="ghostDailyScore">${d.score}</div>
-          </div>
-        </section>
-
         <section class="graphSide">
           <div class="ghostGraphWrap">
             <canvas class="ghostGraphCanvas"></canvas>
             <div class="graph-day-label ghostPrevDayLabel">${prevLabel}</div>
             <div class="graph-day-label ghostNextDayLabel">${nextLabel}</div>
             <div class="ghostEventLayer"><div class="event-rail"></div><div class="event-hint">Drag tags here</div></div>
+            <div class="graphOverlayRow">
+              <div class="summaryLeft">
+                <div class="kicker">${d.dow}</div>
+                <div style="display:flex;align-items:baseline;gap:18px;">
+                  <div class="ghostDateFull">${d.dateStr}</div>
+                  <div class="ghostDailyScore">${d.score}</div>
+                </div>
+              </div>
+            </div>
           </div>
           ${axisHTMLForPanel()}
         </section>
@@ -5423,6 +5536,7 @@ function redrawPagerGhostCanvases(){
     const canvas=panel.querySelector('.ghostGraphCanvas');
     if(wrap && canvas){
       drawGraphToCanvas(canvas, wrap, dayIdx, false);
+      positionGraphOverlay(panel);
     }
     renderGhostEvents(panel);
   }
@@ -5443,6 +5557,7 @@ function schedulePagerGhostRedraw(){
 
     if(wrap && canvas){
       drawGraphToCanvas(canvas, wrap, dayIdx, false);
+      positionGraphOverlay(panel);
     }
     renderGhostEvents(panel);
 
@@ -6222,7 +6337,44 @@ function initResultsPage(){updateAddedLabel(DAILY_SCORE);
   setTimeout(deposit,900);
 }
 if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initResultsPage);}else{setTimeout(initResultsPage,50);}
-addEventListener('resize',()=>{resizeP();drawGraph();renderEvents();updateTagWheelScale()})
+addEventListener('resize',()=>{resizeP();drawGraph();renderEvents();updateTagWheelScale();positionGraphOverlay()})
+
+function openInfoModal(){
+  document.getElementById('info-modal-overlay').classList.add('open');
+}
+function closeInfoModal(){
+  document.getElementById('info-modal-overlay').classList.remove('open');
+}
+
+function positionGraphOverlay(panel){
+  function applyPositions(seps, canvasW, wrap){
+    const mid=(seps.x0+seps.x1)/2;
+    const leftEl=wrap.querySelector('.summaryLeft');
+    if(leftEl){
+      leftEl.style.left=mid+'px';
+      leftEl.style.transform='translateX(-50%)';
+      leftEl.style.textAlign='center';
+    }
+    if(seps.midY!=null){
+      const prevLbl=wrap.querySelector('#prevGraphDayLabel,.ghostPrevDayLabel');
+      const nextLbl=wrap.querySelector('#nextGraphDayLabel,.ghostNextDayLabel');
+      [prevLbl,nextLbl].forEach(el=>{
+        if(el) el.style.top=seps.midY+'px';
+      });
+    }
+  }
+  if(panel){
+    const canvas=panel.querySelector('.ghostGraphCanvas');
+    if(!canvas||!canvas._graphSeps) return;
+    applyPositions(canvas._graphSeps, canvas.clientWidth, panel);
+    return;
+  }
+  const seps=window._graphSeps;
+  if(!seps) return;
+  const wrap=document.getElementById('graphWrap');
+  if(!wrap) return;
+  applyPositions(seps, null, wrap);
+}
 
 function initDayGraphPopup(){
   const wrap    = document.getElementById('graphWrap');
