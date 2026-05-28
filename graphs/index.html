@@ -254,7 +254,7 @@ html, body {
 .pulse{animation:pulse .85s ease-in-out infinite alternate}@keyframes pulse{from{filter:drop-shadow(0 0 4px rgba(251,146,60,.2));transform:scale(1)}to{filter:drop-shadow(0 0 22px rgba(251,146,60,.55));transform:scale(1.035)}}
 .pop{animation:pop .52s cubic-bezier(.2,1.7,.35,1)}@keyframes pop{0%{transform:scale(1)}42%{transform:scale(1.12)}100%{transform:scale(1)}}
 .sealed #graph{opacity:.72;filter:saturate(.74)}.sealed #dailyScore{opacity:.58}
-@media(max-width:760px){.rp-screen{padding:14px 0}.topbar{padding:0 20px}.logo{display:none}.rp-tabs .rp-tab:nth-child(n+4){display:none}.rp-control{display:flex;flex-direction:column;padding:0 12px}.rail{order:2;width:100%}.bank{order:1;width:100%}.card{border-radius:24px;border-left:0;border-right:0}.cardbody{padding:18px 18px 12px}.summaryTop{flex-direction:row;align-items:flex-end;justify-content:space-between}#dateFull{font-size:27px;margin-bottom:0}#dailyScore{font-size:54px}.graphSide{width:100%}#graphWrap{min-height:220px}.tags{padding:0 18px}.note{margin:0 18px}.tag{flex-basis:84px}}
+@media(max-width:760px){.rp-screen{padding:14px 0}.topbar{padding:0 20px}.logo{display:none}.rp-tabs .rp-tab:nth-child(n+4){display:none}.rp-control{display:flex;flex-direction:column;padding:0 12px}.rail{order:2;width:100%}.bank{order:1;width:100%}.card{border-radius:24px;border-left:0;border-right:0}.cardbody{padding:0 18px 12px}.summaryTop{flex-direction:row;align-items:flex-end;justify-content:space-between}#dateFull{font-size:27px;margin-bottom:0}#dailyScore{font-size:54px}.graphSide{width:100%}#graphWrap{min-height:220px}.tags{padding:0 18px}.note{margin:0 18px}.tag{flex-basis:84px}}
 @media(max-height:720px){.note{display:none}.tags{min-height:82px}.tag{height:56px}#graphWrap{min-height:130px}}
 
 /* Compact mode for short phones like iPhone SE */
@@ -610,9 +610,7 @@ html, body {
     max-height:34dvh;
   }
 
-  .cardbody{
-    padding-top:18px;
-  }
+
 
   .tags{
     min-height:92px;
@@ -1339,30 +1337,7 @@ html, body {
   padding:0 2px 4px;
 }
 
-.ghostRenderedCard .summaryLeft{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  text-align:center;
-  width:100%;
-}
 
-.ghostRenderedCard .cardbody{
-  flex:1;
-  min-height:0;
-  display:flex;
-  flex-direction:column;
-  gap:0;
-  padding:0 20px 14px;
-}
-
-.ghostRenderedCard .graphSide{
-  flex:1;
-  min-height:0;
-  width:100%;
-  display:flex;
-  flex-direction:column;
-}
 
 .ghostGraphWrap{
   position:relative;
@@ -1398,16 +1373,6 @@ html, body {
     border-right:0;
   }
 
-  .ghostRenderedCard .cardbody{
-    padding:0 18px 12px;
-  }
-
-  .ghostRenderedCard .summaryTop{
-    flex-direction:row;
-    align-items:flex-end;
-    justify-content:space-between;
-    gap:8px;
-  }
 
   .ghostDateFull{
     font-size:27px;
@@ -1424,29 +1389,6 @@ html, body {
 }
 
 @media(max-width:760px) and (min-height:701px){
-  .ghostRenderedCard .cardbody{
-    flex:1 1 auto;
-    min-height:0;
-    display:flex;
-    flex-direction:column;
-    gap:0;
-    padding:0 16px 9px;
-  }
-
-  .ghostRenderedCard .summaryTop{
-    flex:0 0 auto;
-    flex-direction:row;
-    align-items:flex-end;
-    justify-content:space-between;
-    gap:12px;
-  }
-
-  .ghostRenderedCard .summaryLeft{
-    min-width:0;
-    align-items:center;
-    text-align:center;
-  }
-
   .ghostDateFull{
     font-size:30px;
     margin-bottom:0;
@@ -1475,23 +1417,6 @@ html, body {
 }
 
 @media(max-height:700px){
-  .ghostRenderedCard .cardbody{
-    padding:12px 16px 8px;
-    gap:6px;
-  }
-
-  .ghostRenderedCard .summaryTop{
-    flex-direction:row;
-    align-items:flex-end;
-    justify-content:space-between;
-    gap:10px;
-    padding-bottom:0;
-  }
-
-  .ghostRenderedCard .summaryLeft{
-    min-width:0;
-  }
-
   .ghostRenderedCard .kicker{
     font-size:8px;
     margin-bottom:5px;
@@ -1513,10 +1438,6 @@ html, body {
 }
 
 @media(max-width:380px) and (max-height:700px){
-  .ghostRenderedCard .cardbody{
-    padding:10px 13px 7px;
-  }
-
   .ghostDateFull{ font-size:22px; }
   .ghostDailyScore{ font-size:40px; }
 
@@ -5774,20 +5695,18 @@ function enableGraphDayPager(){
         if(el)el.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
       },0);
 
-      snapTo(snap,()=>{
-        // Phase 1: always update selectedDay and text immediately.
-        window._pagerInternalUpdate=true;
-        selectedDay=targetDay;
-        window._pagerInternalUpdate=false;
+      // Update selectedDay and redraw the live card immediately, while the
+      // panel is still sliding. By the time it lands everything is ready.
+      window._pagerInternalUpdate=true;
+      selectedDay=targetDay;
+      updateRollerAndCardForPager();
+      window._pagerInternalUpdate=false;
 
-        // Phase 2: debounce the heavy redraw — if another swipe starts within
-        // 120ms we skip this redraw entirely and let the next snap do it.
+      snapTo(snap,()=>{
+        // After snap: rebuild ghost panels, debounced so rapid swipes skip it.
         if(window._redrawTimer) clearTimeout(window._redrawTimer);
         window._redrawTimer=setTimeout(()=>{
           window._redrawTimer=null;
-          window._pagerInternalUpdate=true;
-          updateRollerAndCardForPager();
-          window._pagerInternalUpdate=false;
           requestAnimationFrame(()=>{
             refreshDayPagerGhosts({
               liveAlreadyDrawn:true,
