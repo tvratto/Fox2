@@ -5054,10 +5054,6 @@ function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
 
   const padL=6,padR=6,padT=10,padB=8,gTop=padT,gBot=H-padB,gH=gBot-gTop;
 
-  // Visible window:
-  //   -144..0     = last 10% of yesterday
-  //    0..1440    = all selected day
-  //    1440..1584 = first 10% of tomorrow
   const REL_START=-144;
   const REL_END=1584;
   const TOTAL_REL=REL_END-REL_START;
@@ -5069,12 +5065,6 @@ function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
   const xSep0=relToX(0);
   const xSep1=relToX(1440);
 
-  // Collect real measurement points around the visible window.
-  // This replaces the old Results-page synthetic boundary points
-  // (estimateStartValue/estimateEndValue/etc.) with the same principle
-  // used by the fuel page: real neighbouring points are allowed to shape
-  // the spline, and midnight/zero anchors are only used when there is no
-  // valid neighbouring measurement to connect to.
   const actual=[];
   for(let di=dayIdx-2; di<=dayIdx+2; di++){
     const d=DAYS[di];
@@ -5101,16 +5091,13 @@ function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
     return gBot-Math.max(0,Math.min(maxV,v))/maxV*gH;
   }
 
-  function col(v){
-    return Math.round(v)<=2?'#22D3EE':Math.round(v)<=4?'#6EE787':'#A855F7';
+  function zoneOf(v){
+    return Math.round(v)<=2?0:Math.round(v)<=4?1:2;
   }
+  const zoneFill=['rgba(34,211,238,0.45)','rgba(74,222,128,0.40)','rgba(168,85,247,0.35)'];
+  const zoneStroke=['#22D3EE','#4ADE80','#A855F7'];
+  function col(v){ return zoneStroke[zoneOf(v)]; }
 
-  function addZeroAnchor(points, rel){
-    points.push({rel:rel, v:0, anchor:true, meas:false});
-  }
-
-  // Split actual points at >24h gaps, then add only the same kind of
-  // start/end anchors the fuel graph uses when no adjacent real point exists.
   const GAP_LIMIT=1440;
   const rawSegments=[];
   let cur=[];
@@ -5123,32 +5110,31 @@ function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
   });
   if(cur.length)rawSegments.push(cur);
 
+  function pushAnchorIfMissing(pts, rel){
+    if(!pts.some(p=>Math.abs(p.rel-rel)<0.001)){
+      pts.push({rel:rel,v:0,anchor:true,meas:false});
+    }
+  }
+
   const segments=rawSegments.map(seg=>{
     let pts=seg.map(p=>Object.assign({},p));
-
     if(!pts.length)return pts;
 
     const first=pts[0];
     const last=pts[pts.length-1];
 
-    // Leading anchor only if the segment begins after that day's midnight
-    // and there is no neighbouring real point already in the segment.
     const firstDayStart=Math.floor(first.rel/1440)*1440;
     if(first.rel>firstDayStart && first.rel-firstDayStart<=GAP_LIMIT){
-      addZeroAnchor(pts, firstDayStart);
+      pushAnchorIfMissing(pts, firstDayStart);
     }
 
-    // Trailing anchor for completed days only when there is no neighbouring
-    // real point already available. If this is the current/live day, stop at
-    // the last measurement and use the dashed projection line instead.
     const lastDayEnd=Math.floor(last.rel/1440)*1440+1440;
     const lastIsSelectedDay=(last.dayIdx===dayIdx);
     const selectedIsLiveDay=(dayIdx===TODAY_IDX);
     if(!(lastIsSelectedDay && selectedIsLiveDay) && last.rel<lastDayEnd && lastDayEnd-last.rel<=GAP_LIMIT){
-      addZeroAnchor(pts, lastDayEnd);
+      pushAnchorIfMissing(pts, lastDayEnd);
     }
 
-    // Keep sorted and de-duped.
     pts.sort((a,b)=>a.rel-b.rel);
     pts=pts.filter((p,i)=>i===0 || Math.abs(p.rel-pts[i-1].rel)>0.001);
     return pts;
@@ -5160,7 +5146,7 @@ function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
     if(seg.length===2){
       const a=seg[0],b=seg[1];
       const t=(rel-a.rel)/(b.rel-a.rel || 1);
-      return a.v+(b.v-a.v)*t;
+      return Math.max(0,a.v+(b.v-a.v)*t);
     }
     const xs=seg.map(p=>p.rel);
     const ys=seg.map(p=>p.v);
@@ -5188,7 +5174,6 @@ function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
 
   const allSamples=segments.map(sampleSegment).filter(s=>s.length>=2);
 
-  // Gridlines for the selected day's 6-hour marks.
   ctx.strokeStyle='rgba(255,255,255,.065)';
   ctx.lineWidth=1;
   [360,720,1080].forEach(m=>{
@@ -5199,7 +5184,6 @@ function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
     ctx.stroke();
   });
 
-  // Baseline across the whole visible window.
   ctx.strokeStyle='rgba(255,255,255,.14)';
   ctx.lineWidth=1;
   ctx.beginPath();
@@ -5207,7 +5191,6 @@ function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
   ctx.lineTo(W-padR,gBot);
   ctx.stroke();
 
-  // Midnight separators between days.
   ctx.strokeStyle='rgba(255,255,255,.24)';
   ctx.lineWidth=1;
   ctx.setLineDash([4,6]);
@@ -5219,31 +5202,33 @@ function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
   });
   ctx.setLineDash([]);
 
-  // Fill under each continuous spline segment.
   allSamples.forEach(samples=>{
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(samples[0].x,gBot);
-    ctx.lineTo(samples[0].x,samples[0].y);
-    samples.forEach(p=>ctx.lineTo(p.x,p.y));
-    ctx.lineTo(samples[samples.length-1].x,gBot);
-    ctx.closePath();
-    ctx.clip();
+    let runs=[];
+    let curZone=zoneOf(samples[0].v), runStart=0;
+    for(let i=1;i<samples.length;i++){
+      const z=zoneOf(samples[i].v);
+      if(z!==curZone){
+        runs.push({zone:curZone,from:runStart,to:i});
+        curZone=z; runStart=i;
+      }
+    }
+    runs.push({zone:curZone,from:runStart,to:samples.length-1});
 
-    const grad=ctx.createLinearGradient(0,gTop,0,gBot);
-    grad.addColorStop(0,'rgba(168,85,247,.48)');
-    grad.addColorStop(.48,'rgba(110,231,135,.34)');
-    grad.addColorStop(1,'rgba(251,146,60,.28)');
-    ctx.fillStyle=grad;
-    ctx.fillRect(0,gTop,W,gH);
-    ctx.restore();
-  });
+    runs.forEach(run=>{
+      const s0=samples[run.from],sN=samples[run.to];
+      ctx.fillStyle=zoneFill[run.zone];
+      ctx.beginPath();
+      ctx.moveTo(s0.x,gBot);
+      ctx.lineTo(s0.x,s0.y);
+      for(let i=run.from+1;i<=run.to;i++)ctx.lineTo(samples[i].x,samples[i].y);
+      ctx.lineTo(sN.x,gBot);
+      ctx.closePath();
+      ctx.fill();
+    });
 
-  // Zone-coloured stroke.
-  ctx.lineWidth=3;
-  ctx.lineCap='round';
-  ctx.shadowBlur=12;
-  allSamples.forEach(samples=>{
+    ctx.lineWidth=3;
+    ctx.lineCap='round';
+    ctx.shadowBlur=12;
     for(let j=0;j<samples.length-1;j++){
       ctx.strokeStyle=col((samples[j].v+samples[j+1].v)/2);
       ctx.shadowColor=ctx.strokeStyle;
@@ -5252,10 +5237,9 @@ function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
       ctx.lineTo(samples[j+1].x,samples[j+1].y);
       ctx.stroke();
     }
+    ctx.shadowBlur=0;
   });
-  ctx.shadowBlur=0;
 
-  // Dashed projection for the current/live day only.
   const selectedActual=actual.filter(p=>p.dayIdx===dayIdx).sort((a,b)=>a.rel-b.rel);
   if(dayIdx===TODAY_IDX && selectedActual.length){
     const last=selectedActual[selectedActual.length-1];
@@ -5270,12 +5254,21 @@ function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
     ctx.setLineDash([]);
   }
 
-  // Dots and labels only for actual readings on the selected day.
+  if(dayIdx===selectedDay && targetCanvas && targetCanvas.id==='graph'){
+    window._dayGraphDots=[];
+  }
+
   selectedActual
     .filter(p=>p.rel>=0 && p.rel<=1440)
     .forEach(p=>{
       const x=relToX(p.rel), y=gy(p.v);
       const cc=col(p.v);
+
+      if(dayIdx===selectedDay && targetCanvas && targetCanvas.id==='graph'){
+        if(!window._dayGraphDots)window._dayGraphDots=[];
+        window._dayGraphDots.push({cx:x,cy:y,val:p.v,minute:p.minute,epoch:null});
+      }
+
       ctx.beginPath();
       ctx.arc(x,y,7,0,Math.PI*2);
       ctx.fillStyle=cc;
@@ -5674,6 +5667,294 @@ function drawGraph(){
     true
   );
 }
+
+
+const pc=document.getElementById('particles'),px=pc.getContext('2d');
+let particles=[];
+let activeTransfers=[];
+
+function resizeP(){
+  const d=devicePixelRatio||1;
+  pc.width=innerWidth*d;
+  pc.height=innerHeight*d;
+  pc.style.width=innerWidth+'px';
+  pc.style.height=innerHeight+'px';
+  px.setTransform(d,0,0,d,0,0);
+}
+
+function spawn(x,y,vx,vy,size,color,life){
+  particles.push({x,y,vx,vy,size,color,life,age:0});
+}
+
+function bezier(p0,p1,p2,p3,t){
+  const u=1-t;
+  return {
+    x:u*u*u*p0.x+3*u*u*t*p1.x+3*u*t*t*p2.x+t*t*t*p3.x,
+    y:u*u*u*p0.y+3*u*u*t*p1.y+3*u*t*t*p2.y+t*t*t*p3.y
+  };
+}
+
+function loop(now){
+  px.clearRect(0,0,innerWidth,innerHeight);
+
+  for(let i=activeTransfers.length-1;i>=0;i--){
+    let tr=activeTransfers[i];
+    let age=now-tr.start;
+
+    if(age>tr.life){
+      activeTransfers.splice(i,1);
+      continue;
+    }
+
+    let t=Math.min(1,Math.max(0,age/tr.travel));
+    let p=bezier(tr.p0,tr.p1,tr.p2,tr.p3,t);
+
+    // Add a little directional tail by drawing a few previous positions.
+    for(let k=5;k>=0;k--){
+      let tt=Math.max(0,t-k*.025);
+      let q=bezier(tr.p0,tr.p1,tr.p2,tr.p3,tt);
+      let a=(1-k/6)*Math.min(1,(tr.life-age)/220);
+      px.save();
+      px.globalAlpha=a*.8;
+      px.beginPath();
+      px.arc(q.x,q.y,tr.size*(1-k*.10),0,Math.PI*2);
+      px.fillStyle=tr.color;
+      px.shadowColor=tr.color;
+      px.shadowBlur=18;
+      px.fill();
+      px.restore();
+    }
+
+    // Bright head particle
+    px.save();
+    px.globalAlpha=Math.min(1,(tr.life-age)/220);
+    px.beginPath();
+    px.arc(p.x,p.y,tr.size*1.15,0,Math.PI*2);
+    px.fillStyle='rgba(255,232,140,.98)';
+    px.shadowColor='rgba(255,170,35,.98)';
+    px.shadowBlur=26;
+    px.fill();
+    px.restore();
+
+    // Impact sparkles near the target as each particle lands
+    if(!tr.landed && t>=.96){
+      tr.landed=true;
+      for(let s=0;s<4;s++){
+        let a=Math.random()*Math.PI*2;
+        let sp=1+Math.random()*2.2;
+        spawn(
+          tr.p3.x,
+          tr.p3.y,
+          Math.cos(a)*sp,
+          Math.sin(a)*sp,
+          .9+Math.random()*1.8,
+          Math.random()>.35?'rgba(110,231,135,.92)':'rgba(255,200,80,.9)',
+          260+Math.random()*280
+        );
+      }
+    }
+  }
+
+  for(let i=particles.length-1;i>=0;i--){
+    let p=particles[i];
+    p.age+=16;
+    p.x+=p.vx;
+    p.y+=p.vy;
+    p.vy+=.01;
+
+    let a=Math.max(0,1-p.age/p.life);
+    if(a<=0){particles.splice(i,1);continue}
+
+    px.globalAlpha=a;
+    px.beginPath();
+    px.arc(p.x,p.y,p.size*a,0,Math.PI*2);
+    px.fillStyle=p.color;
+    px.shadowColor=p.color;
+    px.shadowBlur=18;
+    px.fill();
+  }
+
+  px.globalAlpha=1;
+  px.shadowBlur=0;
+  requestAnimationFrame(loop);
+}
+
+function burst(el,color,n){
+  const r=el.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
+  for(let i=0;i<n;i++){
+    let a=Math.random()*Math.PI*2,s=1.5+Math.random()*4;
+    spawn(x,y,Math.cos(a)*s,Math.sin(a)*s,1.5+Math.random()*2.5,color,500+Math.random()*500)
+  }
+}
+
+function counter(el,from,to,dur,format,done){
+  let st=null;
+  function step(ts){
+    if(!st)st=ts;
+    let t=Math.min(1,(ts-st)/dur),e=ease(t);
+    el.textContent=format(from+(to-from)*e);
+    if(t<1)requestAnimationFrame(step);
+    else{el.textContent=format(to);done&&done()}
+  }
+  requestAnimationFrame(step)
+}
+
+function flow(fromEl,toEl,dur){
+  const contribRect=document.getElementById('contribNum').getBoundingClientRect();
+  const totalRect=document.getElementById('totalNum').getBoundingClientRect();
+
+  const startX=contribRect.left+contribRect.width*.52;
+  const startY=contribRect.top+contribRect.height*.55;
+  const endX=totalRect.left+totalRect.width*.48;
+  const endY=totalRect.top+totalRect.height*.55;
+  const dx=endX-startX;
+
+  activeTransfers=[];
+
+  let startTime=performance.now();
+  let emitted=0;
+  const count=96;          // number of additive packets
+  const emitEvery=dur/count;
+  const travel=520;        // fast movement across the gap
+
+  function emit(){
+    const now=performance.now();
+    const elapsed=now-startTime;
+
+    // Emit packets for 4 seconds, so transport is clearly additive.
+    while(emitted<count && emitted*emitEvery<=elapsed){
+      const n=emitted/(count-1);
+      const arcFamily=emitted%5;
+      const offset=(arcFamily-2)*5.5;
+
+      // Two clean one-way paths: an upper arc and a lower arc.
+      // Alternating packets use opposite arcs so it reads like a continuous transfer,
+      // not a single connected ribbon.
+      const arcHeight=34+arcFamily*7+Math.random()*8;
+      const arcDir=(emitted%2===0)?-1:1; // -1 = top arc, +1 = bottom arc
+      const arcSpread=arcDir*arcHeight;
+
+      const p0={x:startX+(Math.random()-.5)*8,y:startY+offset+(Math.random()-.5)*3};
+      const p1={x:startX+dx*.32,y:startY+arcSpread+offset};
+      const p2={x:startX+dx*.68,y:endY+arcSpread-offset*.25};
+      const p3={x:endX+(Math.random()-.5)*8,y:endY-offset*.25+(Math.random()-.5)*3};
+
+      activeTransfers.push({
+        p0,p1,p2,p3,
+        start:now,
+        travel:travel+Math.random()*120,
+        life:travel+420,
+        size:2.8+Math.random()*2.5,
+        color:Math.random()>.35?'rgba(255,165,35,.95)':'rgba(255,220,95,.98)',
+        landed:false
+      });
+
+      emitted++;
+    }
+
+    if(elapsed<dur) requestAnimationFrame(emit);
+  }
+
+  requestAnimationFrame(emit);
+}
+
+
+function updateAddedLabel(amount){
+  const el=document.getElementById('added');
+  if(!el)return;
+  amount=Math.max(0,Math.round(amount||0));
+  el.textContent='+'+amount.toLocaleString()+' today';
+}
+
+function reset(){updateAddedLabel(DAILY_SCORE);hasDeposited=false;bank.classList.remove('depositing');bank.classList.remove('streaming');contribCell.classList.remove('glow');totalCell.classList.remove('totalGlow');contribNum.classList.remove('pulse');totalNum.classList.remove('pop');added.classList.remove('show');archiveStatus.classList.remove('show');card.classList.remove('sealed');contribNum.textContent='+'+DAILY_SCORE;totalNum.textContent=fmt(TOTAL_BEFORE);updateAddedLabel(DAILY_SCORE);contribSub.textContent='tap to deposit'}
+function deposit(){if(hasDeposited)return;hasDeposited=true;bank.classList.add('streaming');contribCell.classList.add('glow');contribNum.classList.add('pulse');contribSub.textContent='ready';setTimeout(()=>{contribSub.textContent='depositing';flow(contribCell,totalCell,4000);counter(contribNum,DAILY_SCORE,0,4000,v=>'+'+Math.max(0,Math.round(v)));counter(totalNum,TOTAL_BEFORE,TOTAL_AFTER,4000,v=>fmt(v),()=>{contribNum.classList.remove('pulse');contribCell.classList.remove('glow');totalCell.classList.add('totalGlow');totalNum.classList.add('pop');bank.classList.remove('streaming');contribSub.textContent='complete';updateAddedLabel(DAILY_SCORE);added.classList.add('show');archiveStatus.classList.add('show');card.classList.add('sealed');burst(totalNum,'rgba(110,231,135,.95)',34);setTimeout(()=>{totalCell.classList.remove('totalGlow');totalNum.classList.remove('pop')},1100)})},700)}
+bank.onclick=()=>{reset();setTimeout(deposit,250)}
+
+// ── Supabase tag save ─────────────────────────────────────────────
+var _tagSaveTimer={};
+function saveTagsForDay(idx){
+  if(!_sbDeviceId)return;
+  clearTimeout(_tagSaveTimer[idx]);
+  _tagSaveTimer[idx]=setTimeout(function(){
+    var d=DAYS[idx];
+    fetch(_sbUrl+'/rest/v1/day_tags?on_conflict=device_id,day_date',{
+      method:'POST',
+      headers:Object.assign({},_sbHeaders,{'Prefer':'resolution=merge-duplicates,return=minimal'}),
+      body:JSON.stringify({
+        device_id: _sbDeviceId,
+        day_date:  d.isoDate,
+        events:    d.events,
+        tray_tags: d.tags,
+        note:      d.note||'',
+        updated_at: new Date().toISOString()
+      })
+    }).catch(function(){});
+  },400);
+}
+
+// ── Note field ────────────────────────────────────────────────────
+function updateNote(){
+  var inp=document.getElementById('noteInput');
+  if(inp) inp.value=DAYS[selectedDay].note||'';
+}
+function saveNote(){
+  var inp=document.getElementById('noteInput');
+  if(!inp)return;
+  DAYS[selectedDay].note=inp.value.trim();
+  saveTagsForDay(selectedDay);
+  var btn=document.getElementById('noteBtn');
+  if(btn){btn.textContent='\u2713';setTimeout(function(){btn.textContent='Save';},1000);}
+}
+(function(){
+  var btn=document.getElementById('noteBtn');
+  var inp=document.getElementById('noteInput');
+  if(btn) btn.addEventListener('click',saveNote);
+  if(inp) inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();saveNote();}});
+})();
+
+// ── Show already-deposited state immediately ──────────────────────
+function showDeposited(){updateAddedLabel(DAILY_SCORE);
+  hasDeposited=true;
+  contribNum.textContent='+'+DAILY_SCORE;
+  contribSub.textContent='complete';
+  totalNum.textContent=fmt(TOTAL_AFTER);
+  added.classList.add('show');
+  archiveStatus.classList.add('show');
+  card.classList.add('sealed');
+}
+
+// ── Supabase read + init ──────────────────────────────────────────
+var _sbUrl='',_sbHeaders={},_sbDeviceId='';
+
+function initWithSupabase(sbUrl,sbHeaders,deviceId,preRead){
+  _sbUrl=sbUrl;_sbHeaders=sbHeaders;_sbDeviceId=deviceId;
+  var alreadyDeposited=preRead.alreadyDeposited;
+  var tagRows=preRead.tagRows||[];
+  TOTAL_BEFORE=preRead.totalBefore;
+  TOTAL_AFTER=preRead.totalAfter;
+  contribNum.textContent='+'+DAILY_SCORE;
+  totalNum.textContent=fmt(TOTAL_BEFORE);
+  var tagLookup={};
+  tagRows.forEach(function(row){tagLookup[row.day_date]=row;});
+  DAYS.forEach(function(d){
+    var row=tagLookup[d.isoDate];
+    if(row){
+      d.events=Array.isArray(row.events)?row.events:[];
+      d.tags=Array.isArray(row.tray_tags)?row.tray_tags:[];
+      d.note=row.note||'';
+    }
+  });
+  _doInit(alreadyDeposited);
+}
+
+function _doInit(alreadyDeposited){
+  resizeP();loop();buildRail();updateCard();buildTags();updateNote();enableGraphDaySwipe();
+  setTimeout(function(){drawGraph();renderEvents();},80);
+  if(alreadyDeposited){setTimeout(showDeposited,200);}
+  else{setTimeout(deposit,900);}
+}
+
+let activeDrag=null;
 
 function minuteToTime(min){
   min=Math.max(0,Math.min(1439,Math.round(min/15)*15));
