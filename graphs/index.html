@@ -1229,7 +1229,6 @@ html, body {
 }
 
 .ghostPanel{
-  opacity:.92;
 }
 
 @media(max-width:760px){
@@ -4894,7 +4893,7 @@ function getVerdict(d, isToday) {
 function updateCard(){
   const d=DAYS[selectedDay];
   const isToday=selectedDay===TODAY_IDX;
-  document.getElementById('todayLabel').textContent=d.dow;
+  document.getElementById('todayLabel').textContent=isToday?'Today':d.dow;
   document.getElementById('dateFull').textContent=d.dateStr;
   document.getElementById('dailyScore').textContent=d.score;
   const v=getVerdict(d,isToday);
@@ -5782,8 +5781,25 @@ function enableGraphDayPager(){
 
     if(target!==selectedDay){
       const targetDay=target;
+
+      // Update text fields immediately — invisible during the slide animation
+      // and ready the moment the panel lands.
+      const dTarget=DAYS[targetDay];
+      document.getElementById('todayLabel').textContent=targetDay===TODAY_IDX?'Today':dTarget.dow;
+      document.getElementById('dateFull').textContent=dTarget.dateStr;
+      document.getElementById('dailyScore').textContent=dTarget.score;
+
+      // Also update the date rail highlight now so it snaps with the swipe.
+      document.querySelectorAll('.day').forEach(el=>{
+        el.classList.toggle('active',Number(el.dataset.idx)===targetDay);
+      });
+      setTimeout(()=>{
+        const el=document.querySelector('.day.active');
+        if(el)el.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
+      },0);
+
       snapTo(snap,()=>{
-        // Phase 1 after snap: update only the visible/live panel.
+        // Phase 1 after snap: finish full UI update (verdict, tags, note, graph).
         window._pagerInternalUpdate=true;
         selectedDay=targetDay;
         updateRollerAndCardForPager();
