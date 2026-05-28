@@ -5039,32 +5039,21 @@ function buildTags(){
 
 
 
-function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
-  const c=targetCanvas,wrap=targetWrap,W=wrap.clientWidth,H=wrap.clientHeight,dpr=devicePixelRatio||1;
-  if(!W||!H)return;
 
-  c.width=W*dpr;
-  c.height=H*dpr;
-  c.style.width=W+'px';
-  c.style.height=H+'px';
+const dayCurveCache = {};
 
-  const ctx=c.getContext('2d');
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-  ctx.clearRect(0,0,W,H);
+function invalidateDayCurveCache(){
+  Object.keys(dayCurveCache).forEach(k=>delete dayCurveCache[k]);
+}
 
-  const padL=6,padR=6,padT=10,padB=8,gTop=padT,gBot=H-padB,gH=gBot-gTop;
+function getCachedResultsCurve(dayIdx){
+  const cacheKey='day_'+dayIdx;
+  if(dayCurveCache[cacheKey])return dayCurveCache[cacheKey];
 
   const REL_START=-144;
   const REL_END=1584;
-  const TOTAL_REL=REL_END-REL_START;
 
-  function relToX(rel){
-    return padL+(rel-REL_START)/TOTAL_REL*(W-padL-padR);
-  }
-
-  const xSep0=relToX(0);
-  const xSep1=relToX(1440);
-
+  // Collect real measurement points around the visible window.
   const actual=[];
   for(let di=dayIdx-2; di<=dayIdx+2; di++){
     const d=DAYS[di];
@@ -5081,32 +5070,18 @@ function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
   }
   actual.sort((a,b)=>a.rel-b.rel);
 
-  // The open/live edge is the last day that actually has a measurement,
-  // not simply TODAY_IDX or the last payload/date slot. Do not add a
-  // synthetic midnight/zero anchor after the final real measurement.
-  const lastMeasuredGraphDay = actual.length
-    ? actual.reduce((m,p)=>Math.max(m,p.dayIdx), actual[0].dayIdx)
-    : dayIdx;
-  const lastMeasuredGraphRel = actual.length
-    ? actual[actual.length-1].rel
-    : null;
-
   const scaleVals=actual
     .filter(p=>p.rel>=REL_START-1440 && p.rel<=REL_END+1440)
     .map(p=>p.v);
   const rawMax=scaleVals.length?Math.max(...scaleVals):4;
   const maxV=Math.max(4.5,Math.ceil(rawMax*1.28));
 
-  function gy(v){
-    return gBot-Math.max(0,Math.min(maxV,v))/maxV*gH;
-  }
-
-  function zoneOf(v){
-    return Math.round(v)<=2?0:Math.round(v)<=4?1:2;
-  }
-  const zoneFill=['rgba(34,211,238,0.45)','rgba(74,222,128,0.40)','rgba(168,85,247,0.35)'];
-  const zoneStroke=['#22D3EE','#4ADE80','#A855F7'];
-  function col(v){ return zoneStroke[zoneOf(v)]; }
+  const lastMeasuredGraphDay = actual.length
+    ? actual.reduce((m,p)=>Math.max(m,p.dayIdx), actual[0].dayIdx)
+    : dayIdx;
+  const lastMeasuredGraphRel = actual.length
+    ? actual[actual.length-1].rel
+    : null;
 
   const GAP_LIMIT=1440;
   const rawSegments=[];
@@ -5126,7 +5101,7 @@ function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
     }
   }
 
-  const segments=rawSegments.map(seg=>{
+  const knotSegments=rawSegments.map(seg=>{
     let pts=seg.map(p=>Object.assign({},p));
     if(!pts.length)return pts;
 
@@ -5142,6 +5117,7 @@ function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
     const segmentEndsAtFinalMeasurement =
       lastMeasuredGraphRel != null && Math.abs(last.rel-lastMeasuredGraphRel) < 0.001;
 
+    // Do not extend beyond the final real measurement.
     if(!segmentEndsAtFinalMeasurement && last.rel<lastDayEnd && lastDayEnd-last.rel<=GAP_LIMIT){
       pushAnchorIfMissing(pts, lastDayEnd);
     }
@@ -5150,8 +5126,6 @@ function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
     pts=pts.filter((p,i)=>i===0 || Math.abs(p.rel-pts[i-1].rel)>0.001);
     return pts;
   }).filter(seg=>seg.length>=2);
-
-  if(!segments.length)return;
 
   function evalSegment(seg, rel){
     if(seg.length===2){
@@ -5171,19 +5145,84 @@ function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
     const samples=[];
     if(to<=from)return samples;
 
-    const step=Math.max(1, (REL_END-REL_START)/(W-padL-padR));
-    for(let rel=from; rel<=to; rel+=step){
-      const v=evalSegment(seg, rel);
-      samples.push({rel, v, x:relToX(rel), y:gy(v)});
+    // Cache in data-space at 1-minute resolution.
+    // Drawing can then be a cheap rel/v → x/y transform for every panel.
+    for(let rel=Math.ceil(from); rel<=Math.floor(to); rel++){
+      samples.push({rel:rel, v:evalSegment(seg, rel)});
     }
-    if(samples.length===0 || samples[samples.length-1].rel<to){
-      const v=evalSegment(seg, to);
-      samples.push({rel:to, v, x:relToX(to), y:gy(v)});
+
+    // Preserve exact endpoints if they are fractional.
+    if(samples.length===0 || samples[0].rel>from){
+      samples.unshift({rel:from, v:evalSegment(seg, from)});
     }
+    if(samples[samples.length-1].rel<to){
+      samples.push({rel:to, v:evalSegment(seg, to)});
+    }
+
     return samples;
   }
 
-  const allSamples=segments.map(sampleSegment).filter(s=>s.length>=2);
+  const segments=knotSegments
+    .map(sampleSegment)
+    .filter(samples=>samples.length>=2);
+
+  const dots=actual
+    .filter(p=>p.dayIdx===dayIdx && p.rel>=0 && p.rel<=1440)
+    .sort((a,b)=>a.rel-b.rel)
+    .map(p=>({rel:p.rel,v:p.v,minute:p.minute,dayIdx:p.dayIdx}));
+
+  const result={
+    relStart:REL_START,
+    relEnd:REL_END,
+    maxV:maxV,
+    segments:segments,
+    dots:dots,
+    lastMeasuredGraphDay:lastMeasuredGraphDay
+  };
+
+  dayCurveCache[cacheKey]=result;
+  return result;
+}
+
+function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
+  const c=targetCanvas,wrap=targetWrap,W=wrap.clientWidth,H=wrap.clientHeight,dpr=devicePixelRatio||1;
+  if(!W||!H)return;
+
+  c.width=W*dpr;
+  c.height=H*dpr;
+  c.style.width=W+'px';
+  c.style.height=H+'px';
+
+  const ctx=c.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,W,H);
+
+  const data=getCachedResultsCurve(dayIdx);
+
+  const padL=6,padR=6,padT=10,padB=8,gTop=padT,gBot=H-padB,gH=gBot-gTop;
+  const REL_START=data.relStart;
+  const REL_END=data.relEnd;
+  const TOTAL_REL=REL_END-REL_START;
+  const maxV=data.maxV;
+
+  function relToX(rel){
+    return padL+(rel-REL_START)/TOTAL_REL*(W-padL-padR);
+  }
+
+  function gy(v){
+    return gBot-Math.max(0,Math.min(maxV,v))/maxV*gH;
+  }
+
+  function zoneOf(v){
+    return Math.round(v)<=2?0:Math.round(v)<=4?1:2;
+  }
+
+  const zoneFill=['rgba(34,211,238,0.45)','rgba(74,222,128,0.40)','rgba(168,85,247,0.35)'];
+  const zoneStroke=['#22D3EE','#4ADE80','#A855F7'];
+  function col(v){ return zoneStroke[zoneOf(v)]; }
+
+  const xSep0=relToX(0);
+  const xSep1=relToX(1440);
 
   ctx.strokeStyle='rgba(255,255,255,.065)';
   ctx.lineWidth=1;
@@ -5213,9 +5252,10 @@ function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
   });
   ctx.setLineDash([]);
 
-  allSamples.forEach(samples=>{
+  data.segments.forEach(samples=>{
     let runs=[];
     let curZone=zoneOf(samples[0].v), runStart=0;
+
     for(let i=1;i<samples.length;i++){
       const z=zoneOf(samples[i].v);
       if(z!==curZone){
@@ -5229,10 +5269,12 @@ function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
       const s0=samples[run.from],sN=samples[run.to];
       ctx.fillStyle=zoneFill[run.zone];
       ctx.beginPath();
-      ctx.moveTo(s0.x,gBot);
-      ctx.lineTo(s0.x,s0.y);
-      for(let i=run.from+1;i<=run.to;i++)ctx.lineTo(samples[i].x,samples[i].y);
-      ctx.lineTo(sN.x,gBot);
+      ctx.moveTo(relToX(s0.rel),gBot);
+      ctx.lineTo(relToX(s0.rel),gy(s0.v));
+      for(let i=run.from+1;i<=run.to;i++){
+        ctx.lineTo(relToX(samples[i].rel),gy(samples[i].v));
+      }
+      ctx.lineTo(relToX(sN.rel),gBot);
       ctx.closePath();
       ctx.fill();
     });
@@ -5244,16 +5286,15 @@ function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
       ctx.strokeStyle=col((samples[j].v+samples[j+1].v)/2);
       ctx.shadowColor=ctx.strokeStyle;
       ctx.beginPath();
-      ctx.moveTo(samples[j].x,samples[j].y);
-      ctx.lineTo(samples[j+1].x,samples[j+1].y);
+      ctx.moveTo(relToX(samples[j].rel),gy(samples[j].v));
+      ctx.lineTo(relToX(samples[j+1].rel),gy(samples[j+1].v));
       ctx.stroke();
     }
     ctx.shadowBlur=0;
   });
 
-  const selectedActual=actual.filter(p=>p.dayIdx===dayIdx).sort((a,b)=>a.rel-b.rel);
-  if(dayIdx===lastMeasuredGraphDay && selectedActual.length){
-    const last=selectedActual[selectedActual.length-1];
+  if(dayIdx===data.lastMeasuredGraphDay && data.dots.length){
+    const last=data.dots[data.dots.length-1];
     const x=relToX(last.rel), y=gy(last.v);
     ctx.setLineDash([5,7]);
     ctx.strokeStyle='rgba(255,255,255,.26)';
@@ -5269,32 +5310,31 @@ function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
     window._dayGraphDots=[];
   }
 
-  selectedActual
-    .filter(p=>p.rel>=0 && p.rel<=1440)
-    .forEach(p=>{
-      const x=relToX(p.rel), y=gy(p.v);
-      const cc=col(p.v);
+  data.dots.forEach(p=>{
+    const x=relToX(p.rel), y=gy(p.v);
+    const cc=col(p.v);
 
-      if(dayIdx===selectedDay && targetCanvas && targetCanvas.id==='graph'){
-        if(!window._dayGraphDots)window._dayGraphDots=[];
-        window._dayGraphDots.push({cx:x,cy:y,val:p.v,minute:p.minute,epoch:null});
-      }
+    if(dayIdx===selectedDay && targetCanvas && targetCanvas.id==='graph'){
+      if(!window._dayGraphDots)window._dayGraphDots=[];
+      window._dayGraphDots.push({cx:x,cy:y,val:p.v,minute:p.minute,epoch:null});
+    }
 
-      ctx.beginPath();
-      ctx.arc(x,y,7,0,Math.PI*2);
-      ctx.fillStyle=cc;
-      ctx.shadowColor=cc;
-      ctx.shadowBlur=14;
-      ctx.fill();
-      ctx.shadowBlur=0;
+    ctx.beginPath();
+    ctx.arc(x,y,7,0,Math.PI*2);
+    ctx.fillStyle=cc;
+    ctx.shadowColor=cc;
+    ctx.shadowBlur=14;
+    ctx.fill();
+    ctx.shadowBlur=0;
 
-      ctx.fillStyle='#fff';
-      ctx.font='800 14px -apple-system,BlinkMacSystemFont,sans-serif';
-      ctx.textAlign='center';
-      ctx.textBaseline='bottom';
-      ctx.fillText(Math.round(p.v),x,y-10);
-    });
+    ctx.fillStyle='#fff';
+    ctx.font='800 14px -apple-system,BlinkMacSystemFont,sans-serif';
+    ctx.textAlign='center';
+    ctx.textBaseline='bottom';
+    ctx.fillText(Math.round(p.v),x,y-10);
+  });
 }
+
 
 function drawGraphToCanvas(targetCanvas,targetWrap,dayIdx,drawLabels){
   return drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels);
