@@ -4286,25 +4286,22 @@ window.addEventListener('load', function() {
     }
   }
 
-  dest.addEventListener('touchstart', function(e) {
-    touchCount = e.touches.length;
-    if (touchCount === 1) {
-      touchStartTime = Date.now();
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-    }
+  dest.addEventListener('pointerdown', function(e) {
+    if(e.pointerType==='mouse' && e.button!==0) return;
+    touchStartTime = Date.now();
+    touchStartX = e.clientX;
+    touchStartY = e.clientY;
   }, { passive: true });
 
-  dest.addEventListener('touchend', function(e) {
-    if (touchCount > 1) { touchCount = 0; hidePopup(); return; }
+  dest.addEventListener('pointerup', function(e) {
+    if(e.pointerType==='mouse' && e.button!==0) return;
     var dt = Date.now() - touchStartTime;
-    var dx = Math.abs(e.changedTouches[0].clientX - touchStartX);
-    var dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
-    if (dt < 250 && dx < 10 && dy < 10) {
+    var dx = Math.abs(e.clientX - touchStartX);
+    var dy = Math.abs(e.clientY - touchStartY);
+    if (dt < 300 && dx < 12 && dy < 12) {
       lastTouch = Date.now();
       handleTap(touchStartX, touchStartY);
     }
-    touchCount = 0;
   }, { passive: true });
 
   dest.addEventListener('click', function(e) {
@@ -4396,25 +4393,22 @@ window.addEventListener('load', function() {
     }
   }
 
-  destF.addEventListener('touchstart', function(e) {
-    touchCount = e.touches.length;
-    if (touchCount === 1) {
-      touchStartTime = Date.now();
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-    }
+  destF.addEventListener('pointerdown', function(e) {
+    if(e.pointerType==='mouse' && e.button!==0) return;
+    touchStartTime = Date.now();
+    touchStartX = e.clientX;
+    touchStartY = e.clientY;
   }, { passive: true });
 
-  destF.addEventListener('touchend', function(e) {
-    if (touchCount > 1) { touchCount = 0; hideFuelPopup(); return; }
+  destF.addEventListener('pointerup', function(e) {
+    if(e.pointerType==='mouse' && e.button!==0) return;
     var dt = Date.now() - touchStartTime;
-    var dx = Math.abs(e.changedTouches[0].clientX - touchStartX);
-    var dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
-    if (dt < 250 && dx < 10 && dy < 10) {
+    var dx = Math.abs(e.clientX - touchStartX);
+    var dy = Math.abs(e.clientY - touchStartY);
+    if (dt < 300 && dx < 12 && dy < 12) {
       lastTouch = Date.now();
       handleFuelTap(touchStartX, touchStartY);
     }
-    touchCount = 0;
   }, { passive: true });
 
   destF.addEventListener('click', function(e) {
@@ -6281,15 +6275,16 @@ function initDayGraphPopup(){
     const dot=findNearestDot(clientX,clientY);
     dot?showPopup(dot,clientX,clientY):hidePopup();
   }
-  wrap.addEventListener('touchstart',e=>{
-    if(e.touches.length!==1){hidePopup();return;}
-    touchStartX=e.touches[0].clientX; touchStartY=e.touches[0].clientY; touchStartTime=Date.now();
+  wrap.addEventListener('pointerdown',e=>{
+    if(e.pointerType==='mouse' && e.button!==0) return;
+    touchStartX=e.clientX; touchStartY=e.clientY; touchStartTime=Date.now();
   },{passive:true});
-  wrap.addEventListener('touchend',e=>{
+  wrap.addEventListener('pointerup',e=>{
+    if(e.pointerType==='mouse' && e.button!==0) return;
     const dt=Date.now()-touchStartTime;
-    const dx=Math.abs(e.changedTouches[0].clientX-touchStartX);
-    const dy=Math.abs(e.changedTouches[0].clientY-touchStartY);
-    if(dt<250&&dx<12&&dy<12){lastTouch=Date.now();handleTap(e.changedTouches[0].clientX,e.changedTouches[0].clientY);}
+    const dx=Math.abs(e.clientX-touchStartX);
+    const dy=Math.abs(e.clientY-touchStartY);
+    if(dt<300&&dx<12&&dy<12){lastTouch=Date.now();handleTap(e.clientX,e.clientY);}
   },{passive:true});
   wrap.addEventListener('click',e=>{ if(Date.now()-lastTouch<500)return; handleTap(e.clientX,e.clientY); });
 }
