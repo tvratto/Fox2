@@ -4847,6 +4847,7 @@ function enableMouseTagWheel(){
 
   window.addEventListener('mousemove',e=>{
     if(!isDown)return;
+    if(activeDrag)return;
     const now=performance.now();
     const dx=e.clientX-startX;
     wrap.scrollLeft=startScroll-dx;
@@ -4864,7 +4865,7 @@ function enableMouseTagWheel(){
     if(!isDown)return;
     isDown=false;
     wrap.classList.remove('mouse-swiping');
-    momentum();
+    if(!activeDrag)momentum();
   });
 }
 
@@ -4940,12 +4941,14 @@ function buildTags(){
     el.dataset.wheelIndex=String(wheelIdx);
     el.innerHTML=`<div class="tagIcon">${icon}</div><div class="tagName">${name}</div>${applied?'<div class="check">✓</div>':''}`;
 
-    let downX=0,downY=0,dragStarted=false,pressed=false,horizontalScroll=false;
+    let downX=0,downY=0,dragStarted=false,pressed=false,horizontalScroll=false,activePointerId=null;
 
     function cleanup(){
       pressed=false;
       dragStarted=false;
       horizontalScroll=false;
+      activePointerId=null;
+      el.style.touchAction='';
       clearTimeout(el._pressTimer);
       el.classList.remove('dragging-source');
       document.removeEventListener('pointermove',onDocMove);
@@ -4958,6 +4961,9 @@ function buildTags(){
       if(dragStarted)return;
       dragStarted=true;
       horizontalScroll=false;
+      // Lock pointer to this element so the scroll container can't steal it
+      el.style.touchAction='none';
+      if(activePointerId!==null){try{el.setPointerCapture(activePointerId);}catch(e){}}
       startTagDrag(icon,name,x,y,el,null);
     }
 
@@ -5017,6 +5023,7 @@ function buildTags(){
       pressed=true;
       dragStarted=false;
       horizontalScroll=false;
+      activePointerId=ev.pointerId;
       downX=ev.clientX;
       downY=ev.clientY;
 
