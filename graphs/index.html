@@ -1487,6 +1487,108 @@ html, body {
   }
 }
 
+
+/* --- Pager side-panel axis + annotation parity --- */
+.ghostRenderedCard .axis{
+  position:relative;
+  height:18px;
+  padding:5px 6px 0;
+  color:rgba(255,255,255,.32);
+  font-size:10px;
+  font-weight:650;
+  flex-shrink:0;
+}
+
+.ghostRenderedCard .axis span{
+  position:absolute;
+  top:5px;
+  transform:translateX(-50%);
+  white-space:nowrap;
+}
+
+.ghostRenderedCard .axis span:first-child{
+  transform:translateX(0);
+}
+
+.ghostRenderedCard .axis span:last-child{
+  transform:translateX(-100%);
+}
+
+.ghostEventLayer{
+  position:absolute;
+  inset:0;
+  z-index:4;
+  pointer-events:none;
+}
+
+.ghostEventLayer .event-rail{
+  position:absolute;
+  left:8px;
+  right:8px;
+  bottom:10px;
+  height:34px;
+  border-radius:999px;
+  background:rgba(0,0,0,.22);
+  border:1px solid rgba(255,255,255,.08);
+  backdrop-filter:blur(6px);
+  opacity:.72;
+}
+
+.ghostEventLayer .event-hint{
+  position:absolute;
+  left:50%;
+  bottom:19px;
+  transform:translateX(-50%);
+  color:rgba(255,255,255,.36);
+  font-size:11px;
+  font-weight:750;
+  letter-spacing:.02em;
+  pointer-events:none;
+}
+
+.ghostEventLayer.has-events .event-hint{
+  opacity:0;
+}
+
+.ghostPlacedTag{
+  position:absolute;
+  bottom:13px;
+  transform:translateX(-50%);
+  height:28px;
+  width:28px;
+  min-width:28px;
+  padding:0;
+  border-radius:999px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(180deg,rgba(255,210,60,.22),rgba(255,255,255,.08));
+  border:1px solid rgba(255,210,60,.58);
+  box-shadow:0 0 18px rgba(255,210,60,.18), inset 0 1px 0 rgba(255,255,255,.12);
+  font-size:16px;
+  z-index:6;
+}
+
+@media(max-height:700px){
+  .ghostEventLayer .event-rail{
+    height:28px;
+    bottom:7px;
+  }
+
+  .ghostEventLayer .event-hint{
+    bottom:14px;
+    font-size:9px;
+  }
+
+  .ghostPlacedTag{
+    bottom:9px;
+    height:24px;
+    width:24px;
+    min-width:24px;
+    font-size:14px;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -5204,6 +5306,7 @@ function renderDayCardHTML(dayIdx){
             <canvas class="ghostGraphCanvas"></canvas>
             <div class="graph-day-label ghostPrevDayLabel">${prevLabel}</div>
             <div class="graph-day-label ghostNextDayLabel">${nextLabel}</div>
+            <div class="ghostEventLayer"><div class="event-rail"></div><div class="event-hint">Drag tags here</div></div>
           </div>
           ${axisHTMLForPanel()}
         </section>
@@ -5223,6 +5326,29 @@ function buildDayPanel(dayIdx, kind){
   return panel;
 }
 
+
+function renderGhostEvents(panel){
+  const layer=panel.querySelector('.ghostEventLayer');
+  if(!layer)return;
+
+  layer.querySelectorAll('.ghostPlacedTag').forEach(el=>el.remove());
+
+  const dayIdx=Number(panel.dataset.dayIdx);
+  const d=DAYS[dayIdx];
+  const events=(d && Array.isArray(d.events)) ? d.events : [];
+
+  layer.classList.toggle('has-events', events.length>0);
+
+  events.forEach(ev=>{
+    const chip=document.createElement('div');
+    chip.className='ghostPlacedTag';
+    chip.style.left=(Math.max(0,Math.min(1439,ev.minute||0))/1440*100)+'%';
+    chip.textContent=ev.icon||'•';
+    chip.title=(ev.name||'Tag')+' • '+minuteToTime(ev.minute||0);
+    layer.appendChild(chip);
+  });
+}
+
 function redrawPagerGhostCanvases(){
   document.querySelectorAll('#cardTrack .ghostPanel').forEach(panel=>{
     const dayIdx=Number(panel.dataset.dayIdx);
@@ -5231,6 +5357,7 @@ function redrawPagerGhostCanvases(){
     if(wrap && canvas){
       drawGraphToCanvas(canvas, wrap, dayIdx, false);
     }
+    renderGhostEvents(panel);
   });
 }
 
