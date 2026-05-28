@@ -1713,9 +1713,12 @@ html, body {
           <div class="graphOverlayRow">
             <div class="summaryLeft" id="summaryLeft">
               <div class="kicker" id="todayLabel">Today</div>
-              <div style="display:flex;align-items:baseline;gap:18px;">
+              <div style="display:flex;align-items:flex-end;gap:18px;">
                 <div id="dateFull">May 26</div>
-                <div id="dailyScore">140</div>
+                <div style="display:flex;flex-direction:column;align-items:flex-start;">
+                  <div class="scoreLabel">Daily Score</div>
+                  <div id="dailyScore">140</div>
+                </div>
               </div>
             </div>
           </div>
@@ -5479,9 +5482,12 @@ function renderDayCardHTML(dayIdx){
             <div class="graphOverlayRow">
               <div class="summaryLeft">
                 <div class="kicker">${d.dow}</div>
-                <div style="display:flex;align-items:baseline;gap:18px;">
+                <div style="display:flex;align-items:flex-end;gap:18px;">
                   <div class="ghostDateFull">${d.dateStr}</div>
-                  <div class="ghostDailyScore">${d.score}</div>
+                  <div style="display:flex;flex-direction:column;align-items:flex-start;">
+                    <div class="scoreLabel">Daily Score</div>
+                    <div class="ghostDailyScore">${d.score}</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -5536,7 +5542,7 @@ function redrawPagerGhostCanvases(){
     const canvas=panel.querySelector('.ghostGraphCanvas');
     if(wrap && canvas){
       drawGraphToCanvas(canvas, wrap, dayIdx, false);
-      positionGraphOverlay(panel);
+      requestAnimationFrame(()=>positionGraphOverlay(panel));
     }
     renderGhostEvents(panel);
   }
@@ -5557,7 +5563,7 @@ function schedulePagerGhostRedraw(){
 
     if(wrap && canvas){
       drawGraphToCanvas(canvas, wrap, dayIdx, false);
-      positionGraphOverlay(panel);
+      requestAnimationFrame(()=>positionGraphOverlay(panel));
     }
     renderGhostEvents(panel);
 
