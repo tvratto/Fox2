@@ -4742,7 +4742,7 @@ function renderSelectedDayUI(){
     el.classList.toggle('active',idx===selectedDay);
   });
   updateCard();
-  buildTags();
+  updateTagsApplied();
   updateNote();
   drawGraph();
   ensureSelectedDayVisible();
@@ -5144,6 +5144,28 @@ function buildTags(){
 
   tuneTagWheel();
   enableMouseTagWheel();
+}
+
+// Lightweight alternative to buildTags() — just updates applied state on existing elements.
+// Falls back to full rebuild if the wheel hasn't been built yet.
+function updateTagsApplied(){
+  const d=DAYS[selectedDay];
+  const wrap=document.getElementById('tagsScroll');
+  if(!wrap||!wrap.querySelector('.tag[data-base-index]')){buildTags();return;}
+  wrap.querySelectorAll('.tag[data-base-index]').forEach(el=>{
+    const icon=ALL_TAGS[Number(el.dataset.baseIndex)][0];
+    const applied=d.tags.includes(icon);
+    el.className='tag'+(applied?' applied':'');
+    const existing=el.querySelector('.check');
+    if(applied && !existing){
+      const chk=document.createElement('div');
+      chk.className='check';chk.textContent='✓';
+      el.appendChild(chk);
+    } else if(!applied && existing){
+      existing.remove();
+    }
+  });
+  updateTagWheelScale();
 }
 
 
