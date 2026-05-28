@@ -134,22 +134,14 @@ html, body {
 .rp-screen{position:relative;z-index:1;width:100%;height:100%;padding:18px;display:flex;flex-direction:column;gap:14px;overflow:hidden;}
 .topbar{display:flex;align-items:center;justify-content:space-between}
 .logo{font-size:20px;font-weight:950;letter-spacing:-.06em}.logo span{color:var(--gold)}
-.rp-tabs{display:flex;gap:20px;font-size:13px;font-weight:700;color:rgba(255,255,255,.4)}
+.rp-tabs{display:flex;gap:20px;font-size:13px;font-weight:700;color:rgba(255,255,255,.4);align-items:center}
 .rp-tab.active{color:#fff;position:relative}.rp-tab.active:after{content:"";position:absolute;left:0;right:0;bottom:-8px;height:2px;background:var(--gold);border-radius:99px;box-shadow:0 0 14px rgba(255,210,60,.7)}
-.rp-control{display:grid;grid-template-columns:minmax(0,1fr) min(390px,44vw);gap:12px;align-items:center}
+.rp-control{display:flex;flex-direction:column;gap:12px}
 .rail{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}.rail::-webkit-scrollbar{display:none}
 .day{flex:0 0 58px;height:60px;border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:rgba(255,255,255,.42);border:1px solid transparent;cursor:pointer}
 .day.active{background:linear-gradient(180deg,rgba(255,210,60,.18),rgba(255,210,60,.04));border-color:rgba(255,210,60,.72);color:#fff;box-shadow:0 0 28px rgba(255,210,60,.13)}
 .day .dow{font-size:clamp(10px,1.5dvh,13px);font-weight:800}.day .date{font-size:clamp(11px,1.65dvh,14px);font-weight:650}.dot{width:5px;height:5px;border-radius:50%;background:transparent}.day.today .dot{background:var(--gold);box-shadow:0 0 12px var(--gold)}
-.bank{height:78px;border-radius:24px;background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.035));border:1px solid rgba(255,255,255,.16);display:grid;grid-template-columns:1fr 1px 1fr;overflow:hidden;box-shadow:0 20px 80px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.08)}
-.cell{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0}
-.sep{background:rgba(255,255,255,.1);margin:14px 0}
-.label{font-size:9px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.48)}
-.num{font-size:30px;line-height:1;font-weight:950;letter-spacing:-.06em;font-variant-numeric:tabular-nums}
-#contribNum{color:var(--orange);text-shadow:0 0 20px rgba(251,146,60,.45)}#totalNum{color:#fff}#fatNum{color:var(--violet)}
-.sub{min-height:12px;font-size:10px;font-weight:800;color:rgba(255,255,255,.34)}
-#added{color:var(--green);opacity:0;transform:translateY(-2px);transition:.25s}#added.show{opacity:1;transform:translateY(0)}
-.glow{background:radial-gradient(circle,rgba(251,146,60,.32),transparent 70%);box-shadow:0 0 60px rgba(251,146,60,.25) inset}.totalGlow{background:radial-gradient(circle,rgba(110,231,135,.18),transparent 68%)}
+#totalNum{margin-left:auto;color:var(--orange);font-size:15px;font-weight:950;letter-spacing:-.04em;font-variant-numeric:tabular-nums;text-shadow:0 0 20px rgba(251,146,60,.45);line-height:1}#totalNum.pop{animation:pop .52s cubic-bezier(.2,1.7,.35,1)}#fatNum{color:var(--violet)}
 .card{flex:1;min-height:0;border-radius:28px;background:linear-gradient(135deg,rgba(255,255,255,.078),rgba(255,255,255,.028)),rgba(7,8,10,.9);border:1px solid rgba(255,255,255,.1);box-shadow:0 20px 80px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.06);overflow:hidden;display:flex;flex-direction:column}
 .cardbody{flex:1;min-height:0;display:flex;flex-direction:column;gap:0;padding:0 0 14px}
 .kicker{color:var(--gold);font-size:clamp(9px,1.2dvh,11px);letter-spacing:.16em;text-transform:uppercase;font-weight:950;margin-bottom:9px}
@@ -241,7 +233,7 @@ html, body {
 .axis span:last-child{
   transform:translateX(-100%);
 }
-#archiveStatus{color:var(--green);opacity:0;transform:translateY(2px);transition:.35s}#archiveStatus.show{opacity:1;transform:translateY(0)}
+
 .tags{min-height:116px}.sectionLabel{padding:0 4px 10px;color:rgba(255,255,255,.37);font-size:clamp(10px,1.4dvh,12px);font-weight:950;letter-spacing:.14em;text-transform:uppercase}
 #tagsScroll{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding:0 2px 2px}#tagsScroll::-webkit-scrollbar{display:none}
 .tag{flex:0 0 122px;height:98px;touch-action:pan-x;user-select:none;-webkit-user-select:none;border-radius:24px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.055);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;position:relative;cursor:pointer}
@@ -250,11 +242,11 @@ html, body {
 .note{height:56px;border-radius:19px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.048);display:flex;align-items:center;gap:12px;padding:0 12px}
 .note input{flex:1;background:transparent;border:none;outline:none;color:rgba(255,255,255,.75);font:inherit;font-size:14px}.note input::placeholder{color:rgba(255,255,255,.33)}
 .note button{border:none;height:38px;min-width:82px;border-radius:999px;background:linear-gradient(180deg,#D6A72A,#9B6C16);color:#111;font-size:13px;font-weight:900}
-.streaming #contribCell,.streaming #totalCell{box-shadow:0 0 70px rgba(255,132,0,.22) inset,0 0 32px rgba(255,132,0,.18)}
+
 .pulse{animation:pulse .85s ease-in-out infinite alternate}@keyframes pulse{from{filter:drop-shadow(0 0 4px rgba(251,146,60,.2));transform:scale(1)}to{filter:drop-shadow(0 0 22px rgba(251,146,60,.55));transform:scale(1.035)}}
 .pop{animation:pop .52s cubic-bezier(.2,1.7,.35,1)}@keyframes pop{0%{transform:scale(1)}42%{transform:scale(1.12)}100%{transform:scale(1)}}
 .sealed #graph{opacity:.72;filter:saturate(.74)}.sealed #dailyScore{opacity:.58}
-@media(max-width:760px){.rp-screen{padding:14px 0}.topbar{padding:0 20px}.logo{display:none}.rp-tabs .rp-tab:nth-child(n+4){display:none}.rp-control{display:flex;flex-direction:column;padding:0 12px}.rail{order:2;width:100%}.bank{order:1;width:100%}.card{border-radius:24px;border-left:0;border-right:0}.cardbody{padding:0 18px 12px}.summaryTop{flex-direction:row;align-items:flex-end;justify-content:space-between}#dateFull{margin-bottom:0}#dailyScore{}.graphSide{width:100%}#graphWrap{min-height:220px}.tags{padding:0 18px}.note{margin:0 18px}.tag{flex-basis:112px}}
+@media(max-width:760px){.rp-screen{padding:14px 0}.topbar{padding:0 20px}.logo{display:none}.rp-tabs .rp-tab:nth-child(n+4){display:none}.rp-control{padding:0 12px}.rail{width:100%}.card{border-radius:24px;border-left:0;border-right:0}.cardbody{padding:0 18px 12px}.summaryTop{flex-direction:row;align-items:flex-end;justify-content:space-between}#dateFull{margin-bottom:0}#dailyScore{}.graphSide{width:100%}#graphWrap{min-height:220px}.tags{padding:0 18px}.note{margin:0 18px}.tag{flex-basis:112px}}
 @media(max-height:720px){.note{display:none}.tags{min-height:82px}.tag{height:74px}#graphWrap{min-height:130px}}
 
 /* Compact mode for short phones like iPhone SE */
@@ -276,11 +268,6 @@ html, body {
 
   .rp-control{
     gap:7px;
-  }
-
-  .bank{
-    height:62px;
-    border-radius:19px;
   }
 
   .label{
@@ -427,10 +414,6 @@ html, body {
     padding:0 8px;
   }
 
-  .bank{
-    height:58px;
-  }
-
   .num{
     font-size:18px;
   }
@@ -477,10 +460,6 @@ html, body {
 
   .rp-control{
     gap:9px;
-  }
-
-  .bank{
-    height:70px;
   }
 
   .day{
@@ -605,11 +584,6 @@ html, body {
 
 /* Larger score/date bars + tighter autoscaled graph */
 @media(max-width:760px) and (min-height:701px){
-  .bank{
-    height:80px;
-    border-radius:24px;
-  }
-
   .label{
     font-size:9px;
   }
@@ -650,10 +624,6 @@ html, body {
 }
 
 @media(max-width:760px) and (min-height:820px){
-  .bank{
-    height:84px;
-  }
-
   .day{
     height:60px;
   }
@@ -671,10 +641,6 @@ html, body {
 }
 
 @media(max-width:380px) and (max-height:700px){
-  .bank{
-    height:64px;
-  }
-
   .num{
     font-size:20px;
   }
@@ -1046,29 +1012,6 @@ html, body {
   }
 }
 
-
-/* Desktop: stack contribution/total above the date rail */
-@media (hover:hover) and (pointer:fine) and (min-width:800px){
-  .rp-control{
-    display:flex !important;
-    flex-direction:column !important;
-    gap:10px !important;
-    padding:0 12px !important;
-    align-items:stretch !important;
-  }
-
-  .bank{
-    order:1 !important;
-    width:100% !important;
-    flex-shrink:0 !important;
-  }
-
-  .rail{
-    order:2 !important;
-    width:100% !important;
-    flex-shrink:0 !important;
-  }
-}
 
 
 /* Desktop: reserve enough vertical room for graph axis */
@@ -1528,18 +1471,13 @@ html, body {
   <header class="topbar">
     <div style="display:flex;align-items:center;gap:22px;min-width:0">
       <div class="logo">FOX<span>2</span></div>
-      <nav class="rp-tabs"><div class="rp-tab active">Results</div><div class="rp-tab">Fuel</div><div class="rp-tab">Daily Scores</div><div class="rp-tab">Insights</div></nav>
+      <nav class="rp-tabs"><div class="rp-tab active">Results</div><div class="rp-tab">Fuel</div><div class="rp-tab">Daily Scores</div><div class="rp-tab">Insights</div><span id="totalNum">12,480</span></nav>
     </div>
     <div style="display:flex;gap:8px"><button style="height:34px;width:34px;border-radius:999px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.045);color:white">↥</button><button style="height:34px;border-radius:999px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.045);color:white;padding:0 13px;font-weight:700">ⓘ Guide</button></div>
   </header>
 
   <section class="rp-control">
     <div class="rail" id="rail"></div>
-    <div class="bank" id="bank" title="Tap to replay deposit animation">
-      <div class="cell" id="contribCell"><div class="label">Contribution</div><div class="num" id="contribNum">+140</div><div class="sub" id="contribSub">tap to deposit</div></div>
-      <div class="sep"></div>
-      <div class="cell" id="totalCell"><div class="label">Total</div><div class="num" id="totalNum">12,480</div><div class="sub" id="added">+0 today</div><div class="sub" id="archiveStatus" style="font-size:9px;letter-spacing:.04em;">Archived ✓</div></div>
-    </div>
   </section>
 
   <main class="card" id="card">
@@ -1654,12 +1592,12 @@ var sParam    = params.get('s') || '';
   var src = params.get('src') || 'qr';
   var days = dParam ? dParam.split('|').length : 0;
   var el = document.getElementById('debug-bar');
-  if (el) el.textContent = 'id:' + id + '  v:' + v + '  patient:' + p + '  clinic:' + c + '  [web build 2149 bigger-tags-ghost-sync]';
+  if (el) el.textContent = 'id:' + id + '  v:' + v + '  patient:' + p + '  clinic:' + c + '  [web build 2150 total-in-nav]';
   // Populate info modal
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v1.8 · 2026-05-28 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v1.9 · 2026-05-28 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
@@ -5884,11 +5822,11 @@ function counter(el,from,to,dur,format,done){
 }
 
 function flow(fromEl,toEl,dur){
-  const contribRect=document.getElementById('contribNum').getBoundingClientRect();
+  const fromRect=document.getElementById('dailyScore').getBoundingClientRect();
   const totalRect=document.getElementById('totalNum').getBoundingClientRect();
 
-  const startX=contribRect.left+contribRect.width*.52;
-  const startY=contribRect.top+contribRect.height*.55;
+  const startX=fromRect.left+fromRect.width*.52;
+  const startY=fromRect.top+fromRect.height*.55;
   const endX=totalRect.left+totalRect.width*.48;
   const endY=totalRect.top+totalRect.height*.55;
   const dx=endX-startX;
@@ -5943,16 +5881,10 @@ function flow(fromEl,toEl,dur){
 }
 
 
-function updateAddedLabel(amount){
-  const el=document.getElementById('added');
-  if(!el)return;
-  amount=Math.max(0,Math.round(amount||0));
-  el.textContent='+'+amount.toLocaleString()+' today';
-}
 
-function reset(){updateAddedLabel(DAILY_SCORE);hasDeposited=false;bank.classList.remove('depositing');bank.classList.remove('streaming');contribCell.classList.remove('glow');totalCell.classList.remove('totalGlow');contribNum.classList.remove('pulse');totalNum.classList.remove('pop');added.classList.remove('show');archiveStatus.classList.remove('show');card.classList.remove('sealed');contribNum.textContent='+'+DAILY_SCORE;totalNum.textContent=fmt(TOTAL_BEFORE);updateAddedLabel(DAILY_SCORE);contribSub.textContent='tap to deposit'}
-function deposit(){if(hasDeposited)return;hasDeposited=true;bank.classList.add('streaming');contribCell.classList.add('glow');contribNum.classList.add('pulse');contribSub.textContent='ready';setTimeout(()=>{contribSub.textContent='depositing';flow(contribCell,totalCell,4000);counter(contribNum,DAILY_SCORE,0,4000,v=>'+'+Math.max(0,Math.round(v)));counter(totalNum,TOTAL_BEFORE,TOTAL_AFTER,4000,v=>fmt(v),()=>{contribNum.classList.remove('pulse');contribCell.classList.remove('glow');totalCell.classList.add('totalGlow');totalNum.classList.add('pop');bank.classList.remove('streaming');contribSub.textContent='complete';updateAddedLabel(DAILY_SCORE);added.classList.add('show');archiveStatus.classList.add('show');card.classList.add('sealed');burst(totalNum,'rgba(110,231,135,.95)',34);setTimeout(()=>{totalCell.classList.remove('totalGlow');totalNum.classList.remove('pop')},1100)})},700)}
-bank.onclick=()=>{reset();setTimeout(deposit,250)}
+function reset(){hasDeposited=false;card.classList.remove('sealed');totalNum.textContent=fmt(TOTAL_BEFORE);}
+function deposit(){if(hasDeposited)return;hasDeposited=true;setTimeout(()=>{flow(null,null,4000);counter(totalNum,TOTAL_BEFORE,TOTAL_AFTER,4000,v=>fmt(v),()=>{totalNum.classList.add('pop');card.classList.add('sealed');burst(totalNum,'rgba(110,231,135,.95)',34);setTimeout(()=>{totalNum.classList.remove('pop')},1100)})},700)}
+// deposit triggered automatically on load
 
 // ── Supabase tag save ─────────────────────────────────────────────
 var _tagSaveTimer={};
@@ -5997,13 +5929,9 @@ function saveNote(){
 })();
 
 // ── Show already-deposited state immediately ──────────────────────
-function showDeposited(){updateAddedLabel(DAILY_SCORE);
+function showDeposited(){
   hasDeposited=true;
-  contribNum.textContent='+'+DAILY_SCORE;
-  contribSub.textContent='complete';
   totalNum.textContent=fmt(TOTAL_AFTER);
-  added.classList.add('show');
-  archiveStatus.classList.add('show');
   card.classList.add('sealed');
 }
 
@@ -6016,7 +5944,6 @@ function initWithSupabase(sbUrl,sbHeaders,deviceId,preRead){
   var tagRows=preRead.tagRows||[];
   TOTAL_BEFORE=preRead.totalBefore;
   TOTAL_AFTER=preRead.totalAfter;
-  contribNum.textContent='+'+DAILY_SCORE;
   totalNum.textContent=fmt(TOTAL_BEFORE);
   var tagLookup={};
   tagRows.forEach(function(row){tagLookup[row.day_date]=row;});
@@ -6222,7 +6149,8 @@ function renderEvents(force){
   });
 }
 
-function initResultsPage(){updateAddedLabel(DAILY_SCORE);
+function initResultsPage(){
+  totalNum.textContent=fmt(TOTAL_BEFORE||0);
   resizeP();loop();buildRail();updateCard();buildTags();updateNote();
   setTimeout(function(){drawGraph();renderEvents();},80);
   setTimeout(deposit,900);
