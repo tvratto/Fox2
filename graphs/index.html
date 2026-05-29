@@ -14,6 +14,7 @@ html, body {
   font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   color: #fff;
   overflow: hidden;
+  overscroll-behavior: none;
 }
 .top-header {
   position: fixed; top: 0; left: 0; right: 0; z-index: 60;
@@ -223,9 +224,10 @@ html, body {
 }
 
 .tags{min-height:116px}.sectionLabel{padding:0 4px 10px;color:rgba(255,255,255,.37);font-size:clamp(10px,1.4dvh,12px);font-weight:950;letter-spacing:.14em;text-transform:uppercase}
-#tagsScroll{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding:0 2px 2px}#tagsScroll::-webkit-scrollbar{display:none}
+#tagsScroll{display:flex;gap:10px;overflow-x:auto;overflow-y:visible;scrollbar-width:none;padding:6px 2px 2px}#tagsScroll::-webkit-scrollbar{display:none}
 .tag{flex:0 0 122px;height:98px;touch-action:pan-x;user-select:none;-webkit-user-select:none;border-radius:24px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.055);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;position:relative;cursor:pointer}
-.tag.applied{border-color:rgba(255,210,60,.72);background:linear-gradient(180deg,rgba(255,210,60,.13),rgba(255,255,255,.045))}
+.tag.applied{}
+.tag.pressed{border-color:rgba(255,210,60,.72);background:linear-gradient(180deg,rgba(255,210,60,.13),rgba(255,255,255,.045))}
 .tagIcon{font-size:clamp(24px,3.7dvh,35px)}.tagName{font-size:clamp(13px,1.9dvh,17px);color:rgba(255,255,255,.62);white-space:nowrap}
 .note{height:56px;border-radius:19px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.048);display:flex;align-items:center;gap:12px;padding:0 12px}
 .note input{flex:1;background:transparent;border:none;outline:none;color:rgba(255,255,255,.75);font:inherit;font-size:14px}.note input::placeholder{color:rgba(255,255,255,.33)}
@@ -1107,7 +1109,6 @@ html, body {
 
 
 
-  position:absolute;
   inset:0;
   display:block;
   width:100%;
@@ -1500,7 +1501,7 @@ html, body {
     <div id="info-modal-title">Device Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic ID</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v2.3 · 2026-05-29 04:19 UTC</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.3 · 2026-05-29 05:38 UTC</span></div>
     <div class="info-row"><span class="info-label">Payload</span><span class="info-value" id="info-payload">—</span></div>
     <div class="info-row"><span class="info-label">Days</span><span class="info-value" id="info-days">—</span></div>
     <button id="info-modal-close" onclick="closeInfoModal()">Close</button>
@@ -1542,7 +1543,7 @@ var sParam    = params.get('s') || '';
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v2.3 · 2026-05-29 04:19 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v3.3 · 2026-05-29 05:38 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
@@ -4612,7 +4613,7 @@ function getVerdict(d, isToday) {
 function updateCard(){
   const d=DAYS[selectedDay];
   const isToday=selectedDay===TODAY_IDX;
-  document.getElementById('todayLabel').textContent=isToday?'Today':d.dow;
+  document.getElementById('todayLabel').textContent=d.dow;
   document.getElementById('dateFull').textContent=d.dateStr;
   document.getElementById('dailyScore').textContent=d.score;
   // sealed only makes sense on today — clear it on past days, restore on today if deposited
@@ -4761,7 +4762,7 @@ function buildTags(){
     }
     const applied=d.tags.includes(icon);
     const el=document.createElement('div');
-    el.className='tag'+(applied?' applied':'');
+    el.className='tag';
     el.setAttribute('draggable','false');
     el.dataset.baseIndex=String(wheelIdx%ALL_TAGS.length);
     el.dataset.wheelIndex=String(wheelIdx);
@@ -4777,6 +4778,7 @@ function buildTags(){
       el.style.touchAction='';
       clearTimeout(el._pressTimer);
       el.classList.remove('dragging-source');
+      el.classList.remove('pressed');
       document.removeEventListener('pointermove',onDocMove);
       document.removeEventListener('pointerup',onDocUp);
       document.removeEventListener('pointercancel',onDocCancel);
@@ -4829,10 +4831,6 @@ function buildTags(){
       if(dragStarted){
         ev.preventDefault();
         endTagDrag(ev.clientX,ev.clientY);
-      }else if(!horizontalScroll){
-        applied?d.tags=d.tags.filter(t=>t!==icon):d.tags.push(icon);
-        buildTags();
-        saveTagsForDay(selectedDay);
       }
 
       cleanup();
@@ -4852,6 +4850,7 @@ function buildTags(){
       activePointerId=ev.pointerId;
       downX=ev.clientX;
       downY=ev.clientY;
+      el.classList.add('pressed');
 
       document.addEventListener('pointermove',onDocMove,{passive:false});
       document.addEventListener('pointerup',onDocUp,{passive:false});
@@ -4867,18 +4866,10 @@ function buildTags(){
   enableMouseTagWheel();
 }
 
-// Lightweight alternative to buildTags() — just updates applied state on existing elements.
-// Falls back to full rebuild if the wheel hasn't been built yet.
+// Lightweight refresh — just updates wheel scale on day change.
 function updateTagsApplied(){
-  const d=DAYS[selectedDay];
   const wrap=document.getElementById('tagsScroll');
   if(!wrap||!wrap.querySelector('.tag[data-base-index]')){buildTags();return;}
-  wrap.querySelectorAll('.tag[data-base-index]').forEach(el=>{
-    const icon=ALL_TAGS[Number(el.dataset.baseIndex)][0];
-    const applied=d.tags.includes(icon);
-    el.className='tag'+(applied?' applied':'');
-
-  });
   updateTagWheelScale();
 }
 
@@ -4949,7 +4940,8 @@ function getCachedResultsCurve(dayIdx){
     }
   }
 
-  const knotSegments=rawSegments.map(seg=>{
+  const knotSegments=rawSegments.map((seg, segIdx)=>{
+    const isLastSeg = segIdx === rawSegments.length - 1;
     let pts=seg.map(p=>Object.assign({},p));
     if(!pts.length)return pts;
 
@@ -4963,11 +4955,13 @@ function getCachedResultsCurve(dayIdx){
 
     const lastDayEnd=Math.floor(last.rel/1440)*1440+1440;
 
-    // Only extend to a midnight anchor if the segment does NOT end on a real measurement.
-    // Real measurements are the natural endpoint — never draw the spline past them.
+    // For non-final segments: always drop to zero at next midnight (matches fuel graph).
+    // For the final segment: stop at the last real measurement, don't extend to midnight.
     const lastIsRealMeasurement = !last.anchor;
 
-    if(!lastIsRealMeasurement && last.rel<lastDayEnd && lastDayEnd-last.rel<=GAP_LIMIT){
+    if(isLastSeg && lastIsRealMeasurement){
+      // Final segment ending on a real measurement — don't extend
+    } else if(last.rel<lastDayEnd && lastDayEnd-last.rel<=GAP_LIMIT){
       pushAnchorIfMissing(pts, lastDayEnd);
     }
 
@@ -5566,7 +5560,7 @@ function enableGraphDayPager(){
       // Update text fields immediately — invisible during the slide animation
       // and ready the moment the panel lands.
       const dTarget=DAYS[targetDay];
-      document.getElementById('todayLabel').textContent=targetDay===TODAY_IDX?'Today':dTarget.dow;
+      document.getElementById('todayLabel').textContent=dTarget.dow;
       document.getElementById('dateFull').textContent=dTarget.dateStr;
       document.getElementById('dailyScore').textContent=dTarget.score;
 
@@ -5956,7 +5950,7 @@ function initWithSupabase(sbUrl,sbHeaders,deviceId,preRead){
 }
 
 function _doInit(alreadyDeposited){
-  resizeP();loop();buildRail();updateCard();buildTags();updateNote();enableGraphDaySwipe();
+  resizeP();loop();buildRail();updateCard();buildTags();updateNote();enableGraphDaySwipe();initDayGraphPopup();
   setTimeout(function(){drawGraph();renderEvents();},80);
   if(alreadyDeposited){setTimeout(showDeposited,200);}
   else{setTimeout(deposit,900);}
