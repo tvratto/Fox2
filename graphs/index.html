@@ -237,7 +237,7 @@ html, body {
 .pop{animation:pop .52s cubic-bezier(.2,1.7,.35,1)}@keyframes pop{0%{transform:scale(1)}42%{transform:scale(1.12)}100%{transform:scale(1)}}
 .sealed #graph{opacity:.72;filter:saturate(.74)}.sealed #dailyScore{opacity:.58}
 @media(max-width:760px){.rp-screen{padding:14px 0}.rp-control{padding:0 12px}.rail{width:100%}.card{border-radius:24px;border-left:0;border-right:0}.cardbody{padding:0 18px 12px}.summaryTop{flex-direction:row;align-items:flex-end;justify-content:space-between}#dateFull{margin-bottom:0}#dailyScore{}.graphSide{width:100%}#graphWrap{min-height:220px}.tags{padding:0 18px}.note{margin:0 18px}.tag{flex-basis:112px}}
-@media(max-height:720px){.note{display:none}.tags{min-height:82px}.tag{height:74px}#graphWrap{min-height:130px}}
+@media(max-height:720px){.tags{min-height:82px}.tag{height:74px}#graphWrap{min-height:130px}}
 
 /* Compact mode for short phones like iPhone SE */
 @media(max-height:700px){
@@ -4396,7 +4396,7 @@ let selectedDay=TODAY_IDX,hasDeposited=false;
 // TOTAL_BEFORE and DAILY_SCORE are set after Supabase fetch; use placeholders until then
 let DAILY_SCORE=0,TOTAL_BEFORE=0,TOTAL_AFTER=0;
 
-const ALL_TAGS=[['🍎','Snack'],['🍽️','Meal'],['🍜','Late meal'],['🍕','High carb'],['🍷','Alcohol'],['🚶','Walk'],['🏃','Run'],['🏋️','Workout'],['⏱️','Fasted'],['😴','Poor sleep'],['🧠','Stress']];
+const ALL_TAGS=[['🍎','Snack'],['🍽️','Meal'],['🍳','Low carb'],['🍕','High carb'],['🍷','Alcohol'],['🚶','Walk'],['🏃','Run'],['🏋️','Workout'],['⏱️','Fasting'],['😴','Poor sleep'],['🧠','Stress']];
 const DAYS=[];
 // Local-time ISO date string — avoids UTC midnight rollover issues
 function localIso(d){
