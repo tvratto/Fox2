@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html><!DOCTYPE html>
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -103,6 +103,76 @@ html, body {
 .info-row:last-of-type { border-bottom: none; padding-bottom: 0; }
 .info-label { font-size: 12px; color: rgba(255,255,255,0.38); font-weight: 600; letter-spacing:.04em; }
 .info-value { font-size: 13px; color: rgba(255,255,255,0.82); font-family: monospace; text-align:right; word-break:break-all; }
+
+.info-section-title {
+  font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.3);
+  letter-spacing: .1em; text-transform: uppercase;
+  margin-top: 4px;
+}
+.info-toggle-row {
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 9px;
+}
+.info-toggle-label { font-size: 13px; color: rgba(255,255,255,0.75); }
+.info-toggle-sub { font-size: 11px; color: rgba(255,255,255,0.35); margin-top:2px; }
+/* Toggle switch */
+.tog { position:relative; width:44px; height:26px; flex-shrink:0; }
+.tog input { opacity:0; width:0; height:0; }
+.tog-slider {
+  position:absolute; inset:0; border-radius:999px;
+  background:rgba(255,255,255,.15); cursor:pointer;
+  transition:background .2s;
+}
+.tog input:checked + .tog-slider { background:#4ADE80; }
+.tog-slider:before {
+  content:''; position:absolute;
+  width:20px; height:20px; border-radius:50%;
+  background:#fff; top:3px; left:3px;
+  transition:transform .2s;
+}
+.tog input:checked + .tog-slider:before { transform:translateX(18px); }
+.info-email-row {
+  display:flex; flex-direction:column; gap:6px;
+  border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 9px;
+}
+.info-email-row input {
+  background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.15);
+  border-radius:10px; color:rgba(255,255,255,.85); font:inherit;
+  font-size:13px; padding:8px 10px; outline:none; width:100%; box-sizing:border-box;
+}
+.info-email-row input::placeholder { color:rgba(255,255,255,.3); }
+.info-email-row input:focus { border-color:rgba(74,222,128,.5); }
+#info-modal-save {
+  margin-top:0; width:100%; padding:9px;
+  border-radius:12px; border:none;
+  background:linear-gradient(180deg,#4ADE80,#22a85a);
+  color:#111; font:700 13px -apple-system,sans-serif; cursor:pointer;
+}
+#info-modal-save:disabled { background:rgba(255,255,255,.1); color:rgba(255,255,255,.3); cursor:default; }
+
+#lb-board {
+  display:flex; flex-direction:column; gap:6px;
+  margin-top:4px;
+}
+#lb-board-loading {
+  font-size:12px; color:rgba(255,255,255,.35); text-align:center; padding:8px 0;
+}
+.lb-row {
+  display:flex; align-items:center; gap:10px;
+  padding:8px 10px; border-radius:10px;
+  background:rgba(255,255,255,.05);
+}
+.lb-row.lb-me {
+  background:rgba(74,222,128,.08);
+  border:1px solid rgba(74,222,128,.25);
+}
+.lb-rank  { font-size:16px; width:24px; text-align:center; flex-shrink:0; }
+.lb-info  { flex:1; min-width:0; }
+.lb-name  { font-size:13px; font-weight:700; color:rgba(255,255,255,.85); }
+.lb-me .lb-name { color:#4ADE80; }
+.lb-zone-bar { display:flex; height:5px; border-radius:3px; overflow:hidden; margin-top:4px; }
+.lb-score { font-size:15px; font-weight:800; color:#fff; text-align:right; flex-shrink:0; }
+.lb-score-sub { font-size:10px; color:rgba(255,255,255,.35); text-align:right; }
 #info-modal-close {
   margin-top: 4px; width: 100%; padding: 9px;
   border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
@@ -1540,10 +1610,23 @@ html, body {
   <div id="info-modal">
     <div id="info-modal-title">Device Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
-    <div class="info-row"><span class="info-label">Clinic ID</span><span class="info-value" id="info-clinic-id">—</span></div>
+    <div class="info-row"><span class="info-label">Clinic</span><span class="info-value" id="info-clinic-id">—</span></div>
     <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.7 · 2026-05-29 slot-utc</span></div>
-    <div class="info-row"><span class="info-label">Payload</span><span class="info-value" id="info-payload">—</span></div>
-    <div class="info-row"><span class="info-label">Days</span><span class="info-value" id="info-days">—</span></div>
+    <div class="info-section-title">Leaderboard</div>
+    <div class="info-toggle-row">
+      <div>
+        <div class="info-toggle-label">Join leaderboard</div>
+        <div class="info-toggle-sub">Daily email · your scores vs the community</div>
+      </div>
+      <label class="tog"><input type="checkbox" id="lb-optin"><span class="tog-slider"></span></label>
+    </div>
+    <div class="info-email-row" id="lb-email-row" style="display:none">
+      <input type="email" id="lb-email" placeholder="your@email.com" autocomplete="email" />
+    </div>
+    <div id="lb-board" style="display:none;">
+      <div id="lb-board-loading">Loading leaderboard…</div>
+    </div>
+    <button id="info-modal-save" onclick="saveInfoModal()">Save</button>
     <button id="info-modal-close" onclick="closeInfoModal()">Close</button>
   </div>
 </div>
@@ -1845,10 +1928,14 @@ if (!dParam || totalDays === 0) {
       .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; }),
     fetch(SUPABASE_URL + '/rest/v1/day_tags?device_id=eq.' + encodeURIComponent(deviceId)
           + '&select=day_date,events,tray_tags,note', { method:'GET', headers:readHeaders })
+      .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; }),
+    fetch(SUPABASE_URL + '/rest/v1/devices?device_id=eq.' + encodeURIComponent(deviceId)
+          + '&select=leaderboard_opt_in,leaderboard_email&limit=1', { method:'GET', headers:readHeaders })
       .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; })
   ]).then(function(results) {
     var scoreRows  = results[0];
     var tagRows    = results[1];
+    var deviceRows = results[2];
 
     // ── Determine pre-write total and animation state ──────────────
     // DAILY_SCORE = what the URL says today's score is right now
@@ -1925,7 +2012,8 @@ if (!dParam || totalDays === 0) {
       alreadyDeposited: alreadyDeposited,
       totalBefore:      TOTAL_BEFORE_LOCAL,
       totalAfter:       TOTAL_AFTER_LOCAL,
-      tagRows:          tagRows
+      tagRows:          tagRows,
+      deviceRow:        deviceRows && deviceRows[0] ? deviceRows[0] : null
     });
 
   }).catch(function() {
@@ -5953,6 +6041,98 @@ function deposit(){if(hasDeposited)return;hasDeposited=true;setTimeout(()=>{flow
 
 // ── Supabase tag save ─────────────────────────────────────────────
 var _tagSaveTimer={};
+function fetchLeaderboard(){
+  var board = document.getElementById('lb-board');
+  if(!board || !_sbUrl) return;
+  board.innerHTML = '<div id="lb-board-loading">Loading leaderboard…</div>';
+
+  var today = new Date(Date.now()).toISOString().slice(0,10);
+
+  Promise.all([
+    // All opted-in devices — name, zone colours, last sync
+    fetch(_sbUrl+'/rest/v1/devices?leaderboard_opt_in=eq.LB-1'+
+          '&select=device_id,pct_glucose,pct_mixed,pct_fat,last_scan_at',
+      {method:'GET',headers:_sbHeaders}).then(function(r){return r.ok?r.json():[];}),
+    // Today's scores for opted-in devices
+    fetch(_sbUrl+'/rest/v1/daily_scores?day_date=eq.'+today+
+          '&select=device_id,auc_score',
+      {method:'GET',headers:_sbHeaders}).then(function(r){return r.ok?r.json():[];})
+  ]).then(function(results){
+    var devList   = results[0] || [];
+    var scoreList = results[1] || [];
+
+    // Build today's score lookup
+    var todayScore = {};
+    scoreList.forEach(function(s){ todayScore[s.device_id] = s.auc_score||0; });
+
+    // Rank by today's score
+    var ranked = devList.slice().sort(function(a,b){
+      return (todayScore[b.device_id]||0) - (todayScore[a.device_id]||0);
+    });
+
+    if(ranked.length === 0){
+      board.innerHTML = '<div id="lb-board-loading">No entries yet — be the first!</div>';
+      return;
+    }
+
+    function medal(i){ return i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)+'.'; }
+
+    function syncAge(isoStr){
+      if(!isoStr) return 'never';
+      var mins = Math.round((Date.now() - new Date(isoStr).getTime()) / 60000);
+      if(mins < 2)   return 'just now';
+      if(mins < 60)  return mins+'m ago';
+      var hrs = Math.round(mins/60);
+      if(hrs < 24)   return hrs+'h ago';
+      return Math.round(hrs/24)+'d ago';
+    }
+
+    var html = ranked.map(function(d, i){
+      var isMe  = d.device_id === _sbDeviceId;
+      var name  = d.device_id ? d.device_id.slice(-4) : '????';
+      var score = Math.round(todayScore[d.device_id]||0);
+      var g = Math.round(d.pct_glucose||0);
+      var m = Math.round(d.pct_mixed  ||0);
+      var f = Math.round(d.pct_fat    ||0);
+      var sync = syncAge(d.last_scan_at);
+      return '<div class="lb-row'+(isMe?' lb-me':'')+'">'+
+        '<div class="lb-rank">'+medal(i)+'</div>'+
+        '<div class="lb-info">'+
+          '<div class="lb-name">'+name+(isMe?' <span style="font-size:10px;opacity:.7">(you)</span>':'')+'</div>'+
+          '<div class="lb-zone-bar">'+
+            '<div style="width:'+g+'%;background:#22D3EE;"></div>'+
+            '<div style="width:'+m+'%;background:#4ADE80;"></div>'+
+            '<div style="width:'+f+'%;background:#A855F7;"></div>'+
+          '</div>'+
+          '<div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:3px;">synced '+sync+'</div>'+
+        '</div>'+
+        '<div>'+
+          '<div class="lb-score">'+score+'</div>'+
+          '<div class="lb-score-sub">today</div>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+
+    board.innerHTML = html;
+  }).catch(function(){
+    board.innerHTML = '<div id="lb-board-loading">Could not load leaderboard.</div>';
+  });
+}
+
+function saveLeaderboardPrefs(optIn, email){
+  if(!_sbUrl || !_sbDeviceId) return;
+  fetch(_sbUrl+'/rest/v1/devices?on_conflict=device_id',{
+    method:'POST',
+    headers:Object.assign({},_sbHeaders,{'Prefer':'resolution=merge-duplicates,return=minimal'}),
+    body:JSON.stringify({
+      device_id: _sbDeviceId,
+      leaderboard_opt_in: optIn || null,
+      leaderboard_email:  email || null,
+      updated_at: new Date().toISOString()
+    })
+  }).catch(function(){});
+}
+
 function saveTagsForDay(idx){
   if(!_sbDeviceId)return;
   clearTimeout(_tagSaveTimer[idx]);
@@ -5983,6 +6163,7 @@ function showDeposited(){
 
 // ── Supabase read + init ──────────────────────────────────────────
 var _sbUrl='',_sbHeaders={},_sbDeviceId='';
+var _lbOptIn='', _lbEmail='';
 
 function initWithSupabase(sbUrl,sbHeaders,deviceId,preRead){
   _sbUrl=sbUrl;_sbHeaders=sbHeaders;_sbDeviceId=deviceId;
@@ -6001,6 +6182,11 @@ function initWithSupabase(sbUrl,sbHeaders,deviceId,preRead){
       d.note=row.note||'';
     }
   });
+  // Load leaderboard prefs from device row if available
+  if(preRead.deviceRow){
+    _lbOptIn  = preRead.deviceRow.leaderboard_opt_in || '';
+    _lbEmail  = preRead.deviceRow.leaderboard_email || '';
+  }
   _doInit(alreadyDeposited);
 }
 
@@ -6276,7 +6462,38 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 addEventListener('resize',()=>{resizeP();drawGraph();renderEvents();updateTagWheelScale();positionGraphOverlay()})
 
 function openInfoModal(){
+  var optEl    = document.getElementById('lb-optin');
+  var emailEl  = document.getElementById('lb-email');
+  var emailRow = document.getElementById('lb-email-row');
+  var board    = document.getElementById('lb-board');
+  if(optEl) optEl.checked = (_lbOptIn === 'LB-1');
+  if(emailEl && _lbEmail) emailEl.value = _lbEmail;
+  if(emailRow) emailRow.style.display = (optEl && optEl.checked) ? 'flex' : 'none';
+  if(board)    board.style.display    = (optEl && optEl.checked) ? 'flex' : 'none';
+  if(optEl) optEl.onchange = function(){
+    var on = this.checked;
+    emailRow.style.display = on ? 'flex' : 'none';
+    board.style.display    = on ? 'flex' : 'none';
+    if(on){ setTimeout(()=>emailEl && emailEl.focus(), 60); fetchLeaderboard(); }
+  };
+  if(_lbOptIn === 'LB-1') fetchLeaderboard();
   document.getElementById('info-modal-overlay').classList.add('open');
+}
+function saveInfoModal(){
+  var optEl  = document.getElementById('lb-optin');
+  var emailEl = document.getElementById('lb-email');
+  var optIn  = optEl && optEl.checked ? 'LB-1' : '';
+  var email  = emailEl ? emailEl.value.trim() : '';
+  if(optIn && email && !email.match(/^[^@\s]+@[^@\s]+\.[^@\s]+$/)){
+    emailEl.focus(); emailEl.style.borderColor='rgba(255,80,80,.7)';
+    setTimeout(function(){emailEl.style.borderColor='';},1200); return;
+  }
+  _lbOptIn = optIn;
+  _lbEmail = email;
+  saveLeaderboardPrefs(optIn, email);
+  var btn = document.getElementById('info-modal-save');
+  if(btn){ btn.textContent='Saved ✓'; btn.disabled=true;
+    setTimeout(()=>{ btn.textContent='Save'; btn.disabled=false; }, 1500); }
 }
 function closeInfoModal(){
   document.getElementById('info-modal-overlay').classList.remove('open');
