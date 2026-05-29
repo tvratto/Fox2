@@ -1500,7 +1500,7 @@ html, body {
     <div id="info-modal-title">Device Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic ID</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v1.6 · 2026-05-28 21:48 UTC</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v1.7 · 2026-05-29 03:36 UTC</span></div>
     <div class="info-row"><span class="info-label">Payload</span><span class="info-value" id="info-payload">—</span></div>
     <div class="info-row"><span class="info-label">Days</span><span class="info-value" id="info-days">—</span></div>
     <button id="info-modal-close" onclick="closeInfoModal()">Close</button>
@@ -1542,7 +1542,7 @@ var sParam    = params.get('s') || '';
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v1.9 · 2026-05-28 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v1.7 · 2026-05-29 03:36 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
