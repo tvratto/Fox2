@@ -1,4 +1,4 @@
-<!DOCTYPE html><!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -131,29 +131,15 @@ html, body {
   transition:transform .2s;
 }
 .tog input:checked + .tog-slider:before { transform:translateX(18px); }
-.info-email-row {
-  display:flex; flex-direction:column; gap:6px;
-  border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 9px;
-}
-.info-email-row input {
-  background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.15);
-  border-radius:10px; color:rgba(255,255,255,.85); font:inherit;
-  font-size:13px; padding:8px 10px; outline:none; width:100%; box-sizing:border-box;
-}
-.info-email-row input::placeholder { color:rgba(255,255,255,.3); }
-.info-email-row input:focus { border-color:rgba(74,222,128,.5); }
-#info-modal-save {
-  margin-top:0; width:100%; padding:9px;
-  border-radius:12px; border:none;
-  background:linear-gradient(180deg,#4ADE80,#22a85a);
-  color:#111; font:700 13px -apple-system,sans-serif; cursor:pointer;
-}
-#info-modal-save:disabled { background:rgba(255,255,255,.1); color:rgba(255,255,255,.3); cursor:default; }
+
+
 
 #lb-board {
   display:flex; flex-direction:column; gap:6px;
   margin-top:4px;
+  max-height:260px; overflow-y:auto; scrollbar-width:none;
 }
+#lb-board::-webkit-scrollbar { display:none; }
 #lb-board-loading {
   font-size:12px; color:rgba(255,255,255,.35); text-align:center; padding:8px 0;
 }
@@ -166,13 +152,25 @@ html, body {
   background:rgba(74,222,128,.08);
   border:1px solid rgba(74,222,128,.25);
 }
-.lb-rank  { font-size:16px; width:24px; text-align:center; flex-shrink:0; }
+.lb-rank  { font-size:32px; width:40px; text-align:center; flex-shrink:0; line-height:1; }
 .lb-info  { flex:1; min-width:0; }
 .lb-name  { font-size:13px; font-weight:700; color:rgba(255,255,255,.85); }
 .lb-me .lb-name { color:#4ADE80; }
 .lb-zone-bar { display:flex; height:5px; border-radius:3px; overflow:hidden; margin-top:4px; }
 .lb-score { font-size:15px; font-weight:800; color:#fff; text-align:right; flex-shrink:0; }
 .lb-score-sub { font-size:10px; color:rgba(255,255,255,.35); text-align:right; }
+
+#squad-dot {
+  position:absolute;
+  top:-5px; left:-5px;
+  width:16px; height:16px;
+  border-radius:50%;
+  background:#e11d1d;
+  border:2px solid #0a0c14;
+  display:none;
+  pointer-events:none;
+}
+#bottom-info { position:relative; }
 #info-modal-close {
   margin-top: 4px; width: 100%; padding: 9px;
   border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
@@ -214,6 +212,8 @@ html, body {
 .kicker{color:var(--gold);font-size:clamp(9px,1.2dvh,11px);letter-spacing:.16em;text-transform:uppercase;font-weight:950;margin-bottom:9px}
 #dateFull{font-size:clamp(22px,3.8dvh,32px);font-weight:950;letter-spacing:-.075em;line-height:.98;margin-bottom:0}
 .scoreLabel{font-size:clamp(11px,1.5dvh,14px);font-weight:700;color:rgba(255,255,255,.55);margin-bottom:6px}
+
+
 #dailyScore{font-size:clamp(38px,7dvh,62px);line-height:.9;color:var(--orange);font-weight:950;letter-spacing:-.085em;font-variant-numeric:tabular-nums;text-shadow:0 0 28px rgba(251,146,60,.18)}
 #verdict{margin-top:18px;font-size:15px;font-weight:850}.rule{width:44px;height:3px;border-radius:99px;background:var(--orange);margin:13px auto 12px;box-shadow:0 0 12px rgba(251,146,60,.35)}
 #subtext{max-width:122px;color:rgba(255,255,255,.48);font-size:12px;line-height:1.42;font-weight:520}
@@ -1594,7 +1594,8 @@ html, body {
       <path d="M8 7v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
       <circle cx="8" cy="4.5" r="0.9" fill="currentColor"/>
     </svg>
-    Info
+    Squad
+    <span id="squad-dot"></span>
   </button>
   <a class="bar-btn" href="https://tvratto.github.io/Fox2/" target="_blank">
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
@@ -1608,7 +1609,7 @@ html, body {
 
 <div id="info-modal-overlay" onclick="if(event.target===this)closeInfoModal()">
   <div id="info-modal">
-    <div id="info-modal-title">Device Info</div>
+    <div id="info-modal-title">Squad Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic</span><span class="info-value" id="info-clinic-id">—</span></div>
     <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.7 · 2026-05-29 slot-utc</span></div>
@@ -1616,17 +1617,14 @@ html, body {
     <div class="info-toggle-row">
       <div>
         <div class="info-toggle-label">Join leaderboard</div>
-        <div class="info-toggle-sub">Daily email · your scores vs the community</div>
+        <div class="info-toggle-sub">Daily scores · your scores vs the community</div>
+        <div class="info-toggle-sub" style="margin-top:4px;color:rgba(255,255,255,.22);">Only people who opt in are included</div>
       </div>
       <label class="tog"><input type="checkbox" id="lb-optin"><span class="tog-slider"></span></label>
-    </div>
-    <div class="info-email-row" id="lb-email-row" style="display:none">
-      <input type="email" id="lb-email" placeholder="your@email.com" autocomplete="email" />
     </div>
     <div id="lb-board" style="display:none;">
       <div id="lb-board-loading">Loading leaderboard…</div>
     </div>
-    <button id="info-modal-save" onclick="saveInfoModal()">Save</button>
     <button id="info-modal-close" onclick="closeInfoModal()">Close</button>
   </div>
 </div>
@@ -1930,7 +1928,7 @@ if (!dParam || totalDays === 0) {
           + '&select=day_date,events,tray_tags,note', { method:'GET', headers:readHeaders })
       .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; }),
     fetch(SUPABASE_URL + '/rest/v1/devices?device_id=eq.' + encodeURIComponent(deviceId)
-          + '&select=leaderboard_opt_in,leaderboard_email&limit=1', { method:'GET', headers:readHeaders })
+          + '&select=leaderboard_opt_in,leaderboard_hash&limit=1', { method:'GET', headers:readHeaders })
       .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; })
   ]).then(function(results) {
     var scoreRows  = results[0];
@@ -4524,7 +4522,7 @@ let selectedDay=TODAY_IDX,hasDeposited=false;
 // TOTAL_BEFORE and DAILY_SCORE are set after Supabase fetch; use placeholders until then
 let DAILY_SCORE=0,TOTAL_BEFORE=0,TOTAL_AFTER=0;
 
-const ALL_TAGS=[['🍎','Snack'],['🍽️','Meal'],['🍳','Low carb'],['🍕','High carb'],['🍷','Alcohol'],['🚶','Walk'],['🏃','Run'],['🏋️','Workout'],['⏱️','Fasting'],['😴','Poor sleep'],['🧠','Stress'],['✏️','Note']];
+const ALL_TAGS=[['✏️','Note'],['🍎','Snack'],['🍽️','Meal'],['🍳','Low carb'],['🍕','High carb'],['🍷','Alcohol'],['🚶','Walk'],['🏃','Run'],['🏋️','Workout'],['⏱️','Fasting'],['😴','Poor sleep'],['🧠','Stress']];
 const DAYS=[];
 // Local-time ISO date string — avoids UTC midnight rollover issues
 function localIso(d){
@@ -4885,6 +4883,30 @@ function tuneTagWheel(){
 
         updateTagWheelScale();
       });
+      // Snap to nearest tag center after scrolling stops
+      clearTimeout(wrap._snapTimer);
+      wrap._snapTimer=setTimeout(()=>{
+        const first=wrap.querySelector('.tag[data-base-index]');
+        if(!first)return;
+        const iW=first.getBoundingClientRect().width+10;
+        // Find nearest tag center relative to wrap left
+        const wLeft=wrap.getBoundingClientRect().left;
+        const wCenter=wrap.getBoundingClientRect().width/2;
+        let best=null, bestDist=Infinity;
+        wrap.querySelectorAll('.tag[data-base-index]').forEach(el=>{
+          const r=el.getBoundingClientRect();
+          const elCenter=r.left-wLeft+r.width/2;
+          const dist=Math.abs(elCenter-wCenter);
+          if(dist<bestDist){bestDist=dist;best=el;}
+        });
+        if(best){
+          const r=best.getBoundingClientRect();
+          const elCenter=r.left-wLeft+r.width/2;
+          const delta=elCenter-wCenter;
+          wrap.scrollLeft+=delta;
+        }
+        updateTagWheelScale();
+      },120);
     },{passive:true});
   }
 
@@ -6036,7 +6058,20 @@ function flow(fromEl,toEl,dur){
 
 
 function reset(){hasDeposited=false;card.classList.remove('sealed');totalNum.textContent=fmt(TOTAL_BEFORE);}
-function deposit(){if(hasDeposited)return;hasDeposited=true;setTimeout(()=>{flow(null,null,4000);counter(totalNum,TOTAL_BEFORE,TOTAL_AFTER,4000,v=>fmt(v),()=>{totalNum.classList.add('pop');card.classList.add('sealed');burst(totalNum,'rgba(110,231,135,.95)',34);setTimeout(()=>{totalNum.classList.remove('pop')},1100)})},700)}
+function deposit(){
+  if(hasDeposited)return;
+  hasDeposited=true;
+
+  setTimeout(()=>{
+    flow(null,null,4000);
+    counter(totalNum,TOTAL_BEFORE,TOTAL_AFTER,4000,v=>fmt(v),()=>{
+      totalNum.classList.add('pop');
+      card.classList.add('sealed');
+      burst(totalNum,'rgba(110,231,135,.95)',34);
+      setTimeout(()=>{totalNum.classList.remove('pop')},1100);
+    });
+  },700);
+}
 // deposit triggered automatically on load
 
 // ── Supabase tag save ─────────────────────────────────────────────
@@ -6048,6 +6083,8 @@ function fetchLeaderboard(){
 
   var today = new Date(Date.now()).toISOString().slice(0,10);
 
+  var cutoff7 = new Date(Date.now() - 7*86400000).toISOString().slice(0,10);
+
   Promise.all([
     // All opted-in devices — name, zone colours, last sync
     fetch(_sbUrl+'/rest/v1/devices?leaderboard_opt_in=eq.LB-1'+
@@ -6056,14 +6093,25 @@ function fetchLeaderboard(){
     // Today's scores for opted-in devices
     fetch(_sbUrl+'/rest/v1/daily_scores?day_date=eq.'+today+
           '&select=device_id,auc_score',
+      {method:'GET',headers:_sbHeaders}).then(function(r){return r.ok?r.json():[];}),
+    // Last 7 days scores for best-day calculation
+    fetch(_sbUrl+'/rest/v1/daily_scores?day_date=gte.'+cutoff7+
+          '&select=device_id,auc_score',
       {method:'GET',headers:_sbHeaders}).then(function(r){return r.ok?r.json():[];})
   ]).then(function(results){
-    var devList   = results[0] || [];
-    var scoreList = results[1] || [];
+    var devList    = results[0] || [];
+    var scoreList  = results[1] || [];
+    var weekScores = results[2] || [];
 
     // Build today's score lookup
     var todayScore = {};
     scoreList.forEach(function(s){ todayScore[s.device_id] = s.auc_score||0; });
+
+    // Build 7-day best lookup
+    var bestScore = {};
+    weekScores.forEach(function(s){
+      if((s.auc_score||0) > (bestScore[s.device_id]||0)) bestScore[s.device_id] = s.auc_score||0;
+    });
 
     // Rank by today's score
     var ranked = devList.slice().sort(function(a,b){
@@ -6075,7 +6123,7 @@ function fetchLeaderboard(){
       return;
     }
 
-    function medal(i){ return i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)+'.'; }
+    function medal(i){ return i===0?'🥇':i===1?'🥈':i===2?'🥉':'🏆'; }
 
     function syncAge(isoStr){
       if(!isoStr) return 'never';
@@ -6095,6 +6143,7 @@ function fetchLeaderboard(){
       var m = Math.round(d.pct_mixed  ||0);
       var f = Math.round(d.pct_fat    ||0);
       var sync = syncAge(d.last_scan_at);
+      var best = Math.round(bestScore[d.device_id]||0);
       return '<div class="lb-row'+(isMe?' lb-me':'')+'">'+
         '<div class="lb-rank">'+medal(i)+'</div>'+
         '<div class="lb-info">'+
@@ -6106,20 +6155,45 @@ function fetchLeaderboard(){
           '</div>'+
           '<div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:3px;">synced '+sync+'</div>'+
         '</div>'+
-        '<div>'+
-          '<div class="lb-score">'+score+'</div>'+
-          '<div class="lb-score-sub">today</div>'+
+        '<div style="display:flex;gap:8px;align-items:flex-end;">'+
+          '<div style="text-align:right;">'+
+            '<div class="lb-score">'+score+'</div>'+
+            '<div class="lb-score-sub">today</div>'+
+          '</div>'+
+          '<div style="text-align:right;">'+
+            '<div class="lb-score" style="color:#facc15;">'+best+'</div>'+
+            '<div class="lb-score-sub">best</div>'+
+          '</div>'+
         '</div>'+
       '</div>';
     }).join('');
 
     board.innerHTML = html;
+
+    // Compute hash: ranked device IDs + today scores
+    _lbCurrentHash = ranked.map(function(d){
+      return d.device_id.slice(-4)+':'+(Math.round(todayScore[d.device_id]||0));
+    }).join('|');
+
+    // Show red dot if hash differs from stored
+    var dot = document.getElementById('squad-dot');
+    if(dot) dot.style.display = (_lbCurrentHash && _lbCurrentHash !== _lbStoredHash) ? 'block' : 'none';
+
   }).catch(function(){
     board.innerHTML = '<div id="lb-board-loading">Could not load leaderboard.</div>';
   });
 }
 
-function saveLeaderboardPrefs(optIn, email){
+function saveLeaderboardHash(hash){
+  if(!_sbUrl || !_sbDeviceId) return;
+  fetch(_sbUrl+'/rest/v1/devices?on_conflict=device_id',{
+    method:'POST',
+    headers:Object.assign({},_sbHeaders,{'Prefer':'resolution=merge-duplicates,return=minimal'}),
+    body:JSON.stringify({device_id:_sbDeviceId, leaderboard_hash:hash})
+  }).catch(function(){});
+}
+
+function saveLeaderboardPrefs(optIn){
   if(!_sbUrl || !_sbDeviceId) return;
   fetch(_sbUrl+'/rest/v1/devices?on_conflict=device_id',{
     method:'POST',
@@ -6127,7 +6201,6 @@ function saveLeaderboardPrefs(optIn, email){
     body:JSON.stringify({
       device_id: _sbDeviceId,
       leaderboard_opt_in: optIn || null,
-      leaderboard_email:  email || null,
       updated_at: new Date().toISOString()
     })
   }).catch(function(){});
@@ -6163,7 +6236,7 @@ function showDeposited(){
 
 // ── Supabase read + init ──────────────────────────────────────────
 var _sbUrl='',_sbHeaders={},_sbDeviceId='';
-var _lbOptIn='', _lbEmail='';
+var _lbOptIn='', _lbStoredHash='', _lbCurrentHash='';
 
 function initWithSupabase(sbUrl,sbHeaders,deviceId,preRead){
   _sbUrl=sbUrl;_sbHeaders=sbHeaders;_sbDeviceId=deviceId;
@@ -6185,12 +6258,14 @@ function initWithSupabase(sbUrl,sbHeaders,deviceId,preRead){
   // Load leaderboard prefs from device row if available
   if(preRead.deviceRow){
     _lbOptIn  = preRead.deviceRow.leaderboard_opt_in || '';
-    _lbEmail  = preRead.deviceRow.leaderboard_email || '';
+
   }
   _doInit(alreadyDeposited);
 }
 
 function _doInit(alreadyDeposited){
+  // Fetch leaderboard silently on load so dot can appear immediately
+  if(_lbOptIn === 'LB-1') setTimeout(fetchLeaderboard, 1200);
   resizeP();loop();buildRail();updateCard();buildTags();enableGraphDaySwipe();initDayGraphPopup();
   setTimeout(function(){drawGraph();renderEvents();},80);
   if(alreadyDeposited){setTimeout(showDeposited,200);}
@@ -6462,39 +6537,29 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 addEventListener('resize',()=>{resizeP();drawGraph();renderEvents();updateTagWheelScale();positionGraphOverlay()})
 
 function openInfoModal(){
-  var optEl    = document.getElementById('lb-optin');
-  var emailEl  = document.getElementById('lb-email');
-  var emailRow = document.getElementById('lb-email-row');
-  var board    = document.getElementById('lb-board');
+  var optEl = document.getElementById('lb-optin');
+  var board = document.getElementById('lb-board');
   if(optEl) optEl.checked = (_lbOptIn === 'LB-1');
-  if(emailEl && _lbEmail) emailEl.value = _lbEmail;
-  if(emailRow) emailRow.style.display = (optEl && optEl.checked) ? 'flex' : 'none';
-  if(board)    board.style.display    = (optEl && optEl.checked) ? 'flex' : 'none';
+  if(board) board.style.display = (optEl && optEl.checked) ? 'flex' : 'none';
   if(optEl) optEl.onchange = function(){
     var on = this.checked;
-    emailRow.style.display = on ? 'flex' : 'none';
-    board.style.display    = on ? 'flex' : 'none';
-    if(on){ setTimeout(()=>emailEl && emailEl.focus(), 60); fetchLeaderboard(); }
+    board.style.display = on ? 'flex' : 'none';
+    var optIn = on ? 'LB-1' : '';
+    _lbOptIn = optIn;
+    if(typeof saveLeaderboardPrefs === 'function') saveLeaderboardPrefs(optIn);
+    if(on) fetchLeaderboard();
   };
   if(_lbOptIn === 'LB-1') fetchLeaderboard();
+  // Clear dot and persist current hash when user opens Squad
+  var dot = document.getElementById('squad-dot');
+  if(dot) dot.style.display = 'none';
+  if(_lbCurrentHash && _lbCurrentHash !== _lbStoredHash){
+    _lbStoredHash = _lbCurrentHash;
+    saveLeaderboardHash(_lbCurrentHash);
+  }
   document.getElementById('info-modal-overlay').classList.add('open');
 }
-function saveInfoModal(){
-  var optEl  = document.getElementById('lb-optin');
-  var emailEl = document.getElementById('lb-email');
-  var optIn  = optEl && optEl.checked ? 'LB-1' : '';
-  var email  = emailEl ? emailEl.value.trim() : '';
-  if(optIn && email && !email.match(/^[^@\s]+@[^@\s]+\.[^@\s]+$/)){
-    emailEl.focus(); emailEl.style.borderColor='rgba(255,80,80,.7)';
-    setTimeout(function(){emailEl.style.borderColor='';},1200); return;
-  }
-  _lbOptIn = optIn;
-  _lbEmail = email;
-  saveLeaderboardPrefs(optIn, email);
-  var btn = document.getElementById('info-modal-save');
-  if(btn){ btn.textContent='Saved ✓'; btn.disabled=true;
-    setTimeout(()=>{ btn.textContent='Save'; btn.disabled=false; }, 1500); }
-}
+
 function closeInfoModal(){
   document.getElementById('info-modal-overlay').classList.remove('open');
 }
