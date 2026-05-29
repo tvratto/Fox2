@@ -1501,7 +1501,7 @@ html, body {
     <div id="info-modal-title">Device Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic ID</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.4 · 2026-05-29 early-init</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.5 · 2026-05-29 tz-fix</span></div>
     <div class="info-row"><span class="info-label">Payload</span><span class="info-value" id="info-payload">—</span></div>
     <div class="info-row"><span class="info-label">Days</span><span class="info-value" id="info-days">—</span></div>
     <button id="info-modal-close" onclick="closeInfoModal()">Close</button>
@@ -1538,12 +1538,12 @@ var sParam    = params.get('s') || '';
   var src = params.get('src') || 'qr';
   var days = dParam ? dParam.split('|').length : 0;
   var el = document.getElementById('debug-bar');
-  if (el) el.textContent = 'id:' + id + '  v:' + v + '  patient:' + p + '  clinic:' + c + '  [web build 2151 svh-fix]';
+  if (el) el.textContent = 'id:' + id + '  v:' + v + '  patient:' + p + '  clinic:' + c + '  [web build 2152 tz-fix]';
   // Populate info modal
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v3.4 · 2026-05-29 early-init' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v3.5 · 2026-05-29 tz-fix' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
@@ -1551,11 +1551,17 @@ var sParam    = params.get('s') || '';
 // Count day blocks first so windowStart can span the full payload
 var numDaysInPayload = dParam ? dParam.split('|').length : 21;
 
+// tz= param: JS-convention minutes west of UTC (e.g. UTC-5 = 300, UTC+7 = -420).
+// The device RTC is set to local time (utcEpoch - tzOffset*60), so all device
+// epochs are local-time-as-UTC. We must apply the same offset when computing
+// windowStart so day boundaries match.
+var tzParam = params.get('tz');
+var tzOffsetMin = (tzParam !== null && tzParam !== '') ? parseInt(tzParam, 10) : -(new Date().getTimezoneOffset());
+
 // Derive windowStart.
-// New URLs may include ws=<base36 epoch-day>, emitted by the device.
-// Prefer that exact device anchor so an old NFC/QR payload cannot be
-// remapped onto newer calendar dates when scanned later.
-// Legacy URLs without ws= fall back to the previous Saturday-anchor logic.
+// The device computes its Saturday-anchor using local midnight (RTC = local time).
+// We replicate that by shifting 'now' by the device timezone offset before
+// computing the UTC-style Saturday anchor.
 var wsParam = params.get('ws') || '';
 var windowStart = (function() {
   if (wsParam) {
@@ -1565,12 +1571,14 @@ var windowStart = (function() {
     }
   }
 
-  var now = new Date();
-  var dow = now.getUTCDay(); // 0=Sun, 6=Sat
-  // Days TO the next/current Saturday (0 if today is Sat, forward otherwise)
-  // Legacy fallback: matches the device's Saturday-anchored 21-day window.
+  // Shift UTC now by tzOffsetMin to get the device's local "now" in UTC terms.
+  // tzOffsetMin is minutes WEST, so local time = UTC - tzOffsetMin*60s.
+  var nowUtcMs = Date.now() - tzOffsetMin * 60 * 1000;
+  var nowLocal  = new Date(nowUtcMs);
+  var dow = nowLocal.getUTCDay(); // day-of-week in shifted (local) time
   var daysToSat = (6 - dow + 7) % 7;
-  var weekEndMs = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) + daysToSat * 86400000;
+  var weekEndMs = Date.UTC(nowLocal.getUTCFullYear(), nowLocal.getUTCMonth(), nowLocal.getUTCDate())
+                  + daysToSat * 86400000;
   return Math.floor(weekEndMs / 1000) - (numDaysInPayload - 1) * 86400;
 })();
 
@@ -4394,9 +4402,19 @@ const DAYS=[];
 function localIso(d){
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
-function dateStr(i){const d=new Date();d.setDate(d.getDate()-(29-i));return d.toLocaleDateString(undefined,{month:'short',day:'numeric'});}
-function dowStr(i){const d=new Date();d.setDate(d.getDate()-(29-i));return d.toLocaleDateString(undefined,{weekday:'short'});}
-function isoDateStr(i){const d=new Date();d.setDate(d.getDate()-(29-i));return localIso(d);}
+// Derive display dates from windowStart (device local time) rather than browser Date(),
+// so they match the device's day boundaries regardless of browser timezone.
+// windowStart is the epoch of the first slot's local midnight (device-local-time-as-UTC).
+// tzOffsetMin (minutes west) converts it back to the correct wall-clock date.
+function deviceDateFromSlot(i){
+  // epoch of slot i's local midnight in device time
+  var slotEpochMs = (windowStart + i * 86400) * 1000;
+  // shift by tz so getUTC* methods return local values
+  return new Date(slotEpochMs + tzOffsetMin * 60 * 1000);
+}
+function dateStr(i){return deviceDateFromSlot(i).toLocaleDateString(undefined,{month:'short',day:'numeric'});}
+function dowStr(i){return deviceDateFromSlot(i).toLocaleDateString(undefined,{weekday:'short'});}
+function isoDateStr(i){const d=deviceDateFromSlot(i);return d.getUTCFullYear()+'-'+String(d.getUTCMonth()+1).padStart(2,'0')+'-'+String(d.getUTCDate()).padStart(2,'0');}
 
 // Build DAYS from decoded URL data (scores come from aParam, tags start empty)
 (function(){
