@@ -1500,7 +1500,7 @@ html, body {
     <div id="info-modal-title">Device Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic ID</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v1.8 · 2026-05-29 03:43 UTC</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v1.9 · 2026-05-29 03:53 UTC</span></div>
     <div class="info-row"><span class="info-label">Payload</span><span class="info-value" id="info-payload">—</span></div>
     <div class="info-row"><span class="info-label">Days</span><span class="info-value" id="info-days">—</span></div>
     <button id="info-modal-close" onclick="closeInfoModal()">Close</button>
@@ -1542,7 +1542,7 @@ var sParam    = params.get('s') || '';
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v1.8 · 2026-05-29 03:43 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v1.9 · 2026-05-29 03:53 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
@@ -4429,7 +4429,7 @@ function isoDateStr(i){const d=new Date();d.setDate(d.getDate()-(29-i));return l
   for(let i=0;i<30;i++){
     const iso=isoDateStr(i);
     const score=scoreLookup[iso]||0;
-    const pts=ptsLookup[iso]||[[0,0],[1440,0]];
+    const pts=ptsLookup[iso]||null;
     DAYS.push({dateStr:dateStr(i),dow:dowStr(i),isoDate:iso,pts,score,tags:[],events:[],note:''});
   }
 
@@ -6199,4 +6199,3 @@ function initDayGraphPopup(){
 </script>
 </body>
 </html>
-
