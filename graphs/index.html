@@ -155,15 +155,7 @@ html, body {
   padding:0 2px 4px;
 }
 
-#dateFull{
-  font-size:30px;
-  margin-bottom:0;
-}
 
-#dailyScore{
-  font-size:64px;
-  line-height:.88;
-}
 
 #verdict{
   margin-top:0;
@@ -666,6 +658,7 @@ html, body {
   border:1px solid rgba(255,255,255,.08);
   backdrop-filter:blur(6px);
   opacity:.72;
+  z-index:1;
 }
 
 .event-hint{
@@ -1347,6 +1340,7 @@ html, body {
   border:1px solid rgba(255,255,255,.08);
   backdrop-filter:blur(6px);
   opacity:.72;
+  z-index:1;
 }
 
 .ghostEventLayer .event-hint{
@@ -1556,33 +1550,27 @@ var sParam    = params.get('s') || '';
 // Count day blocks first so windowStart can span the full payload
 var numDaysInPayload = dParam ? dParam.split('|').length : 21;
 
-// Derive windowStart: window ending on the most recent Saturday, spanning all payload days
+// Derive windowStart.
+// New URLs may include ws=<base36 epoch-day>, emitted by the device.
+// Prefer that exact device anchor so an old NFC/QR payload cannot be
+// remapped onto newer calendar dates when scanned later.
+// Legacy URLs without ws= fall back to the previous Saturday-anchor logic.
+var wsParam = params.get('ws') || '';
 var windowStart = (function() {
-  var tzParam = params.get('tz');
-  var daysToSat;
-  var satMidnightMs;
-
-  if (tzParam !== null) {
-    var tzOffsetMin = parseInt(tzParam, 10);
-    var nowUtcMs = Date.now();
-    var localMs  = nowUtcMs - tzOffsetMin * 60000;
-    var localDate = new Date(localMs);
-    var dow = localDate.getUTCDay();
-    daysToSat = (6 - dow + 7) % 7;
-    var localMidnightMs = localMs - (localDate.getUTCHours() * 3600000
-                                   + localDate.getUTCMinutes() * 60000
-                                   + localDate.getUTCSeconds() * 1000
-                                   + localDate.getUTCMilliseconds());
-    satMidnightMs = localMidnightMs + daysToSat * 86400000;
-  } else {
-    var now = new Date();
-    var dow = now.getDay();
-    daysToSat = (6 - dow + 7) % 7;
-    var sat = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysToSat);
-    satMidnightMs = sat.getTime();
+  if (wsParam) {
+    var wsDay = parseInt(wsParam, 36);
+    if (!isNaN(wsDay) && wsDay > 0) {
+      return wsDay * 86400;
+    }
   }
 
-  return Math.floor(satMidnightMs / 1000) - (numDaysInPayload - 1) * 86400;
+  var now = new Date();
+  var dow = now.getUTCDay(); // 0=Sun, 6=Sat
+  // Days TO the next/current Saturday (0 if today is Sat, forward otherwise)
+  // Legacy fallback: matches the device's Saturday-anchored 21-day window.
+  var daysToSat = (6 - dow + 7) % 7;
+  var weekEndMs = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) + daysToSat * 86400000;
+  return Math.floor(weekEndMs / 1000) - (numDaysInPayload - 1) * 86400;
 })();
 
 // Parse injected AUCs — fixed 21-slot, 2-char base36 each, no separators
@@ -6207,3 +6195,4 @@ function initDayGraphPopup(){
 </script>
 </body>
 </html>
+
