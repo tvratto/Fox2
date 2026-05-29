@@ -4965,8 +4965,10 @@ function getCachedResultsCurve(dayIdx){
     const segmentEndsAtFinalMeasurement =
       lastMeasuredGraphRel != null && Math.abs(last.rel-lastMeasuredGraphRel) < 0.001;
 
+    const lastIsRealMeasurement = !last.anchor;
+
     // Do not extend beyond the final real measurement.
-    if(!segmentEndsAtFinalMeasurement && last.rel<lastDayEnd && lastDayEnd-last.rel<=GAP_LIMIT){
+    if(!segmentEndsAtFinalMeasurement && !lastIsRealMeasurement && last.rel<lastDayEnd && lastDayEnd-last.rel<=GAP_LIMIT){
       pushAnchorIfMissing(pts, lastDayEnd);
     }
 
@@ -5113,6 +5115,7 @@ function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
   });
   ctx.setLineDash([]);
 
+  // Pass 1: fills
   data.segments.forEach(samples=>{
     let runs=[];
     let curZone=zoneOf(samples[0].v), runStart=0;
@@ -5139,7 +5142,10 @@ function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
       ctx.closePath();
       ctx.fill();
     });
+  });
 
+  // Pass 2: strokes on top of fills
+  data.segments.forEach(samples=>{
     ctx.lineWidth=3;
     ctx.lineCap='round';
     ctx.shadowBlur=12;
@@ -5275,8 +5281,10 @@ function redrawPagerGhostCanvases(){
     const wrap=panel.querySelector('.ghostGraphWrap');
     const canvas=panel.querySelector('.ghostGraphCanvas');
     if(wrap && canvas){
-      drawGraphToCanvas(canvas, wrap, dayIdx, false);
-      requestAnimationFrame(()=>positionGraphOverlay(panel));
+      requestAnimationFrame(()=>{
+        drawGraphToCanvas(canvas, wrap, dayIdx, false);
+        requestAnimationFrame(()=>positionGraphOverlay(panel));
+      });
     }
     renderGhostEvents(panel);
   }
@@ -6133,7 +6141,7 @@ function initDayGraphPopup(){
   const popVal  = document.getElementById('day-graph-popup-val');
   const popTime = document.getElementById('day-graph-popup-time');
   if(!wrap || !popup) return;
-  const HIT_R = 28;
+  const HIT_R = 44;
   let touchStartX=0, touchStartY=0, touchStartTime=0, lastTouch=0;
   function fmtDayGraphTime(epoch, minute){
     if(epoch!=null && !isNaN(epoch)){
@@ -6146,15 +6154,11 @@ function initDayGraphPopup(){
   }
   function findNearestDot(clientX, clientY){
     const rect=wrap.getBoundingClientRect();
-    const canvas=document.getElementById('graph');
-    if(!canvas||!window._dayGraphDots||!window._dayGraphDots.length) return null;
-    const dpr=window.devicePixelRatio||1;
-    const scaleX=canvas.clientWidth/(canvas.width/dpr);
-    const scaleY=canvas.clientHeight/(canvas.height/dpr);
+    if(!window._dayGraphDots||!window._dayGraphDots.length) return null;
     const x=clientX-rect.left, y=clientY-rect.top;
     let best=null, bestD=HIT_R*HIT_R;
     window._dayGraphDots.forEach(dot=>{
-      const dx=dot.cx*scaleX-x, dy=dot.cy*scaleY-y;
+      const dx=dot.cx-x, dy=dot.cy-y;
       const d2=dx*dx+dy*dy;
       if(d2<bestD){bestD=d2;best=dot;}
     });
