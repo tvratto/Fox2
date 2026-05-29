@@ -6099,7 +6099,7 @@ function deposit(){
     flow(null,null,4000);
     counter(totalNum,TOTAL_BEFORE,TOTAL_AFTER,4000,v=>fmt(v),()=>{
       totalNum.classList.add('pop');
-      card.classList.add('sealed');
+      //card.classList.add('sealed');
       burst(totalNum,'rgba(110,231,135,.95)',34);
       setTimeout(()=>{totalNum.classList.remove('pop')},1100);
     });
@@ -6270,7 +6270,7 @@ function saveTagsForDay(idx){
 function showDeposited(){
   hasDeposited=true;
   totalNum.textContent=fmt(TOTAL_AFTER);
-  card.classList.add('sealed');
+  //card.classList.add('sealed');
 }
 
 // ── Supabase read + init ──────────────────────────────────────────
