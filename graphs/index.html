@@ -36,7 +36,7 @@ html, body {
 .nav-tab.active { font-size: 24px; font-weight: 700; color: #fff; }
 .scroll-x {
   display: flex; flex-direction: row;
-  width: 100vw; height: 100dvh;
+  width: 100vw; height: 100svh;
   overflow-x: auto; overflow-y: hidden;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
@@ -44,7 +44,7 @@ html, body {
 }
 .scroll-x::-webkit-scrollbar { display: none; }
 .page {
-  flex: 0 0 100vw; width: 100vw; height: 100dvh;
+  flex: 0 0 100vw; width: 100vw; height: 100svh;
   display: flex; flex-direction: column;
   align-items: center; justify-content: flex-start;
   padding: 16px;
@@ -894,7 +894,7 @@ html, body {
   .scroll-x{
     position:relative;
     width:min(430px, 100vw);
-    height:100dvh;
+    height:100svh;
     margin-left:auto;
     margin-right:auto;
     transform:none;
@@ -938,7 +938,7 @@ html, body {
   }
 
   #results-page{
-    height:calc(100dvh - 104px - 56px) !important;
+    height:calc(100svh - 104px - 56px) !important;
   }
 
   .rp-screen{
@@ -974,12 +974,12 @@ html, body {
 
   .scroll-x{
     padding-top:88px;
-    height:100dvh;
+    height:100svh;
     box-sizing:border-box;
   }
 
   .page{
-    height:calc(100dvh - 88px);
+    height:calc(100svh - 88px);
     padding-top:0 !important;
   }
 
