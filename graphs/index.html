@@ -1538,7 +1538,7 @@ var sParam    = params.get('s') || '';
   var src = params.get('src') || 'qr';
   var days = dParam ? dParam.split('|').length : 0;
   var el = document.getElementById('debug-bar');
-  if (el) el.textContent = 'id:' + id + '  v:' + v + '  patient:' + p + '  clinic:' + c + '  [web build 2150 total-in-nav]';
+  if (el) el.textContent = 'id:' + id + '  v:' + v + '  patient:' + p + '  clinic:' + c + '  [web build 2151 svh-fix]';
   // Populate info modal
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
@@ -6146,7 +6146,13 @@ function initResultsPage(){
   setTimeout(function(){drawGraph();renderEvents();},80);
   setTimeout(deposit,900);
 }
-if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initResultsPage);}else{setTimeout(initResultsPage,50);}
+// Install pager DOM structure immediately so layout is stable before Supabase resolves.
+// _doInit will call enableGraphDaySwipe() later but installDayPager() guards against double-install.
+function earlyInit(){
+  resizeP();loop();buildRail();updateCard();buildTags();updateNote();installDayPager();initDayGraphPopup();
+  setTimeout(function(){drawGraph();renderEvents();},80);
+}
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',earlyInit);}else{setTimeout(earlyInit,0);}
 addEventListener('resize',()=>{resizeP();drawGraph();renderEvents();updateTagWheelScale();positionGraphOverlay()})
 
 function openInfoModal(){
