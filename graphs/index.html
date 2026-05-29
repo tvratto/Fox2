@@ -2030,6 +2030,8 @@ if (!dParam || totalDays === 0) {
         last_d_param:         dParam         || null,
         last_a_param:         aParam         || null,
         last_s_param:         sParam         || null,
+        last_ws_param:        params.get('ws') || null,
+        last_tz_param:        params.get('tz') || null,
         pct_glucose:          pctGlucose,
         pct_mixed:            pctMixed,
         pct_fat:              pctFat
@@ -6693,13 +6695,29 @@ function initDayGraphPopup(){
 
   function buildNewUrl(row) {
     var u = new URL(window.location.href);
-    // Replace data params from stored device row; keep non-data params as-is
+    // Replace data params from stored device row; keep non-data params as-is.
+    // Important: ws/tz travel with the payload. Without updating ws, the
+    // refreshed page can decode the new d/a payload using the old page-load
+    // windowStart and appear stuck on the original day.
     if (row.last_t_param !== null) u.searchParams.set('t', row.last_t_param);
     if (row.last_d_param !== null) u.searchParams.set('d', row.last_d_param);
     if (row.last_a_param !== null) u.searchParams.set('a', row.last_a_param);
     else u.searchParams.delete('a');
     if (row.last_s_param !== null) u.searchParams.set('s', row.last_s_param);
     else u.searchParams.delete('s');
+
+    if (row.last_ws_param !== null && row.last_ws_param !== undefined) {
+      u.searchParams.set('ws', row.last_ws_param);
+    } else {
+      u.searchParams.delete('ws');
+    }
+
+    if (row.last_tz_param !== null && row.last_tz_param !== undefined) {
+      u.searchParams.set('tz', row.last_tz_param);
+    } else {
+      u.searchParams.delete('tz');
+    }
+
     return u.toString();
   }
 
@@ -6717,13 +6735,20 @@ function initDayGraphPopup(){
   function poll() {
     if (!_sbUrl || !_sbDeviceId) return;
     fetch(_sbUrl + '/rest/v1/devices?device_id=eq.' + encodeURIComponent(_sbDeviceId)
-          + '&select=last_d_param,last_t_param,last_a_param,last_s_param&limit=1',
+          + '&select=last_d_param,last_t_param,last_a_param,last_s_param,last_ws_param,last_tz_param&limit=1',
       { method: 'GET', headers: _sbHeaders })
     .then(function(r){ return r.ok ? r.json() : []; })
     .then(function(rows){
       if (!rows || !rows.length) return;
       var row = rows[0];
-      if (row.last_d_param && row.last_d_param !== dParam) {
+      var currentWs = params.get('ws') || null;
+      var currentTz = params.get('tz') || null;
+      var rowWs = row.last_ws_param || null;
+      var rowTz = row.last_tz_param || null;
+
+      if ((row.last_d_param && row.last_d_param !== dParam) ||
+          (rowWs !== currentWs) ||
+          (rowTz !== currentTz)) {
         showBanner(buildNewUrl(row));
         clearInterval(_pollTimer); // stop polling once banner is up
       }
