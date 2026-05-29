@@ -1500,7 +1500,7 @@ html, body {
     <div id="info-modal-title">Device Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic ID</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v2.0 · 2026-05-29 04:00 UTC</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v2.3 · 2026-05-29 04:19 UTC</span></div>
     <div class="info-row"><span class="info-label">Payload</span><span class="info-value" id="info-payload">—</span></div>
     <div class="info-row"><span class="info-label">Days</span><span class="info-value" id="info-days">—</span></div>
     <button id="info-modal-close" onclick="closeInfoModal()">Close</button>
@@ -1542,7 +1542,7 @@ var sParam    = params.get('s') || '';
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v2.0 · 2026-05-29 04:00 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v2.3 · 2026-05-29 04:19 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
@@ -4387,7 +4387,7 @@ let selectedDay=TODAY_IDX,hasDeposited=false;
 // TOTAL_BEFORE and DAILY_SCORE are set after Supabase fetch; use placeholders until then
 let DAILY_SCORE=0,TOTAL_BEFORE=0,TOTAL_AFTER=0;
 
-const ALL_TAGS=[['🍜','Late meal'],['🍷','Alcohol'],['🚶','Walk'],['🏋️','Workout'],['😴','Poor sleep'],['🧠','Stress'],['🍕','High carb'],['⏱️','Fasted']];
+const ALL_TAGS=[['🍎','Snack'],['🍽️','Meal'],['🍜','Late meal'],['🍕','High carb'],['🍷','Alcohol'],['🚶','Walk'],['🏃','Run'],['🏋️','Workout'],['⏱️','Fasted'],['😴','Poor sleep'],['🧠','Stress']];
 const DAYS=[];
 // Local-time ISO date string — avoids UTC midnight rollover issues
 function localIso(d){
