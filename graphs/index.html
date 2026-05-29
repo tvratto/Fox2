@@ -75,6 +75,37 @@ html, body {
 }
 .bar-btn:active { background: rgba(255,255,255,0.1); }
 .bar-btn svg { opacity: 0.5; }
+#update-banner {
+  display: none;
+  position: fixed; bottom: calc(56px + env(safe-area-inset-bottom) + 8px);
+  left: 50%; transform: translateX(-50%);
+  z-index: 150;
+  background: #1a1a1a;
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 24px;
+  padding: 10px 18px 10px 14px;
+  display: flex; align-items: center; gap: 10px;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+#update-banner.visible {
+  opacity: 1; pointer-events: auto;
+}
+#update-banner .ub-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #4ADE80; flex-shrink: 0;
+}
+#update-banner .ub-text {
+  font-size: 13px; font-weight: 600; color: #fff;
+}
+#update-banner .ub-dismiss {
+  margin-left: 4px; opacity: 0.4;
+  font-size: 16px; line-height: 1;
+  padding: 0 0 0 4px;
+}
 #info-modal-overlay {
   display: none;
   position: fixed; inset: 0; z-index: 200;
@@ -6651,7 +6682,88 @@ function initDayGraphPopup(){
   wrap.addEventListener('click',e=>{ if(Date.now()-lastTouch<500)return; handleTap(e.clientX,e.clientY); });
 }
 
+// ── New-measurement banner ────────────────────────────────────────────────
+// Polls the devices table every 30s. If last_d_param differs from the
+// current page's dParam, a new sync has happened — show the banner.
+// Tapping reloads to a URL rebuilt from the stored params.
+(function(){
+  var POLL_INTERVAL = 30000;
+  var _pollTimer    = null;
+  var _newUrl       = null;
+
+  function buildNewUrl(row) {
+    var u = new URL(window.location.href);
+    // Replace data params from stored device row; keep non-data params as-is
+    if (row.last_t_param !== null) u.searchParams.set('t', row.last_t_param);
+    if (row.last_d_param !== null) u.searchParams.set('d', row.last_d_param);
+    if (row.last_a_param !== null) u.searchParams.set('a', row.last_a_param);
+    else u.searchParams.delete('a');
+    if (row.last_s_param !== null) u.searchParams.set('s', row.last_s_param);
+    else u.searchParams.delete('s');
+    return u.toString();
+  }
+
+  function showBanner(url) {
+    _newUrl = url;
+    var el = document.getElementById('update-banner');
+    if (el) { el.style.display = 'flex'; requestAnimationFrame(function(){ el.classList.add('visible'); }); }
+  }
+
+  function dismissBanner() {
+    var el = document.getElementById('update-banner');
+    if (el) { el.classList.remove('visible'); }
+  }
+
+  function poll() {
+    if (!_sbUrl || !_sbDeviceId) return;
+    fetch(_sbUrl + '/rest/v1/devices?device_id=eq.' + encodeURIComponent(_sbDeviceId)
+          + '&select=last_d_param,last_t_param,last_a_param,last_s_param&limit=1',
+      { method: 'GET', headers: _sbHeaders })
+    .then(function(r){ return r.ok ? r.json() : []; })
+    .then(function(rows){
+      if (!rows || !rows.length) return;
+      var row = rows[0];
+      if (row.last_d_param && row.last_d_param !== dParam) {
+        showBanner(buildNewUrl(row));
+        clearInterval(_pollTimer); // stop polling once banner is up
+      }
+    })
+    .catch(function(){});
+  }
+
+  // Start polling once Supabase is ready (wait for _sbDeviceId to be set)
+  function startWhenReady() {
+    if (_sbDeviceId) {
+      _pollTimer = setInterval(poll, POLL_INTERVAL);
+    } else {
+      setTimeout(startWhenReady, 500);
+    }
+  }
+  startWhenReady();
+
+  // Banner tap: reload to new URL
+  document.addEventListener('DOMContentLoaded', function(){}, false);
+  setTimeout(function(){
+    var el = document.getElementById('update-banner');
+    if (!el) return;
+    el.addEventListener('click', function(e) {
+      // Dismiss tap on ×, reload tap on everything else
+      if (e.target.classList.contains('ub-dismiss')) {
+        dismissBanner();
+        return;
+      }
+      if (_newUrl) window.location.href = _newUrl;
+    });
+  }, 0);
+})();
+
 </script>
+<div id="update-banner" role="button" tabindex="0">
+  <div class="ub-dot"></div>
+  <span class="ub-text">New measurement — tap to update</span>
+  <span class="ub-dismiss">×</span>
+</div>
+
 <div id="note-popup" class="note-popup" style="display:none;">
   <div class="note-popup-time" id="note-popup-time"></div>
   <textarea id="note-popup-text" placeholder="Write a note…" rows="3"></textarea>
