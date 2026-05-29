@@ -1501,7 +1501,7 @@ html, body {
     <div id="info-modal-title">Device Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic ID</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.5 · 2026-05-29 tz-fix</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.6 · 2026-05-29 slot-index</span></div>
     <div class="info-row"><span class="info-label">Payload</span><span class="info-value" id="info-payload">—</span></div>
     <div class="info-row"><span class="info-label">Days</span><span class="info-value" id="info-days">—</span></div>
     <button id="info-modal-close" onclick="closeInfoModal()">Close</button>
@@ -1538,12 +1538,12 @@ var sParam    = params.get('s') || '';
   var src = params.get('src') || 'qr';
   var days = dParam ? dParam.split('|').length : 0;
   var el = document.getElementById('debug-bar');
-  if (el) el.textContent = 'id:' + id + '  v:' + v + '  patient:' + p + '  clinic:' + c + '  [web build 2152 tz-fix]';
+  if (el) el.textContent = 'id:' + id + '  v:' + v + '  patient:' + p + '  clinic:' + c + '  [web build 2153 slot-index]';
   // Populate info modal
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v3.5 · 2026-05-29 tz-fix' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v3.6 · 2026-05-29 slot-index' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
@@ -4418,45 +4418,53 @@ function isoDateStr(i){const d=deviceDateFromSlot(i);return d.getUTCFullYear()+'
 
 // Build DAYS from decoded URL data (scores come from aParam, tags start empty)
 (function(){
-  // Build score lookup from aParam keyed by ISO date; track last slot with data
-  var scoreLookup={};
-  var lastDataIso='';
+  // Build lookups by SLOT INDEX (not date string) to avoid UTC-vs-local timezone
+  // ambiguity. Device epochs are local-midnight-as-UTC; converting them with
+  // localIso() shifts them back one day in timezones west of UTC.
+
+  // Score by slot index
+  var scoreBySlot={};
+  var lastDataSlot=-1;
   if(aParam){
     for(var ai=0;ai*2+2<=aParam.length;ai++){
       var auc=parseInt(aParam.substring(ai*2,ai*2+2),36);
-      var dayEpoch=windowStart+ai*86400;
-      var dayDate=localIso(new Date(dayEpoch*1000));
-      if(auc>0){scoreLookup[dayDate]=auc;lastDataIso=dayDate;}
+      if(auc>0){scoreBySlot[ai]=auc;lastDataSlot=ai;}
     }
   }
 
-  // Build pts lookup from decoded days[] (epochs → [minute, ppm] pairs)
-  var ptsLookup={};
+  // Pts by slot index from decoded days[] (epochs → [minute, ppm] pairs)
+  var ptsBySlot={};
   if(typeof days !== 'undefined'){
     for(var di=0;di<days.length;di++){
-      var dayIso=localIso(new Date((windowStart+di*86400)*1000));
       var dday=days[di];
       if(dday.epochs && dday.epochs.length>0){
         var dayStartEpoch=windowStart+di*86400;
-        ptsLookup[dayIso]=dday.epochs.map(function(ep,k){
+        ptsBySlot[di]=dday.epochs.map(function(ep,k){
           return [Math.round((ep-dayStartEpoch)/60), dday.vals[k]];
         });
       }
     }
   }
 
+  // DAYS has 30 entries (rolling 30-day display window).
+  // Payload has numDaysInPayload slots (typically 21).
+  // Align: last payload slot → TODAY_IDX in DAYS (= 29 initially).
+  // So payload slot si → DAYS index (29 - (numDaysInPayload-1) + si).
+  var slotOffset = 29 - (numDaysInPayload - 1); // = 29-20 = 9 for 21-day payload
+
   for(let i=0;i<30;i++){
     const iso=isoDateStr(i);
-    const score=scoreLookup[iso]||0;
-    const pts=ptsLookup[iso]||null;
+    // Map DAYS[i] back to its payload slot index
+    var si = i - slotOffset;
+    var score = (si >= 0 && si < numDaysInPayload) ? (scoreBySlot[si]||0) : 0;
+    var pts   = (si >= 0 && si < numDaysInPayload) ? (ptsBySlot[si]||null) : null;
     DAYS.push({dateStr:dateStr(i),dow:dowStr(i),isoDate:iso,pts,score,tags:[],events:[],note:''});
   }
 
-  // Derive TODAY_IDX from data: the DAYS index matching the last slot with a score.
-  // This handles the case where the QR was generated on a day that isn't browser-today.
-  if(lastDataIso){
-    var found=DAYS.findIndex(function(d){return d.isoDate===lastDataIso;});
-    if(found>=0){TODAY_IDX=found;selectedDay=found;}
+  // TODAY_IDX = DAYS index of last payload slot with a score.
+  if(lastDataSlot >= 0){
+    var found = slotOffset + lastDataSlot;
+    if(found >= 0 && found < 30){TODAY_IDX=found;selectedDay=found;}
   }
 
   DAILY_SCORE=DAYS[TODAY_IDX].score;
