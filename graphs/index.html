@@ -6194,16 +6194,22 @@ function saveLeaderboardHash(hash){
 }
 
 function saveLeaderboardPrefs(optIn){
-  if(!_sbUrl || !_sbDeviceId) return;
+  if(!_sbUrl || !_sbDeviceId){
+    // Supabase not ready yet — queue it
+    _pendingLbOptIn = optIn;
+    return;
+  }
+  _pendingLbOptIn = null;
   fetch(_sbUrl+'/rest/v1/devices?on_conflict=device_id',{
     method:'POST',
     headers:Object.assign({},_sbHeaders,{'Prefer':'resolution=merge-duplicates,return=minimal'}),
     body:JSON.stringify({
       device_id: _sbDeviceId,
-      leaderboard_opt_in: optIn || null,
-      updated_at: new Date().toISOString()
+      leaderboard_opt_in: optIn || null
     })
-  }).catch(function(){});
+  }).then(function(r){
+    if(!r.ok) r.text().then(function(t){console.warn('saveLeaderboardPrefs failed:',r.status,t);});
+  }).catch(function(e){console.warn('saveLeaderboardPrefs error:',e);});
 }
 
 function saveTagsForDay(idx){
@@ -6236,10 +6242,13 @@ function showDeposited(){
 
 // ── Supabase read + init ──────────────────────────────────────────
 var _sbUrl='',_sbHeaders={},_sbDeviceId='';
+var _pendingLbOptIn=null; // queued if save fires before Supabase init
 var _lbOptIn='', _lbStoredHash='', _lbCurrentHash='';
 
 function initWithSupabase(sbUrl,sbHeaders,deviceId,preRead){
   _sbUrl=sbUrl;_sbHeaders=sbHeaders;_sbDeviceId=deviceId;
+  // Flush any leaderboard opt-in that was toggled before init completed
+  if(_pendingLbOptIn !== null){ saveLeaderboardPrefs(_pendingLbOptIn); }
   var alreadyDeposited=preRead.alreadyDeposited;
   var tagRows=preRead.tagRows||[];
   TOTAL_BEFORE=preRead.totalBefore;
