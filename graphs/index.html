@@ -5801,19 +5801,19 @@ function enableGraphDayPager(){
 
       snapTo(snap,()=>{
         // Draw graph now that the panel has landed.
-        //requestAnimationFrame(()=>{
-        //  drawGraph();
-        //  renderEvents();
+        requestAnimationFrame(()=>{
+          drawGraph();
+          renderEvents();
         //});
         // Rebuild ghost panels, debounced so rapid swipes skip it.
         if(window._redrawTimer) clearTimeout(window._redrawTimer);
         window._redrawTimer=setTimeout(()=>{
           window._redrawTimer=null;
-          requestAnimationFrame(()=>{
-            refreshDayPagerGhosts({
-              liveAlreadyDrawn:true,
-              deferGhosts:true
-            });
+          //requestAnimationFrame(()=>{
+          //  refreshDayPagerGhosts({
+          //    liveAlreadyDrawn:true,
+          //    deferGhosts:true
+          //  });
           });
         },120);
       });
