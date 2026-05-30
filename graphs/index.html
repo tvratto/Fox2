@@ -1690,7 +1690,7 @@ var sParam    = params.get('s') || '';
   var src = params.get('src') || 'qr';
   var days = dParam ? dParam.split('|').length : 0;
   var el = document.getElementById('debug-bar');
-  if (el) el.textContent = 'id:' + id + '  v:' + v + '  patient:' + p + '  clinic:' + c + '  [web build 2154 slot-utc]';
+  if (el) el.textContent = 'id:' + id + '  v:' + v + '  patient:' + p + '  clinic:' + c + '  [web build 0040 pager-fix]';
   // Populate info modal
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
@@ -5631,11 +5631,13 @@ function refreshDayPagerGhosts(options){
   const liveCard=document.getElementById('card');
   if(!track || !liveCard)return;
 
-  let prevPanel = track.querySelector('.prevPanel');
-  let centerPanel = track.querySelector('.centerPanel');
-  let nextPanel = track.querySelector('.nextPanel');
+  let prevPanel=track.querySelector('.prevPanel');
+  let centerPanel=track.querySelector('.centerPanel');
+  let nextPanel=track.querySelector('.nextPanel');
 
-  // First-time setup only: create the 3-panel structure and move liveCard once.
+  // First-time setup only: create the 3-panel structure and move the live card once.
+  // After this, do not clear the track or re-append #card, because mobile Safari can
+  // visibly re-layout the live graph/card at snap completion.
   if(!prevPanel || !centerPanel || !nextPanel){
     track.innerHTML='';
 
@@ -5655,25 +5657,22 @@ function refreshDayPagerGhosts(options){
     track.appendChild(nextPanel);
   }
 
-  // Replace only the offscreen ghost panels.
-  const newPrev = buildDayPanel(selectedDay>0 ? selectedDay-1 : selectedDay,'ghost');
-  newPrev.className = 'dayPanel prevPanel';
+  // Rebuild only the offscreen ghost panels.
+  const newPrev=buildDayPanel(selectedDay>0 ? selectedDay-1 : selectedDay,'ghost');
+  newPrev.className='dayPanel prevPanel';
 
-  const newNext = buildDayPanel(selectedDay<TODAY_IDX ? selectedDay+1 : selectedDay,'ghost');
-  newNext.className = 'dayPanel nextPanel';
+  const newNext=buildDayPanel(selectedDay<TODAY_IDX ? selectedDay+1 : selectedDay,'ghost');
+  newNext.className='dayPanel nextPanel';
 
   prevPanel.replaceWith(newPrev);
   nextPanel.replaceWith(newNext);
-
-  // Re-read refs after replaceWith.
-  prevPanel = newPrev;
-  nextPanel = newNext;
 
   // Reset the pager back to the center panel without animation.
   track.classList.add('dragging');
   track.style.transform='translateX(-100%)';
 
-  // Do not redraw live panel if caller already drew it.
+  // Only redraw the visible graph here if the caller has not already done it.
+  // The swipe commit path draws the live panel first, then rebuilds offscreen panels only.
   if(!options.liveAlreadyDrawn){
     drawGraph();
     renderEvents(true);
@@ -5831,7 +5830,7 @@ function enableGraphDayPager(){
         requestAnimationFrame(()=>{
           drawGraph();
           renderEvents();
-        //});
+        });
         // Rebuild ghost panels, debounced so rapid swipes skip it.
         if(window._redrawTimer) clearTimeout(window._redrawTimer);
         window._redrawTimer=setTimeout(()=>{
@@ -6126,7 +6125,7 @@ function deposit(){
     flow(null,null,4000);
     counter(totalNum,TOTAL_BEFORE,TOTAL_AFTER,4000,v=>fmt(v),()=>{
       totalNum.classList.add('pop');
-      //card.classList.add('sealed');
+      card.classList.add('sealed');
       burst(totalNum,'rgba(110,231,135,.95)',34);
       setTimeout(()=>{totalNum.classList.remove('pop')},1100);
     });
@@ -6297,7 +6296,7 @@ function saveTagsForDay(idx){
 function showDeposited(){
   hasDeposited=true;
   totalNum.textContent=fmt(TOTAL_AFTER);
-  //card.classList.add('sealed');
+  card.classList.add('sealed');
 }
 
 // ── Supabase read + init ──────────────────────────────────────────
