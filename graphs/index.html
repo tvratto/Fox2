@@ -14,7 +14,6 @@ html, body {
   font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   color: #fff;
   overflow: hidden;
-  overscroll-behavior: none;
 }
 .top-header {
   position: fixed; top: 0; left: 0; right: 0; z-index: 60;
@@ -36,7 +35,7 @@ html, body {
 .nav-tab.active { font-size: 24px; font-weight: 700; color: #fff; }
 .scroll-x {
   display: flex; flex-direction: row;
-  width: 100vw; height: 100svh;
+  width: 100vw; height: 100dvh;
   overflow-x: auto; overflow-y: hidden;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
@@ -44,7 +43,7 @@ html, body {
 }
 .scroll-x::-webkit-scrollbar { display: none; }
 .page {
-  flex: 0 0 100vw; width: 100vw; height: 100svh;
+  flex: 0 0 100vw; width: 100vw; height: 100dvh;
   display: flex; flex-direction: column;
   align-items: center; justify-content: flex-start;
   padding: 16px;
@@ -75,139 +74,6 @@ html, body {
 }
 .bar-btn:active { background: rgba(255,255,255,0.1); }
 .bar-btn svg { opacity: 0.5; }
-#update-banner {
-  display: none;
-  position: fixed; bottom: calc(56px + env(safe-area-inset-bottom) + 8px);
-  left: 50%; transform: translateX(-50%);
-  z-index: 150;
-  background: #1a1a1a;
-  border: 1px solid rgba(255,255,255,0.18);
-  border-radius: 24px;
-  padding: 10px 18px 10px 14px;
-  display: flex; align-items: center; gap: 10px;
-  cursor: pointer; -webkit-tap-highlight-color: transparent;
-  white-space: nowrap;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
-  opacity: 0; pointer-events: none;
-  transition: opacity 0.25s ease;
-}
-#update-banner.visible {
-  opacity: 1; pointer-events: auto;
-}
-#update-banner .ub-dot {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: #4ADE80; flex-shrink: 0;
-}
-#update-banner .ub-text {
-  font-size: 13px; font-weight: 600; color: #fff;
-}
-#update-banner .ub-dismiss {
-  margin-left: 4px; opacity: 0.4;
-  font-size: 16px; line-height: 1;
-  padding: 0 0 0 4px;
-}
-#info-modal-overlay {
-  display: none;
-  position: fixed; inset: 0; z-index: 200;
-  background: rgba(0,0,0,0.7);
-  align-items: flex-end; justify-content: center;
-  padding-bottom: calc(env(safe-area-inset-bottom) + 80px);
-}
-#info-modal-overlay.open { display: flex; }
-#info-modal {
-  background: #111;
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 20px;
-  padding: 22px 24px 20px;
-  width: min(340px, calc(100vw - 32px));
-  display: flex; flex-direction: column; gap: 12px;
-}
-#info-modal-title {
-  font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.4);
-  letter-spacing: .1em; text-transform: uppercase;
-}
-.info-row {
-  display: flex; justify-content: space-between; align-items: baseline;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-  padding-bottom: 9px; gap: 12px;
-}
-.info-row:last-of-type { border-bottom: none; padding-bottom: 0; }
-.info-label { font-size: 12px; color: rgba(255,255,255,0.38); font-weight: 600; letter-spacing:.04em; }
-.info-value { font-size: 13px; color: rgba(255,255,255,0.82); font-family: monospace; text-align:right; word-break:break-all; }
-
-.info-section-title {
-  font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.3);
-  letter-spacing: .1em; text-transform: uppercase;
-  margin-top: 4px;
-}
-.info-toggle-row {
-  display: flex; justify-content: space-between; align-items: center;
-  border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 9px;
-}
-.info-toggle-label { font-size: 13px; color: rgba(255,255,255,0.75); }
-.info-toggle-sub { font-size: 11px; color: rgba(255,255,255,0.35); margin-top:2px; }
-/* Toggle switch */
-.tog { position:relative; width:44px; height:26px; flex-shrink:0; }
-.tog input { opacity:0; width:0; height:0; }
-.tog-slider {
-  position:absolute; inset:0; border-radius:999px;
-  background:rgba(255,255,255,.15); cursor:pointer;
-  transition:background .2s;
-}
-.tog input:checked + .tog-slider { background:#4ADE80; }
-.tog-slider:before {
-  content:''; position:absolute;
-  width:20px; height:20px; border-radius:50%;
-  background:#fff; top:3px; left:3px;
-  transition:transform .2s;
-}
-.tog input:checked + .tog-slider:before { transform:translateX(18px); }
-
-
-
-#lb-board {
-  display:flex; flex-direction:column; gap:6px;
-  margin-top:4px;
-  max-height:260px; overflow-y:auto; scrollbar-width:none;
-}
-#lb-board::-webkit-scrollbar { display:none; }
-#lb-board-loading {
-  font-size:12px; color:rgba(255,255,255,.35); text-align:center; padding:8px 0;
-}
-.lb-row {
-  display:flex; align-items:center; gap:10px;
-  padding:8px 10px; border-radius:10px;
-  background:rgba(255,255,255,.05);
-}
-.lb-row.lb-me {
-  background:rgba(74,222,128,.08);
-  border:1px solid rgba(74,222,128,.25);
-}
-.lb-rank  { font-size:32px; width:40px; text-align:center; flex-shrink:0; line-height:1; }
-.lb-info  { flex:1; min-width:0; }
-.lb-name  { font-size:13px; font-weight:700; color:rgba(255,255,255,.85); }
-.lb-me .lb-name { color:#4ADE80; }
-.lb-zone-bar { display:flex; height:5px; border-radius:3px; overflow:hidden; margin-top:4px; }
-.lb-score { font-size:15px; font-weight:800; color:#fff; text-align:right; flex-shrink:0; }
-.lb-score-sub { font-size:10px; color:rgba(255,255,255,.35); text-align:right; }
-
-#squad-dot {
-  position:absolute;
-  top:-5px; left:-5px;
-  width:16px; height:16px;
-  border-radius:50%;
-  background:#e11d1d;
-  border:2px solid #0a0c14;
-  display:none;
-  pointer-events:none;
-}
-#bottom-info { position:relative; }
-#info-modal-close {
-  margin-top: 4px; width: 100%; padding: 9px;
-  border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
-  background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.5);
-  font: 600 13px -apple-system,sans-serif; cursor: pointer;
-}
 #no-data {
   display: none; text-align: center;
   color: rgba(255,255,255,0.4); font-size: 14px;
@@ -232,32 +98,57 @@ html, body {
 :root{color-scheme:dark;--gold:#FFD23C;--orange:#FB923C;--green:#6EE787;--cyan:#22D3EE;--violet:#A855F7}
 #particles{position:fixed;inset:0;z-index:10;pointer-events:none}
 .rp-screen{position:relative;z-index:1;width:100%;height:100%;padding:18px;display:flex;flex-direction:column;gap:14px;overflow:hidden;}
-.rp-control{display:flex;flex-direction:column;gap:12px}
+.topbar{display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:20px;font-weight:950;letter-spacing:-.06em}.logo span{color:var(--gold)}
+.rp-tabs{display:flex;gap:20px;font-size:13px;font-weight:700;color:rgba(255,255,255,.4)}
+.rp-tab.active{color:#fff;position:relative}.rp-tab.active:after{content:"";position:absolute;left:0;right:0;bottom:-8px;height:2px;background:var(--gold);border-radius:99px;box-shadow:0 0 14px rgba(255,210,60,.7)}
+.rp-control{display:grid;grid-template-columns:minmax(0,1fr) min(390px,44vw);gap:12px;align-items:center}
 .rail{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}.rail::-webkit-scrollbar{display:none}
 .day{flex:0 0 58px;height:60px;border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:rgba(255,255,255,.42);border:1px solid transparent;cursor:pointer}
 .day.active{background:linear-gradient(180deg,rgba(255,210,60,.18),rgba(255,210,60,.04));border-color:rgba(255,210,60,.72);color:#fff;box-shadow:0 0 28px rgba(255,210,60,.13)}
-.day .dow{font-size:clamp(10px,1.5dvh,13px);font-weight:800}.day .date{font-size:clamp(11px,1.65dvh,14px);font-weight:650}.dot{width:5px;height:5px;border-radius:50%;background:transparent}.day.today .dot{background:var(--gold);box-shadow:0 0 12px var(--gold)}
-#totalNum{color:var(--orange);font-size:17px;font-weight:950;letter-spacing:-.04em;font-variant-numeric:tabular-nums;text-shadow:0 0 20px rgba(251,146,60,.45);line-height:1}#totalNum.pop{animation:pop .52s cubic-bezier(.2,1.7,.35,1)}#fatNum{color:var(--violet)}
+.day .dow{font-size:11px;font-weight:800}.day .date{font-size:12px;font-weight:650}.dot{width:5px;height:5px;border-radius:50%;background:transparent}.day.today .dot{background:var(--gold);box-shadow:0 0 12px var(--gold)}
+.bank{height:78px;border-radius:24px;background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.035));border:1px solid rgba(255,255,255,.16);display:grid;grid-template-columns:1fr 1px 1fr;overflow:hidden;box-shadow:0 20px 80px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.08)}
+.cell{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0}
+.sep{background:rgba(255,255,255,.1);margin:14px 0}
+.label{font-size:9px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.48)}
+.num{font-size:30px;line-height:1;font-weight:950;letter-spacing:-.06em;font-variant-numeric:tabular-nums}
+#contribNum{color:var(--orange);text-shadow:0 0 20px rgba(251,146,60,.45)}#totalNum{color:#fff}#fatNum{color:var(--violet)}
+.sub{min-height:12px;font-size:10px;font-weight:800;color:rgba(255,255,255,.34)}
+#added{color:var(--green);opacity:0;transform:translateY(-2px);transition:.25s}#added.show{opacity:1;transform:translateY(0)}
+.glow{background:radial-gradient(circle,rgba(251,146,60,.32),transparent 70%);box-shadow:0 0 60px rgba(251,146,60,.25) inset}.totalGlow{background:radial-gradient(circle,rgba(110,231,135,.18),transparent 68%)}
 .card{flex:1;min-height:0;border-radius:28px;background:linear-gradient(135deg,rgba(255,255,255,.078),rgba(255,255,255,.028)),rgba(7,8,10,.9);border:1px solid rgba(255,255,255,.1);box-shadow:0 20px 80px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.06);overflow:hidden;display:flex;flex-direction:column}
-.cardbody{flex:1;min-height:0;display:flex;flex-direction:column;gap:0;padding:0 0 14px}
-.kicker{color:var(--gold);font-size:clamp(9px,1.2dvh,11px);letter-spacing:.16em;text-transform:uppercase;font-weight:950;margin-bottom:9px}
-#dateFull{font-size:clamp(22px,3.8dvh,32px);font-weight:950;letter-spacing:-.075em;line-height:.98;margin-bottom:0}
-.scoreLabel{font-size:clamp(11px,1.5dvh,14px);font-weight:700;color:rgba(255,255,255,.55);margin-bottom:6px}
-
-
-#dailyScore{font-size:clamp(38px,7dvh,62px);line-height:.9;color:var(--orange);font-weight:950;letter-spacing:-.085em;font-variant-numeric:tabular-nums;text-shadow:0 0 28px rgba(251,146,60,.18)}
+.cardbody{flex:1;min-height:0;display:flex;flex-direction:column;gap:10px;padding:22px 20px 14px}
+.kicker{color:var(--gold);font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:950;margin-bottom:9px}
+#dateFull{font-size:31px;font-weight:950;letter-spacing:-.075em;line-height:.98;margin-bottom:30px}
+.scoreLabel{font-size:13px;font-weight:700;color:rgba(255,255,255,.55);margin-bottom:6px}
+#dailyScore{font-size:58px;line-height:.9;color:var(--orange);font-weight:950;letter-spacing:-.085em;font-variant-numeric:tabular-nums;text-shadow:0 0 28px rgba(251,146,60,.18)}
 #verdict{margin-top:18px;font-size:15px;font-weight:850}.rule{width:44px;height:3px;border-radius:99px;background:var(--orange);margin:13px auto 12px;box-shadow:0 0 12px rgba(251,146,60,.35)}
 #subtext{max-width:122px;color:rgba(255,255,255,.48);font-size:12px;line-height:1.42;font-weight:520}
 .summaryTop{
   display:flex;
-  flex-direction:row;
-  align-items:flex-end;
-  justify-content:space-between;
-  gap:8px;
+  align-items:center;
+  justify-content:center;
+  gap:18px;
   padding:0 2px 4px;
 }
 
+.summaryLeft{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  text-align:center;
+  min-width:0;
+}
 
+#dateFull{
+  font-size:30px;
+  margin-bottom:14px;
+}
+
+#dailyScore{
+  font-size:64px;
+  line-height:.88;
+}
 
 #verdict{
   margin-top:0;
@@ -268,25 +159,6 @@ html, body {
   max-width:220px;
   font-size:13px;
 }
-
-.summaryRight{
-  display:flex;
-  flex-direction:column;
-  align-items:flex-end;
-  text-align:right;
-  flex-shrink:0;
-}
-
-.summaryLeft {
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  text-align:center;
-  padding:4px 0 4px;
-  pointer-events:none;
-  width:100%;
-}
-
 
 .graphSide{
   flex:1;
@@ -308,7 +180,7 @@ html, body {
   height:18px;
   padding:5px 6px 0;
   color:rgba(255,255,255,.32);
-  font-size:clamp(10px,1.4dvh,12px);
+  font-size:10px;
   font-weight:650;
 }
 .axis span{
@@ -323,19 +195,21 @@ html, body {
 .axis span:last-child{
   transform:translateX(-100%);
 }
-
-.tags{min-height:116px}.sectionLabel{padding:0 4px 10px;color:rgba(255,255,255,.37);font-size:clamp(10px,1.4dvh,12px);font-weight:950;letter-spacing:.14em;text-transform:uppercase}
-#tagsScroll{display:flex;gap:10px;overflow-x:auto;overflow-y:visible;scrollbar-width:none;padding:6px 2px 2px}#tagsScroll::-webkit-scrollbar{display:none}
-.tag{flex:0 0 122px;height:98px;touch-action:pan-x;user-select:none;-webkit-user-select:none;border-radius:24px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.055);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;position:relative;cursor:pointer}
-.tag.applied{}
-.tag.pressed{border-color:rgba(255,210,60,.72);background:linear-gradient(180deg,rgba(255,210,60,.13),rgba(255,255,255,.045))}
-.tagIcon{font-size:clamp(24px,3.7dvh,35px)}.tagName{font-size:clamp(13px,1.9dvh,17px);color:rgba(255,255,255,.62);white-space:nowrap}.note input::placeholder{color:rgba(255,255,255,.33)}
-
+#archiveStatus{color:var(--green);opacity:0;transform:translateY(2px);transition:.35s}#archiveStatus.show{opacity:1;transform:translateY(0)}
+.tags{min-height:116px}.sectionLabel{padding:0 4px 10px;color:rgba(255,255,255,.37);font-size:11px;font-weight:950;letter-spacing:.14em;text-transform:uppercase}
+#tagsScroll{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding:0 2px 2px}#tagsScroll::-webkit-scrollbar{display:none}
+.tag{flex:0 0 92px;height:74px;touch-action:none;user-select:none;-webkit-user-select:none;border-radius:18px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.055);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;position:relative;cursor:pointer}
+.tag.applied{border-color:rgba(255,210,60,.72);background:linear-gradient(180deg,rgba(255,210,60,.13),rgba(255,255,255,.045))}
+.tagIcon{font-size:24px}.tagName{font-size:12px;color:rgba(255,255,255,.62);white-space:nowrap}.check{position:absolute;right:7px;top:7px;width:17px;height:17px;border-radius:50%;background:var(--gold);color:#111;font-size:10px;font-weight:950;display:flex;align-items:center;justify-content:center}
+.note{height:56px;border-radius:19px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.048);display:flex;align-items:center;gap:12px;padding:0 12px}
+.note input{flex:1;background:transparent;border:none;outline:none;color:rgba(255,255,255,.75);font:inherit;font-size:14px}.note input::placeholder{color:rgba(255,255,255,.33)}
+.note button{border:none;height:38px;min-width:82px;border-radius:999px;background:linear-gradient(180deg,#D6A72A,#9B6C16);color:#111;font-size:13px;font-weight:900}
+.streaming #contribCell,.streaming #totalCell{box-shadow:0 0 70px rgba(255,132,0,.22) inset,0 0 32px rgba(255,132,0,.18)}
 .pulse{animation:pulse .85s ease-in-out infinite alternate}@keyframes pulse{from{filter:drop-shadow(0 0 4px rgba(251,146,60,.2));transform:scale(1)}to{filter:drop-shadow(0 0 22px rgba(251,146,60,.55));transform:scale(1.035)}}
 .pop{animation:pop .52s cubic-bezier(.2,1.7,.35,1)}@keyframes pop{0%{transform:scale(1)}42%{transform:scale(1.12)}100%{transform:scale(1)}}
-.sealed #graph{opacity:1;filter:none}.sealed #dailyScore{opacity:1}
-@media(max-width:760px){.rp-screen{padding:14px 0}.rp-control{padding:0 12px}.rail{width:100%}.card{border-radius:24px;border-left:0;border-right:0}.cardbody{padding:0 18px 12px}.summaryTop{flex-direction:row;align-items:flex-end;justify-content:space-between}#dateFull{margin-bottom:0}#dailyScore{}.graphSide{width:100%}#graphWrap{min-height:220px}.tags{padding:0 18px}.tag{flex-basis:112px}}
-@media(max-height:720px){.tags{min-height:82px}.tag{height:74px}#graphWrap{min-height:130px}}
+.sealed #graph{opacity:.72;filter:saturate(.74)}.sealed #dailyScore{opacity:.58}
+@media(max-width:760px){.rp-screen{padding:14px 0}.topbar{padding:0 20px}.logo{display:none}.rp-tabs .rp-tab:nth-child(n+4){display:none}.rp-control{display:flex;flex-direction:column;padding:0 12px}.rail{order:2;width:100%}.bank{order:1;width:100%}.card{border-radius:24px;border-left:0;border-right:0}.cardbody{padding:18px 18px 12px}.summaryTop{flex-direction:column;align-items:flex-start;gap:8px}#dateFull{font-size:27px;margin-bottom:12px}#dailyScore{font-size:54px}.graphSide{width:100%}#graphWrap{min-height:220px}.tags{padding:0 18px}.note{margin:0 18px}.tag{flex-basis:84px}}
+@media(max-height:720px){.note{display:none}.tags{min-height:82px}.tag{height:56px}#graphWrap{min-height:130px}}
 
 /* Compact mode for short phones like iPhone SE */
 @media(max-height:700px){
@@ -345,10 +219,22 @@ html, body {
     padding-bottom:8px;
   }
 
-  
-  
+  .topbar{
+    min-height:28px;
+  }
+
+  .rp-tabs{
+    font-size:12px;
+    gap:14px;
+  }
+
   .rp-control{
     gap:7px;
+  }
+
+  .bank{
+    height:62px;
+    border-radius:19px;
   }
 
   .label{
@@ -372,9 +258,11 @@ html, body {
   }
 
   .day .dow{
+    font-size:9px;
   }
 
   .day .date{
+    font-size:10px;
   }
 
   .dot{
@@ -387,35 +275,38 @@ html, body {
   }
 
   .cardbody{
-    padding:4px 16px 8px;
-    gap:0;
+    padding:12px 16px 8px;
+    gap:6px;
   }
 
   .summaryTop{
     flex-direction:row;
     align-items:flex-end;
-    justify-content:space-between;
     gap:10px;
     padding-bottom:0;
   }
 
   .summaryLeft{
-    min-width:0;
+    min-width:92px;
   }
 
   .kicker{
+    font-size:8px;
     margin-bottom:5px;
   }
 
   #dateFull{
-    margin-bottom:0;
+    font-size:21px;
+    margin-bottom:8px;
   }
 
   .scoreLabel{
+    font-size:10px;
     margin-bottom:2px;
   }
 
   #dailyScore{
+    font-size:39px;
   }
 
   #verdict{
@@ -445,6 +336,7 @@ html, body {
   }
 
   .axis{
+    font-size:9px;
     padding-top:2px;
   }
 
@@ -455,23 +347,35 @@ html, body {
 
   .sectionLabel{
     padding-bottom:5px;
+    font-size:9px;
   }
 
   .tag{
-    height:64px;
-    flex-basis:88px;
-    border-radius:19px;
-    gap:4px;
+    height:48px;
+    flex-basis:66px;
+    border-radius:14px;
+    gap:3px;
   }
 
   .tagIcon{
+    font-size:18px;
   }
 
   .tagName{
+    font-size:9px;
   }
 
+  .check{
+    width:13px;
+    height:13px;
+    font-size:8px;
+    right:5px;
+    top:5px;
+  }
 
-
+  .note{
+    display:none;
+  }
 }
 
 @media(max-width:380px) and (max-height:700px){
@@ -479,10 +383,21 @@ html, body {
     gap:7px;
   }
 
-  
-  
+  .topbar{
+    padding:0 14px;
+  }
+
+  .rp-tabs{
+    font-size:11px;
+    gap:11px;
+  }
+
   .rp-control{
     padding:0 8px;
+  }
+
+  .bank{
+    height:58px;
   }
 
   .num{
@@ -494,9 +409,11 @@ html, body {
   }
 
   #dateFull{
+    font-size:20px;
   }
 
   #dailyScore{
+    font-size:36px;
   }
 
   #graphWrap{
@@ -509,14 +426,16 @@ html, body {
   }
 
   .tag{
-    height:58px;
-    flex-basis:82px;
+    height:44px;
+    flex-basis:62px;
   }
 
   .tagIcon{
+    font-size:17px;
   }
 
   .tagName{
+    font-size:8px;
   }
 }
 
@@ -531,6 +450,10 @@ html, body {
 
   .rp-control{
     gap:9px;
+  }
+
+  .bank{
+    height:70px;
   }
 
   .day{
@@ -548,8 +471,8 @@ html, body {
     min-height:0;
     display:flex;
     flex-direction:column;
-    gap:0;
-    padding:0 16px 9px;
+    gap:8px;
+    padding:16px 16px 9px;
   }
 
   .summaryTop{
@@ -561,20 +484,23 @@ html, body {
   }
 
   .summaryLeft{
-    min-width:0;
+    min-width:108px;
     align-items:center;
     text-align:center;
   }
 
   #dateFull{
-    margin-bottom:0;
+    font-size:25px;
+    margin-bottom:10px;
   }
 
   .scoreLabel{
+    font-size:11px;
     margin-bottom:3px;
   }
 
   #dailyScore{
+    font-size:48px;
   }
 
   #verdict{
@@ -617,16 +543,23 @@ html, body {
   }
 
   .tag{
-    height:77px;
-    flex-basis:98px;
+    height:58px;
+    flex-basis:74px;
   }
 
   .tagIcon{
+    font-size:20px;
   }
 
   .tagName{
+    font-size:9px;
   }
 
+  .note{
+    height:48px;
+    margin:0 14px;
+    flex-shrink:0;
+  }
 }
 
 /* Extra room for taller Pro/Plus phones */
@@ -636,20 +569,27 @@ html, body {
     max-height:34dvh;
   }
 
-
+  .cardbody{
+    padding-top:18px;
+  }
 
   .tags{
     min-height:92px;
   }
 
   .tag{
-    height:85px;
+    height:64px;
   }
 }
 
 
 /* Larger score/date bars + tighter autoscaled graph */
 @media(max-width:760px) and (min-height:701px){
+  .bank{
+    height:80px;
+    border-radius:24px;
+  }
+
   .label{
     font-size:9px;
   }
@@ -668,10 +608,12 @@ html, body {
   }
 
   #dateFull{
-    margin-bottom:0;
+    font-size:30px;
+    margin-bottom:12px;
   }
 
   #dailyScore{
+    font-size:56px;
   }
 
   #verdict{
@@ -690,14 +632,20 @@ html, body {
 }
 
 @media(max-width:760px) and (min-height:820px){
+  .bank{
+    height:84px;
+  }
+
   .day{
     height:60px;
   }
 
   #dateFull{
+    font-size:32px;
   }
 
   #dailyScore{
+    font-size:60px;
   }
 
   #graphWrap{
@@ -707,6 +655,10 @@ html, body {
 }
 
 @media(max-width:380px) and (max-height:700px){
+  .bank{
+    height:64px;
+  }
+
   .num{
     font-size:20px;
   }
@@ -716,9 +668,11 @@ html, body {
   }
 
   #dateFull{
+    font-size:22px;
   }
 
   #dailyScore{
+    font-size:40px;
   }
 
   #graphWrap{
@@ -750,7 +704,6 @@ html, body {
   border:1px solid rgba(255,255,255,.08);
   backdrop-filter:blur(6px);
   opacity:.72;
-  z-index:1;
 }
 
 .event-hint{
@@ -774,9 +727,9 @@ html, body {
   position:absolute;
   bottom:13px;
   transform:translateX(-50%);
-  height:37px;
-  width:37px;
-  min-width:37px;
+  height:28px;
+  width:28px;
+  min-width:28px;
   padding:0;
   border-radius:999px;
   display:flex;
@@ -786,7 +739,7 @@ html, body {
   background:linear-gradient(180deg,rgba(255,210,60,.22),rgba(255,255,255,.08));
   border:1px solid rgba(255,210,60,.58);
   box-shadow:0 0 18px rgba(255,210,60,.18), inset 0 1px 0 rgba(255,255,255,.12);
-  font-size:21px;
+  font-size:16px;
   cursor:grab;
   user-select:none;
   -webkit-user-select:none;
@@ -797,58 +750,6 @@ html, body {
 .placed-tag:active{
   cursor:grabbing;
 }
-.note-popup{
-  position:fixed;
-  z-index:200;
-  background:rgba(18,20,30,0.97);
-  border:1px solid rgba(255,210,60,.45);
-  border-radius:18px;
-  padding:14px 16px 12px;
-  box-shadow:0 8px 40px rgba(0,0,0,.7);
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  min-width:220px;
-  max-width:300px;
-}
-.note-popup-time{
-  font-size:11px;
-  font-weight:750;
-  letter-spacing:.08em;
-  color:rgba(255,210,60,.8);
-  text-transform:uppercase;
-}
-.note-popup textarea{
-  background:rgba(255,255,255,.07);
-  border:1px solid rgba(255,255,255,.15);
-  border-radius:10px;
-  color:rgba(255,255,255,.85);
-  font:inherit;
-  font-size:13px;
-  padding:8px 10px;
-  resize:none;
-  outline:none;
-  min-height:64px;
-}
-.note-popup textarea::placeholder{color:rgba(255,255,255,.3);}
-.note-popup-btns{display:flex;gap:8px;justify-content:flex-end;}
-.note-popup-btns button{
-  border:none;
-  border-radius:999px;
-  font:inherit;
-  font-size:13px;
-  font-weight:800;
-  padding:6px 18px;
-  cursor:pointer;
-}
-.note-popup-save{background:linear-gradient(180deg,#D6A72A,#9B6C16);color:#111;}
-.note-popup-cancel{background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);}
-
-.placed-tag.is-note{
-  background:linear-gradient(180deg,rgba(255,210,60,.28),rgba(255,255,255,.10));
-  border-color:rgba(255,210,60,.8);
-}
-
 
 .placed-time{
   display:none;
@@ -929,9 +830,9 @@ html, body {
 
   .placed-tag{
     bottom:9px;
-    height:32px;
-    min-width:32px;
-    font-size:19px;
+    height:24px;
+    min-width:24px;
+    font-size:14px;
     padding:0 6px;
   }
 
@@ -948,6 +849,7 @@ html, body {
 
 /* Results page embedded overrides */
 #results-page { padding: 0 !important; overflow: hidden !important; height: 100%; width: 100%; }
+.rp-screen .topbar { display: none !important; }
 .rp-screen {
   padding-top: 8px !important;
   padding-bottom: 8px !important;
@@ -962,585 +864,6 @@ html, body {
 /* Hide particles canvas when not on results page */
 #particles { transition: opacity 0.2s; }
 
-
-.graph-day-label{
-  position:absolute;
-  top:6px;
-  z-index:5;
-  color:var(--gold);
-  font-size:10px;
-  letter-spacing:.16em;
-  text-transform:uppercase;
-  font-weight:950;
-  pointer-events:none;
-  opacity:.78;
-}
-#prevGraphDayLabel{
-  left:4.167%;
-  transform:translateX(-50%);
-}
-#nextGraphDayLabel{
-  left:95.833%;
-  transform:translateX(-50%);
-}
-
-
-/* Momentum wheel-style tag tray */
-#tagsScroll.mouse-swiping{cursor:grabbing;}
-#tagsScroll{cursor:grab;}
-#tagsScroll{
-  scroll-behavior:auto;
-  -webkit-overflow-scrolling:touch;
-  overscroll-behavior-x:contain;
-  mask-image:linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%);
-  -webkit-mask-image:linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%);
-}
-
-.tag{
-  transition:transform .18s ease, opacity .18s ease, background .15s ease, border-color .15s ease;
-}
-
-.tag.wheel-side{
-  opacity:.58;
-  transform:scale(.92);
-}
-
-.tag.wheel-center{
-  opacity:1;
-  transform:scale(1.04);
-}
-
-
-
-
-/* --- Desktop / large-screen containment, centered app shell --- */
-@media (hover:hover) and (pointer:fine) and (min-width: 800px){
-  html, body{
-    width:100%;
-    height:100%;
-    overflow:hidden;
-    background:
-      radial-gradient(circle at 50% 0%, rgba(255,210,60,.07), transparent 34%),
-      #000;
-  }
-
-  .top-header,
-  .bottom-bar{
-    position:fixed;
-    left:calc((100vw - min(430px, 100vw)) / 2);
-    right:auto;
-    width:min(430px, 100vw);
-    transform:none;
-  }
-
-  .scroll-x{
-    position:relative;
-    width:min(430px, 100vw);
-    height:100svh;
-    margin-left:auto;
-    margin-right:auto;
-    transform:none;
-    left:auto;
-    right:auto;
-    border-radius:28px;
-    box-shadow:
-      0 0 0 1px rgba(255,255,255,.06),
-      0 18px 60px rgba(0,0,0,.55);
-    overflow-x:auto;
-    overflow-y:hidden;
-  }
-
-  .page{
-    flex:0 0 min(430px, 100vw);
-    width:min(430px, 100vw);
-  }
-
-  .rp-screen{
-    width:100%;
-  }
-
-  #graphWrap{
-    width:100%;
-  }
-}
-
-
-/* --- Desktop stacking + spacing fix --- */
-@media (hover:hover) and (pointer:fine) and (min-width: 800px){
-  .top-header{
-    z-index:120;
-  }
-
-  .scroll-x{
-    padding-top:0;
-  }
-
-  .page{
-    padding-top:calc(104px + env(safe-area-inset-top));
-  }
-
-  #results-page{
-    height:calc(100svh - 104px - 56px) !important;
-  }
-
-  .rp-screen{
-    height:100%;
-  }
-}
-
-
-/* Visual repeat markers for infinite tag wheel */
-.tag-repeat-marker{
-  flex:0 0 18px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  opacity:.28;
-  pointer-events:none;
-}
-
-.tag-repeat-marker::before{
-  content:'';
-  width:2px;
-  height:34px;
-  border-radius:2px;
-  background:linear-gradient(to bottom, transparent, rgba(255,255,255,.9), transparent);
-}
-
-
-/* Desktop: keep header/date bar above the app content without hiding sections */
-@media (hover:hover) and (pointer:fine) and (min-width:800px){
-  .top-header{
-    z-index:300 !important;
-  }
-
-  .scroll-x{
-    padding-top:88px;
-    height:100svh;
-    box-sizing:border-box;
-  }
-
-  .page{
-    height:calc(100svh - 88px);
-    padding-top:0 !important;
-  }
-
-  #results-page{
-    height:100% !important;
-  }
-}
-
-
-
-/* Desktop: reserve enough vertical room for graph axis */
-@media (hover:hover) and (pointer:fine) and (min-width:800px){
-  .cardbody{
-    padding-bottom:26px !important;
-  }
-
-  .axis{
-    height:24px !important;
-    flex-shrink:0 !important;
-    margin-top:2px !important;
-  }
-
-  .graphSide{
-    min-height:0 !important;
-    overflow:visible !important;
-  }
-
-  #graphWrap{
-    min-height:150px !important;
-  }
-}
-
-
-/* Graph day-swipe interaction */
-#graphWrap{
-  touch-action:pan-y;
-  cursor:grab;
-}
-#graphWrap.graph-swiping{
-  cursor:grabbing;
-}
-
-
-/* Swipe the whole results card block */
-.card.card-dragging{
-  transition:none;
-}
-
-
-/* Mobile/touch day swipe: card owns horizontal movement, page keeps vertical scroll */
-.card,
-.card *{
-  -webkit-user-select:none;
-  user-select:none;
-}
-
-.card{
-  touch-action:pan-y;
-}
-
-.card.card-dragging{
-  touch-action:none;
-}
-
-
-/* Stronger mobile graph-card day swipe */
-.card{
-  touch-action:pan-y;
-  overscroll-behavior:contain;
-}
-.card.card-dragging{
-  transition:none !important;
-}
-
-
-/* Real 3-panel pager for day graph card */
-#cardViewport{
-  position:relative;
-  overflow:hidden;
-  border-radius:28px;
-  flex:1;
-  min-height:0;
-}
-
-#cardTrack{
-  height:100%;
-  display:flex;
-  transform:translateX(-100%);
-  transition:transform .26s cubic-bezier(.2,1,.25,1);
-  will-change:transform;
-}
-
-#cardTrack.dragging{
-  transition:none;
-}
-
-.dayPanel{
-  flex:0 0 100%;
-  width:100%;
-  height:100%;
-  min-width:0;
-}
-
-.dayPanel .card{
-  height:100%;
-}
-
-.ghostPanel{
-}
-
-@media(max-width:760px){
-  #cardViewport{
-    border-radius:24px;
-  }
-}
-
-
-
-
-.ghostGraphCanvas{display:block;width:100%;height:100%;}
-
-/* Stable rendered pager panels */
-.ghostRenderedCard{
-  width:100%;
-  height:100%;
-}
-
-
-
-  inset:0;
-  display:block;
-  width:100%;
-  height:100%;
-}
-
-.ghostPrevDayLabel{
-  left:4.167%;
-  transform:translateX(-50%);
-}
-
-.ghostNextDayLabel{
-  left:95.833%;
-  transform:translateX(-50%);
-}
-
-
-/* --- Unified real-panel day pager: side panels match the live panel --- */
-#cardViewport{
-  position:relative;
-  overflow:hidden;
-  flex:1 1 auto;
-  min-height:0;
-  border-radius:28px;
-}
-
-#cardTrack{
-  height:100%;
-  width:100%;
-  display:flex;
-  transform:translateX(-100%);
-  transition:transform .26s cubic-bezier(.2,1,.25,1);
-  will-change:transform;
-}
-
-#cardTrack.dragging{
-  transition:none;
-}
-
-.dayPanel{
-  flex:0 0 100%;
-  width:100%;
-  min-width:100%;
-  height:100%;
-  min-height:0;
-  display:flex;
-  flex-direction:column;
-}
-
-.dayPanel .card{
-  width:100%;
-  height:100%;
-  flex:1 1 auto;
-  min-height:0;
-}
-
-.ghostPanel,
-.ghostRenderedCard{
-  opacity:1 !important;
-}
-
-.dayPanel .kicker{
-  color:var(--gold);
-  font-size:clamp(9px,1.2dvh,11px);
-  letter-spacing:.16em;
-  text-transform:uppercase;
-  font-weight:950;
-  margin-bottom:9px;
-}
-
-.ghostDateFull{
-  font-size:clamp(22px,3.8dvh,32px);
-  font-weight:950;
-  letter-spacing:-.075em;
-  line-height:.98;
-  margin-bottom:0;
-}
-
-.ghostDailyScore{
-  font-size:clamp(38px,7dvh,62px);
-  line-height:.9;
-  color:var(--orange);
-  font-weight:950;
-  letter-spacing:-.085em;
-  font-variant-numeric:tabular-nums;
-  text-shadow:0 0 28px rgba(251,146,60,.18);
-}
-
-.ghostRenderedCard .scoreLabel{
-  font-size:clamp(11px,1.5dvh,14px);
-}
-
-.ghostRenderedCard .summaryTop{
-  display:flex;
-  flex-direction:row;
-  align-items:flex-end;
-  justify-content:space-between;
-  gap:8px;
-  padding:0 2px 4px;
-}
-
-
-
-.ghostGraphWrap{
-  position:relative;
-  flex:1;
-  min-height:260px;
-  width:100%;
-}
-
-.ghostGraphCanvas{
-  position:absolute;
-  inset:0;
-  display:block;
-  width:100%;
-  height:100%;
-}
-
-.ghostPrevDayLabel{
-  left:4.167%;
-  transform:translateX(-50%);
-}
-
-.ghostNextDayLabel{
-  left:95.833%;
-  transform:translateX(-50%);
-}
-
-@media(max-width:760px){
-  #cardViewport{ border-radius:24px; }
-
-  .ghostRenderedCard{
-    border-radius:24px;
-    border-left:0;
-    border-right:0;
-  }
-
-  .ghostDateFull{
-    margin-bottom:0;
-  }
-
-  .ghostGraphWrap{
-    min-height:220px;
-  }
-}
-
-@media(max-width:760px) and (min-height:701px){
-  .ghostDateFull{
-    margin-bottom:0;
-  }
-
-  .ghostGraphWrap{
-    flex:1 1 auto;
-    min-height:clamp(135px, 24dvh, 210px) !important;
-    max-height:28dvh;
-    width:100%;
-  }
-}
-
-@media(max-width:760px) and (min-height:820px){
-  .ghostGraphWrap{
-    min-height:clamp(150px, 25dvh, 230px) !important;
-    max-height:30dvh;
-  }
-}
-
-@media(max-height:700px){
-  .ghostRenderedCard .kicker{
-    margin-bottom:5px;
-  }
-
-  .ghostDateFull{
-    margin-bottom:0;
-  }
-
-  .ghostGraphWrap{
-    min-height:118px !important;
-    flex:1 1 auto;
-  }
-}
-
-@media(max-width:380px) and (max-height:700px){
-  .ghostGraphWrap{
-    min-height:104px !important;
-  }
-}
-
-
-/* --- Pager side-panel axis + annotation parity --- */
-.ghostRenderedCard .axis{
-  position:relative;
-  height:18px;
-  padding:5px 6px 0;
-  color:rgba(255,255,255,.32);
-  font-size:clamp(10px,1.4dvh,12px);
-  font-weight:650;
-  flex-shrink:0;
-}
-
-.ghostRenderedCard .axis span{
-  position:absolute;
-  top:5px;
-  transform:translateX(-50%);
-  white-space:nowrap;
-}
-
-.ghostRenderedCard .axis span:first-child{
-  transform:translateX(0);
-}
-
-.ghostRenderedCard .axis span:last-child{
-  transform:translateX(-100%);
-}
-
-.ghostEventLayer{
-  position:absolute;
-  inset:0;
-  z-index:4;
-  pointer-events:none;
-}
-
-.ghostEventLayer .event-rail{
-  position:absolute;
-  left:8px;
-  right:8px;
-  bottom:10px;
-  height:34px;
-  border-radius:999px;
-  background:rgba(0,0,0,.22);
-  border:1px solid rgba(255,255,255,.08);
-  backdrop-filter:blur(6px);
-  opacity:.72;
-  z-index:1;
-}
-
-.ghostEventLayer .event-hint{
-  position:absolute;
-  left:50%;
-  bottom:19px;
-  transform:translateX(-50%);
-  color:rgba(255,255,255,.36);
-  font-size:11px;
-  font-weight:750;
-  letter-spacing:.02em;
-  pointer-events:none;
-}
-
-.ghostEventLayer.has-events .event-hint{
-  opacity:0;
-}
-
-.ghostPlacedTag{
-  position:absolute;
-  bottom:13px;
-  transform:translateX(-50%);
-  height:37px;
-  width:37px;
-  min-width:37px;
-  padding:0;
-  border-radius:999px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:linear-gradient(180deg,rgba(255,210,60,.22),rgba(255,255,255,.08));
-  border:1px solid rgba(255,210,60,.58);
-  box-shadow:0 0 18px rgba(255,210,60,.18), inset 0 1px 0 rgba(255,255,255,.12);
-  font-size:21px;
-  z-index:6;
-}
-
-@media(max-height:700px){
-  .ghostEventLayer .event-rail{
-    height:28px;
-    bottom:7px;
-  }
-
-  .ghostEventLayer .event-hint{
-    bottom:14px;
-    font-size:9px;
-  }
-
-  .ghostPlacedTag{
-    bottom:9px;
-    height:32px;
-    width:32px;
-    min-width:32px;
-    font-size:19px;
-  }
-}
-
 </style>
 </head>
 <body>
@@ -1551,9 +874,8 @@ html, body {
     <button class="nav-tab" data-page="1">Fuel</button>
     <button class="nav-tab" data-page="2">Daily Scores</button>
     <button class="nav-tab" data-page="3">Insights</button>
-    <span id="totalNum" style="margin-left:auto;align-self:center;">12,480</span>
   </div>
-  <div id="debug-bar" style="display:none;">v1.1</div>
+  <div id="debug-bar" style="font-size:10px;color:rgba(255,255,255,0.25);font-family:monospace;padding:2px 20px 6px;letter-spacing:0.05em;">v1.1</div>
 </div>
 
 <div class="scroll-x" id="scroller">
@@ -1563,35 +885,46 @@ html, body {
 <div id="dragGhost"><span id="ghostIcon"></span><span class="ghostName" id="ghostName"></span></div>
 <div id="timeCursor"><div class="cursorLine" id="cursorLine"></div><div class="cursorLabel" id="cursorLabel">12:00 PM</div></div>
 <div class="rp-screen">
+  <header class="topbar">
+    <div style="display:flex;align-items:center;gap:22px;min-width:0">
+      <div class="logo">FOX<span>2</span></div>
+      <nav class="rp-tabs"><div class="rp-tab active">Results</div><div class="rp-tab">Fuel</div><div class="rp-tab">Daily Scores</div><div class="rp-tab">Insights</div></nav>
+    </div>
+    <div style="display:flex;gap:8px"><button style="height:34px;width:34px;border-radius:999px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.045);color:white">↥</button><button style="height:34px;border-radius:999px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.045);color:white;padding:0 13px;font-weight:700">ⓘ Guide</button></div>
+  </header>
 
   <section class="rp-control">
     <div class="rail" id="rail"></div>
+    <div class="bank" id="bank" title="Tap to replay deposit animation">
+      <div class="cell" id="contribCell"><div class="label">Contribution</div><div class="num" id="contribNum">+140</div><div class="sub" id="contribSub">tap to deposit</div></div>
+      <div class="sep"></div>
+      <div class="cell" id="totalCell"><div class="label">Total</div><div class="num" id="totalNum">12,480</div><div class="sub" id="added">+0 today</div><div class="sub" id="archiveStatus" style="font-size:9px;letter-spacing:.04em;">Archived ✓</div></div>
+    </div>
   </section>
 
   <main class="card" id="card">
     <div class="cardbody">
 
-      <section class="graphSide">
-        <div class="summaryLeft" id="summaryLeft">
+      <section class="summaryTop">
+        <div class="summaryLeft">
           <div class="kicker" id="todayLabel">Today</div>
-          <div style="display:flex;align-items:flex-end;gap:18px;">
-            <div id="dateFull">May 26</div>
-            <div style="display:flex;flex-direction:column;align-items:flex-start;">
-              <div class="scoreLabel">Daily Score</div>
-              <div id="dailyScore">140</div>
-            </div>
-          </div>
+          <div id="dateFull">May 26</div>
+          <div class="scoreLabel">Daily Score</div>
+          <div id="dailyScore">140</div>
         </div>
-        <div id="graphWrap"><canvas id="graph"></canvas><div id="prevGraphDayLabel" class="graph-day-label"></div><div id="nextGraphDayLabel" class="graph-day-label"></div><div id="day-graph-popup" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;"><div id="day-graph-popup-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div><div id="day-graph-popup-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div></div><div id="dot-popup" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;"><div id="dot-popup-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div><div id="dot-popup-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div></div><div id="eventLayer"><div class="event-rail"></div><div class="event-hint">Drag tags here</div></div>
-        </div>
-        <div class="axis"><span style="left:8.333%;">12a</span><span style="left:29.167%;">6a</span><span style="left:50%;">12p</span><span style="left:70.833%;">6p</span><span style="left:91.667%;">12a</span></div>
+      </section>
+
+      <section class="graphSide">
+        <div id="graphWrap"><canvas id="graph"></canvas><div id="eventLayer"><div class="event-rail"></div><div class="event-hint">Drag tags here</div></div></div>
+        <div class="axis"><span style="left:0%;">9:36p</span><span style="left:8.333%;">12a</span><span style="left:29.167%;">6a</span><span style="left:50%;">12p</span><span style="left:70.833%;">6p</span><span style="left:91.667%;">12a</span><span style="left:100%;">2:24a</span></div>
       </section>
 
     </div>
   </main>
 
-  <section class="tags"><div id="tagsScroll"></div></section>
+  <section class="tags"><div class="sectionLabel" id="tagsLabel">Tags for today</div><div id="tagsScroll"></div></section>
 
+  <section class="note"><span style="opacity:.35">✎</span><input id="noteInput" placeholder="Add a note..." /><button id="noteBtn">Save</button></section>
 </div>
 </div>
   </div>
@@ -1619,15 +952,6 @@ html, body {
     </svg>
     Share
   </button>
-  <button class="bar-btn" id="bottom-info" onclick="openInfoModal()">
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-      <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.8"/>
-      <path d="M8 7v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-      <circle cx="8" cy="4.5" r="0.9" fill="currentColor"/>
-    </svg>
-    Squad
-    <span id="squad-dot"></span>
-  </button>
   <a class="bar-btn" href="https://tvratto.github.io/Fox2/" target="_blank">
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
       <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.8"/>
@@ -1636,28 +960,6 @@ html, body {
     </svg>
     Guide
   </a>
-</div>
-
-<div id="info-modal-overlay" onclick="if(event.target===this)closeInfoModal()">
-  <div id="info-modal">
-    <div id="info-modal-title">Squad Info</div>
-    <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
-    <div class="info-row"><span class="info-label">Clinic</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.7 · 2026-05-29 slot-utc</span></div>
-    <div class="info-section-title">Leaderboard</div>
-    <div class="info-toggle-row">
-      <div>
-        <div class="info-toggle-label">Join leaderboard</div>
-        <div class="info-toggle-sub">Daily scores · your scores vs the community</div>
-        <div class="info-toggle-sub" style="margin-top:4px;color:rgba(255,255,255,.22);">Only people who opt in are included</div>
-      </div>
-      <label class="tog"><input type="checkbox" id="lb-optin"><span class="tog-slider"></span></label>
-    </div>
-    <div id="lb-board" style="display:none;">
-      <div id="lb-board-loading">Loading leaderboard…</div>
-    </div>
-    <button id="info-modal-close" onclick="closeInfoModal()">Close</button>
-  </div>
 </div>
 
 <div id="loading">
@@ -1681,57 +983,46 @@ var dParam    = params.get('d') || '';
 var aParam    = params.get('a') || '';
 var sParam    = params.get('s') || '';
 
-// ─── Debug bar + info modal ────────────────────────────────────────────────────
+// ─── Debug bar ────────────────────────────────────────────────────
 (function() {
   var id = params.get('id') || '—';
   var v  = params.get('v')  || '—';
   var p  = params.get('p')  || '—';
   var c  = params.get('c')  || '—';
-  var src = params.get('src') || 'qr';
-  var days = dParam ? dParam.split('|').length : 0;
   var el = document.getElementById('debug-bar');
-  if (el) el.textContent = 'id:' + id + '  v:' + v + '  patient:' + p + '  clinic:' + c + '  [web build 0040 pager-fix]';
-  // Populate info modal
-  var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
-  setVal('info-device-id', id);
-  setVal('info-clinic-id', c);
-  setVal('info-version', 'v3.7 · 2026-05-29 slot-utc' + (v !== '—' ? ' · fw:' + v : ''));
-  setVal('info-payload', src.toUpperCase());
-  setVal('info-days', days ? days + ' days' : '—');
+  if (el) el.textContent = 'id:' + id + '  v:' + v + '  patient:' + p + '  clinic:' + c + '  [web v1.3]';
 })();
 
 // Count day blocks first so windowStart can span the full payload
 var numDaysInPayload = dParam ? dParam.split('|').length : 21;
 
-// tz= param: JS-convention minutes west of UTC (e.g. UTC-5 = 300, UTC+7 = -420).
-// The device RTC is set to local time (utcEpoch - tzOffset*60), so all device
-// epochs are local-time-as-UTC. We must apply the same offset when computing
-// windowStart so day boundaries match.
-var tzParam = params.get('tz');
-var tzOffsetMin = (tzParam !== null && tzParam !== '') ? parseInt(tzParam, 10) : -(new Date().getTimezoneOffset());
-
-// Derive windowStart.
-// The device computes its Saturday-anchor using local midnight (RTC = local time).
-// We replicate that by shifting 'now' by the device timezone offset before
-// computing the UTC-style Saturday anchor.
-var wsParam = params.get('ws') || '';
+// Derive windowStart: window ending on the most recent Saturday, spanning all payload days
 var windowStart = (function() {
-  if (wsParam) {
-    var wsDay = parseInt(wsParam, 36);
-    if (!isNaN(wsDay) && wsDay > 0) {
-      return wsDay * 86400;
-    }
+  var tzParam = params.get('tz');
+  var daysToSat;
+  var satMidnightMs;
+
+  if (tzParam !== null) {
+    var tzOffsetMin = parseInt(tzParam, 10);
+    var nowUtcMs = Date.now();
+    var localMs  = nowUtcMs - tzOffsetMin * 60000;
+    var localDate = new Date(localMs);
+    var dow = localDate.getUTCDay();
+    daysToSat = (6 - dow + 7) % 7;
+    var localMidnightMs = localMs - (localDate.getUTCHours() * 3600000
+                                   + localDate.getUTCMinutes() * 60000
+                                   + localDate.getUTCSeconds() * 1000
+                                   + localDate.getUTCMilliseconds());
+    satMidnightMs = localMidnightMs + daysToSat * 86400000;
+  } else {
+    var now = new Date();
+    var dow = now.getDay();
+    daysToSat = (6 - dow + 7) % 7;
+    var sat = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysToSat);
+    satMidnightMs = sat.getTime();
   }
 
-  // Shift UTC now by tzOffsetMin to get the device's local "now" in UTC terms.
-  // tzOffsetMin is minutes WEST, so local time = UTC - tzOffsetMin*60s.
-  var nowUtcMs = Date.now() - tzOffsetMin * 60 * 1000;
-  var nowLocal  = new Date(nowUtcMs);
-  var dow = nowLocal.getUTCDay(); // day-of-week in shifted (local) time
-  var daysToSat = (6 - dow + 7) % 7;
-  var weekEndMs = Date.UTC(nowLocal.getUTCFullYear(), nowLocal.getUTCMonth(), nowLocal.getUTCDate())
-                  + daysToSat * 86400000;
-  return Math.floor(weekEndMs / 1000) - (numDaysInPayload - 1) * 86400;
+  return Math.floor(satMidnightMs / 1000) - (numDaysInPayload - 1) * 86400;
 })();
 
 // Parse injected AUCs — fixed 21-slot, 2-char base36 each, no separators
@@ -1957,14 +1248,10 @@ if (!dParam || totalDays === 0) {
       .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; }),
     fetch(SUPABASE_URL + '/rest/v1/day_tags?device_id=eq.' + encodeURIComponent(deviceId)
           + '&select=day_date,events,tray_tags,note', { method:'GET', headers:readHeaders })
-      .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; }),
-    fetch(SUPABASE_URL + '/rest/v1/devices?device_id=eq.' + encodeURIComponent(deviceId)
-          + '&select=leaderboard_opt_in,leaderboard_hash&limit=1', { method:'GET', headers:readHeaders })
       .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; })
   ]).then(function(results) {
     var scoreRows  = results[0];
     var tagRows    = results[1];
-    var deviceRows = results[2];
 
     // ── Determine pre-write total and animation state ──────────────
     // DAILY_SCORE = what the URL says today's score is right now
@@ -2030,8 +1317,6 @@ if (!dParam || totalDays === 0) {
         last_d_param:         dParam         || null,
         last_a_param:         aParam         || null,
         last_s_param:         sParam         || null,
-        last_ws_param:        params.get('ws') || null,
-        last_tz_param:        params.get('tz') || null,
         pct_glucose:          pctGlucose,
         pct_mixed:            pctMixed,
         pct_fat:              pctFat
@@ -2043,8 +1328,7 @@ if (!dParam || totalDays === 0) {
       alreadyDeposited: alreadyDeposited,
       totalBefore:      TOTAL_BEFORE_LOCAL,
       totalAfter:       TOTAL_AFTER_LOCAL,
-      tagRows:          tagRows,
-      deviceRow:        deviceRows && deviceRows[0] ? deviceRows[0] : null
+      tagRows:          tagRows
     });
 
   }).catch(function() {
@@ -2210,16 +1494,6 @@ function splinePath(ctx, pts, bottomY) {
 // maxY: shared y scale maximum
 // prevPt/nextPt: last point from previous week / first point from next week
 // isLastWeek: true if this is the final row (last QR data point gets no extension)
-
-function lastMeasuredDayIdx(){
-  for (var i = totalDays - 1; i >= 0; i--) {
-    if (days[i] && days[i].epochs && days[i].epochs.length > 0) {
-      return i;
-    }
-  }
-  return totalDays - 1;
-}
-
 function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, maxY, todayIdx, prevPt, nextPt, isLastWeek, zoneGrad, viewMode) {
   prevPt = prevPt || null;
   nextPt = nextPt || null;
@@ -2665,7 +1939,7 @@ function buildGraphCard(forcedView) {
   if (maxY < 2) maxY = 2;
 
   // Today = last day of payload
-  var todayIdx = lastMeasuredDayIdx();
+  var todayIdx = totalDays - 1;
 
   // ── Zone gradient stop fractions (for zones view fill) ───────
   var activeView = forcedView || summaryView;
@@ -2958,7 +2232,7 @@ function buildStreakCard() {
   if (maxAUC < 40) maxAUC = 40;
 
   // Today = last day of payload
-  var todayIdx = lastMeasuredDayIdx();
+  var todayIdx = totalDays - 1;
 
   // ── Pill title ────────────────────────────────────────────────
   var pillCX = CW / 2;
@@ -4277,22 +3551,25 @@ window.addEventListener('load', function() {
     }
   }
 
-  dest.addEventListener('pointerdown', function(e) {
-    if(e.pointerType==='mouse' && e.button!==0) return;
-    touchStartTime = Date.now();
-    touchStartX = e.clientX;
-    touchStartY = e.clientY;
+  dest.addEventListener('touchstart', function(e) {
+    touchCount = e.touches.length;
+    if (touchCount === 1) {
+      touchStartTime = Date.now();
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }
   }, { passive: true });
 
-  dest.addEventListener('pointerup', function(e) {
-    if(e.pointerType==='mouse' && e.button!==0) return;
+  dest.addEventListener('touchend', function(e) {
+    if (touchCount > 1) { touchCount = 0; hidePopup(); return; }
     var dt = Date.now() - touchStartTime;
-    var dx = Math.abs(e.clientX - touchStartX);
-    var dy = Math.abs(e.clientY - touchStartY);
-    if (dt < 300 && dx < 12 && dy < 12) {
+    var dx = Math.abs(e.changedTouches[0].clientX - touchStartX);
+    var dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
+    if (dt < 250 && dx < 10 && dy < 10) {
       lastTouch = Date.now();
       handleTap(touchStartX, touchStartY);
     }
+    touchCount = 0;
   }, { passive: true });
 
   dest.addEventListener('click', function(e) {
@@ -4384,22 +3661,25 @@ window.addEventListener('load', function() {
     }
   }
 
-  destF.addEventListener('pointerdown', function(e) {
-    if(e.pointerType==='mouse' && e.button!==0) return;
-    touchStartTime = Date.now();
-    touchStartX = e.clientX;
-    touchStartY = e.clientY;
+  destF.addEventListener('touchstart', function(e) {
+    touchCount = e.touches.length;
+    if (touchCount === 1) {
+      touchStartTime = Date.now();
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }
   }, { passive: true });
 
-  destF.addEventListener('pointerup', function(e) {
-    if(e.pointerType==='mouse' && e.button!==0) return;
+  destF.addEventListener('touchend', function(e) {
+    if (touchCount > 1) { touchCount = 0; hideFuelPopup(); return; }
     var dt = Date.now() - touchStartTime;
-    var dx = Math.abs(e.clientX - touchStartX);
-    var dy = Math.abs(e.clientY - touchStartY);
-    if (dt < 300 && dx < 12 && dy < 12) {
+    var dx = Math.abs(e.changedTouches[0].clientX - touchStartX);
+    var dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
+    if (dt < 250 && dx < 10 && dy < 10) {
       lastTouch = Date.now();
       handleFuelTap(touchStartX, touchStartY);
     }
+    touchCount = 0;
   }, { passive: true });
 
   destF.addEventListener('click', function(e) {
@@ -4555,83 +3835,57 @@ let selectedDay=TODAY_IDX,hasDeposited=false;
 // TOTAL_BEFORE and DAILY_SCORE are set after Supabase fetch; use placeholders until then
 let DAILY_SCORE=0,TOTAL_BEFORE=0,TOTAL_AFTER=0;
 
-const ALL_TAGS=[['✏️','Note'],['🍎','Snack'],['🍽️','Meal'],['🍳','Low carb'],['🍕','High carb'],['🍷','Alcohol'],['🚶','Walk'],['🏃','Run'],['🏋️','Workout'],['⏱️','Fasting'],['😴','Poor sleep'],['🧠','Stress']];
+const ALL_TAGS=[['🍜','Late meal'],['🍷','Alcohol'],['🚶','Walk'],['🏋️','Workout'],['😴','Poor sleep'],['🧠','Stress'],['🍕','High carb'],['⏱️','Fasted']];
 const DAYS=[];
 // Local-time ISO date string — avoids UTC midnight rollover issues
 function localIso(d){
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
-// Device epochs are local-midnight-as-UTC (RTC set to local time).
-// Using getUTC* on them directly gives the correct device-local date — no tz offset needed.
-// slotOffset = 29 - (numDaysInPayload-1): maps DAYS index i to payload slot si = i - slotOffset.
-var _slotOffset = 29 - (numDaysInPayload - 1);
-function _slotEpochMs(i){
-  // DAYS index i → payload slot si (may be negative for pre-payload days)
-  var si = i - _slotOffset;
-  return (windowStart + si * 86400) * 1000;
-}
-function dateStr(i){
-  var d=new Date(_slotEpochMs(i));
-  var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  return months[d.getUTCMonth()]+' '+d.getUTCDate();
-}
-function dowStr(i){
-  var d=new Date(_slotEpochMs(i));
-  var days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  return days[d.getUTCDay()];
-}
-function isoDateStr(i){
-  var d=new Date(_slotEpochMs(i));
-  return d.getUTCFullYear()+'-'+String(d.getUTCMonth()+1).padStart(2,'0')+'-'+String(d.getUTCDate()).padStart(2,'0');
-}
+function dateStr(i){const d=new Date();d.setDate(d.getDate()-(29-i));return d.toLocaleDateString(undefined,{month:'short',day:'numeric'});}
+function dowStr(i){const d=new Date();d.setDate(d.getDate()-(29-i));return d.toLocaleDateString(undefined,{weekday:'short'});}
+function isoDateStr(i){const d=new Date();d.setDate(d.getDate()-(29-i));return localIso(d);}
 
 // Build DAYS from decoded URL data (scores come from aParam, tags start empty)
 (function(){
-  // Build lookups by SLOT INDEX (not date string) to avoid UTC-vs-local timezone
-  // ambiguity. Device epochs are local-midnight-as-UTC; converting them with
-  // localIso() shifts them back one day in timezones west of UTC.
-
-  // Score by slot index
-  var scoreBySlot={};
-  var lastDataSlot=-1;
+  // Build score lookup from aParam keyed by ISO date; track last slot with data
+  var scoreLookup={};
+  var lastDataIso='';
   if(aParam){
     for(var ai=0;ai*2+2<=aParam.length;ai++){
       var auc=parseInt(aParam.substring(ai*2,ai*2+2),36);
-      if(auc>0){scoreBySlot[ai]=auc;lastDataSlot=ai;}
+      var dayEpoch=windowStart+ai*86400;
+      var dayDate=localIso(new Date(dayEpoch*1000));
+      if(auc>0){scoreLookup[dayDate]=auc;lastDataIso=dayDate;}
     }
   }
 
-  // Pts by slot index from decoded days[] (epochs → [minute, ppm] pairs)
-  var ptsBySlot={};
+  // Build pts lookup from decoded days[] (epochs → [minute, ppm] pairs)
+  var ptsLookup={};
   if(typeof days !== 'undefined'){
     for(var di=0;di<days.length;di++){
+      var dayIso=localIso(new Date((windowStart+di*86400)*1000));
       var dday=days[di];
       if(dday.epochs && dday.epochs.length>0){
         var dayStartEpoch=windowStart+di*86400;
-        ptsBySlot[di]=dday.epochs.map(function(ep,k){
+        ptsLookup[dayIso]=dday.epochs.map(function(ep,k){
           return [Math.round((ep-dayStartEpoch)/60), dday.vals[k]];
         });
       }
     }
   }
 
-  // DAYS has 30 entries (rolling 30-day display window).
-  // Payload has numDaysInPayload slots (typically 21).
-  // Align: last payload slot → DAYS[29], first → DAYS[29-(numDaysInPayload-1)].
-  // _slotOffset is defined above alongside the date helpers.
-
   for(let i=0;i<30;i++){
     const iso=isoDateStr(i);
-    var si = i - _slotOffset; // payload slot index for this DAYS entry
-    var score = (si >= 0 && si < numDaysInPayload) ? (scoreBySlot[si]||0) : 0;
-    var pts   = (si >= 0 && si < numDaysInPayload) ? (ptsBySlot[si]||null) : null;
+    const score=scoreLookup[iso]||0;
+    const pts=ptsLookup[iso]||[[0,0],[1440,0]];
     DAYS.push({dateStr:dateStr(i),dow:dowStr(i),isoDate:iso,pts,score,tags:[],events:[],note:''});
   }
 
-  // TODAY_IDX = DAYS index of last payload slot with a score.
-  if(lastDataSlot >= 0){
-    var found = _slotOffset + lastDataSlot;
-    if(found >= 0 && found < 30){TODAY_IDX=found;selectedDay=found;}
+  // Derive TODAY_IDX from data: the DAYS index matching the last slot with a score.
+  // This handles the case where the QR was generated on a day that isn't browser-today.
+  if(lastDataIso){
+    var found=DAYS.findIndex(function(d){return d.isoDate===lastDataIso;});
+    if(found>=0){TODAY_IDX=found;selectedDay=found;}
   }
 
   DAILY_SCORE=DAYS[TODAY_IDX].score;
@@ -4641,34 +3895,7 @@ function fmt(v){return Math.round(v).toLocaleString();}
 function ease(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2}
 
 function buildRail(){const rail=document.getElementById('rail');rail.innerHTML='';for(let i=Math.max(0,TODAY_IDX-8);i<=TODAY_IDX;i++){const d=DAYS[i];const el=document.createElement('div');el.className='day'+(i===selectedDay?' active':'')+(i===TODAY_IDX?' today':'');el.dataset.idx=i;el.innerHTML=`<div class="dow">${d.dow}</div><div class="date">${d.dateStr}</div><div class="dot"></div>`;el.onclick=()=>selectDay(i);rail.appendChild(el)}setTimeout(()=>document.querySelector('.day.active')?.scrollIntoView({behavior:'smooth',inline:'center'}),50)}
-
-function renderSelectedDayUI(){
-  document.querySelectorAll('.day').forEach(el=>{
-    const idx=Number(el.dataset.idx);
-    el.classList.toggle('active',idx===selectedDay);
-  });
-  updateCard();
-  updateTagsApplied();
-  ;
-  drawGraph();
-  ensureSelectedDayVisible();
-  setTimeout(renderEvents,0);
-}
-
-function ensureSelectedDayVisible(){
-  const el=document.querySelector('.day.active');
-  if(el) el.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
-}
-
-function selectDay(i){
-  selectedDay=Math.max(0,Math.min(TODAY_IDX,i));
-  renderSelectedDayUI();
-
-  // Date-rail clicks should rebuild the 3-panel pager too.
-  if(window._dayPagerInstalled && !window._pagerInternalUpdate){
-    refreshDayPagerGhosts();
-  }
-}
+function selectDay(i){selectedDay=Math.max(0,Math.min(TODAY_IDX,i));document.querySelectorAll('.day').forEach(el=>{const idx=Number(el.dataset.idx);el.classList.toggle('active',idx===selectedDay);});updateCard();buildTags();updateNote();drawGraph();setTimeout(renderEvents,0);}
 function getVerdict(d, isToday) {
   const score = d.score;
   const lastPt = d.pts && d.pts.length ? d.pts[d.pts.length - 1] : null;
@@ -4806,235 +4033,55 @@ function getVerdict(d, isToday) {
 function updateCard(){
   const d=DAYS[selectedDay];
   const isToday=selectedDay===TODAY_IDX;
-  document.getElementById('todayLabel').textContent=d.dow;
+  document.getElementById('todayLabel').textContent=isToday?'Today':d.dow;
   document.getElementById('dateFull').textContent=d.dateStr;
   document.getElementById('dailyScore').textContent=d.score;
-  // sealed only makes sense on today — clear it on past days, restore on today if deposited
-  const card=document.getElementById('card');
-  if(card){
-    if(isToday){
-      card.classList.toggle('sealed',hasDeposited);
-    }else{
-      card.classList.remove('sealed');
-    }
-  }
   const v=getVerdict(d,isToday);
   const verdictEl=document.getElementById('verdict'); if(verdictEl) verdictEl.textContent=v[0];
   const subtextEl=document.getElementById('subtext'); if(subtextEl) subtextEl.textContent=v[1];
+  document.getElementById('tagsLabel').textContent=isToday?'Tags for today':'Tags for '+d.dateStr;
 }
-
-
-
-function appendTagRepeatMarker(wrap){
-  const marker=document.createElement('div');
-  marker.className='tag-repeat-marker';
-  wrap.appendChild(marker);
-}
-
-function enableMouseTagWheel(){
-  const wrap=document.getElementById('tagsScroll');
-  if(!wrap || wrap._mouseWheelReady)return;
-  wrap._mouseWheelReady=true;
-
-  let isDown=false;
-  let startX=0;
-  let startScroll=0;
-  let lastX=0;
-  let lastT=0;
-  let velocity=0;
-  let raf=null;
-
-  function momentum(){
-    if(Math.abs(velocity)<0.15)return;
-    wrap.scrollLeft-=velocity;
-    velocity*=0.94;
-    updateTagWheelScale();
-    raf=requestAnimationFrame(momentum);
-  }
-
-  wrap.addEventListener('mousedown',e=>{
-    // Only left mouse button.
-    if(e.button!==0)return;
-    isDown=true;
-    startX=e.clientX;
-    lastX=e.clientX;
-    lastT=performance.now();
-    startScroll=wrap.scrollLeft;
-    velocity=0;
-    if(raf)cancelAnimationFrame(raf);
-    wrap.classList.add('mouse-swiping');
-  });
-
-  window.addEventListener('mousemove',e=>{
-    if(!isDown)return;
-    if(activeDrag)return;
-    const now=performance.now();
-    const dx=e.clientX-startX;
-    wrap.scrollLeft=startScroll-dx;
-
-    const dt=Math.max(1,now-lastT);
-    velocity=(e.clientX-lastX)/dt*16.7;
-
-    lastX=e.clientX;
-    lastT=now;
-    updateTagWheelScale();
-    e.preventDefault();
-  },{passive:false});
-
-  window.addEventListener('mouseup',()=>{
-    if(!isDown)return;
-    isDown=false;
-    wrap.classList.remove('mouse-swiping');
-    if(!activeDrag)momentum();
-  });
-}
-
-function tuneTagWheel(){
-  const wrap=document.getElementById('tagsScroll');
-  if(!wrap || !wrap.children.length)return;
-
-  const baseCount=ALL_TAGS.length;
-  const first=wrap.querySelector('.tag[data-base-index]');
-  if(!first)return;
-
-  const itemW=first.getBoundingClientRect().width + 10; // tag width + gap
-  const cycleW=itemW*baseCount;
-
-  if(!wrap._wheelReady){
-    wrap._wheelReady=true;
-    wrap._wheelRAF=null;
-
-    wrap.addEventListener('scroll',()=>{
-      if(wrap._wheelRAF)cancelAnimationFrame(wrap._wheelRAF);
-      wrap._wheelRAF=requestAnimationFrame(()=>{
-        const min=cycleW*.55;
-        const max=cycleW*1.55;
-
-        // Seamless loop: keep the scroll position in the middle copy.
-        if(wrap.scrollLeft<min)wrap.scrollLeft+=cycleW;
-        else if(wrap.scrollLeft>max)wrap.scrollLeft-=cycleW;
-
-        updateTagWheelScale();
-      });
-      // Snap to nearest tag center after scrolling stops
-      clearTimeout(wrap._snapTimer);
-      wrap._snapTimer=setTimeout(()=>{
-        const first=wrap.querySelector('.tag[data-base-index]');
-        if(!first)return;
-        const iW=first.getBoundingClientRect().width+10;
-        // Find nearest tag center relative to wrap left
-        const wLeft=wrap.getBoundingClientRect().left;
-        const wCenter=wrap.getBoundingClientRect().width/2;
-        let best=null, bestDist=Infinity;
-        wrap.querySelectorAll('.tag[data-base-index]').forEach(el=>{
-          const r=el.getBoundingClientRect();
-          const elCenter=r.left-wLeft+r.width/2;
-          const dist=Math.abs(elCenter-wCenter);
-          if(dist<bestDist){bestDist=dist;best=el;}
-        });
-        if(best){
-          const r=best.getBoundingClientRect();
-          const elCenter=r.left-wLeft+r.width/2;
-          const delta=elCenter-wCenter;
-          wrap.scrollLeft+=delta;
-        }
-        updateTagWheelScale();
-      },120);
-    },{passive:true});
-  }
-
-  // Start in the middle copy so the user can swipe either direction.
-  if(!wrap._wheelPositioned){
-    wrap._wheelPositioned=true;
-    setTimeout(()=>{
-      wrap.scrollLeft=cycleW;
-      updateTagWheelScale();
-    },0);
-  }else{
-    updateTagWheelScale();
-  }
-}
-
-function updateTagWheelScale(){
-  const wrap=document.getElementById('tagsScroll');
-  if(!wrap)return;
-
-  const center=wrap.getBoundingClientRect().left+wrap.clientWidth/2;
-  wrap.querySelectorAll('.tag[data-base-index]').forEach(el=>{
-    const r=el.getBoundingClientRect();
-    const elCenter=r.left+r.width/2;
-    const dist=Math.abs(elCenter-center);
-    el.classList.toggle('wheel-center',dist<r.width*.55);
-    el.classList.toggle('wheel-side',dist>r.width*1.35);
-  });
-}
-
 function buildTags(){
   const d=DAYS[selectedDay],wrap=document.getElementById('tagsScroll');
   wrap.innerHTML='';
 
-  Array.from({length:ALL_TAGS.length*3},(_,wheelIdx)=>ALL_TAGS[wheelIdx%ALL_TAGS.length]).forEach(([icon,name],wheelIdx)=>{
-    if(wheelIdx>0 && wheelIdx%ALL_TAGS.length===0){
-      appendTagRepeatMarker(wrap);
-    }
+  ALL_TAGS.forEach(([icon,name])=>{
     const applied=d.tags.includes(icon);
     const el=document.createElement('div');
-    el.className='tag';
+    el.className='tag'+(applied?' applied':'');
     el.setAttribute('draggable','false');
-    el.dataset.baseIndex=String(wheelIdx%ALL_TAGS.length);
-    el.dataset.wheelIndex=String(wheelIdx);
-    el.innerHTML=`<div class="tagIcon">${icon}</div><div class="tagName">${name}</div>`;
+    el.innerHTML=`<div class="tagIcon">${icon}</div><div class="tagName">${name}</div>${applied?'<div class="check">✓</div>':''}`;
 
-    let downX=0,downY=0,dragStarted=false,pressed=false,horizontalScroll=false,activePointerId=null;
+    let downX=0,downY=0,dragStarted=false,pressed=false;
 
     function cleanup(){
+      if(dragStarted)cancelTagDrag();
       pressed=false;
       dragStarted=false;
-      horizontalScroll=false;
-      activePointerId=null;
-      el.style.touchAction='';
       clearTimeout(el._pressTimer);
       el.classList.remove('dragging-source');
-      el.classList.remove('pressed');
       document.removeEventListener('pointermove',onDocMove);
       document.removeEventListener('pointerup',onDocUp);
       document.removeEventListener('pointercancel',onDocCancel);
-      setTimeout(updateTagWheelScale,0);
+      document.removeEventListener('pointerleave',onDocLeave);
+    }
+
+    function onDocLeave(ev){
+      if(ev.target===document.documentElement){cancelTagDrag();cleanup();}
     }
 
     function beginDrag(x,y){
       if(dragStarted)return;
       dragStarted=true;
-      horizontalScroll=false;
-      // Lock pointer to this element so the scroll container can't steal it
-      el.style.touchAction='none';
-      if(activePointerId!==null){try{el.setPointerCapture(activePointerId);}catch(e){}}
       startTagDrag(icon,name,x,y,el,null);
     }
 
     function onDocMove(ev){
       if(!pressed)return;
+      const dist=Math.hypot(ev.clientX-downX,ev.clientY-downY);
 
-      const dx=ev.clientX-downX;
-      const dy=ev.clientY-downY;
-      const adx=Math.abs(dx);
-      const ady=Math.abs(dy);
-
-      if(!dragStarted){
-        // Horizontal intent: let the native scroller keep the gesture.
-        if(adx>8 && adx>ady*1.15){
-          horizontalScroll=true;
-          return;
-        }
-
-        // Upward intent: pull the tag out of the tray.
-        if(dy<-10 && ady>adx*.85){
-          ev.preventDefault();
-          beginDrag(ev.clientX,ev.clientY);
-        }else{
-          return;
-        }
-      }
+      // Start drag once the pointer has moved enough.
+      if(dist>5 && !dragStarted)beginDrag(ev.clientX,ev.clientY);
 
       if(dragStarted){
         ev.preventDefault();
@@ -5048,883 +4095,293 @@ function buildTags(){
       if(dragStarted){
         ev.preventDefault();
         endTagDrag(ev.clientX,ev.clientY);
+      }else{
+        // Short tap/click still toggles chip selection.
+        applied?d.tags=d.tags.filter(t=>t!==icon):d.tags.push(icon);
+        buildTags();
+        saveTagsForDay(selectedDay);
       }
 
       cleanup();
     }
 
     function onDocCancel(){
-      cancelTagDrag();
       cleanup();
     }
 
     el.addEventListener('pointerdown',ev=>{
-      // Important: no preventDefault here, otherwise the tag owns horizontal swipes
-      // and the tray cannot scroll with momentum.
+      ev.preventDefault();
       pressed=true;
       dragStarted=false;
-      horizontalScroll=false;
-      activePointerId=ev.pointerId;
       downX=ev.clientX;
       downY=ev.clientY;
-      el.classList.add('pressed');
+
+      // Long press also starts drag, helpful on mobile.
+      el._pressTimer=setTimeout(()=>beginDrag(downX,downY),130);
 
       document.addEventListener('pointermove',onDocMove,{passive:false});
       document.addEventListener('pointerup',onDocUp,{passive:false});
       document.addEventListener('pointercancel',onDocCancel,{passive:false});
-    },{passive:true});
+      document.addEventListener('pointerleave',onDocLeave,{passive:false});
+    },{passive:false});
 
+    // Prevent native browser drag ghost on desktop.
     el.addEventListener('dragstart',ev=>ev.preventDefault());
 
     wrap.appendChild(el);
   });
 
-  tuneTagWheel();
-  enableMouseTagWheel();
+  const add=document.createElement('div');
+  add.className='tag';
+  add.style.flexBasis='74px';
+  add.style.borderStyle='dashed';
+  add.style.fontSize='26px';
+  add.textContent='+';
+  wrap.appendChild(add);
 }
 
-// Lightweight refresh — just updates wheel scale on day change.
-function updateTagsApplied(){
-  const wrap=document.getElementById('tagsScroll');
-  if(!wrap||!wrap.querySelector('.tag[data-base-index]')){buildTags();return;}
-  updateTagWheelScale();
-}
+function drawGraph(){
+  const c=document.getElementById('graph'),wrap=document.getElementById('graphWrap'),W=wrap.clientWidth,H=wrap.clientHeight,dpr=devicePixelRatio||1;
+  if(!W||!H)return;
+  c.width=W*dpr;c.height=H*dpr;c.style.width=W+'px';c.style.height=H+'px';
+  const ctx=c.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);
 
+  const day=DAYS[selectedDay],padL=6,padR=6,padT=10,padB=8,gTop=padT,gBot=H-padB,gH=gBot-gTop;
 
-
-
-
-
-
-const dayCurveCache = {};
-
-function invalidateDayCurveCache(){
-  Object.keys(dayCurveCache).forEach(k=>delete dayCurveCache[k]);
-}
-
-function getCachedResultsCurve(dayIdx){
-  const cacheKey='day_'+dayIdx;
-  if(dayCurveCache[cacheKey])return dayCurveCache[cacheKey];
-
+  // Visible time window:
+  //   -144..0     = last 10% of yesterday
+  //    0..1440    = all of today
+  //    1440..1584 = first 10% of tomorrow
   const REL_START=-144;
   const REL_END=1584;
-
-  // Collect real measurement points around the visible window.
-  const actual=[];
-  for(let di=dayIdx-2; di<=dayIdx+2; di++){
-    const d=DAYS[di];
-    if(!d||!d.pts)continue;
-    d.pts.forEach(p=>{
-      actual.push({
-        rel:(di-dayIdx)*1440+p[0],
-        v:p[1],
-        dayIdx:di,
-        minute:p[0],
-        meas:di===dayIdx
-      });
-    });
-  }
-  actual.sort((a,b)=>a.rel-b.rel);
-
-  const scaleVals=actual
-    .filter(p=>p.rel>=REL_START-1440 && p.rel<=REL_END+1440)
-    .map(p=>p.v);
-  const rawMax=scaleVals.length?Math.max(...scaleVals):4;
-  const maxV=Math.max(4.5,Math.ceil(rawMax*1.28));
-
-  const lastMeasuredGraphDay = actual.length
-    ? actual.reduce((m,p)=>Math.max(m,p.dayIdx), actual[0].dayIdx)
-    : dayIdx;
-  const lastMeasuredGraphRel = actual.length
-    ? actual[actual.length-1].rel
-    : null;
-
-  const GAP_LIMIT=1440;
-  const rawSegments=[];
-  let cur=[];
-  actual.forEach(p=>{
-    if(cur.length && p.rel-cur[cur.length-1].rel>GAP_LIMIT){
-      rawSegments.push(cur);
-      cur=[];
-    }
-    cur.push(p);
-  });
-  if(cur.length)rawSegments.push(cur);
-
-  function pushAnchorIfMissing(pts, rel){
-    if(!pts.some(p=>Math.abs(p.rel-rel)<0.001)){
-      pts.push({rel:rel,v:0,anchor:true,meas:false});
-    }
-  }
-
-  const knotSegments=rawSegments.map((seg, segIdx)=>{
-    const isLastSeg = segIdx === rawSegments.length - 1;
-    let pts=seg.map(p=>Object.assign({},p));
-    if(!pts.length)return pts;
-
-    const first=pts[0];
-    const last=pts[pts.length-1];
-
-    const firstDayStart=Math.floor(first.rel/1440)*1440;
-    if(first.rel>firstDayStart && first.rel-firstDayStart<=GAP_LIMIT){
-      pushAnchorIfMissing(pts, firstDayStart);
-    }
-
-    const lastDayEnd=Math.floor(last.rel/1440)*1440+1440;
-
-    // For non-final segments: always drop to zero at next midnight (matches fuel graph).
-    // For the final segment: stop at the last real measurement, don't extend to midnight.
-    const lastIsRealMeasurement = !last.anchor;
-
-    if(isLastSeg && lastIsRealMeasurement){
-      // Final segment ending on a real measurement — don't extend
-    } else if(last.rel<lastDayEnd && lastDayEnd-last.rel<=GAP_LIMIT){
-      pushAnchorIfMissing(pts, lastDayEnd);
-    }
-
-    pts.sort((a,b)=>a.rel-b.rel);
-    pts=pts.filter((p,i)=>i===0 || Math.abs(p.rel-pts[i-1].rel)>0.001);
-    return pts;
-  }).filter(seg=>seg.length>=2);
-
-  function evalSegment(seg, rel){
-    if(seg.length===2){
-      const a=seg[0],b=seg[1];
-      const t=(rel-a.rel)/(b.rel-a.rel || 1);
-      return Math.max(0,a.v+(b.v-a.v)*t);
-    }
-    const xs=seg.map(p=>p.rel);
-    const ys=seg.map(p=>p.v);
-    derivCache={};
-    return Math.max(0, constrainedSpline(xs, ys, xs.length, rel));
-  }
-
-  function sampleSegment(seg){
-    const from=Math.max(REL_START, seg[0].rel);
-    const to=Math.min(REL_END, seg[seg.length-1].rel);
-    const samples=[];
-    if(to<=from)return samples;
-
-    // Cache in data-space at 1-minute resolution.
-    // Drawing can then be a cheap rel/v → x/y transform for every panel.
-    for(let rel=Math.ceil(from); rel<=Math.floor(to); rel++){
-      samples.push({rel:rel, v:evalSegment(seg, rel)});
-    }
-
-    // Preserve exact endpoints if they are fractional.
-    if(samples.length===0 || samples[0].rel>from){
-      samples.unshift({rel:from, v:evalSegment(seg, from)});
-    }
-    if(samples[samples.length-1].rel<to){
-      samples.push({rel:to, v:evalSegment(seg, to)});
-    }
-
-    return samples;
-  }
-
-  const segments=knotSegments
-    .map(sampleSegment)
-    .filter(samples=>samples.length>=2);
-
-  const dots=actual
-    .filter(p=>p.dayIdx===dayIdx && p.rel>=0 && p.rel<=1440)
-    .sort((a,b)=>a.rel-b.rel)
-    .map(p=>{
-      const d=DAYS[p.dayIdx];
-      let epoch=null;
-      if(d && d.isoDate){
-        const dayStartMs=new Date(d.isoDate+'T00:00:00').getTime();
-        if(!isNaN(dayStartMs)) epoch=Math.round(dayStartMs/1000)+Math.round(p.minute||0)*60;
-      }
-      return {rel:p.rel,v:p.v,minute:p.minute,dayIdx:p.dayIdx,epoch:epoch};
-    });
-
-  const result={
-    relStart:REL_START,
-    relEnd:REL_END,
-    maxV:maxV,
-    segments:segments,
-    dots:dots,
-    lastMeasuredGraphDay:lastMeasuredGraphDay
-  };
-
-  dayCurveCache[cacheKey]=result;
-  return result;
-}
-
-function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
-  const c=targetCanvas,wrap=targetWrap,W=wrap.clientWidth,H=wrap.clientHeight,dpr=devicePixelRatio||1;
-  if(!W||!H)return;
-
-  c.width=W*dpr;
-  c.height=H*dpr;
-  c.style.width=W+'px';
-  c.style.height=H+'px';
-
-  const ctx=c.getContext('2d');
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-  ctx.clearRect(0,0,W,H);
-
-  const data=getCachedResultsCurve(dayIdx);
-
-  const padL=6,padR=6,padT=12,padB=8,gTop=padT,gBot=H-padB,gH=gBot-gTop;
-  const REL_START=data.relStart;
-  const REL_END=data.relEnd;
   const TOTAL_REL=REL_END-REL_START;
-  const maxV=data.maxV;
+  const xSep0=relToX(0);
+  const xSep1=relToX(1440);
 
   function relToX(rel){
     return padL+(rel-REL_START)/TOTAL_REL*(W-padL-padR);
   }
 
-  function gy(v){
-    return gBot-Math.max(0,Math.min(maxV,v))/maxV*gH;
+  // Include adjacent days when autoscaling, so boundary estimates do not clip.
+  const scaleVals=[];
+  [selectedDay-1,selectedDay,selectedDay+1].forEach(idx=>{
+    const d=DAYS[idx];
+    if(d&&d.pts)d.pts.forEach(p=>scaleVals.push(p[1]));
+  });
+  const rawMax=scaleVals.length?Math.max(...scaleVals):4;
+  const maxV=Math.max(4.5,Math.ceil(rawMax*1.28));
+
+  const gy=v=>gBot-Math.max(0,Math.min(maxV,v))/maxV*gH;
+  const col=v=>Math.round(v)<=2?'#22D3EE':Math.round(v)<=4?'#6EE787':'#A855F7';
+
+  function estimateStartValue(dayIdx){
+    const d=DAYS[dayIdx]; if(!d||!d.pts||!d.pts.length)return 0;
+    const first=d.pts[0], prev=DAYS[dayIdx-1];
+    if(prev&&prev.pts&&prev.pts.length){
+      const lastPrev=prev.pts[prev.pts.length-1];
+      const prevMinute=lastPrev[0]-1440, firstMinute=first[0], dt=firstMinute-prevMinute;
+      if(dt>0){
+        const slope=(first[1]-lastPrev[1])/dt;
+        return Math.max(0,Math.min(maxV,first[1]-slope*firstMinute));
+      }
+    }
+    return Math.max(0,Math.min(maxV,first[1]));
   }
 
-  function zoneOf(v){
-    return Math.round(v)<=2?0:Math.round(v)<=4?1:2;
+  function estimateEndValue(dayIdx){
+    const d=DAYS[dayIdx]; if(!d||!d.pts||!d.pts.length)return 0;
+    const last=d.pts[d.pts.length-1], next=DAYS[dayIdx+1];
+    if(next&&next.pts&&next.pts.length){
+      const firstNext=next.pts[0];
+      const nextMinute=1440+firstNext[0], lastMinute=last[0], dt=nextMinute-lastMinute;
+      if(dt>0){
+        const slope=(firstNext[1]-last[1])/dt;
+        return Math.max(0,Math.min(maxV,last[1]+slope*(1440-lastMinute)));
+      }
+    }
+    return Math.max(0,Math.min(maxV,last[1]));
   }
 
-  const zoneFill=['rgba(34,211,238,0.45)','rgba(74,222,128,0.40)','rgba(168,85,247,0.35)'];
-  const zoneStroke=['#22D3EE','#4ADE80','#A855F7'];
-  function col(v){ return zoneStroke[zoneOf(v)]; }
+  function estimatePrevWindowStartValue(){
+    const prev=DAYS[selectedDay-1];
+    const startV=estimateStartValue(selectedDay);
 
-  const xSep0=relToX(0);
-  const xSep1=relToX(1440);
-  if(targetCanvas.id==='graph'){
-    window._graphSeps={x0:xSep0, x1:xSep1};
-    positionGraphOverlay();
+    if(!prev||!prev.pts||!prev.pts.length)return startV;
+
+    const tail=prev.pts.filter(p=>p[0]>=1296);
+    if(tail.length){
+      const firstTail=tail[0];
+      if(firstTail[0]===1296)return firstTail[1];
+
+      // Interpolate/extrapolate from prior point to first tail point if possible.
+      const before=prev.pts.slice().reverse().find(p=>p[0]<1296);
+      if(before){
+        const dt=firstTail[0]-before[0];
+        if(dt>0){
+          const slope=(firstTail[1]-before[1])/dt;
+          return Math.max(0,Math.min(maxV,before[1]+slope*(1296-before[0])));
+        }
+      }
+      return firstTail[1];
+    }
+
+    const lastPrev=prev.pts[prev.pts.length-1];
+    const dt=1440-lastPrev[0];
+    if(dt>0){
+      const slope=(startV-lastPrev[1])/dt;
+      return Math.max(0,Math.min(maxV,lastPrev[1]+slope*(1296-lastPrev[0])));
+    }
+    return lastPrev[1];
   }
-  targetCanvas._graphSeps={x0:xSep0, x1:xSep1};
 
-  ctx.strokeStyle='rgba(255,255,255,.065)';
-  ctx.lineWidth=1;
-  [360,720,1080].forEach(m=>{
-    const x=relToX(m);
-    ctx.beginPath();
-    ctx.moveTo(x,gTop+10);
-    ctx.lineTo(x,gBot);
-    ctx.stroke();
+  function estimateNextWindowEndValue(){
+    const next=DAYS[selectedDay+1];
+    const endV=estimateEndValue(selectedDay);
+
+    if(!next||!next.pts||!next.pts.length)return endV;
+
+    const head=next.pts.filter(p=>p[0]<=144);
+    if(head.length){
+      const lastHead=head[head.length-1];
+      if(lastHead[0]===144)return lastHead[1];
+
+      const after=next.pts.find(p=>p[0]>144);
+      if(after){
+        const dt=after[0]-lastHead[0];
+        if(dt>0){
+          const slope=(after[1]-lastHead[1])/dt;
+          return Math.max(0,Math.min(maxV,lastHead[1]+slope*(144-lastHead[0])));
+        }
+      }
+      return lastHead[1];
+    }
+
+    const firstNext=next.pts[0];
+    if(firstNext[0]>0){
+      const slope=(firstNext[1]-endV)/firstNext[0];
+      return Math.max(0,Math.min(maxV,endV+slope*144));
+    }
+    return firstNext[1];
+  }
+
+  let pts=[];
+
+  // Previous-day context starts exactly at 9:36pm yesterday.
+  const prev=DAYS[selectedDay-1];
+  if(prev&&prev.pts&&prev.pts.length){
+    pts.push({rel:-144,x:relToX(-144),y:gy(estimatePrevWindowStartValue()),v:estimatePrevWindowStartValue(),meas:false,context:true});
+    prev.pts.filter(p=>p[0]>=1296).forEach(p=>{
+      pts.push({rel:p[0]-1440,x:relToX(p[0]-1440),y:gy(p[1]),v:p[1],meas:false,context:true});
+    });
+  }
+
+  // Midnight separator: estimated value, shared by yesterday/today.
+  const startV=estimateStartValue(selectedDay);
+  pts.push({rel:0,x:relToX(0),y:gy(startV),v:startV,meas:false,boundary:true});
+
+  // Today's real measurements.
+  day.pts.forEach(p=>{
+    pts.push({rel:p[0],x:relToX(p[0]),y:gy(p[1]),v:p[1],meas:true});
   });
 
-  ctx.strokeStyle='rgba(255,255,255,.14)';
-  ctx.lineWidth=1;
-  ctx.beginPath();
-  ctx.moveTo(padL,gBot);
-  ctx.lineTo(W-padR,gBot);
-  ctx.stroke();
+  if(selectedDay!==TODAY_IDX){
+    // Midnight separator: estimated value, shared by today/tomorrow.
+    const endV=estimateEndValue(selectedDay);
+    pts.push({rel:1440,x:relToX(1440),y:gy(endV),v:endV,meas:false,boundary:true});
 
+    const next=DAYS[selectedDay+1];
+    if(next&&next.pts&&next.pts.length){
+      next.pts.filter(p=>p[0]<=144).forEach(p=>{
+        pts.push({rel:1440+p[0],x:relToX(1440+p[0]),y:gy(p[1]),v:p[1],meas:false,context:true});
+      });
+      pts.push({rel:1584,x:relToX(1584),y:gy(estimateNextWindowEndValue()),v:estimateNextWindowEndValue(),meas:false,context:true});
+    }
+  }
+
+  pts=pts.filter(p=>p.rel>=REL_START&&p.rel<=REL_END).sort((a,b)=>a.rel-b.rel);
+
+  // De-duplicate identical x/rel points.
+  pts=pts.filter((p,i)=>i===0 || Math.abs(p.rel-pts[i-1].rel)>0.001);
+
+  if(pts.length<2)return;
+
+  // Gridlines for today's 6-hour marks.
+  ctx.strokeStyle='rgba(255,255,255,.065)';ctx.lineWidth=1;
+  [360,720,1080].forEach(m=>{
+    const x=relToX(m);
+    ctx.beginPath();ctx.moveTo(x,gTop+10);ctx.lineTo(x,gBot);ctx.stroke();
+  });
+
+  // Baseline across the whole visible window.
+  ctx.strokeStyle='rgba(255,255,255,.14)';ctx.beginPath();ctx.moveTo(padL,gBot);ctx.lineTo(W-padR,gBot);ctx.stroke();
+
+  // Midnight separators between days.
   ctx.strokeStyle='rgba(255,255,255,.24)';
   ctx.lineWidth=1;
   ctx.setLineDash([4,6]);
   [xSep0,xSep1].forEach(x=>{
-    ctx.beginPath();
-    ctx.moveTo(x,gTop+4);
-    ctx.lineTo(x,gBot);
-    ctx.stroke();
+    ctx.beginPath();ctx.moveTo(x,gTop+4);ctx.lineTo(x,gBot);ctx.stroke();
   });
   ctx.setLineDash([]);
 
-  // Catmull-Rom control points helper (matches fuel graph)
-  function crCP(p0,p1,p2,p3){
-    const t=0.5;
-    return {
-      cp1x:p1.x+(p2.x-p0.x)*t/3, cp1y:p1.y+(p2.y-p0.y)*t/3,
-      cp2x:p2.x-(p3.x-p1.x)*t/3, cp2y:p2.y-(p3.y-p1.y)*t/3
-    };
+  // Catmull-Rom sample continuously across the full visible window.
+  let samples=[];
+  for(let i=0;i<pts.length-1;i++){
+    const p0=pts[Math.max(0,i-1)],p1=pts[i],p2=pts[i+1],p3=pts[Math.min(pts.length-1,i+2)];
+    const steps=Math.max(16,Math.round((p2.x-p1.x)/3));
+    for(let s=0;s<=steps;s++){
+      const t=s/steps,t2=t*t,t3=t2*t;
+      const x=.5*((2*p1.x)+(-p0.x+p2.x)*t+(2*p0.x-5*p1.x+4*p2.x-p3.x)*t2+(-p0.x+3*p1.x-3*p2.x+p3.x)*t3);
+      const y=.5*((2*p1.y)+(-p0.y+p2.y)*t+(2*p0.y-5*p1.y+4*p2.y-p3.y)*t2+(-p0.y+3*p1.y-3*p2.y+p3.y)*t3);
+      samples.push({x,y,v:(gBot-y)/gH*maxV});
+    }
   }
-  // Subsample dense array to ~every 5 minutes for smooth bezier without overdraw
-  function subsample(samples, step){
-    if(samples.length<=2)return samples;
-    const out=[samples[0]];
-    for(let i=step;i<samples.length-1;i+=step) out.push(samples[i]);
-    out.push(samples[samples.length-1]);
-    return out;
+  if(!samples.length)return;
+
+  // Continuous fill under the whole curve.
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(samples[0].x,gBot);
+  ctx.lineTo(samples[0].x,samples[0].y);
+  samples.forEach(p=>ctx.lineTo(p.x,p.y));
+  ctx.lineTo(samples[samples.length-1].x,gBot);
+  ctx.closePath();
+  ctx.clip();
+
+  let grad=ctx.createLinearGradient(0,gTop,0,gBot);
+  grad.addColorStop(0,'rgba(168,85,247,.48)');
+  grad.addColorStop(.48,'rgba(110,231,135,.34)');
+  grad.addColorStop(1,'rgba(251,146,60,.28)');
+  ctx.fillStyle=grad;
+  ctx.fillRect(0,gTop,W,gH);
+  ctx.restore();
+
+  // Continuous zone-colored stroke.
+  ctx.lineWidth=3;ctx.lineCap='round';ctx.shadowBlur=12;
+  for(let j=0;j<samples.length-1;j++){
+    ctx.strokeStyle=col((samples[j].v+samples[j+1].v)/2);
+    ctx.shadowColor=ctx.strokeStyle;
+    ctx.beginPath();ctx.moveTo(samples[j].x,samples[j].y);ctx.lineTo(samples[j+1].x,samples[j+1].y);ctx.stroke();
   }
-  // Draw a Catmull-Rom bezier path through pts (array of {x,y})
-  function crPath(pts){
-    if(pts.length<2)return;
-    const p0={x:2*pts[0].x-pts[1].x, y:2*pts[0].y-pts[1].y};
-    const pN={x:2*pts[pts.length-1].x-pts[pts.length-2].x, y:2*pts[pts.length-1].y-pts[pts.length-2].y};
-    const ext=[p0,...pts,pN];
-    ctx.moveTo(pts[0].x,pts[0].y);
-    for(let i=0;i<pts.length-1;i++){
-      const cp=crCP(ext[i],ext[i+1],ext[i+2],ext[i+3]);
-      ctx.bezierCurveTo(cp.cp1x,cp.cp1y,cp.cp2x,cp.cp2y,pts[i+1].x,pts[i+1].y);
+  ctx.shadowBlur=0;
+
+  // Today projection line, from last actual today reading to today/tomorrow separator.
+  if(selectedDay===TODAY_IDX && day.pts.length){
+    const lastMeas=pts.filter(p=>p.meas).at(-1);
+    if(lastMeas){
+      ctx.setLineDash([5,7]);ctx.strokeStyle='rgba(255,255,255,.26)';ctx.lineWidth=1.2;
+      ctx.beginPath();ctx.moveTo(lastMeas.x,lastMeas.y);ctx.lineTo(xSep1,lastMeas.y);ctx.stroke();ctx.setLineDash([]);
     }
   }
 
-  // Pass 1: fills
-  data.segments.forEach(samples=>{
-    let runs=[];
-    let curZone=zoneOf(samples[0].v), runStart=0;
-
-    for(let i=1;i<samples.length;i++){
-      const z=zoneOf(samples[i].v);
-      if(z!==curZone){
-        runs.push({zone:curZone,from:runStart,to:i});
-        curZone=z; runStart=i;
-      }
-    }
-    runs.push({zone:curZone,from:runStart,to:samples.length-1});
-
-    runs.forEach(run=>{
-      const s0=samples[run.from],sN=samples[run.to];
-      const sub=subsample(samples.slice(run.from,run.to+1),5);
-      const pts=sub.map(s=>({x:relToX(s.rel),y:gy(s.v)}));
-      ctx.fillStyle=zoneFill[run.zone];
-      ctx.beginPath();
-      ctx.moveTo(pts[0].x,gBot);
-      ctx.lineTo(pts[0].x,pts[0].y);
-      // Extend phantom points so bezier starts/ends cleanly at the boundary
-      const ph0={x:2*pts[0].x-pts[1].x, y:2*pts[0].y-pts[1].y};
-      const phN={x:2*pts[pts.length-1].x-pts[pts.length-2].x, y:2*pts[pts.length-1].y-pts[pts.length-2].y};
-      const ext=[ph0,...pts,phN];
-      for(let i=0;i<pts.length-1;i++){
-        const cp=crCP(ext[i],ext[i+1],ext[i+2],ext[i+3]);
-        ctx.bezierCurveTo(cp.cp1x,cp.cp1y,cp.cp2x,cp.cp2y,pts[i+1].x,pts[i+1].y);
-      }
-      ctx.lineTo(relToX(sN.rel),gBot);
-      ctx.closePath();
-      ctx.fill();
-    });
-  });
-
-  // Pass 2: strokes on top of fills
-  data.segments.forEach(samples=>{
-    const sub=subsample(samples,5);
-    const pts=sub.map(s=>({x:relToX(s.rel),y:gy(s.v),v:s.v}));
-    const p0={x:2*pts[0].x-pts[1].x, y:2*pts[0].y-pts[1].y};
-    const pN={x:2*pts[pts.length-1].x-pts[pts.length-2].x, y:2*pts[pts.length-1].y-pts[pts.length-2].y};
-    const ext=[p0,...pts,pN];
-    ctx.lineWidth=3;
-    ctx.lineCap='round';
-    ctx.lineJoin='round';
-    ctx.shadowBlur=12;
-    for(let i=0;i<pts.length-1;i++){
-      const midV=(pts[i].v+pts[i+1].v)/2;
-      ctx.strokeStyle=col(midV);
-      ctx.shadowColor=ctx.strokeStyle;
-      const cp=crCP(ext[i],ext[i+1],ext[i+2],ext[i+3]);
-      ctx.beginPath();
-      ctx.moveTo(pts[i].x,pts[i].y);
-      ctx.bezierCurveTo(cp.cp1x,cp.cp1y,cp.cp2x,cp.cp2y,pts[i+1].x,pts[i+1].y);
-      ctx.stroke();
-    }
-    ctx.shadowBlur=0;
-  });
-
-  if(dayIdx===selectedDay && targetCanvas && targetCanvas.id==='graph'){
-    window._dayGraphDots=[];
-  }
-
-  data.dots.forEach(p=>{
-    const x=relToX(p.rel), y=gy(p.v);
-    const cc=col(p.v);
-
-    if(dayIdx===selectedDay && targetCanvas && targetCanvas.id==='graph'){
-      if(!window._dayGraphDots)window._dayGraphDots=[];
-      window._dayGraphDots.push({cx:x,cy:y,val:p.v,minute:p.minute,epoch:p.epoch});
-    }
-
-    ctx.beginPath();
-    ctx.arc(x,y,7,0,Math.PI*2);
-    ctx.fillStyle=cc;
-    ctx.shadowColor=cc;
-    ctx.shadowBlur=14;
-    ctx.fill();
-    ctx.shadowBlur=0;
-
-    ctx.fillStyle='#fff';
-    ctx.font='800 14px -apple-system,BlinkMacSystemFont,sans-serif';
-    ctx.textAlign='center';
-    ctx.textBaseline='bottom';
-    ctx.fillText(Math.round(p.v),x,y-10);
+  // Measurement dots and labels only for today’s actual readings.
+  pts.forEach(p=>{
+    if(!p.meas)return;
+    ctx.beginPath();ctx.arc(p.x,p.y,7,0,Math.PI*2);ctx.fillStyle=col(p.v);ctx.shadowColor=col(p.v);ctx.shadowBlur=14;ctx.fill();
+    ctx.shadowBlur=0;ctx.fillStyle='#fff';ctx.font='800 14px -apple-system,BlinkMacSystemFont,sans-serif';
+    ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(Math.round(p.v),p.x,p.y-10);
   });
 }
-
-
-function drawGraphToCanvas(targetCanvas,targetWrap,dayIdx,drawLabels){
-  return drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels);
-}
-
-function axisHTMLForPanel(){
-  return '<div class="axis">'
-    + '<span style="left:8.333%;">12a</span>'
-    + '<span style="left:29.167%;">6a</span>'
-    + '<span style="left:50%;">12p</span>'
-    + '<span style="left:70.833%;">6p</span>'
-    + '<span style="left:91.667%;">12a</span>'
-    + '</div>';
-}
-
-function renderDayCardHTML(dayIdx){
-  const d=DAYS[Math.max(0,Math.min(TODAY_IDX,dayIdx))];
-  const prev=DAYS[dayIdx-1];
-  const next=DAYS[dayIdx+1];
-
-  const nextLabel=(dayIdx!==TODAY_IDX && next) ? next.dow : '';
-  const prevLabel=prev ? prev.dow : '';
-
-  return `
-    <main class="card ghostRenderedCard">
-      <div class="cardbody">
-        <section class="graphSide">
-          <div class="summaryLeft">
-            <div class="kicker">${d.dow}</div>
-            <div style="display:flex;align-items:flex-end;gap:18px;">
-              <div class="ghostDateFull">${d.dateStr}</div>
-              <div style="display:flex;flex-direction:column;align-items:flex-start;">
-                <div class="scoreLabel">Daily Score</div>
-                <div class="ghostDailyScore">${d.score}</div>
-              </div>
-            </div>
-          </div>
-          <div class="ghostGraphWrap">
-            <canvas class="ghostGraphCanvas"></canvas>
-            <div class="graph-day-label ghostPrevDayLabel">${prevLabel}</div>
-            <div class="graph-day-label ghostNextDayLabel">${nextLabel}</div>
-            <div class="ghostEventLayer"><div class="event-rail"></div><div class="event-hint">Drag tags here</div></div>
-          </div>
-          ${axisHTMLForPanel()}
-        </section>
-      </div>
-    </main>`;
-}
-
-function buildDayPanel(dayIdx, kind){
-  const panel=document.createElement('div');
-  panel.className='dayPanel '+kind+'Panel';
-  panel.dataset.dayIdx=String(Math.max(0,Math.min(TODAY_IDX,dayIdx)));
-
-  // Do NOT clone the live card. Render a stable, independent ghost card.
-  // The old clone-based approach caused the adjacent canvas to paint late
-  // on mobile Safari, so the new day appeared only after another touch/reflow.
-  panel.innerHTML=renderDayCardHTML(Number(panel.dataset.dayIdx));
-  return panel;
-}
-
-
-function renderGhostEvents(panel){
-  const layer=panel.querySelector('.ghostEventLayer');
-  if(!layer)return;
-
-  layer.querySelectorAll('.ghostPlacedTag').forEach(el=>el.remove());
-
-  const dayIdx=Number(panel.dataset.dayIdx);
-  const d=DAYS[dayIdx];
-  const events=(d && Array.isArray(d.events)) ? d.events : [];
-
-  layer.classList.toggle('has-events', events.length>0);
-
-  events.forEach(ev=>{
-    const chip=document.createElement('div');
-    chip.className='ghostPlacedTag';
-    chip.style.left=(Math.max(0,Math.min(1439,ev.minute||0))/1440*100)+'%';
-    chip.textContent=ev.icon||'•';
-    chip.title=(ev.name||'Tag')+' • '+minuteToTime(ev.minute||0);
-    layer.appendChild(chip);
-  });
-}
-
-function redrawPagerGhostCanvases(){
-  const panels=Array.from(document.querySelectorAll('#cardTrack .ghostPanel'));
-
-  function drawOne(panel){
-    const dayIdx=Number(panel.dataset.dayIdx);
-    const wrap=panel.querySelector('.ghostGraphWrap');
-    const canvas=panel.querySelector('.ghostGraphCanvas');
-    if(wrap && canvas){
-      requestAnimationFrame(()=>{
-        drawGraphToCanvas(canvas, wrap, dayIdx, false);
-        requestAnimationFrame(()=>positionGraphOverlay(panel));
-      });
-    }
-    renderGhostEvents(panel);
-  }
-
-  panels.forEach(drawOne);
-}
-
-function schedulePagerGhostRedraw(){
-  const panels=Array.from(document.querySelectorAll('#cardTrack .ghostPanel'));
-
-  function drawOnePanel(i){
-    if(i>=panels.length)return;
-
-    const panel=panels[i];
-    const dayIdx=Number(panel.dataset.dayIdx);
-    const wrap=panel.querySelector('.ghostGraphWrap');
-    const canvas=panel.querySelector('.ghostGraphCanvas');
-
-    if(wrap && canvas){
-      drawGraphToCanvas(canvas, wrap, dayIdx, false);
-      requestAnimationFrame(()=>positionGraphOverlay(panel));
-    }
-    renderGhostEvents(panel);
-
-    requestAnimationFrame(()=>drawOnePanel(i+1));
-  }
-
-  const start=()=>requestAnimationFrame(()=>drawOnePanel(0));
-
-  // Keep side-panel redraws out of the snap frame when possible.
-  if('requestIdleCallback' in window){
-    requestIdleCallback(start,{timeout:300});
-  }else{
-    setTimeout(start,40);
-  }
-}
-
-
-function installDayPager(){
-  if(window._dayPagerInstalled)return;
-  window._dayPagerInstalled=true;
-
-  const card=document.getElementById('card');
-  if(!card || !card.parentElement)return;
-
-  // Add data roles to the live card once so ghost cards can find fields safely.
-  const kicker=card.querySelector('#todayLabel');
-  const date=card.querySelector('#dateFull');
-  const score=card.querySelector('#dailyScore');
-  if(kicker)kicker.dataset.role='todayLabel';
-  if(date)date.dataset.role='dateFull';
-  if(score)score.dataset.role='dailyScore';
-
-  const viewport=document.createElement('div');
-  viewport.id='cardViewport';
-
-  const track=document.createElement('div');
-  track.id='cardTrack';
-
-  const parent=card.parentElement;
-  parent.insertBefore(viewport,card);
-  viewport.appendChild(track);
-
-  const centerPanel=document.createElement('div');
-  centerPanel.className='dayPanel centerPanel';
-  centerPanel.appendChild(card);
-
-  track.appendChild(buildDayPanel(selectedDay>0 ? selectedDay-1 : selectedDay,'ghost'));
-  track.appendChild(centerPanel);
-  track.appendChild(buildDayPanel(selectedDay<TODAY_IDX ? selectedDay+1 : selectedDay,'ghost'));
-
-  track.classList.add('dragging');
-  track.style.transform='translateX(-100%)';
-  void track.offsetWidth;
-  track.classList.remove('dragging');
-
-  requestAnimationFrame(()=>{
-    drawGraph();
-    renderEvents(true);
-    schedulePagerGhostRedraw();
-  });
-
-  enableGraphDayPager();
-}
-
-function refreshDayPagerGhosts(options){
-  options=options||{};
-
-  const track=document.getElementById('cardTrack');
-  const liveCard=document.getElementById('card');
-  if(!track || !liveCard)return;
-
-  let prevPanel=track.querySelector('.prevPanel');
-  let centerPanel=track.querySelector('.centerPanel');
-  let nextPanel=track.querySelector('.nextPanel');
-
-  // First-time setup only: create the 3-panel structure and move the live card once.
-  // After this, do not clear the track or re-append #card, because mobile Safari can
-  // visibly re-layout the live graph/card at snap completion.
-  if(!prevPanel || !centerPanel || !nextPanel){
-    track.innerHTML='';
-
-    prevPanel=document.createElement('div');
-    prevPanel.className='dayPanel prevPanel';
-
-    centerPanel=document.createElement('div');
-    centerPanel.className='dayPanel centerPanel';
-
-    nextPanel=document.createElement('div');
-    nextPanel.className='dayPanel nextPanel';
-
-    centerPanel.appendChild(liveCard);
-
-    track.appendChild(prevPanel);
-    track.appendChild(centerPanel);
-    track.appendChild(nextPanel);
-  }
-
-  // Rebuild only the offscreen ghost panels.
-  const newPrev=buildDayPanel(selectedDay>0 ? selectedDay-1 : selectedDay,'ghost');
-  newPrev.className='dayPanel prevPanel';
-
-  const newNext=buildDayPanel(selectedDay<TODAY_IDX ? selectedDay+1 : selectedDay,'ghost');
-  newNext.className='dayPanel nextPanel';
-
-  prevPanel.replaceWith(newPrev);
-  nextPanel.replaceWith(newNext);
-
-  // Reset the pager back to the center panel without animation.
-  track.classList.add('dragging');
-  track.style.transform='translateX(-100%)';
-
-  // Only redraw the visible graph here if the caller has not already done it.
-  // The swipe commit path draws the live panel first, then rebuilds offscreen panels only.
-  if(!options.liveAlreadyDrawn){
-    drawGraph();
-    renderEvents(true);
-  }
-
-  requestAnimationFrame(()=>{
-    track.classList.remove('dragging');
-    track.style.transform='translateX(-100%)';
-
-    if(options.deferGhosts===false){
-      redrawPagerGhostCanvases();
-    }else{
-      schedulePagerGhostRedraw();
-    }
-  });
-}
-
-function enableGraphDaySwipe(){
-  installDayPager();
-}
-
-function enableGraphDayPager(){
-  const viewport=document.getElementById('cardViewport');
-  const track=document.getElementById('cardTrack');
-  if(!viewport || !track || viewport._pagerReady)return;
-  viewport._pagerReady=true;
-
-  let active=false;
-  let startX=0,startY=0,lastX=0,lastT=0,velocity=0,locked=null;
-
-  function canStart(e){
-    const target=e.target || (e.touches&&e.touches[0]&&e.touches[0].target);
-    if(target && target.closest){
-      if(target.closest('.placed-tag'))return false;
-      if(target.closest('#tagsScroll'))return false;
-      if(target.closest('.tag'))return false;
-      if(target.closest('input,button,a'))return false;
-    }
-    return true;
-  }
-
-  function pFromTouch(e){
-    const t=e.touches&&e.touches[0] ? e.touches[0] : e.changedTouches&&e.changedTouches[0];
-    return t ? {x:t.clientX,y:t.clientY} : null;
-  }
-
-  function setOffset(dx){
-    track.style.transform='translateX(calc(-100% + '+dx+'px))';
-  }
-
-  function snapTo(offset,cb){
-    track.classList.remove('dragging');
-    track.style.transform='translateX('+offset+')';
-
-    // Use a deterministic timer instead of relying on transitionend.
-    // Mobile Safari can skip transitionend when the track is rebuilt or if
-    // layout is interrupted, which leaves selectedDay stale.
-    if(cb){
-      if(window._snapTimer) clearTimeout(window._snapTimer);
-      window._snapTimer=setTimeout(()=>{ window._snapTimer=null; cb(); },240);
-    }
-  }
-
-  function begin(x,y){
-    active=true;
-    startX=x;startY=y;
-    lastX=x;lastT=performance.now();
-    velocity=0;locked=null;
-    track.classList.add('dragging');
-    // Cancel any in-flight snap callback and pending redraw
-    if(window._snapTimer){ clearTimeout(window._snapTimer); window._snapTimer=null; }
-    if(window._redrawTimer){ clearTimeout(window._redrawTimer); window._redrawTimer=null; }
-  }
-
-  function move(x,y,e){
-    if(!active)return;
-
-    const dx=x-startX,dy=y-startY;
-    const adx=Math.abs(dx),ady=Math.abs(dy);
-
-    if(!locked){
-      if(adx>8 && adx>ady*1.08)locked='x';
-      else if(ady>10 && ady>adx*1.08)locked='y';
-    }
-
-    if(locked==='x'){
-      if(e && e.cancelable)e.preventDefault();
-
-      const now=performance.now();
-      const dt=Math.max(1,now-lastT);
-      velocity=(x-lastX)/dt*16.7;
-      lastX=x;lastT=now;
-
-      let dragDx=dx;
-      if((selectedDay<=0 && dx>0) || (selectedDay>=TODAY_IDX && dx<0)){
-        dragDx=dx*.28;
-      }
-
-      setOffset(dragDx);
-    }
-  }
-
-  function finish(x){
-    if(!active)return;
-    active=false;
-
-    const dx=x-startX;
-    const threshold=Math.min(110,Math.max(50,viewport.clientWidth*.22));
-    const fast=Math.abs(velocity)>0.8 && Math.abs(dx)>24;
-
-    let target=selectedDay;
-    let snap='-100%';
-
-    // Drag right reveals the left panel, which is the previous day.
-    if((dx>threshold || (fast && velocity>0)) && selectedDay>0){
-      target=selectedDay-1;
-      snap='0%';
-    }
-    // Drag left reveals the right panel, which is the next day.
-    else if((dx<-threshold || (fast && velocity<0)) && selectedDay<TODAY_IDX){
-      target=selectedDay+1;
-      snap='-200%';
-    }
-
-    if(target!==selectedDay){
-      const targetDay=target;
-
-      // Update text fields immediately — invisible during the slide animation
-      // and ready the moment the panel lands.
-      const dTarget=DAYS[targetDay];
-      document.getElementById('todayLabel').textContent=dTarget.dow;
-      document.getElementById('dateFull').textContent=dTarget.dateStr;
-      document.getElementById('dailyScore').textContent=dTarget.score;
-
-      // Also update the date rail highlight now so it snaps with the swipe.
-      document.querySelectorAll('.day').forEach(el=>{
-        el.classList.toggle('active',Number(el.dataset.idx)===targetDay);
-      });
-      setTimeout(()=>{
-        const el=document.querySelector('.day.active');
-        if(el)el.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
-      },0);
-
-      // Update selectedDay and card text immediately — graph draw is
-      // deferred until after the snap so it doesn't block the animation.
-      window._pagerInternalUpdate=true;
-      selectedDay=targetDay;
-      updateCard();
-      updateTagsApplied();
-      ;
-      window._pagerInternalUpdate=false;
-
-      snapTo(snap,()=>{
-        // Draw graph now that the panel has landed.
-        requestAnimationFrame(()=>{
-          drawGraph();
-          renderEvents();
-        });
-        // Rebuild ghost panels, debounced so rapid swipes skip it.
-        if(window._redrawTimer) clearTimeout(window._redrawTimer);
-        window._redrawTimer=setTimeout(()=>{
-          window._redrawTimer=null;
-          requestAnimationFrame(()=>{
-            refreshDayPagerGhosts({
-              liveAlreadyDrawn:true,
-              deferGhosts:true
-            });
-          });
-        },120);
-      });
-    }else{
-      // No day change: just snap the already-rendered track back to center.
-      snapTo('-100%');
-    }
-
-    locked=null;
-  }
-
-  function cancel(){
-    active=false;locked=null;
-    snapTo('-100%');
-  }
-
-  viewport.addEventListener('pointerdown',e=>{
-    if(e.pointerType==='touch')return;
-    if(!canStart(e))return;
-    begin(e.clientX,e.clientY);
-  },{passive:true});
-
-  window.addEventListener('pointermove',e=>{
-    if(!active)return;
-    move(e.clientX,e.clientY,e);
-  },{passive:false});
-
-  window.addEventListener('pointerup',e=>{
-    if(!active)return;
-    finish(e.clientX);
-  },{passive:false});
-
-  window.addEventListener('pointercancel',cancel,{passive:true});
-
-  viewport.addEventListener('touchstart',e=>{
-    if(!canStart(e))return;
-    const p=pFromTouch(e);
-    if(p)begin(p.x,p.y);
-  },{passive:true});
-
-  viewport.addEventListener('touchmove',e=>{
-    if(!active)return;
-    const p=pFromTouch(e);
-    if(p)move(p.x,p.y,e);
-  },{passive:false});
-
-  viewport.addEventListener('touchend',e=>{
-    if(!active)return;
-    const p=pFromTouch(e);
-    if(p)finish(p.x);
-    else cancel();
-  },{passive:false});
-
-  viewport.addEventListener('touchcancel',cancel,{passive:true});
-}
-
-function updateRollerAndCardForPager(){
-  renderSelectedDayUI();
-}
-
-
-function updateGraphDayLabels(){
-  const prevEl=document.getElementById('prevGraphDayLabel');
-  const nextEl=document.getElementById('nextGraphDayLabel');
-  if(!prevEl||!nextEl)return;
-
-  const prev=DAYS[selectedDay-1];
-  const next=DAYS[selectedDay+1];
-
-  prevEl.textContent=prev ? prev.dow : '';
-  nextEl.textContent=(selectedDay!==TODAY_IDX && next) ? next.dow : '';
-}
-
-
-function drawGraph(){
-  updateGraphDayLabels();
-  return drawResultsSplineGraph(
-    document.getElementById('graph'),
-    document.getElementById('graphWrap'),
-    selectedDay,
-    true
-  );
-}
-
-
 const pc=document.getElementById('particles'),px=pc.getContext('2d');
 let particles=[];
 let activeTransfers=[];
@@ -6056,11 +4513,11 @@ function counter(el,from,to,dur,format,done){
 }
 
 function flow(fromEl,toEl,dur){
-  const fromRect=document.getElementById('dailyScore').getBoundingClientRect();
+  const contribRect=document.getElementById('contribNum').getBoundingClientRect();
   const totalRect=document.getElementById('totalNum').getBoundingClientRect();
 
-  const startX=fromRect.left+fromRect.width*.52;
-  const startY=fromRect.top+fromRect.height*.55;
+  const startX=contribRect.left+contribRect.width*.52;
+  const startY=contribRect.top+contribRect.height*.55;
   const endX=totalRect.left+totalRect.width*.48;
   const endY=totalRect.top+totalRect.height*.55;
   const dx=endX-startX;
@@ -6115,162 +4572,19 @@ function flow(fromEl,toEl,dur){
 }
 
 
-
-function reset(){hasDeposited=false;card.classList.remove('sealed');totalNum.textContent=fmt(TOTAL_BEFORE);}
-function deposit(){
-  if(hasDeposited)return;
-  hasDeposited=true;
-
-  setTimeout(()=>{
-    flow(null,null,4000);
-    counter(totalNum,TOTAL_BEFORE,TOTAL_AFTER,4000,v=>fmt(v),()=>{
-      totalNum.classList.add('pop');
-      card.classList.add('sealed');
-      burst(totalNum,'rgba(110,231,135,.95)',34);
-      setTimeout(()=>{totalNum.classList.remove('pop')},1100);
-    });
-  },700);
+function updateAddedLabel(amount){
+  const el=document.getElementById('added');
+  if(!el)return;
+  amount=Math.max(0,Math.round(amount||0));
+  el.textContent='+'+amount.toLocaleString()+' today';
 }
-// deposit triggered automatically on load
+
+function reset(){updateAddedLabel(DAILY_SCORE);hasDeposited=false;bank.classList.remove('depositing');bank.classList.remove('streaming');contribCell.classList.remove('glow');totalCell.classList.remove('totalGlow');contribNum.classList.remove('pulse');totalNum.classList.remove('pop');added.classList.remove('show');archiveStatus.classList.remove('show');card.classList.remove('sealed');contribNum.textContent='+'+DAILY_SCORE;totalNum.textContent=fmt(TOTAL_BEFORE);updateAddedLabel(DAILY_SCORE);contribSub.textContent='tap to deposit'}
+function deposit(){if(hasDeposited)return;hasDeposited=true;bank.classList.add('streaming');contribCell.classList.add('glow');contribNum.classList.add('pulse');contribSub.textContent='ready';setTimeout(()=>{contribSub.textContent='depositing';flow(contribCell,totalCell,4000);counter(contribNum,DAILY_SCORE,0,4000,v=>'+'+Math.max(0,Math.round(v)));counter(totalNum,TOTAL_BEFORE,TOTAL_AFTER,4000,v=>fmt(v),()=>{contribNum.classList.remove('pulse');contribCell.classList.remove('glow');totalCell.classList.add('totalGlow');totalNum.classList.add('pop');bank.classList.remove('streaming');contribSub.textContent='complete';updateAddedLabel(DAILY_SCORE);added.classList.add('show');archiveStatus.classList.add('show');card.classList.add('sealed');burst(totalNum,'rgba(110,231,135,.95)',34);setTimeout(()=>{totalCell.classList.remove('totalGlow');totalNum.classList.remove('pop')},1100)})},700)}
+bank.onclick=()=>{reset();setTimeout(deposit,250)}
 
 // ── Supabase tag save ─────────────────────────────────────────────
 var _tagSaveTimer={};
-function fetchLeaderboard(){
-  var board = document.getElementById('lb-board');
-  if(!board || !_sbUrl) return;
-  board.innerHTML = '<div id="lb-board-loading">Loading leaderboard…</div>';
-
-  var today = new Date(Date.now()).toISOString().slice(0,10);
-
-  var cutoff7 = new Date(Date.now() - 7*86400000).toISOString().slice(0,10);
-
-  Promise.all([
-    // All opted-in devices — name, zone colours, last sync
-    fetch(_sbUrl+'/rest/v1/devices?leaderboard_opt_in=eq.LB-1'+
-          '&select=device_id,pct_glucose,pct_mixed,pct_fat,last_scan_at',
-      {method:'GET',headers:_sbHeaders}).then(function(r){return r.ok?r.json():[];}),
-    // Today's scores for opted-in devices
-    fetch(_sbUrl+'/rest/v1/daily_scores?day_date=eq.'+today+
-          '&select=device_id,auc_score',
-      {method:'GET',headers:_sbHeaders}).then(function(r){return r.ok?r.json():[];}),
-    // Last 7 days scores for best-day calculation
-    fetch(_sbUrl+'/rest/v1/daily_scores?day_date=gte.'+cutoff7+
-          '&select=device_id,auc_score',
-      {method:'GET',headers:_sbHeaders}).then(function(r){return r.ok?r.json():[];})
-  ]).then(function(results){
-    var devList    = results[0] || [];
-    var scoreList  = results[1] || [];
-    var weekScores = results[2] || [];
-
-    // Build today's score lookup
-    var todayScore = {};
-    scoreList.forEach(function(s){ todayScore[s.device_id] = s.auc_score||0; });
-
-    // Build 7-day best lookup
-    var bestScore = {};
-    weekScores.forEach(function(s){
-      if((s.auc_score||0) > (bestScore[s.device_id]||0)) bestScore[s.device_id] = s.auc_score||0;
-    });
-
-    // Rank by today's score
-    var ranked = devList.slice().sort(function(a,b){
-      return (todayScore[b.device_id]||0) - (todayScore[a.device_id]||0);
-    });
-
-    if(ranked.length === 0){
-      board.innerHTML = '<div id="lb-board-loading">No entries yet — be the first!</div>';
-      return;
-    }
-
-    function medal(i){ return i===0?'🥇':i===1?'🥈':i===2?'🥉':'🏆'; }
-
-    function syncAge(isoStr){
-      if(!isoStr) return 'never';
-      var mins = Math.round((Date.now() - new Date(isoStr).getTime()) / 60000);
-      if(mins < 2)   return 'just now';
-      if(mins < 60)  return mins+'m ago';
-      var hrs = Math.round(mins/60);
-      if(hrs < 24)   return hrs+'h ago';
-      return Math.round(hrs/24)+'d ago';
-    }
-
-    var html = ranked.map(function(d, i){
-      var isMe  = d.device_id === _sbDeviceId;
-      var name  = d.device_id ? d.device_id.slice(-4) : '????';
-      var score = Math.round(todayScore[d.device_id]||0);
-      var g = Math.round(d.pct_glucose||0);
-      var m = Math.round(d.pct_mixed  ||0);
-      var f = Math.round(d.pct_fat    ||0);
-      var sync = syncAge(d.last_scan_at);
-      var best = Math.round(bestScore[d.device_id]||0);
-      return '<div class="lb-row'+(isMe?' lb-me':'')+'">'+
-        '<div class="lb-rank">'+medal(i)+'</div>'+
-        '<div class="lb-info">'+
-          '<div class="lb-name">'+name+(isMe?' <span style="font-size:10px;opacity:.7">(you)</span>':'')+'</div>'+
-          '<div class="lb-zone-bar">'+
-            '<div style="width:'+g+'%;background:#22D3EE;"></div>'+
-            '<div style="width:'+m+'%;background:#4ADE80;"></div>'+
-            '<div style="width:'+f+'%;background:#A855F7;"></div>'+
-          '</div>'+
-          '<div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:3px;">synced '+sync+'</div>'+
-        '</div>'+
-        '<div style="display:flex;gap:8px;align-items:flex-end;">'+
-          '<div style="text-align:right;">'+
-            '<div class="lb-score">'+score+'</div>'+
-            '<div class="lb-score-sub">today</div>'+
-          '</div>'+
-          '<div style="text-align:right;">'+
-            '<div class="lb-score" style="color:#facc15;">'+best+'</div>'+
-            '<div class="lb-score-sub">best</div>'+
-          '</div>'+
-        '</div>'+
-      '</div>';
-    }).join('');
-
-    board.innerHTML = html;
-
-    // Compute hash: ranked device IDs + today scores
-    _lbCurrentHash = ranked.map(function(d){
-      return d.device_id.slice(-4)+':'+(Math.round(todayScore[d.device_id]||0));
-    }).join('|');
-
-    // Show red dot if hash differs from stored
-    var dot = document.getElementById('squad-dot');
-    if(dot) dot.style.display = (_lbCurrentHash && _lbCurrentHash !== _lbStoredHash) ? 'block' : 'none';
-
-  }).catch(function(){
-    board.innerHTML = '<div id="lb-board-loading">Could not load leaderboard.</div>';
-  });
-}
-
-function saveLeaderboardHash(hash){
-  if(!_sbUrl || !_sbDeviceId) return;
-  fetch(_sbUrl+'/rest/v1/devices?on_conflict=device_id',{
-    method:'POST',
-    headers:Object.assign({},_sbHeaders,{'Prefer':'resolution=merge-duplicates,return=minimal'}),
-    body:JSON.stringify({device_id:_sbDeviceId, leaderboard_hash:hash})
-  }).catch(function(){});
-}
-
-function saveLeaderboardPrefs(optIn){
-  if(!_sbUrl || !_sbDeviceId){
-    // Supabase not ready yet — queue it
-    _pendingLbOptIn = optIn;
-    return;
-  }
-  _pendingLbOptIn = null;
-  fetch(_sbUrl+'/rest/v1/devices?on_conflict=device_id',{
-    method:'POST',
-    headers:Object.assign({},_sbHeaders,{'Prefer':'resolution=merge-duplicates,return=minimal'}),
-    body:JSON.stringify({
-      device_id: _sbDeviceId,
-      leaderboard_opt_in: optIn || null
-    })
-  }).then(function(r){
-    if(!r.ok) r.text().then(function(t){console.warn('saveLeaderboardPrefs failed:',r.status,t);});
-  }).catch(function(e){console.warn('saveLeaderboardPrefs error:',e);});
-}
-
 function saveTagsForDay(idx){
   if(!_sbDeviceId)return;
   clearTimeout(_tagSaveTimer[idx]);
@@ -6291,27 +4605,47 @@ function saveTagsForDay(idx){
   },400);
 }
 
+// ── Note field ────────────────────────────────────────────────────
+function updateNote(){
+  var inp=document.getElementById('noteInput');
+  if(inp) inp.value=DAYS[selectedDay].note||'';
+}
+function saveNote(){
+  var inp=document.getElementById('noteInput');
+  if(!inp)return;
+  DAYS[selectedDay].note=inp.value.trim();
+  saveTagsForDay(selectedDay);
+  var btn=document.getElementById('noteBtn');
+  if(btn){btn.textContent='\u2713';setTimeout(function(){btn.textContent='Save';},1000);}
+}
+(function(){
+  var btn=document.getElementById('noteBtn');
+  var inp=document.getElementById('noteInput');
+  if(btn) btn.addEventListener('click',saveNote);
+  if(inp) inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();saveNote();}});
+})();
 
 // ── Show already-deposited state immediately ──────────────────────
-function showDeposited(){
+function showDeposited(){updateAddedLabel(DAILY_SCORE);
   hasDeposited=true;
+  contribNum.textContent='+'+DAILY_SCORE;
+  contribSub.textContent='complete';
   totalNum.textContent=fmt(TOTAL_AFTER);
+  added.classList.add('show');
+  archiveStatus.classList.add('show');
   card.classList.add('sealed');
 }
 
 // ── Supabase read + init ──────────────────────────────────────────
 var _sbUrl='',_sbHeaders={},_sbDeviceId='';
-var _pendingLbOptIn=null; // queued if save fires before Supabase init
-var _lbOptIn='', _lbStoredHash='', _lbCurrentHash='';
 
 function initWithSupabase(sbUrl,sbHeaders,deviceId,preRead){
   _sbUrl=sbUrl;_sbHeaders=sbHeaders;_sbDeviceId=deviceId;
-  // Flush any leaderboard opt-in that was toggled before init completed
-  if(_pendingLbOptIn !== null){ saveLeaderboardPrefs(_pendingLbOptIn); }
   var alreadyDeposited=preRead.alreadyDeposited;
   var tagRows=preRead.tagRows||[];
   TOTAL_BEFORE=preRead.totalBefore;
   TOTAL_AFTER=preRead.totalAfter;
+  contribNum.textContent='+'+DAILY_SCORE;
   totalNum.textContent=fmt(TOTAL_BEFORE);
   var tagLookup={};
   tagRows.forEach(function(row){tagLookup[row.day_date]=row;});
@@ -6323,18 +4657,11 @@ function initWithSupabase(sbUrl,sbHeaders,deviceId,preRead){
       d.note=row.note||'';
     }
   });
-  // Load leaderboard prefs from device row if available
-  if(preRead.deviceRow){
-    _lbOptIn  = preRead.deviceRow.leaderboard_opt_in || '';
-
-  }
   _doInit(alreadyDeposited);
 }
 
 function _doInit(alreadyDeposited){
-  // Fetch leaderboard silently on load so dot can appear immediately
-  if(_lbOptIn === 'LB-1') setTimeout(fetchLeaderboard, 1200);
-  resizeP();loop();buildRail();updateCard();buildTags();enableGraphDaySwipe();initDayGraphPopup();
+  resizeP();loop();buildRail();updateCard();buildTags();updateNote();
   setTimeout(function(){drawGraph();renderEvents();},80);
   if(alreadyDeposited){setTimeout(showDeposited,200);}
   else{setTimeout(deposit,900);}
@@ -6380,18 +4707,6 @@ function startTagDrag(icon,name,x,y,sourceEl,eventIndex){
   moveTagDrag(x,y);
 }
 
-
-function updateDragDeleteHint(x,y){
-  const ghostName=document.getElementById('ghostName');
-  if(!ghostName || !activeDrag)return;
-
-  if(activeDrag.eventIndex!=null && !clientInGraph(x,y)){
-    ghostName.textContent='Release to delete';
-  }else{
-    ghostName.textContent=activeDrag.name;
-  }
-}
-
 function moveTagDrag(x,y){
   if(!activeDrag)return;
   const ghost=document.getElementById("dragGhost");
@@ -6419,50 +4734,19 @@ function moveTagDrag(x,y){
 
 function endTagDrag(x,y){
   if(!activeDrag)return;
-
   const d=DAYS[selectedDay];
-  const droppedInGraph=clientInGraph(x,y);
-
-  if(droppedInGraph){
+  if(clientInGraph(x,y)){
     const minute=minuteFromClientX(x);
-
     if(activeDrag.eventIndex!=null){
       d.events[activeDrag.eventIndex].minute=minute;
-      if(d.events[activeDrag.eventIndex].icon==='✏️'){
-        openNotePopup(selectedDay, activeDrag.eventIndex, minute, true);
-      } else {
-        renderEvents(true);
-        buildTags();
-        saveTagsForDay(selectedDay);
-      }
-    }else if(activeDrag.icon==='✏️'){
-      // Place note event first, then open popup to fill in text
-      d.events.push({icon:'✏️',name:'Note',minute:minute,note:''});
-      if(!d.tags.includes('✏️'))d.tags.push('✏️');
-      openNotePopup(selectedDay, d.events.length-1, minute, false);
     }else{
-      d.events.push({
-        icon:activeDrag.icon,
-        name:activeDrag.name,
-        minute:minute
-      });
+      d.events.push({icon:activeDrag.icon,name:activeDrag.name,minute:minute});
       if(!d.tags.includes(activeDrag.icon))d.tags.push(activeDrag.icon);
-      renderEvents(true);
-      buildTags();
-      saveTagsForDay(selectedDay);
     }
-
-  }else if(activeDrag.eventIndex!=null){
-    // Dragging an existing placed tag off the graph deletes it.
-    d.events.splice(activeDrag.eventIndex,1);
-
-    // If no placed events and no tray selection remain for this icon, keep tray state as-is.
-    // The saved Supabase row is updated with the reduced events array.
-    renderEvents(true);
+    renderEvents();
     buildTags();
     saveTagsForDay(selectedDay);
   }
-
   cancelTagDrag();
 }
 
@@ -6491,73 +4775,19 @@ function showPlacedTagTime(minute){
   showPlacedTagTime._timer=setTimeout(()=>{if(!activeDrag)cursor.classList.remove("show");},1600);
 }
 
-
-function openNotePopup(dayIdx, eventIdx, minute, editing){
-  const popup=document.getElementById('note-popup');
-  const timeEl=document.getElementById('note-popup-time');
-  const textEl=document.getElementById('note-popup-text');
-  const saveBtn=document.getElementById('note-popup-save');
-  const cancelBtn=document.getElementById('note-popup-cancel');
-
-  timeEl.textContent=minuteToTime(minute);
-  const ev=DAYS[dayIdx].events[eventIdx];
-  textEl.value=ev&&ev.note?ev.note:'';
-
-  // Position near centre of screen
-  popup.style.display='flex';
-  popup.style.left='50%';
-  popup.style.top='50%';
-  popup.style.transform='translate(-50%,-50%)';
-
-  setTimeout(()=>textEl.focus(),60);
-
-  function doSave(){
-    const d=DAYS[dayIdx];
-    if(d.events[eventIdx]){
-      d.events[eventIdx].note=textEl.value.trim();
-    }
-    popup.style.display='none';
-    renderEvents(true);
-    buildTags();
-    saveTagsForDay(dayIdx);
-    saveBtn.removeEventListener('click',doSave);
-    cancelBtn.removeEventListener('click',doCancel);
-  }
-
-  function doCancel(){
-    // If this was a fresh drop with no text, remove the event
-    if(!editing && DAYS[dayIdx].events[eventIdx] && !DAYS[dayIdx].events[eventIdx].note){
-      DAYS[dayIdx].events.splice(eventIdx,1);
-    }
-    popup.style.display='none';
-    renderEvents(true);
-    buildTags();
-    saveTagsForDay(dayIdx);
-    saveBtn.removeEventListener('click',doSave);
-    cancelBtn.removeEventListener('click',doCancel);
-  }
-
-  saveBtn.addEventListener('click',doSave);
-  cancelBtn.addEventListener('click',doCancel);
-}
-
-function renderEvents(force){
+function renderEvents(){
   const layer=document.getElementById("eventLayer");
   if(!layer)return;
-  const d=DAYS[selectedDay];
-  if(!d.events)d.events=[];
-  const sig=selectedDay+'_'+d.events.length;
-  if(!force && layer._renderSig===sig)return;
-  layer._renderSig=sig;
   layer.querySelectorAll(".placed-tag").forEach(el=>el.remove());
+  const d=DAYS[selectedDay];
   layer.classList.toggle("has-events",!!(d.events&&d.events.length));
+  if(!d.events)d.events=[];
   d.events.forEach((ev,idx)=>{
     const chip=document.createElement("div");
-    chip.className="placed-tag"+(ev.icon==='✏️'?' is-note':'');
+    chip.className="placed-tag";
     chip.style.left=(ev.minute/1440*100)+"%";
     chip.innerHTML="<span>"+ev.icon+"</span>";
-    const notePreview=ev.icon==='✏️' && ev.note ? ev.note.substring(0,40)+(ev.note.length>40?'…':'') : '';
-    chip.title=(notePreview||ev.name)+" \u2022 "+minuteToTime(ev.minute);
+    chip.title=ev.name+" \u2022 "+minuteToTime(ev.minute);
     let chipDownX=0,chipDownY=0,chipPressed=false,chipDragging=false;
     chip.addEventListener("pointerdown",e=>{
       e.preventDefault();
@@ -6574,10 +4804,7 @@ function renderEvents(force){
     chip.addEventListener("pointerup",e=>{
       if(!chipPressed)return;
       if(chipDragging && activeDrag){endTagDrag(e.clientX,e.clientY);}
-      else{
-        if(ev.icon==='✏️'){openNotePopup(selectedDay,idx,ev.minute,true);}
-        else{showPlacedTagTime(ev.minute);}
-      }
+      else{showPlacedTagTime(ev.minute);}
       chipPressed=false; chipDragging=false;
     });
     chip.addEventListener("pointercancel",e=>{
@@ -6589,240 +4816,13 @@ function renderEvents(force){
   });
 }
 
-function initResultsPage(){
-  totalNum.textContent=fmt(TOTAL_BEFORE||0);
-  resizeP();loop();buildRail();updateCard();buildTags();
+function initResultsPage(){updateAddedLabel(DAILY_SCORE);
+  resizeP();loop();buildRail();updateCard();buildTags();updateNote();
   setTimeout(function(){drawGraph();renderEvents();},80);
   setTimeout(deposit,900);
 }
-// Install pager DOM structure immediately so layout is stable before Supabase resolves.
-// _doInit will call enableGraphDaySwipe() later but installDayPager() guards against double-install.
-function earlyInit(){
-  resizeP();loop();buildRail();updateCard();buildTags();installDayPager();initDayGraphPopup();
-  setTimeout(function(){drawGraph();renderEvents();},80);
-}
-if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',earlyInit);}else{setTimeout(earlyInit,0);}
-addEventListener('resize',()=>{resizeP();drawGraph();renderEvents();updateTagWheelScale();positionGraphOverlay()})
-
-function openInfoModal(){
-  var optEl = document.getElementById('lb-optin');
-  var board = document.getElementById('lb-board');
-  if(optEl) optEl.checked = (_lbOptIn === 'LB-1');
-  if(board) board.style.display = (optEl && optEl.checked) ? 'flex' : 'none';
-  if(optEl) optEl.onchange = function(){
-    var on = this.checked;
-    board.style.display = on ? 'flex' : 'none';
-    var optIn = on ? 'LB-1' : '';
-    _lbOptIn = optIn;
-    if(typeof saveLeaderboardPrefs === 'function') saveLeaderboardPrefs(optIn);
-    if(on) fetchLeaderboard();
-  };
-  if(_lbOptIn === 'LB-1') fetchLeaderboard();
-  // Clear dot and persist current hash when user opens Squad
-  var dot = document.getElementById('squad-dot');
-  if(dot) dot.style.display = 'none';
-  if(_lbCurrentHash && _lbCurrentHash !== _lbStoredHash){
-    _lbStoredHash = _lbCurrentHash;
-    saveLeaderboardHash(_lbCurrentHash);
-  }
-  document.getElementById('info-modal-overlay').classList.add('open');
-}
-
-function closeInfoModal(){
-  document.getElementById('info-modal-overlay').classList.remove('open');
-}
-
-function positionGraphOverlay(panel){
-  function applyPositions(seps, wrap){
-  }
-  if(panel){
-    const canvas=panel.querySelector('.ghostGraphCanvas');
-    if(!canvas||!canvas._graphSeps) return;
-    applyPositions(canvas._graphSeps, panel);
-    return;
-  }
-  const seps=window._graphSeps;
-  if(!seps) return;
-  const wrap=document.getElementById('graphWrap');
-  if(!wrap) return;
-  applyPositions(seps, wrap);
-}
-
-function initDayGraphPopup(){
-  const wrap    = document.getElementById('graphWrap');
-  const popup   = document.getElementById('day-graph-popup');
-  const popVal  = document.getElementById('day-graph-popup-val');
-  const popTime = document.getElementById('day-graph-popup-time');
-  if(!wrap || !popup) return;
-  const HIT_R = 44;
-  let touchStartX=0, touchStartY=0, touchStartTime=0, lastTouch=0;
-  function fmtDayGraphTime(epoch, minute){
-    if(epoch!=null && !isNaN(epoch)){
-      const d=new Date(epoch*1000);
-      let h=d.getHours(), m=d.getMinutes();
-      const ampm=h>=12?'pm':'am'; h=h%12||12;
-      return h+':'+(m<10?'0'+m:String(m))+ampm;
-    }
-    return minuteToTime(minute||0).toLowerCase().replace(' ', '');
-  }
-  function findNearestDot(clientX, clientY){
-    const rect=wrap.getBoundingClientRect();
-    if(!window._dayGraphDots||!window._dayGraphDots.length) return null;
-    const x=clientX-rect.left, y=clientY-rect.top;
-    let best=null, bestD=HIT_R*HIT_R;
-    window._dayGraphDots.forEach(dot=>{
-      const dx=dot.cx-x, dy=dot.cy-y;
-      const d2=dx*dx+dy*dy;
-      if(d2<bestD){bestD=d2;best=dot;}
-    });
-    return best;
-  }
-  function showPopup(dot, clientX, clientY){
-    const vv=(dot.val!=null?dot.val:dot.v);
-    const c=vv<=2?'#22D3EE':vv<=4?'#4ADE80':'#A855F7';
-    popVal.textContent=vv.toFixed(1)+' ppm'; popVal.style.color=c;
-    popTime.textContent=fmtDayGraphTime(dot.epoch,dot.minute);
-    popup.style.display='block'; popup.style.left='0'; popup.style.top='0';
-    void popup.offsetWidth;
-    const rect=wrap.getBoundingClientRect();
-    const pw=popup.offsetWidth, ph=popup.offsetHeight, GAP=10;
-    const px=Math.max(4,Math.min(clientX-rect.left-pw/2, rect.width-pw-4));
-    const pyAbove=clientY-rect.top-ph-GAP;
-    popup.style.left=px+'px'; popup.style.top=(pyAbove>=4?pyAbove:clientY-rect.top+GAP+14)+'px';
-  }
-  function hidePopup(){ popup.style.display='none'; }
-  function handleTap(clientX, clientY){
-    const dot=findNearestDot(clientX,clientY);
-    dot?showPopup(dot,clientX,clientY):hidePopup();
-  }
-  wrap.addEventListener('touchstart',e=>{
-    if(e.touches.length!==1)return;
-    touchStartX=e.touches[0].clientX; touchStartY=e.touches[0].clientY; touchStartTime=Date.now();
-  },{passive:true});
-  wrap.addEventListener('touchend',e=>{
-    if(e.changedTouches.length!==1)return;
-    const t=e.changedTouches[0];
-    const dt=Date.now()-touchStartTime;
-    const dx=Math.abs(t.clientX-touchStartX);
-    const dy=Math.abs(t.clientY-touchStartY);
-    if(dt<300&&dx<14&&dy<14){lastTouch=Date.now();handleTap(t.clientX,t.clientY);}
-  },{passive:true});
-  wrap.addEventListener('click',e=>{ if(Date.now()-lastTouch<500)return; handleTap(e.clientX,e.clientY); });
-}
-
-// ── New-measurement banner ────────────────────────────────────────────────
-// Polls the devices table every 30s. If last_d_param differs from the
-// current page's dParam, a new sync has happened — show the banner.
-// Tapping reloads to a URL rebuilt from the stored params.
-(function(){
-  var POLL_INTERVAL = 30000;
-  var _pollTimer    = null;
-  var _newUrl       = null;
-
-  function buildNewUrl(row) {
-    var u = new URL(window.location.href);
-    // Replace data params from stored device row; keep non-data params as-is.
-    // Important: ws/tz travel with the payload. Without updating ws, the
-    // refreshed page can decode the new d/a payload using the old page-load
-    // windowStart and appear stuck on the original day.
-    if (row.last_t_param !== null) u.searchParams.set('t', row.last_t_param);
-    if (row.last_d_param !== null) u.searchParams.set('d', row.last_d_param);
-    if (row.last_a_param !== null) u.searchParams.set('a', row.last_a_param);
-    else u.searchParams.delete('a');
-    if (row.last_s_param !== null) u.searchParams.set('s', row.last_s_param);
-    else u.searchParams.delete('s');
-
-    if (row.last_ws_param !== null && row.last_ws_param !== undefined) {
-      u.searchParams.set('ws', row.last_ws_param);
-    } else {
-      u.searchParams.delete('ws');
-    }
-
-    if (row.last_tz_param !== null && row.last_tz_param !== undefined) {
-      u.searchParams.set('tz', row.last_tz_param);
-    } else {
-      u.searchParams.delete('tz');
-    }
-
-    return u.toString();
-  }
-
-  function showBanner(url) {
-    _newUrl = url;
-    var el = document.getElementById('update-banner');
-    if (el) { el.style.display = 'flex'; requestAnimationFrame(function(){ el.classList.add('visible'); }); }
-  }
-
-  function dismissBanner() {
-    var el = document.getElementById('update-banner');
-    if (el) { el.classList.remove('visible'); }
-  }
-
-  function poll() {
-    if (!_sbUrl || !_sbDeviceId) return;
-    fetch(_sbUrl + '/rest/v1/devices?device_id=eq.' + encodeURIComponent(_sbDeviceId)
-          + '&select=last_d_param,last_t_param,last_a_param,last_s_param,last_ws_param,last_tz_param&limit=1',
-      { method: 'GET', headers: _sbHeaders })
-    .then(function(r){ return r.ok ? r.json() : []; })
-    .then(function(rows){
-      if (!rows || !rows.length) return;
-      var row = rows[0];
-      var currentWs = params.get('ws') || null;
-      var currentTz = params.get('tz') || null;
-      var rowWs = row.last_ws_param || null;
-      var rowTz = row.last_tz_param || null;
-
-      if ((row.last_d_param && row.last_d_param !== dParam) ||
-          (rowWs !== currentWs) ||
-          (rowTz !== currentTz)) {
-        showBanner(buildNewUrl(row));
-        clearInterval(_pollTimer); // stop polling once banner is up
-      }
-    })
-    .catch(function(){});
-  }
-
-  // Start polling once Supabase is ready (wait for _sbDeviceId to be set)
-  function startWhenReady() {
-    if (_sbDeviceId) {
-      _pollTimer = setInterval(poll, POLL_INTERVAL);
-    } else {
-      setTimeout(startWhenReady, 500);
-    }
-  }
-  startWhenReady();
-
-  // Banner tap: reload to new URL
-  document.addEventListener('DOMContentLoaded', function(){}, false);
-  setTimeout(function(){
-    var el = document.getElementById('update-banner');
-    if (!el) return;
-    el.addEventListener('click', function(e) {
-      // Dismiss tap on ×, reload tap on everything else
-      if (e.target.classList.contains('ub-dismiss')) {
-        dismissBanner();
-        return;
-      }
-      if (_newUrl) window.location.href = _newUrl;
-    });
-  }, 0);
-})();
-
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initResultsPage);}else{setTimeout(initResultsPage,50);}
+addEventListener('resize',()=>{resizeP();drawGraph();renderEvents()})
 </script>
-<div id="update-banner" role="button" tabindex="0">
-  <div class="ub-dot"></div>
-  <span class="ub-text">New measurement — tap to update</span>
-  <span class="ub-dismiss">×</span>
-</div>
-
-<div id="note-popup" class="note-popup" style="display:none;">
-  <div class="note-popup-time" id="note-popup-time"></div>
-  <textarea id="note-popup-text" placeholder="Write a note…" rows="3"></textarea>
-  <div class="note-popup-btns">
-    <button class="note-popup-cancel" id="note-popup-cancel">Cancel</button>
-    <button class="note-popup-save" id="note-popup-save">Save</button>
-  </div>
-</div>
-
 </body>
 </html>
