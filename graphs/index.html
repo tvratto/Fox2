@@ -5053,17 +5053,18 @@ function buildTags(){
       const ady=Math.abs(dy);
 
       if(!dragStarted){
-        // Horizontal intent: let the native scroller keep the gesture.
-        if(adx>8 && adx>ady*1.15){
-          horizontalScroll=true;
-          return;
-        }
+        const dist=Math.sqrt(adx*adx+ady*ady);
+        if(dist<3)return; // wait for minimal movement
 
-        // Upward intent: pull the tag out of the tray.
-        if(dy<-10 && ady>adx*.85){
+        // Angle threshold: >35° from horizontal = upward drag intent.
+        // tan(35°) ≈ 0.70 — single threshold, no dead zone.
+        if(ady>adx*0.70 && dy<0){
+          // Upward intent — preventDefault immediately before browser claims scroll.
           ev.preventDefault();
           beginDrag(ev.clientX,ev.clientY);
-        }else{
+        } else {
+          // Horizontal intent: let the native scroller keep the gesture.
+          horizontalScroll=true;
           return;
         }
       }
@@ -5104,7 +5105,7 @@ function buildTags(){
       document.addEventListener('pointermove',onDocMove,{passive:false});
       document.addEventListener('pointerup',onDocUp,{passive:false});
       document.addEventListener('pointercancel',onDocCancel,{passive:false});
-    },{passive:true});
+    },{passive:false});
 
     el.addEventListener('dragstart',ev=>ev.preventDefault());
 
@@ -6369,8 +6370,11 @@ function xFromMinute(minute){
 }
 
 function clientInGraph(x,y){
-  const r=document.getElementById("eventLayer").getBoundingClientRect();
-  const pad=24;
+  // Use the card (dark glass panel) as the drop zone — as soon as the ghost
+  // crosses the card's top edge, the tag can be placed on the graph.
+  const graphWrap=document.getElementById('graphWrap');
+  const r=graphWrap ? graphWrap.getBoundingClientRect() : document.getElementById("eventLayer").getBoundingClientRect();
+  const pad=8;
   return x>=r.left-pad && x<=r.right+pad && y>=r.top-pad && y<=r.bottom+pad;
 }
 
