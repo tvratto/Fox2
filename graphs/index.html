@@ -1960,7 +1960,7 @@ if (!dParam || totalDays === 0) {
           + '&select=day_date,events,tray_tags,note', { method:'GET', headers:readHeaders })
       .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; }),
     fetch(SUPABASE_URL + '/rest/v1/devices?device_id=eq.' + encodeURIComponent(deviceId)
-          + '&select=leaderboard_opt_in,leaderboard_hash,last_d_param&limit=1', { method:'GET', headers:readHeaders })
+          + '&select=leaderboard_opt_in,leaderboard_hash,last_d_param,last_ws_param&limit=1', { method:'GET', headers:readHeaders })
       .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; })
   ]).then(function(results) {
     var scoreRows  = results[0];
@@ -2016,10 +2016,15 @@ if (!dParam || totalDays === 0) {
     // Only write payload params if this page's dParam is different from what's
     // already stored — prevents an older open tab from overwriting newer data.
     var storedDeviceRow = deviceRows && deviceRows[0] ? deviceRows[0] : null;
-    // Only write if this page's dParam is longer (more measurements) than what's stored.
-    // A plain !== check would cause old pages to think they have "new" data when they differ.
+    // Determine if this page carries newer data than what's stored.
+    // Primary signal: ws (windowStart epoch, base36) — higher = newer window.
+    // Tiebreaker when ws matches: d param length — more chars = more measurements in same window.
     var storedDParam = storedDeviceRow ? (storedDeviceRow.last_d_param || '') : '';
-    var isNewerPayload = dParam.length > storedDParam.length;
+    var storedWs     = storedDeviceRow ? (storedDeviceRow.last_ws_param || '') : '';
+    var wsVal        = parseInt(wsParam  || '0', 36);
+    var storedWsVal  = parseInt(storedWs || '0', 36);
+    var isNewerPayload = wsVal > storedWsVal ||
+                         (wsVal === storedWsVal && dParam.length > storedDParam.length);
     // Only write if this page carries new data — prevents stale reloads clobbering anything.
     if (isNewerPayload) {
       var deviceWriteBody = {
