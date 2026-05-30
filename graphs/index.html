@@ -5631,22 +5631,49 @@ function refreshDayPagerGhosts(options){
   const liveCard=document.getElementById('card');
   if(!track || !liveCard)return;
 
-  track.innerHTML='';
+  let prevPanel = track.querySelector('.prevPanel');
+  let centerPanel = track.querySelector('.centerPanel');
+  let nextPanel = track.querySelector('.nextPanel');
 
-  const centerPanel=document.createElement('div');
-  centerPanel.className='dayPanel centerPanel';
+  // First-time setup only: create the 3-panel structure and move liveCard once.
+  if(!prevPanel || !centerPanel || !nextPanel){
+    track.innerHTML='';
 
-  track.appendChild(buildDayPanel(selectedDay>0 ? selectedDay-1 : selectedDay,'ghost'));
-  centerPanel.appendChild(liveCard);
-  track.appendChild(centerPanel);
-  track.appendChild(buildDayPanel(selectedDay<TODAY_IDX ? selectedDay+1 : selectedDay,'ghost'));
+    prevPanel=document.createElement('div');
+    prevPanel.className='dayPanel prevPanel';
+
+    centerPanel=document.createElement('div');
+    centerPanel.className='dayPanel centerPanel';
+
+    nextPanel=document.createElement('div');
+    nextPanel.className='dayPanel nextPanel';
+
+    centerPanel.appendChild(liveCard);
+
+    track.appendChild(prevPanel);
+    track.appendChild(centerPanel);
+    track.appendChild(nextPanel);
+  }
+
+  // Replace only the offscreen ghost panels.
+  const newPrev = buildDayPanel(selectedDay>0 ? selectedDay-1 : selectedDay,'ghost');
+  newPrev.className = 'dayPanel prevPanel';
+
+  const newNext = buildDayPanel(selectedDay<TODAY_IDX ? selectedDay+1 : selectedDay,'ghost');
+  newNext.className = 'dayPanel nextPanel';
+
+  prevPanel.replaceWith(newPrev);
+  nextPanel.replaceWith(newNext);
+
+  // Re-read refs after replaceWith.
+  prevPanel = newPrev;
+  nextPanel = newNext;
 
   // Reset the pager back to the center panel without animation.
   track.classList.add('dragging');
   track.style.transform='translateX(-100%)';
 
-  // Only redraw the visible graph here if the caller has not already done it.
-  // The swipe commit path draws the live panel first, then rebuilds the offscreen panels.
+  // Do not redraw live panel if caller already drew it.
   if(!options.liveAlreadyDrawn){
     drawGraph();
     renderEvents(true);
@@ -5809,11 +5836,11 @@ function enableGraphDayPager(){
         if(window._redrawTimer) clearTimeout(window._redrawTimer);
         window._redrawTimer=setTimeout(()=>{
           window._redrawTimer=null;
-          //requestAnimationFrame(()=>{
-          //  refreshDayPagerGhosts({
-          //    liveAlreadyDrawn:true,
-          //    deferGhosts:true
-          //  });
+          requestAnimationFrame(()=>{
+            refreshDayPagerGhosts({
+              liveAlreadyDrawn:true,
+              deferGhosts:true
+            });
           });
         },120);
       });
