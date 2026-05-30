@@ -6299,8 +6299,8 @@ function initWithSupabase(sbUrl,sbHeaders,deviceId,preRead){
   });
   // Load leaderboard prefs from device row if available
   if(preRead.deviceRow){
-    _lbOptIn  = preRead.deviceRow.leaderboard_opt_in || '';
-
+    _lbOptIn      = preRead.deviceRow.leaderboard_opt_in || '';
+    _lbStoredHash = preRead.deviceRow.leaderboard_hash   || '';
   }
   _doInit(alreadyDeposited);
 }
