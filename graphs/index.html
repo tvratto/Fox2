@@ -6114,9 +6114,8 @@ function fetchLeaderboard(){
   if(!board || !_sbUrl) return;
   board.innerHTML = '<div id="lb-board-loading">Loading leaderboard…</div>';
 
-  var today = new Date(Date.now()).toISOString().slice(0,10);
-
-  var cutoff7 = new Date(Date.now() - 7*86400000).toISOString().slice(0,10);
+  var today   = localIso(new Date());
+  var cutoff7 = localIso(new Date(Date.now() - 7*86400000));
 
   Promise.all([
     // All opted-in devices — name, zone colours, last sync
