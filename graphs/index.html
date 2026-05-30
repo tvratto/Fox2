@@ -1002,7 +1002,7 @@ html, body {
 }
 
 .tag.wheel-side{
-  opacity:.58;
+  opacity:.75;
   transform:scale(.92);
 }
 
@@ -1960,7 +1960,7 @@ if (!dParam || totalDays === 0) {
           + '&select=day_date,events,tray_tags,note', { method:'GET', headers:readHeaders })
       .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; }),
     fetch(SUPABASE_URL + '/rest/v1/devices?device_id=eq.' + encodeURIComponent(deviceId)
-          + '&select=leaderboard_opt_in,leaderboard_hash&limit=1', { method:'GET', headers:readHeaders })
+          + '&select=leaderboard_opt_in,leaderboard_hash,last_d_param&limit=1', { method:'GET', headers:readHeaders })
       .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; })
   ]).then(function(results) {
     var scoreRows  = results[0];
@@ -2013,10 +2013,13 @@ if (!dParam || totalDays === 0) {
       }).catch(function() {});
     }
 
-    fetch(SUPABASE_URL + '/rest/v1/devices?on_conflict=device_id', {
-      method:  'POST',
-      headers: Object.assign({}, headers, { 'Prefer': 'resolution=merge-duplicates,return=minimal' }),
-      body:    JSON.stringify({
+    // Only write payload params if this page's dParam is different from what's
+    // already stored — prevents an older open tab from overwriting newer data.
+    var storedDeviceRow = deviceRows && deviceRows[0] ? deviceRows[0] : null;
+    var isNewerPayload = !storedDeviceRow || dParam !== (storedDeviceRow.last_d_param || null);
+    // Only write if this page carries new data — prevents stale reloads clobbering anything.
+    if (isNewerPayload) {
+      var deviceWriteBody = {
         device_id:            deviceId,
         patient_id:           patientId,
         clinic_id:            clinicId,
@@ -2027,17 +2030,22 @@ if (!dParam || totalDays === 0) {
         last_measurement_at:  lastMeasurementAt,
         payload_ver:          payloadVer,
         firmware_ver:         params.get('v') || null,
+        pct_glucose:          pctGlucose,
+        pct_mixed:            pctMixed,
+        pct_fat:              pctFat,
         last_t_param:         params.get('t') || null,
         last_d_param:         dParam         || null,
         last_a_param:         aParam         || null,
         last_s_param:         sParam         || null,
         last_ws_param:        params.get('ws') || null,
-        last_tz_param:        params.get('tz') || null,
-        pct_glucose:          pctGlucose,
-        pct_mixed:            pctMixed,
-        pct_fat:              pctFat
-      })
-    }).catch(function() {});
+        last_tz_param:        params.get('tz') || null
+      };
+      fetch(SUPABASE_URL + '/rest/v1/devices?on_conflict=device_id', {
+        method:  'POST',
+        headers: Object.assign({}, headers, { 'Prefer': 'resolution=merge-duplicates,return=minimal' }),
+        body:    JSON.stringify(deviceWriteBody)
+      }).catch(function() {});
+    }
 
     // ── Init Results page with pre-write totals and loaded tags ────
     initWithSupabase(SUPABASE_URL, readHeaders, deviceId, {
@@ -6579,9 +6587,10 @@ function renderEvents(force){
 
 function initResultsPage(){
   totalNum.textContent=fmt(TOTAL_BEFORE||0);
-  resizeP();loop();buildRail();updateCard();buildTags();
+  resizeP();loop();buildRail();updateCard();buildTags();enableGraphDaySwipe();initDayGraphPopup();
   setTimeout(function(){drawGraph();renderEvents();},80);
-  setTimeout(deposit,900);
+  // Supabase read failed — no pre-read data, so don't animate; just seal quietly.
+  setTimeout(showDeposited,900);
 }
 // Install pager DOM structure immediately so layout is stable before Supabase resolves.
 // _doInit will call enableGraphDaySwipe() later but installDayPager() guards against double-install.
