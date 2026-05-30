@@ -24,7 +24,7 @@ html, body {
 .top-header-inner {
   display: flex; align-items: baseline;
   padding: 16px 20px 14px;
-  gap: 16px;
+  gap: clamp(8px, 3vw, 16px);
 }
 .nav-tab {
   padding: 0; font-size: 15px; font-weight: 600;
@@ -33,7 +33,8 @@ html, body {
   user-select: none; -webkit-user-select: none;
   border: none; background: none;
 }
-.nav-tab.active { font-size: 24px; font-weight: 700; color: #fff; }
+.nav-tab.active { font-size: clamp(18px, 5.5vw, 24px); font-weight: 700; color: #fff; }
+#totalNum { font-size: clamp(13px, 4vw, 17px); }
 .scroll-x {
   display: flex; flex-direction: row;
   width: 100vw; height: 100svh;
@@ -237,7 +238,7 @@ html, body {
 .day{flex:0 0 58px;height:60px;border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:rgba(255,255,255,.42);border:1px solid transparent;cursor:pointer}
 .day.active{background:linear-gradient(180deg,rgba(255,210,60,.18),rgba(255,210,60,.04));border-color:rgba(255,210,60,.72);color:#fff;box-shadow:0 0 28px rgba(255,210,60,.13)}
 .day .dow{font-size:clamp(10px,1.5dvh,13px);font-weight:800}.day .date{font-size:clamp(11px,1.65dvh,14px);font-weight:650}.dot{width:5px;height:5px;border-radius:50%;background:transparent}.day.today .dot{background:var(--gold);box-shadow:0 0 12px var(--gold)}
-#totalNum{color:var(--orange);font-size:17px;font-weight:950;letter-spacing:-.04em;font-variant-numeric:tabular-nums;text-shadow:0 0 20px rgba(251,146,60,.45);line-height:1}#totalNum.pop{animation:pop .52s cubic-bezier(.2,1.7,.35,1)}#fatNum{color:var(--violet)}
+#totalNum{color:var(--orange);font-weight:950;letter-spacing:-.04em;font-variant-numeric:tabular-nums;text-shadow:0 0 20px rgba(251,146,60,.45);line-height:1}#totalNum.pop{animation:pop .52s cubic-bezier(.2,1.7,.35,1)}#fatNum{color:var(--violet)}
 .card{flex:1;min-height:0;border-radius:28px;background:linear-gradient(135deg,rgba(255,255,255,.078),rgba(255,255,255,.028)),rgba(7,8,10,.9);border:1px solid rgba(255,255,255,.1);box-shadow:0 20px 80px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.06);overflow:hidden;display:flex;flex-direction:column}
 .cardbody{flex:1;min-height:0;display:flex;flex-direction:column;gap:0;padding:0 0 14px}
 .kicker{color:var(--gold);font-size:clamp(9px,1.2dvh,11px);letter-spacing:.16em;text-transform:uppercase;font-weight:950;margin-bottom:9px}
@@ -4642,7 +4643,22 @@ function ease(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2}
 
 function buildRail(){const rail=document.getElementById('rail');rail.innerHTML='';for(let i=Math.max(0,TODAY_IDX-8);i<=TODAY_IDX;i++){const d=DAYS[i];const el=document.createElement('div');el.className='day'+(i===selectedDay?' active':'')+(i===TODAY_IDX?' today':'');el.dataset.idx=i;el.innerHTML=`<div class="dow">${d.dow}</div><div class="date">${d.dateStr}</div><div class="dot"></div>`;el.onclick=()=>selectDay(i);rail.appendChild(el)}setTimeout(()=>document.querySelector('.day.active')?.scrollIntoView({behavior:'smooth',inline:'center'}),50)}
 
+function closeAllPopups(){
+  // Dismiss any floating popups when the day changes
+  var notePopup = document.getElementById('note-popup');
+  if(notePopup) notePopup.style.display='none';
+  var p1 = document.getElementById('dot-popup');
+  if(p1) p1.style.display='none';
+  var p2 = document.getElementById('dot-popup-fuel');
+  if(p2) p2.style.display='none';
+  var p3 = document.getElementById('day-graph-popup');
+  if(p3) p3.style.display='none';
+  var cursor = document.getElementById('timeCursor');
+  if(cursor) cursor.classList.remove('show');
+}
+
 function renderSelectedDayUI(){
+  closeAllPopups();
   document.querySelectorAll('.day').forEach(el=>{
     const idx=Number(el.dataset.idx);
     el.classList.toggle('active',idx===selectedDay);
@@ -5792,6 +5808,7 @@ function enableGraphDayPager(){
 
       // Update selectedDay and card text immediately — graph draw is
       // deferred until after the snap so it doesn't block the animation.
+      closeAllPopups();
       window._pagerInternalUpdate=true;
       selectedDay=targetDay;
       updateCard();
@@ -6114,34 +6131,32 @@ function fetchLeaderboard(){
   if(!board || !_sbUrl) return;
   board.innerHTML = '<div id="lb-board-loading">Loading leaderboard…</div>';
 
-  var today   = localIso(new Date());
-  var cutoff7 = localIso(new Date(Date.now() - 7*86400000));
-
   Promise.all([
     // All opted-in devices — name, zone colours, last sync
     fetch(_sbUrl+'/rest/v1/devices?leaderboard_opt_in=eq.LB-1'+
           '&select=device_id,pct_glucose,pct_mixed,pct_fat,last_scan_at',
       {method:'GET',headers:_sbHeaders}).then(function(r){return r.ok?r.json():[];}),
-    // Today's scores for opted-in devices
-    fetch(_sbUrl+'/rest/v1/daily_scores?day_date=eq.'+today+
-          '&select=device_id,auc_score',
-      {method:'GET',headers:_sbHeaders}).then(function(r){return r.ok?r.json():[];}),
-    // Last 7 days scores for best-day calculation
-    fetch(_sbUrl+'/rest/v1/daily_scores?day_date=gte.'+cutoff7+
-          '&select=device_id,auc_score',
+    // All scores — used for current (latest entry) and all-time best
+    fetch(_sbUrl+'/rest/v1/daily_scores'+
+          '?select=device_id,day_date,auc_score',
       {method:'GET',headers:_sbHeaders}).then(function(r){return r.ok?r.json():[];})
   ]).then(function(results){
     var devList    = results[0] || [];
-    var scoreList  = results[1] || [];
-    var weekScores = results[2] || [];
+    var allScores  = results[1] || [];
 
-    // Build today's score lookup
+    // Current score = most recently written day per device (timezone-agnostic)
+    var latestDate = {};
     var todayScore = {};
-    scoreList.forEach(function(s){ todayScore[s.device_id] = s.auc_score||0; });
+    allScores.forEach(function(s){
+      if(!latestDate[s.device_id] || s.day_date > latestDate[s.device_id]){
+        latestDate[s.device_id] = s.day_date;
+        todayScore[s.device_id] = s.auc_score||0;
+      }
+    });
 
-    // Build 7-day best lookup
+    // All-time best
     var bestScore = {};
-    weekScores.forEach(function(s){
+    allScores.forEach(function(s){
       if((s.auc_score||0) > (bestScore[s.device_id]||0)) bestScore[s.device_id] = s.auc_score||0;
     });
 
