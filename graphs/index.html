@@ -5801,10 +5801,10 @@ function enableGraphDayPager(){
 
       snapTo(snap,()=>{
         // Draw graph now that the panel has landed.
-        requestAnimationFrame(()=>{
-          drawGraph();
-          renderEvents();
-        });
+        //requestAnimationFrame(()=>{
+        //  drawGraph();
+        //  renderEvents();
+        //});
         // Rebuild ghost panels, debounced so rapid swipes skip it.
         if(window._redrawTimer) clearTimeout(window._redrawTimer);
         window._redrawTimer=setTimeout(()=>{
