@@ -4937,14 +4937,20 @@ function tuneTagWheel(){
     wrap._wheelRAF=null;
 
     wrap.addEventListener('scroll',()=>{
+      // Ignore programmatic loop-correction and snap scrolls
+      if(wrap._suppressSnap)return;
+
       if(wrap._wheelRAF)cancelAnimationFrame(wrap._wheelRAF);
       wrap._wheelRAF=requestAnimationFrame(()=>{
         const min=cycleW*.55;
         const max=cycleW*1.55;
 
         // Seamless loop: keep the scroll position in the middle copy.
-        if(wrap.scrollLeft<min)wrap.scrollLeft+=cycleW;
-        else if(wrap.scrollLeft>max)wrap.scrollLeft-=cycleW;
+        if(wrap.scrollLeft<min||wrap.scrollLeft>max){
+          wrap._suppressSnap=true;
+          wrap.scrollLeft+=wrap.scrollLeft<min?cycleW:-cycleW;
+          requestAnimationFrame(()=>{wrap._suppressSnap=false;});
+        }
 
         updateTagWheelScale();
       });
@@ -4953,8 +4959,6 @@ function tuneTagWheel(){
       wrap._snapTimer=setTimeout(()=>{
         const first=wrap.querySelector('.tag[data-base-index]');
         if(!first)return;
-        const iW=first.getBoundingClientRect().width+10;
-        // Find nearest tag center relative to wrap left
         const wLeft=wrap.getBoundingClientRect().left;
         const wCenter=wrap.getBoundingClientRect().width/2;
         let best=null, bestDist=Infinity;
@@ -4965,10 +4969,11 @@ function tuneTagWheel(){
           if(dist<bestDist){bestDist=dist;best=el;}
         });
         if(best){
+          wrap._suppressSnap=true;
           const r=best.getBoundingClientRect();
-          const elCenter=r.left-wLeft+r.width/2;
-          const delta=elCenter-wCenter;
+          const delta=(r.left-wLeft+r.width/2)-wCenter;
           wrap.scrollLeft+=delta;
+          requestAnimationFrame(()=>{wrap._suppressSnap=false;});
         }
         updateTagWheelScale();
       },120);
@@ -5058,7 +5063,7 @@ function buildTags(){
 
         // Angle threshold: >35° from horizontal = upward drag intent.
         // tan(35°) ≈ 0.70 — single threshold, no dead zone.
-        if(ady>adx*0.70 && dy<0){
+        if(ady>adx*0.36 && dy<0){  // drag if >20° from horizontal
           // Upward intent — preventDefault immediately before browser claims scroll.
           ev.preventDefault();
           beginDrag(ev.clientX,ev.clientY);
@@ -6179,6 +6184,11 @@ function fetchLeaderboard(){
 
     // Rank by today's score
     var ranked = devList.slice().sort(function(a,b){
+      // Primary: most recent sync date descending
+      var dateA = latestDate[a.device_id] || '';
+      var dateB = latestDate[b.device_id] || '';
+      if(dateB !== dateA) return dateB > dateA ? 1 : -1;
+      // Tiebreaker: highest score
       return (todayScore[b.device_id]||0) - (todayScore[a.device_id]||0);
     });
 
