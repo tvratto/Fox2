@@ -6201,7 +6201,10 @@ function fetchLeaderboard(){
 
     function syncAge(isoStr){
       if(!isoStr) return 'never';
-      var mins = Math.round((Date.now() - new Date(isoStr).getTime()) / 60000);
+      // Device RTC stores local time as UTC, so stored timestamp is tzOffsetMin minutes
+      // behind real UTC. Compensate by subtracting those minutes from Date.now().
+      var realNow = Date.now() - tzOffsetMin * 60 * 1000;
+      var mins = Math.round((realNow - new Date(isoStr).getTime()) / 60000);
       if(mins < 2)   return 'just now';
       if(mins < 60)  return mins+'m ago';
       var hrs = Math.round(mins/60);
@@ -6232,7 +6235,7 @@ function fetchLeaderboard(){
         '<div style="display:flex;gap:8px;align-items:flex-end;">'+
           '<div style="text-align:right;">'+
             '<div class="lb-score">'+score+'</div>'+
-            '<div class="lb-score-sub">today</div>'+
+            '<div class="lb-score-sub">last</div>'+
           '</div>'+
           '<div style="text-align:right;">'+
             '<div class="lb-score" style="color:#facc15;">'+best+'</div>'+
