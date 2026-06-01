@@ -6184,12 +6184,13 @@ function fetchLeaderboard(){
 
     // Rank by today's score
     var ranked = devList.slice().sort(function(a,b){
-      // Primary: most recent sync date descending
+      // Primary: highest score descending
+      var scoreDiff = (todayScore[b.device_id]||0) - (todayScore[a.device_id]||0);
+      if(scoreDiff !== 0) return scoreDiff;
+      // Tiebreaker: most recent sync date
       var dateA = latestDate[a.device_id] || '';
       var dateB = latestDate[b.device_id] || '';
-      if(dateB !== dateA) return dateB > dateA ? 1 : -1;
-      // Tiebreaker: highest score
-      return (todayScore[b.device_id]||0) - (todayScore[a.device_id]||0);
+      return dateB > dateA ? 1 : -1;
     });
 
     if(ranked.length === 0){
