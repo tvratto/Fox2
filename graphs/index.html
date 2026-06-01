@@ -6156,7 +6156,7 @@ function fetchLeaderboard(){
   Promise.all([
     // All opted-in devices — name, zone colours, last sync
     fetch(_sbUrl+'/rest/v1/devices?leaderboard_opt_in=eq.LB-1'+
-          '&select=device_id,pct_glucose,pct_mixed,pct_fat,last_scan_at',
+          '&select=device_id,pct_glucose,pct_mixed,pct_fat,last_scan_at,last_measurement_at',
       {method:'GET',headers:_sbHeaders}).then(function(r){return r.ok?r.json():[];}),
     // All scores — used for current (latest entry) and all-time best
     fetch(_sbUrl+'/rest/v1/daily_scores'+
@@ -6182,15 +6182,14 @@ function fetchLeaderboard(){
       if((s.auc_score||0) > (bestScore[s.device_id]||0)) bestScore[s.device_id] = s.auc_score||0;
     });
 
-    // Rank by today's score
+    // Rank by recency of last measurement (incentivise measuring, not just syncing), then score
     var ranked = devList.slice().sort(function(a,b){
-      // Primary: highest score descending
-      var scoreDiff = (todayScore[b.device_id]||0) - (todayScore[a.device_id]||0);
-      if(scoreDiff !== 0) return scoreDiff;
-      // Tiebreaker: most recent sync date
-      var dateA = latestDate[a.device_id] || '';
-      var dateB = latestDate[b.device_id] || '';
-      return dateB > dateA ? 1 : -1;
+      // Primary: most recent measurement timestamp descending
+      var tsA = a.last_measurement_at || '';
+      var tsB = b.last_measurement_at || '';
+      if(tsB !== tsA) return tsB > tsA ? 1 : -1;
+      // Tiebreaker: highest score
+      return (todayScore[b.device_id]||0) - (todayScore[a.device_id]||0);
     });
 
     if(ranked.length === 0){
@@ -6217,7 +6216,7 @@ function fetchLeaderboard(){
       var g = Math.round(d.pct_glucose||0);
       var m = Math.round(d.pct_mixed  ||0);
       var f = Math.round(d.pct_fat    ||0);
-      var sync = syncAge(d.last_scan_at);
+      var sync = syncAge(d.last_measurement_at);
       var best = Math.round(bestScore[d.device_id]||0);
       return '<div class="lb-row'+(isMe?' lb-me':'')+'">'+
         '<div class="lb-rank">'+medal(i)+'</div>'+
@@ -6228,7 +6227,7 @@ function fetchLeaderboard(){
             '<div style="width:'+m+'%;background:#4ADE80;"></div>'+
             '<div style="width:'+f+'%;background:#A855F7;"></div>'+
           '</div>'+
-          '<div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:3px;">synced '+sync+'</div>'+
+          '<div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:3px;">measured '+sync+'</div>'+
         '</div>'+
         '<div style="display:flex;gap:8px;align-items:flex-end;">'+
           '<div style="text-align:right;">'+
