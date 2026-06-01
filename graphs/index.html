@@ -1960,7 +1960,7 @@ if (!dParam || totalDays === 0) {
           + '&select=day_date,events,tray_tags,note', { method:'GET', headers:readHeaders })
       .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; }),
     fetch(SUPABASE_URL + '/rest/v1/devices?device_id=eq.' + encodeURIComponent(deviceId)
-          + '&select=leaderboard_opt_in,leaderboard_hash,last_d_param,last_ws_param&limit=1', { method:'GET', headers:readHeaders })
+          + '&select=leaderboard_opt_in,leaderboard_hash,last_d_param,last_ws_param,onboarded_at&limit=1', { method:'GET', headers:readHeaders })
       .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; })
   ]).then(function(results) {
     var scoreRows  = results[0];
@@ -2048,6 +2048,8 @@ if (!dParam || totalDays === 0) {
         last_ws_param:        params.get('ws') || null,
         last_tz_param:        params.get('tz') || null
       };
+      var existingOnboardedAt = deviceRows && deviceRows[0] ? deviceRows[0].onboarded_at : null;
+      if (!existingOnboardedAt) deviceWriteBody.onboarded_at = new Date().toISOString();
       fetch(SUPABASE_URL + '/rest/v1/devices?on_conflict=device_id', {
         method:  'POST',
         headers: Object.assign({}, headers, { 'Prefer': 'resolution=merge-duplicates,return=minimal' }),
@@ -6156,7 +6158,7 @@ function fetchLeaderboard(){
   Promise.all([
     // All opted-in devices — name, zone colours, last sync
     fetch(_sbUrl+'/rest/v1/devices?leaderboard_opt_in=eq.LB-1'+
-          '&select=device_id,pct_glucose,pct_mixed,pct_fat,last_scan_at,last_measurement_at',
+          '&select=device_id,pct_glucose,pct_mixed,pct_fat,last_scan_at',
       {method:'GET',headers:_sbHeaders}).then(function(r){return r.ok?r.json():[];}),
     // All scores — used for current (latest entry) and all-time best
     fetch(_sbUrl+'/rest/v1/daily_scores'+
@@ -6182,12 +6184,12 @@ function fetchLeaderboard(){
       if((s.auc_score||0) > (bestScore[s.device_id]||0)) bestScore[s.device_id] = s.auc_score||0;
     });
 
-    // Rank by recency of last measurement (incentivise measuring, not just syncing), then score
+    // Rank by today's score
     var ranked = devList.slice().sort(function(a,b){
-      // Primary: most recent measurement timestamp descending
-      var tsA = a.last_measurement_at || '';
-      var tsB = b.last_measurement_at || '';
-      if(tsB !== tsA) return tsB > tsA ? 1 : -1;
+      // Primary: most recent sync date descending
+      var dateA = latestDate[a.device_id] || '';
+      var dateB = latestDate[b.device_id] || '';
+      if(dateB !== dateA) return dateB > dateA ? 1 : -1;
       // Tiebreaker: highest score
       return (todayScore[b.device_id]||0) - (todayScore[a.device_id]||0);
     });
@@ -6201,10 +6203,7 @@ function fetchLeaderboard(){
 
     function syncAge(isoStr){
       if(!isoStr) return 'never';
-      // Device RTC stores local time as UTC, so stored timestamp is tzOffsetMin minutes
-      // behind real UTC. Compensate by subtracting those minutes from Date.now().
-      var realNow = Date.now() + tzOffsetMin * 60 * 1000;
-      var mins = Math.round((realNow - new Date(isoStr).getTime()) / 60000);
+      var mins = Math.round((Date.now() - new Date(isoStr).getTime()) / 60000);
       if(mins < 2)   return 'just now';
       if(mins < 60)  return mins+'m ago';
       var hrs = Math.round(mins/60);
@@ -6219,7 +6218,7 @@ function fetchLeaderboard(){
       var g = Math.round(d.pct_glucose||0);
       var m = Math.round(d.pct_mixed  ||0);
       var f = Math.round(d.pct_fat    ||0);
-      var sync = syncAge(d.last_measurement_at);
+      var sync = syncAge(d.last_scan_at);
       var best = Math.round(bestScore[d.device_id]||0);
       return '<div class="lb-row'+(isMe?' lb-me':'')+'">'+
         '<div class="lb-rank">'+medal(i)+'</div>'+
@@ -6230,12 +6229,12 @@ function fetchLeaderboard(){
             '<div style="width:'+m+'%;background:#4ADE80;"></div>'+
             '<div style="width:'+f+'%;background:#A855F7;"></div>'+
           '</div>'+
-          '<div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:3px;">measured '+sync+'</div>'+
+          '<div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:3px;">synced '+sync+'</div>'+
         '</div>'+
         '<div style="display:flex;gap:8px;align-items:flex-end;">'+
           '<div style="text-align:right;">'+
             '<div class="lb-score">'+score+'</div>'+
-            '<div class="lb-score-sub">last</div>'+
+            '<div class="lb-score-sub">today</div>'+
           '</div>'+
           '<div style="text-align:right;">'+
             '<div class="lb-score" style="color:#facc15;">'+best+'</div>'+
