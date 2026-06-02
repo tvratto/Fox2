@@ -1542,45 +1542,55 @@ html, body {
   }
 }
 
-
 /* FOX2 floating tip pill */
 .fox2-tip-pill{
   position:absolute;
   left:50%;
-  top:10px;
+  top:14px;
   transform:translateX(-50%);
   z-index:8;
+
   display:flex;
   align-items:center;
   justify-content:center;
-  gap:7px;
-  max-width:78%;
-  padding:7px 12px;
-  border-radius:999px;
-  background:rgba(0,0,0,.44);
-  border:1px solid rgba(255,210,60,.34);
-  color:rgba(255,255,255,.78);
-  font-size:11px;
-  font-weight:750;
+  gap:10px;
+
+  max-width:88%;
+  padding:12px 18px;
+
+  border-radius:18px;
+
+  background:rgba(255,210,60,.12);
+  border:2px solid rgba(255,210,60,.45);
+
+  color:rgba(255,255,255,.92);
+
+  font-size:17px;
+  font-weight:800;
   letter-spacing:.01em;
-  line-height:1.15;
-  box-shadow:0 0 18px rgba(255,210,60,.10), inset 0 1px 0 rgba(255,255,255,.08);
+  line-height:1.25;
+
+  box-shadow:
+    0 0 28px rgba(255,210,60,.18),
+    inset 0 1px 0 rgba(255,255,255,.12);
+
   backdrop-filter:blur(8px);
   -webkit-backdrop-filter:blur(8px);
+
   pointer-events:auto;
 }
 
 .fox2-tip-pill .tip-icon{
   color:var(--gold);
-  font-size:12px;
+  font-size:18px;
   line-height:1;
   flex-shrink:0;
 }
 
 .fox2-tip-pill .tip-close{
-  margin-left:2px;
-  color:rgba(255,255,255,.42);
-  font-size:13px;
+  margin-left:4px;
+  color:rgba(255,255,255,.55);
+  font-size:18px;
   font-weight:900;
   line-height:1;
   cursor:pointer;
@@ -1590,10 +1600,10 @@ html, body {
 
 @media(max-height:700px){
   .fox2-tip-pill{
-    top:7px;
-    padding:6px 10px;
-    font-size:10px;
-    max-width:82%;
+    top:10px;
+    padding:10px 14px;
+    font-size:15px;
+    max-width:90%;
   }
 }
 
