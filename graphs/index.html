@@ -1614,9 +1614,8 @@ html, body {
 <div class="top-header">
   <div class="top-header-inner">
     <button class="nav-tab active" data-page="0">Results</button>
-    <button class="nav-tab" data-page="1">Fuel</button>
-    <button class="nav-tab" data-page="2">Daily Scores</button>
-    <button class="nav-tab" data-page="3">Insights</button>
+    <button class="nav-tab" data-page="1">History</button>
+    <button class="nav-tab" data-page="2">Insights</button>
     <span id="totalNum" style="margin-left:auto;align-self:center;">12,480</span>
   </div>
   <div id="debug-bar" style="display:none;">v1.1</div>
@@ -1676,9 +1675,6 @@ html, body {
         <div id="dot-popup-fuel-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div>
       </div>
     </div>
-  </div>
-  <div class="page">
-    <div class="card-wrap"><canvas id="card-streaks"></canvas></div>
   </div>
   <div class="page">
     <div class="card-wrap"><canvas id="card-insights"></canvas></div>
@@ -4235,11 +4231,6 @@ window.addEventListener('load', function() {
     var loading = document.getElementById('loading');
     try {
       renderCard();
-
-      streakCanvas = buildStreakCard();
-      var destS = document.getElementById('card-streaks');
-      destS.width = streakCanvas.width; destS.height = streakCanvas.height;
-      destS.getContext('2d').drawImage(streakCanvas, 0, 0);
 
       insightsCanvas = buildInsightsCard();
       var destI = document.getElementById('card-insights');
