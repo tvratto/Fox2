@@ -1732,7 +1732,25 @@ var windowStart = (function() {
   var daysToSat = (6 - dow + 7) % 7;
   var weekEndMs = Date.UTC(nowLocal.getUTCFullYear(), nowLocal.getUTCMonth(), nowLocal.getUTCDate())
                   + daysToSat * 86400000;
-  return Math.floor(weekEndMs / 1000) - (numDaysInPayload - 1) * 86400;
+  var ws = Math.floor(weekEndMs / 1000) - (numDaysInPayload - 1) * 86400;
+
+  // For old URLs without ws param, the window can drift into the future as time
+  // passes. Find the last populated AUC slot and walk the window back by weeks
+  // until that slot no longer falls in the future.
+  if (!wsParam && aParam) {
+    var lastAucSlot = -1;
+    for (var ai = 0; ai * 2 + 2 <= aParam.length; ai++) {
+      if (parseInt(aParam.substring(ai * 2, ai * 2 + 2), 36) > 0) lastAucSlot = ai;
+    }
+    if (lastAucSlot >= 0) {
+      var nowSec = Math.floor(Date.now() / 1000);
+      while ((ws + lastAucSlot * 86400) > nowSec) {
+        ws -= 7 * 86400; // step back one week at a time
+      }
+    }
+  }
+
+  return ws;
 })();
 
 // Parse injected AUCs — fixed 21-slot, 2-char base36 each, no separators
