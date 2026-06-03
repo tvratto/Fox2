@@ -1760,23 +1760,28 @@ var params    = new URLSearchParams(window.location.search);
 (function() {
   if (params.get('src') !== 'clinic') return;
   var idParam = params.get('id') || '';
-  if (!idParam) return;
+  console.log('[clinic] src=clinic detected, id=' + idParam);
+  if (!idParam) { console.log('[clinic] no id param, aborting'); return; }
 
   var SUPABASE_URL = 'https://byysvwdsbpmbypflqcjs.supabase.co';
   var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ5eXN2d2RzYnBtYnlwZmxxY2pzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MTEwNTYsImV4cCI6MjA5NDE4NzA1Nn0.uAKOkd9vNhtN7umEGrVLcQLNjWOnn33n-xKVT25mFzw';
 
-  fetch(SUPABASE_URL + '/rest/v1/devices?device_id=eq.' + encodeURIComponent(idParam)
-      + '&select=last_t_param,last_d_param,last_a_param,last_s_param,last_ws_param,last_tz_param,firmware_ver&limit=1',
+  var fetchUrl = SUPABASE_URL + '/rest/v1/devices?device_id=eq.' + encodeURIComponent(idParam)
+      + '&select=last_t_param,last_d_param,last_a_param,last_s_param,last_ws_param,last_tz_param,firmware_ver&limit=1';
+  console.log('[clinic] fetching:', fetchUrl);
+
+  fetch(fetchUrl,
     { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } })
-  .then(function(r) { return r.ok ? r.json() : []; })
+  .then(function(r) { console.log('[clinic] fetch status:', r.status); return r.ok ? r.json() : []; })
   .then(function(rows) {
-    if (!rows || !rows.length) return; // no row — stay on page, render empty
+    console.log('[clinic] rows returned:', JSON.stringify(rows));
+    if (!rows || !rows.length) { console.log('[clinic] no row found, rendering empty'); return; }
     var row = rows[0];
-    if (!row.last_d_param) return;    // device exists but no data yet — render empty
+    if (!row.last_d_param) { console.log('[clinic] row has no last_d_param, rendering empty'); return; }
 
     // Build full data URL and redirect
     var u = new URL(window.location.href);
-    u.searchParams.delete('src'); // remove clinic marker
+    u.searchParams.delete('src');
     if (row.last_t_param)  u.searchParams.set('t',  row.last_t_param);
     if (row.last_d_param)  u.searchParams.set('d',  row.last_d_param);
     if (row.last_a_param)  u.searchParams.set('a',  row.last_a_param);
@@ -1789,9 +1794,10 @@ var params    = new URLSearchParams(window.location.search);
     else                   u.searchParams.delete('tz');
     if (row.firmware_ver)  u.searchParams.set('v',  row.firmware_ver);
 
+    console.log('[clinic] redirecting to:', u.toString());
     window.location.replace(u.toString());
   })
-  .catch(function() {}); // fetch failed — stay on page, render empty
+  .catch(function(err) { console.log('[clinic] fetch error:', err); });
 })();
 var targetAUC = parseInt(params.get('t') || '0', 36);  // base36 encoded
 var dParam    = params.get('d') || '';
