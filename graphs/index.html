@@ -1718,7 +1718,7 @@ html, body {
     <div id="info-modal-title">Squad Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.7 · 2026-06-03 16:41 UTC</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.7 · 2026-06-03 17:15 UTC</span></div>
     <div class="info-section-title">Leaderboard</div>
     <div class="info-toggle-row">
       <div>
@@ -1751,72 +1751,50 @@ html, body {
 
 // ─── Parse URL params ─────────────────────────────────────────────
 var params    = new URLSearchParams(window.location.search);
+var targetAUC = parseInt(params.get('t') || '0', 36);  // base36 encoded
+var dParam    = params.get('d') || '';
+var aParam    = params.get('a') || '';
+var sParam    = params.get('s') || '';
 
-// ─── Clinic email redirect ─────────────────────────────────────────────────
-// When src=clinic and id is present but no d param, this page was opened from
-// the clinic weekly email. Fetch the latest payload from Supabase for this
-// device and redirect — ensures the clinician always sees current data, never
-// a stale or cross-contaminated snapshot from the time the email was sent.
+// ─── Clinic email redirect ──────────────────────────────────────────────────
 (function() {
   if (params.get('src') !== 'clinic') return;
   var idParam = params.get('id') || '';
   console.log('[clinic] src=clinic detected, id=' + idParam);
   if (!idParam) { console.log('[clinic] no id param, aborting'); return; }
-
   var SUPABASE_URL = 'https://byysvwdsbpmbypflqcjs.supabase.co';
   var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ5eXN2d2RzYnBtYnlwZmxxY2pzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MTEwNTYsImV4cCI6MjA5NDE4NzA1Nn0.uAKOkd9vNhtN7umEGrVLcQLNjWOnn33n-xKVT25mFzw';
-
-  var fetchUrl = SUPABASE_URL + '/rest/v1/devices?device_id=eq.' + encodeURIComponent(idParam)
-      + '&select=last_t_param,last_d_param,last_a_param,last_s_param,last_ws_param,last_tz_param,firmware_ver,last_measurement_at&limit=1';
-  console.log('[clinic] fetching:', fetchUrl);
-
-  fetch(fetchUrl,
+  fetch(SUPABASE_URL + '/rest/v1/devices?device_id=eq.' + encodeURIComponent(idParam)
+      + '&select=last_t_param,last_d_param,last_a_param,last_s_param,last_ws_param,last_tz_param,firmware_ver,last_measurement_at&limit=1',
     { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } })
   .then(function(r) { console.log('[clinic] fetch status:', r.status); return r.ok ? r.json() : []; })
   .then(function(rows) {
     console.log('[clinic] rows returned:', JSON.stringify(rows));
-    if (!rows || !rows.length) { console.log('[clinic] no row found, rendering empty'); return; }
+    if (!rows || !rows.length) { console.log('[clinic] no row, rendering empty'); return; }
     var row = rows[0];
-    if (!row.last_d_param) { console.log('[clinic] row has no last_d_param, rendering empty'); return; }
-
-    // Build full data URL and redirect
+    if (!row.last_d_param) { console.log('[clinic] no last_d_param, rendering empty'); return; }
     var u = new URL(window.location.href);
     u.searchParams.delete('src');
     if (row.last_t_param)  u.searchParams.set('t',  row.last_t_param);
     if (row.last_d_param)  u.searchParams.set('d',  row.last_d_param);
-    if (row.last_a_param)  u.searchParams.set('a',  row.last_a_param);
-    else                   u.searchParams.delete('a');
-    if (row.last_s_param)  u.searchParams.set('s',  row.last_s_param);
-    else                   u.searchParams.delete('s');
-    // If ws is missing (older firmware), infer it from last_measurement_at.
-    // The firmware anchors to the Saturday on-or-after the measurement date,
-    // so we replicate that calculation here to decode day indices correctly.
+    if (row.last_a_param)  u.searchParams.set('a',  row.last_a_param); else u.searchParams.delete('a');
+    if (row.last_s_param)  u.searchParams.set('s',  row.last_s_param); else u.searchParams.delete('s');
+    if (row.last_tz_param) u.searchParams.set('tz', row.last_tz_param); else u.searchParams.delete('tz');
+    if (row.firmware_ver)  u.searchParams.set('v',  row.firmware_ver);
     var wsToUse = row.last_ws_param;
     if (!wsToUse && row.last_measurement_at) {
       var mDate = new Date(row.last_measurement_at);
-      var jsDow = mDate.getUTCDay(); // 0=Sun..6=Sat
-      var daysToSat = (6 - jsDow + 7) % 7;
-      var satMs = Date.UTC(mDate.getUTCFullYear(), mDate.getUTCMonth(), mDate.getUTCDate())
-                  + daysToSat * 86400000;
-      var satDays = Math.floor(satMs / 86400000);
+      var daysToSat = (6 - mDate.getUTCDay() + 7) % 7;
+      var satDays = Math.floor((mDate.getTime() + daysToSat * 86400000) / 86400000);
       wsToUse = satDays.toString(36);
-      console.log('[clinic] inferred ws=' + wsToUse + ' from last_measurement_at=' + row.last_measurement_at);
+      console.log('[clinic] inferred ws=' + wsToUse + ' from ' + row.last_measurement_at);
     }
-    if (wsToUse) u.searchParams.set('ws', wsToUse);
-    else         u.searchParams.delete('ws');
-    if (row.last_tz_param) u.searchParams.set('tz', row.last_tz_param);
-    else                   u.searchParams.delete('tz');
-    if (row.firmware_ver)  u.searchParams.set('v',  row.firmware_ver);
-
+    if (wsToUse) u.searchParams.set('ws', wsToUse); else u.searchParams.delete('ws');
     console.log('[clinic] redirecting to:', u.toString());
     window.location.replace(u.toString());
   })
   .catch(function(err) { console.log('[clinic] fetch error:', err); });
 })();
-var targetAUC = parseInt(params.get('t') || '0', 36);  // base36 encoded
-var dParam    = params.get('d') || '';
-var aParam    = params.get('a') || '';
-var sParam    = params.get('s') || '';
 
 // ─── Debug bar + info modal ────────────────────────────────────────────────────
 (function() {
@@ -1827,12 +1805,12 @@ var sParam    = params.get('s') || '';
   var src = params.get('src') || 'qr';
   var days = dParam ? dParam.split('|').length : 0;
   var el = document.getElementById('debug-bar');
-  if (el) el.textContent = 'id:' + id + '  v:' + v + '  patient:' + p + '  clinic:' + c + '  [web build 2026-06-03 16:41 UTC]';
+  if (el) el.textContent = 'id:' + id + '  v:' + v + '  patient:' + p + '  clinic:' + c + '  [web build 2026-06-03 17:15 UTC]';
   // Populate info modal
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v3.7 · 2026-06-03 16:41 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v3.7 · 2026-06-03 17:15 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
@@ -1856,7 +1834,8 @@ var windowStart = (function() {
   if (wsParam) {
     var wsDay = parseInt(wsParam, 36);
     if (!isNaN(wsDay) && wsDay > 0) {
-      return wsDay * 86400;
+      // ws encodes the Saturday anchor (end of window); windowStart = Saturday - 20 days.
+      return (wsDay - 20) * 86400;
     }
   }
 
@@ -2096,7 +2075,7 @@ if (!dParam || totalDays === 0) {
           + '&select=day_date,events,tray_tags,note', { method:'GET', headers:readHeaders })
       .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; }),
     fetch(SUPABASE_URL + '/rest/v1/devices?device_id=eq.' + encodeURIComponent(deviceId)
-          + '&select=leaderboard_opt_in,leaderboard_hash,last_d_param,last_ws_param&limit=1', { method:'GET', headers:readHeaders })
+          + '&select=leaderboard_opt_in,leaderboard_hash,last_d_param,last_ws_param,last_measurement_at&limit=1', { method:'GET', headers:readHeaders })
       .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; })
   ]).then(function(results) {
     var scoreRows  = results[0];
@@ -2155,12 +2134,15 @@ if (!dParam || totalDays === 0) {
     // Determine if this page carries newer data than what's stored.
     // Primary signal: ws (windowStart epoch, base36) — higher = newer window.
     // Tiebreaker when ws matches: d param length — more chars = more measurements in same window.
-    var storedDParam = storedDeviceRow ? (storedDeviceRow.last_d_param || '') : '';
-    var storedWs     = storedDeviceRow ? (storedDeviceRow.last_ws_param || '') : '';
-    var wsVal        = parseInt(wsParam  || '0', 36);
-    var storedWsVal  = parseInt(storedWs || '0', 36);
+    var storedDParam   = storedDeviceRow ? (storedDeviceRow.last_d_param        || '') : '';
+    var storedWs       = storedDeviceRow ? (storedDeviceRow.last_ws_param       || '') : '';
+    var storedMeasAt   = storedDeviceRow ? (storedDeviceRow.last_measurement_at || '') : '';
+    var wsVal          = parseInt(wsParam  || '0', 36);
+    var storedWsVal    = parseInt(storedWs || '0', 36);
     var isNewerPayload = wsVal > storedWsVal ||
-                         (wsVal === storedWsVal && dParam.length > storedDParam.length);
+                         (wsVal === storedWsVal && dParam.length > storedDParam.length) ||
+                         (wsVal === storedWsVal && dParam.length === storedDParam.length &&
+                          lastMeasurementAt && lastMeasurementAt > storedMeasAt);
     // Only write if this page carries new data — prevents stale reloads clobbering anything.
     if (isNewerPayload) {
       var deviceWriteBody = {
