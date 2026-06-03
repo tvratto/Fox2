@@ -181,13 +181,31 @@ html, body {
   background:rgba(255,255,255,.05);
 }
 .lb-row.lb-me {
-  background:rgba(74,222,128,.08);
-  border:1px solid rgba(74,222,128,.25);
+  background:rgba(74,222,128,.13);
+  border:1px solid rgba(74,222,128,.48);
+  box-shadow:0 0 24px rgba(74,222,128,.12), inset 0 1px 0 rgba(255,255,255,.08);
+  padding:12px 12px;
+  min-height:68px;
 }
 .lb-rank  { font-size:32px; width:40px; text-align:center; flex-shrink:0; line-height:1; }
 .lb-info  { flex:1; min-width:0; }
 .lb-name  { font-size:13px; font-weight:700; color:rgba(255,255,255,.85); }
-.lb-me .lb-name { color:#4ADE80; }
+.lb-me .lb-rank { font-size:34px; width:46px; }
+.lb-me .lb-name { color:#4ADE80; font-size:15px; }
+.lb-me .lb-zone-bar { height:7px; margin-top:6px; }
+.lb-me .lb-score { font-size:40px; color:#4ADE80; }
+.lb-me .lb-score-sub { color:rgba(74,222,128,.58); }
+
+.lb-row.lb-me.lb-flash {
+  animation: lbSelfFlash 1.55s ease-in-out 0s 2;
+}
+@keyframes lbSelfFlash {
+  0%   { background:rgba(74,222,128,.13); box-shadow:0 0 24px rgba(74,222,128,.12), inset 0 1px 0 rgba(255,255,255,.08); transform:scale(1); }
+  18%  { background:rgba(74,222,128,.34); box-shadow:0 0 42px rgba(74,222,128,.45), inset 0 0 0 1px rgba(255,255,255,.18); transform:scale(1.025); }
+  40%  { background:rgba(74,222,128,.16); box-shadow:0 0 26px rgba(74,222,128,.18), inset 0 1px 0 rgba(255,255,255,.08); transform:scale(1); }
+  68%  { background:rgba(255,210,60,.28); box-shadow:0 0 44px rgba(255,210,60,.42), inset 0 0 0 1px rgba(255,255,255,.18); transform:scale(1.025); }
+  100% { background:rgba(74,222,128,.13); box-shadow:0 0 24px rgba(74,222,128,.12), inset 0 1px 0 rgba(255,255,255,.08); transform:scale(1); }
+}
 .lb-zone-bar { display:flex; height:5px; border-radius:3px; overflow:hidden; margin-top:4px; }
 .lb-score { font-size:30px; font-weight:950; color:#fff; text-align:right; flex-shrink:0; line-height:.9; letter-spacing:-.06em; font-variant-numeric:tabular-nums; }
 .lb-score-sub { font-size:9px; color:rgba(255,255,255,.32); text-align:right; margin-top:3px; text-transform:uppercase; letter-spacing:.08em; }
@@ -6439,11 +6457,12 @@ function fetchLeaderboard(){
       var sync = syncAge(d._encodedLastMs);
       var rankText = opts.rankText || medal(i);
       var rowClass = 'lb-row' + (isMe ? ' lb-me' : '') + (opts.pinned ? ' lb-pinned' : '');
+      var rowId = isMe ? ' id="lb-my-row"' : '';
       var nameHtml = isMe
         ? '<span class="lb-you-pill">You</span>' + name
         : name;
 
-      return '<div class="'+rowClass+'">'+
+      return '<div class="'+rowClass+'"'+rowId+'>'+ 
         '<div class="lb-rank">'+rankText+'</div>'+
         '<div class="lb-info">'+
           '<div class="lb-name">'+nameHtml+'</div>'+
@@ -6461,19 +6480,25 @@ function fetchLeaderboard(){
       '</div>';
     }
 
-    var myIndex = ranked.findIndex(function(d){ return d.device_id === _sbDeviceId; });
-    var myHtml = '';
-    if(myIndex >= 0){
-      myHtml = '<div class="lb-section-label">Your rank</div>'+
-               renderLeaderboardRow(ranked[myIndex], myIndex, {pinned:true, rankText:'#'+(myIndex+1)})+
-               '<div class="lb-section-label">Leaderboard</div>';
-    }
-
     var html = ranked.map(function(d, i){
       return renderLeaderboardRow(d, i);
     }).join('');
 
-    board.innerHTML = myHtml + html;
+    board.innerHTML = html;
+
+    // Keep the leaderboard in true rank order, then guide the user to their row.
+    // The larger green row shows identity; the flash makes the row unmistakable.
+    setTimeout(function(){
+      var myRow = document.getElementById('lb-my-row');
+      if(!myRow) return;
+      myRow.scrollIntoView({ behavior:'smooth', block:'center', inline:'nearest' });
+      setTimeout(function(){
+        myRow.classList.remove('lb-flash');
+        void myRow.offsetWidth; // restart animation if leaderboard is reopened/refreshed
+        myRow.classList.add('lb-flash');
+        setTimeout(function(){ myRow.classList.remove('lb-flash'); }, 3400);
+      }, 650);
+    }, 120);
 
     // Compute hash: ranked device IDs + today scores
     _lbCurrentHash = ranked.map(function(d){
