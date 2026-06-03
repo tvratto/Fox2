@@ -1588,14 +1588,20 @@ html, body {
 }
 
 .fox2-tip-pill .tip-close{
-  margin-left:4px;
-  color:rgba(255,255,255,.55);
-  font-size:18px;
+  margin-left:6px;
+  color:rgba(255,255,255,.75);
+  font-size:26px;
   font-weight:900;
   line-height:1;
   cursor:pointer;
   -webkit-tap-highlight-color:transparent;
   flex-shrink:0;
+  padding:4px 2px 4px 6px;
+  min-width:36px;
+  min-height:36px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 
 @media(max-height:700px){
@@ -1651,7 +1657,7 @@ html, body {
 
   <div id="fox2TipPill" class="fox2-tip-pill">
     <span class="tip-icon">💡</span>
-    <span>Add events to discover what affects your score.</span>
+    <span>Add tags to discover what affects your score.</span>
     <span class="tip-close" onclick="document.getElementById('fox2TipPill').style.display='none'">×</span>
   </div>
 <canvas id="graph"></canvas><div id="prevGraphDayLabel" class="graph-day-label"></div><div id="nextGraphDayLabel" class="graph-day-label"></div><div id="day-graph-popup" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;"><div id="day-graph-popup-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div><div id="day-graph-popup-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div></div><div id="dot-popup" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;"><div id="dot-popup-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div><div id="dot-popup-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div></div><div id="eventLayer"><div class="event-rail"></div><div class="event-hint">Drag tags here</div></div>
@@ -5894,6 +5900,8 @@ function enableGraphDayPager(){
       // Update selectedDay and card text immediately — graph draw is
       // deferred until after the snap so it doesn't block the animation.
       closeAllPopups();
+      var _pill=document.getElementById('fox2TipPill');
+      if(_pill) _pill.style.display='none';
       window._pagerInternalUpdate=true;
       selectedDay=targetDay;
       updateCard();
