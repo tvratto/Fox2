@@ -191,6 +191,32 @@ html, body {
 .lb-zone-bar { display:flex; height:5px; border-radius:3px; overflow:hidden; margin-top:4px; }
 .lb-score { font-size:15px; font-weight:800; color:#fff; text-align:right; flex-shrink:0; }
 .lb-score-sub { font-size:10px; color:rgba(255,255,255,.35); text-align:right; }
+.lb-section-label {
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,.34);
+  margin:7px 2px 2px;
+}
+.lb-pinned {
+  background:rgba(74,222,128,.12) !important;
+  border:1px solid rgba(74,222,128,.42) !important;
+  box-shadow:0 0 22px rgba(74,222,128,.10), inset 0 1px 0 rgba(255,255,255,.06);
+}
+.lb-you-pill {
+  display:inline-block;
+  margin-right:6px;
+  padding:2px 6px;
+  border-radius:999px;
+  background:rgba(74,222,128,.18);
+  color:#4ADE80;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  vertical-align:middle;
+}
 
 #squad-dot {
   position:absolute;
@@ -6395,7 +6421,8 @@ function fetchLeaderboard(){
       return Math.round(hrs/24)+'d ago';
     }
 
-    var html = ranked.map(function(d, i){
+    function renderLeaderboardRow(d, i, opts){
+      opts = opts || {};
       var isMe  = d.device_id === _sbDeviceId;
       var name  = d.patient_id ? String(d.patient_id).toUpperCase() : (d.device_id ? d.device_id.substring(0, 4).toUpperCase() : '????');
       var score = Math.round(todayScore[d.device_id]||0);
@@ -6404,10 +6431,16 @@ function fetchLeaderboard(){
       var f = Math.round(d.pct_fat    ||0);
       var sync = syncAge(d._encodedLastMs);
       var best = Math.round(bestScore[d.device_id]||0);
-      return '<div class="lb-row'+(isMe?' lb-me':'')+'">'+
-        '<div class="lb-rank">'+medal(i)+'</div>'+
+      var rankText = opts.rankText || medal(i);
+      var rowClass = 'lb-row' + (isMe ? ' lb-me' : '') + (opts.pinned ? ' lb-pinned' : '');
+      var nameHtml = isMe
+        ? '<span class="lb-you-pill">You</span>' + name
+        : name;
+
+      return '<div class="'+rowClass+'">'+
+        '<div class="lb-rank">'+rankText+'</div>'+
         '<div class="lb-info">'+
-          '<div class="lb-name">'+name+(isMe?' <span style="font-size:10px;opacity:.7">(you)</span>':'')+'</div>'+
+          '<div class="lb-name">'+nameHtml+'</div>'+
           '<div class="lb-zone-bar">'+
             '<div style="width:'+g+'%;background:#22D3EE;"></div>'+
             '<div style="width:'+m+'%;background:#4ADE80;"></div>'+
@@ -6426,9 +6459,21 @@ function fetchLeaderboard(){
           '</div>'+
         '</div>'+
       '</div>';
+    }
+
+    var myIndex = ranked.findIndex(function(d){ return d.device_id === _sbDeviceId; });
+    var myHtml = '';
+    if(myIndex >= 0){
+      myHtml = '<div class="lb-section-label">Your rank</div>'+
+               renderLeaderboardRow(ranked[myIndex], myIndex, {pinned:true, rankText:'#'+(myIndex+1)})+
+               '<div class="lb-section-label">Leaderboard</div>';
+    }
+
+    var html = ranked.map(function(d, i){
+      return renderLeaderboardRow(d, i);
     }).join('');
 
-    board.innerHTML = html;
+    board.innerHTML = myHtml + html;
 
     // Compute hash: ranked device IDs + today scores
     _lbCurrentHash = ranked.map(function(d){
