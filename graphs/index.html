@@ -1594,6 +1594,54 @@ html, body {
 .fox2-tip-pill .fox2-tip-pill @media(max-height:700px){
   }
 
+
+10% { transform: translateX(-2px); }
+  20% { transform: translateX(2px); }
+  30% { transform: translateX(-2px); }
+  40% { transform: translateX(2px); }
+  50% { transform: translateX(-1px); }
+  60% { transform: translateX(1px); }
+  100% { transform: translateX(0); }
+}
+
+30%  { box-shadow:0 0 24px rgba(245,200,66,.8); background:rgba(245,200,66,.22); }
+  100% { box-shadow:none; }
+}
+
+
+@keyframes lbSelfShake {
+  0%, 100% { transform: translateX(0); }
+  12% { transform: translateX(-2px); }
+  24% { transform: translateX(2px); }
+  36% { transform: translateX(-2px); }
+  48% { transform: translateX(2px); }
+  60% { transform: translateX(-1px); }
+  72% { transform: translateX(1px); }
+}
+
+@keyframes lbSelfFlash {
+  0% {
+    background: rgba(74,222,128,.08);
+    box-shadow: 0 0 0 rgba(245,200,66,0);
+  }
+  35% {
+    background: rgba(245,200,66,.24);
+    box-shadow: 0 0 26px rgba(245,200,66,.75);
+  }
+  100% {
+    background: rgba(74,222,128,.08);
+    box-shadow: 0 0 0 rgba(245,200,66,0);
+  }
+}
+
+.lb-self-attention-shake {
+  animation: lbSelfShake .72s ease-in-out both;
+}
+
+.lb-self-attention-flash {
+  animation: lbSelfFlash .75s ease-out both;
+}
+
 </style>
 </head>
 <body>
@@ -6260,10 +6308,37 @@ function deposit(){
 
 // ── Supabase tag save ─────────────────────────────────────────────
 var _tagSaveTimer={};
+
+function animateLeaderboardSelfRow(row) {
+  if (!row) return;
+
+  row.classList.remove('lb-self-attention-shake', 'lb-self-attention-flash');
+
+  setTimeout(function() {
+    row.classList.add('lb-self-attention-shake');
+
+    setTimeout(function() {
+      row.classList.remove('lb-self-attention-shake');
+      row.classList.add('lb-self-attention-flash');
+
+      setTimeout(function() {
+        row.classList.remove('lb-self-attention-flash');
+      }, 850);
+    }, 760);
+  }, 250);
+}
+
 function fetchLeaderboard(){
   var board = document.getElementById('lb-board');
   if(!board || !_sbUrl) return;
   board.innerHTML = '<div id="lb-board-loading">Loading leaderboard…</div>';
+    setTimeout(function(){
+      var me = board.querySelector('.lb-me, .lb-you, .lb-self, [data-you="1"]');
+      if (me) {
+        try { me.scrollIntoView({behavior:'smooth', block:'center'}); } catch(e) {}
+        animateLeaderboardSelfRow(me);
+      }
+    }, 350);
 
   Promise.all([
     // All opted-in devices — name, zone colours, last sync
@@ -7027,6 +7102,7 @@ function initDayGraphPopup(){
     <button class="note-popup-save" id="note-popup-save">Save</button>
   </div>
 </div>
+
 
 </body>
 </html>
