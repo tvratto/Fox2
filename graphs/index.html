@@ -119,8 +119,8 @@ html, body {
   background: #111;
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 20px;
-  padding: 18px 20px 16px;
-  width: min(340px, calc(100vw - 32px));
+  padding: 18px 22px 16px;
+  width: min(392px, calc(100vw - 18px));
   display: flex; flex-direction: column; gap: 8px;
 }
 #info-modal-title {
@@ -169,7 +169,7 @@ html, body {
 #lb-board {
   display:flex; flex-direction:column; gap:6px;
   margin-top:4px;
-  max-height:260px; overflow-y:auto; scrollbar-width:none;
+  max-height:260px; overflow-y:auto; scrollbar-width:none; padding:3px 4px; margin-left:-4px; margin-right:-4px;
 }
 #lb-board::-webkit-scrollbar { display:none; }
 #lb-board-loading {
@@ -197,14 +197,16 @@ html, body {
 .lb-me .lb-score-sub { color:rgba(74,222,128,.58); }
 
 .lb-row.lb-me.lb-flash {
-  animation: lbSelfFlash 1.55s ease-in-out 0s 2;
+  animation: lbSelfFlash 1.8s cubic-bezier(.2,1.35,.25,1) 0s 2;
 }
 @keyframes lbSelfFlash {
-  0%   { background:rgba(74,222,128,.13); box-shadow:0 0 24px rgba(74,222,128,.12), inset 0 1px 0 rgba(255,255,255,.08); transform:scale(1); }
-  18%  { background:rgba(74,222,128,.34); box-shadow:0 0 42px rgba(74,222,128,.45), inset 0 0 0 1px rgba(255,255,255,.18); transform:scale(1.025); }
-  40%  { background:rgba(74,222,128,.16); box-shadow:0 0 26px rgba(74,222,128,.18), inset 0 1px 0 rgba(255,255,255,.08); transform:scale(1); }
-  68%  { background:rgba(255,210,60,.28); box-shadow:0 0 44px rgba(255,210,60,.42), inset 0 0 0 1px rgba(255,255,255,.18); transform:scale(1.025); }
-  100% { background:rgba(74,222,128,.13); box-shadow:0 0 24px rgba(74,222,128,.12), inset 0 1px 0 rgba(255,255,255,.08); transform:scale(1); }
+  0%   { background:rgba(74,222,128,.13); box-shadow:0 0 24px rgba(74,222,128,.12), inset 0 1px 0 rgba(255,255,255,.08); transform:scale(1) rotate(0deg); }
+  10%  { background:rgba(255,210,60,.30); box-shadow:0 0 46px rgba(255,210,60,.48), 0 0 0 2px rgba(255,210,60,.35), inset 0 0 0 1px rgba(255,255,255,.20); transform:scale(1.045) rotate(-.45deg); }
+  22%  { background:rgba(74,222,128,.32); box-shadow:0 0 50px rgba(74,222,128,.48), 0 0 0 2px rgba(74,222,128,.28), inset 0 0 0 1px rgba(255,255,255,.22); transform:scale(1.025) rotate(.35deg); }
+  34%  { background:rgba(255,255,255,.12); box-shadow:0 0 34px rgba(255,255,255,.22), inset 0 1px 0 rgba(255,255,255,.18); transform:scale(1.008) rotate(0deg); }
+  52%  { background:rgba(255,210,60,.26); box-shadow:0 0 44px rgba(255,210,60,.42), 0 0 0 2px rgba(255,210,60,.25), inset 0 0 0 1px rgba(255,255,255,.18); transform:scale(1.035) rotate(.35deg); }
+  72%  { background:rgba(74,222,128,.27); box-shadow:0 0 42px rgba(74,222,128,.36), 0 0 0 1px rgba(74,222,128,.22), inset 0 1px 0 rgba(255,255,255,.14); transform:scale(1.018) rotate(-.25deg); }
+  100% { background:rgba(74,222,128,.13); box-shadow:0 0 24px rgba(74,222,128,.12), inset 0 1px 0 rgba(255,255,255,.08); transform:scale(1) rotate(0deg); }
 }
 .lb-zone-bar { display:flex; height:5px; border-radius:3px; overflow:hidden; margin-top:4px; }
 .lb-score { font-size:30px; font-weight:950; color:#fff; text-align:right; flex-shrink:0; line-height:.9; letter-spacing:-.06em; font-variant-numeric:tabular-nums; }
@@ -1589,75 +1591,8 @@ html, body {
 }
 
 /* FOX2 floating tip pill */
-.fox2-tip-pill{
-  position:absolute;
-  left:50%;
-  top:14px;
-  transform:translateX(-50%);
-  z-index:8;
-
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:10px;
-
-  max-width:88%;
-  padding:12px 18px;
-
-  border-radius:18px;
-
-  background:rgba(255,210,60,.12);
-  border:2px solid rgba(255,210,60,.45);
-
-  color:rgba(255,255,255,.92);
-
-  font-size:17px;
-  font-weight:800;
-  letter-spacing:.01em;
-  line-height:1.25;
-
-  box-shadow:
-    0 0 28px rgba(255,210,60,.18),
-    inset 0 1px 0 rgba(255,255,255,.12);
-
-  backdrop-filter:blur(8px);
-  -webkit-backdrop-filter:blur(8px);
-
-  pointer-events:auto;
-}
-
-.fox2-tip-pill .tip-icon{
-  color:var(--gold);
-  font-size:18px;
-  line-height:1;
-  flex-shrink:0;
-}
-
-.fox2-tip-pill .tip-close{
-  margin-left:6px;
-  color:rgba(255,255,255,.75);
-  font-size:26px;
-  font-weight:900;
-  line-height:1;
-  cursor:pointer;
-  -webkit-tap-highlight-color:transparent;
-  flex-shrink:0;
-  padding:4px 2px 4px 6px;
-  min-width:36px;
-  min-height:36px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-@media(max-height:700px){
-  .fox2-tip-pill{
-    top:10px;
-    padding:10px 14px;
-    font-size:15px;
-    max-width:90%;
+.fox2-tip-pill .fox2-tip-pill @media(max-height:700px){
   }
-}
 
 </style>
 </head>
@@ -1700,12 +1635,6 @@ html, body {
           </div>
         </div>
         <div id="graphWrap">
-
-  <div id="fox2TipPill" class="fox2-tip-pill">
-    <span class="tip-icon">💡</span>
-    <span>Add tags to discover what affects your score.</span>
-    <span class="tip-close" onclick="document.getElementById('fox2TipPill').style.display='none'">×</span>
-  </div>
 <canvas id="graph"></canvas><div id="prevGraphDayLabel" class="graph-day-label"></div><div id="nextGraphDayLabel" class="graph-day-label"></div><div id="day-graph-popup" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;"><div id="day-graph-popup-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div><div id="day-graph-popup-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div></div><div id="dot-popup" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;"><div id="dot-popup-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div><div id="dot-popup-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div></div><div id="eventLayer"><div class="event-rail"></div><div class="event-hint">Drag tags here</div></div>
         </div>
         <div class="axis"><span style="left:8.333%;">12a</span><span style="left:29.167%;">6a</span><span style="left:50%;">12p</span><span style="left:70.833%;">6p</span><span style="left:91.667%;">12a</span></div>
