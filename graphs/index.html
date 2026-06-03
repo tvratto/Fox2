@@ -6293,7 +6293,7 @@ function fetchLeaderboard(){
   Promise.all([
     // All opted-in devices — name, zone colours, last sync
     fetch(_sbUrl+'/rest/v1/devices?leaderboard_opt_in=eq.LB-1'+
-          '&select=device_id,pct_glucose,pct_mixed,pct_fat,last_scan_at,last_measurement_at,last_d_param,last_ws_param,firmware_ver',
+          '&select=device_id,patient_id,pct_glucose,pct_mixed,pct_fat,last_scan_at,last_measurement_at,last_d_param,last_ws_param,firmware_ver',
       {method:'GET',headers:_sbHeaders}).then(function(r){return r.ok?r.json():[];}),
     // All scores — used for current (latest entry) and all-time best
     fetch(_sbUrl+'/rest/v1/daily_scores'+
@@ -6397,7 +6397,7 @@ function fetchLeaderboard(){
 
     var html = ranked.map(function(d, i){
       var isMe  = d.device_id === _sbDeviceId;
-      var name  = d.device_id ? d.device_id.slice(-4) : '????';
+      var name  = d.patient_id ? String(d.patient_id).toUpperCase() : (d.device_id ? d.device_id.substring(0, 4).toUpperCase() : '????');
       var score = Math.round(todayScore[d.device_id]||0);
       var g = Math.round(d.pct_glucose||0);
       var m = Math.round(d.pct_mixed  ||0);
