@@ -119,27 +119,27 @@ html, body {
   background: #111;
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 20px;
-  padding: 22px 24px 20px;
+  padding: 18px 20px 16px;
   width: min(340px, calc(100vw - 32px));
-  display: flex; flex-direction: column; gap: 12px;
+  display: flex; flex-direction: column; gap: 8px;
 }
 #info-modal-title {
-  font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.4);
-  letter-spacing: .1em; text-transform: uppercase;
+  font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.32);
+  letter-spacing: .12em; text-transform: uppercase;
 }
 .info-row {
   display: flex; justify-content: space-between; align-items: baseline;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-  padding-bottom: 9px; gap: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  padding-bottom: 6px; gap: 12px;
 }
 .info-row:last-of-type { border-bottom: none; padding-bottom: 0; }
-.info-label { font-size: 12px; color: rgba(255,255,255,0.38); font-weight: 600; letter-spacing:.04em; }
-.info-value { font-size: 13px; color: rgba(255,255,255,0.82); font-family: monospace; text-align:right; word-break:break-all; }
+.info-label { font-size: 10px; color: rgba(255,255,255,0.30); font-weight: 700; letter-spacing:.08em; text-transform:uppercase; }
+.info-value { font-size: 11px; color: rgba(255,255,255,0.55); font-family: monospace; text-align:right; word-break:break-all; }
 
 .info-section-title {
-  font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.3);
-  letter-spacing: .1em; text-transform: uppercase;
-  margin-top: 4px;
+  font-size: 10px; font-weight: 800; color: rgba(255,255,255,0.28);
+  letter-spacing: .12em; text-transform: uppercase;
+  margin-top: 2px;
 }
 .info-toggle-row {
   display: flex; justify-content: space-between; align-items: center;
@@ -189,8 +189,10 @@ html, body {
 .lb-name  { font-size:13px; font-weight:700; color:rgba(255,255,255,.85); }
 .lb-me .lb-name { color:#4ADE80; }
 .lb-zone-bar { display:flex; height:5px; border-radius:3px; overflow:hidden; margin-top:4px; }
-.lb-score { font-size:15px; font-weight:800; color:#fff; text-align:right; flex-shrink:0; }
-.lb-score-sub { font-size:10px; color:rgba(255,255,255,.35); text-align:right; }
+.lb-score { font-size:30px; font-weight:950; color:#fff; text-align:right; flex-shrink:0; line-height:.9; letter-spacing:-.06em; font-variant-numeric:tabular-nums; }
+.lb-score-sub { font-size:9px; color:rgba(255,255,255,.32); text-align:right; margin-top:3px; text-transform:uppercase; letter-spacing:.08em; }
+.lb-score-box { min-width:54px; text-align:right; flex-shrink:0; }
+.lb-pinned .lb-score { font-size:34px; color:#4ADE80; }
 .lb-section-label {
   font-size:10px;
   font-weight:800;
@@ -6339,12 +6341,6 @@ function fetchLeaderboard(){
       }
     });
 
-    // All-time best
-    var bestScore = {};
-    allScores.forEach(function(s){
-      if((s.auc_score||0) > (bestScore[s.device_id]||0)) bestScore[s.device_id] = s.auc_score||0;
-    });
-
     function lbFromBase36(s){
       return parseInt(s, 36);
     }
@@ -6430,7 +6426,6 @@ function fetchLeaderboard(){
       var m = Math.round(d.pct_mixed  ||0);
       var f = Math.round(d.pct_fat    ||0);
       var sync = syncAge(d._encodedLastMs);
-      var best = Math.round(bestScore[d.device_id]||0);
       var rankText = opts.rankText || medal(i);
       var rowClass = 'lb-row' + (isMe ? ' lb-me' : '') + (opts.pinned ? ' lb-pinned' : '');
       var nameHtml = isMe
@@ -6448,15 +6443,9 @@ function fetchLeaderboard(){
           '</div>'+
           '<div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:3px;">measured '+sync+'</div>'+
         '</div>'+
-        '<div style="display:flex;gap:8px;align-items:flex-end;">'+
-          '<div style="text-align:right;">'+
-            '<div class="lb-score">'+score+'</div>'+
-            '<div class="lb-score-sub">last</div>'+
-          '</div>'+
-          '<div style="text-align:right;">'+
-            '<div class="lb-score" style="color:#facc15;">'+best+'</div>'+
-            '<div class="lb-score-sub">best</div>'+
-          '</div>'+
+        '<div class="lb-score-box">'+
+          '<div class="lb-score">'+score+'</div>'+
+          '<div class="lb-score-sub">last</div>'+
         '</div>'+
       '</div>';
     }
