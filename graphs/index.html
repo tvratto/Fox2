@@ -6387,13 +6387,24 @@ function fetchLeaderboard(){
       d._encodedLastMs = encodedLastMeasurementMs(d);
     });
 
-    // Rank by recency of actual encoded measurement (incentivise measuring, not just syncing), then score
+    // Rank by measurement calendar day first, then daily score.
+    // This avoids letting someone jump ahead just because they measured a few
+    // minutes more recently. Anyone measured today is ranked against others
+    // measured today by score; yesterday's group comes after today's group, etc.
     var ranked = devList.slice().sort(function(a,b){
-      var tsA = a._encodedLastMs || 0;
-      var tsB = b._encodedLastMs || 0;
-      if(tsB !== tsA) return tsB - tsA;
-      // Tiebreaker: highest score
-      return (todayScore[b.device_id]||0) - (todayScore[a.device_id]||0);
+      var dayA = Math.floor((a._encodedLastMs || 0) / 86400000);
+      var dayB = Math.floor((b._encodedLastMs || 0) / 86400000);
+
+      // Newer measurement day first
+      if(dayB !== dayA) return dayB - dayA;
+
+      // Same measurement day: highest daily score first
+      var scoreA = todayScore[a.device_id] || 0;
+      var scoreB = todayScore[b.device_id] || 0;
+      if(scoreB !== scoreA) return scoreB - scoreA;
+
+      // Final tie-breaker only: most recent measurement time
+      return (b._encodedLastMs || 0) - (a._encodedLastMs || 0);
     });
 
     if(ranked.length === 0){
@@ -6445,7 +6456,7 @@ function fetchLeaderboard(){
         '</div>'+
         '<div class="lb-score-box">'+
           '<div class="lb-score">'+score+'</div>'+
-          '<div class="lb-score-sub">last</div>'+
+          '<div class="lb-score-sub">score</div>'+
         '</div>'+
       '</div>';
     }
