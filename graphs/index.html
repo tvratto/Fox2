@@ -6293,7 +6293,7 @@ function fetchLeaderboard(){
   Promise.all([
     // All opted-in devices — name, zone colours, last sync
     fetch(_sbUrl+'/rest/v1/devices?leaderboard_opt_in=eq.LB-1'+
-          '&select=device_id,pct_glucose,pct_mixed,pct_fat,last_scan_at,last_measurement_at',
+          '&select=device_id,pct_glucose,pct_mixed,pct_fat,last_scan_at,last_measurement_at,last_d_param,last_ws_param,firmware_ver',
       {method:'GET',headers:_sbHeaders}).then(function(r){return r.ok?r.json():[];}),
     // All scores — used for current (latest entry) and all-time best
     fetch(_sbUrl+'/rest/v1/daily_scores'+
@@ -6319,12 +6319,57 @@ function fetchLeaderboard(){
       if((s.auc_score||0) > (bestScore[s.device_id]||0)) bestScore[s.device_id] = s.auc_score||0;
     });
 
-    // Rank by recency of last measurement (incentivise measuring, not just syncing), then score
+    function lbFromBase36(s){
+      return parseInt(s, 36);
+    }
+
+    // Reconstruct the most recent measurement timestamp from the encoded graph payload.
+    // This matches the main graph parser:
+    //   current firmware: ws = windowStart day number
+    //   legacy firmware <= 3.042: ws = Saturday/end-of-window day number
+    function encodedLastMeasurementMs(device){
+      var dParam  = device.last_d_param || '';
+      var wsParam = device.last_ws_param || '';
+      if(!dParam || !wsParam) return 0;
+
+      var dayBlocks = dParam.split('|');
+      var numDaysInPayload = dayBlocks.length || 21;
+      var wsDay = parseInt(wsParam, 36);
+      if(!Number.isFinite(wsDay) || wsDay <= 0) return 0;
+
+      var fwVer = parseFloat(device.firmware_ver || '0');
+      var isLegacyWs = fwVer > 0 && fwVer <= 3.042;
+      var windowStartDay = isLegacyWs ? wsDay - (numDaysInPayload - 1) : wsDay;
+      var windowStartSec = windowStartDay * 86400;
+      var lastSec = 0;
+
+      for(var d=0; d<dayBlocks.length; d++){
+        var block = dayBlocks[d];
+        var colon = block.indexOf(':');
+        var rest = colon >= 0 ? block.substring(colon + 1) : '';
+
+        for(var i=0; i + 4 <= rest.length; i += 4){
+          var minuteOffset = lbFromBase36(rest.substring(i, i + 2));
+          if(!Number.isFinite(minuteOffset)) continue;
+
+          var measurementSec = windowStartSec + d * 86400 + minuteOffset * 60;
+          if(measurementSec > lastSec) lastSec = measurementSec;
+        }
+      }
+
+      return lastSec ? lastSec * 1000 : 0;
+    }
+
+    // Cache so sort + render use the exact same decoded timestamp.
+    devList.forEach(function(d){
+      d._encodedLastMs = encodedLastMeasurementMs(d);
+    });
+
+    // Rank by recency of actual encoded measurement (incentivise measuring, not just syncing), then score
     var ranked = devList.slice().sort(function(a,b){
-      // Primary: most recent measurement timestamp descending
-      var tsA = a.last_measurement_at || '';
-      var tsB = b.last_measurement_at || '';
-      if(tsB !== tsA) return tsB > tsA ? 1 : -1;
+      var tsA = a._encodedLastMs || 0;
+      var tsB = b._encodedLastMs || 0;
+      if(tsB !== tsA) return tsB - tsA;
       // Tiebreaker: highest score
       return (todayScore[b.device_id]||0) - (todayScore[a.device_id]||0);
     });
@@ -6336,12 +6381,13 @@ function fetchLeaderboard(){
 
     function medal(i){ return i===0?'🥇':i===1?'🥈':i===2?'🥉':'🏆'; }
 
-    function syncAge(isoStr){
-      if(!isoStr) return 'never';
-      // Device RTC stores local time as UTC, so advance Date.now() by tzOffsetMin
-      // to match the same frame of reference before computing elapsed time.
+    function syncAge(measurementMs){
+      if(!measurementMs) return 'never';
+      // Encoded measurement times are reconstructed in the same local-as-UTC
+      // frame used by the graph payload. Keep the existing leaderboard offset
+      // behavior so age labels compare against the same frame of reference.
       var realNow = Date.now() + tzOffsetMin * 60 * 1000;
-      var mins = Math.round((realNow - new Date(isoStr).getTime()) / 60000);
+      var mins = Math.round((realNow - measurementMs) / 60000);
       if(mins < 2)   return 'just now';
       if(mins < 60)  return mins+'m ago';
       var hrs = Math.round(mins/60);
@@ -6356,7 +6402,7 @@ function fetchLeaderboard(){
       var g = Math.round(d.pct_glucose||0);
       var m = Math.round(d.pct_mixed  ||0);
       var f = Math.round(d.pct_fat    ||0);
-      var sync = syncAge(d.last_measurement_at);
+      var sync = syncAge(d._encodedLastMs);
       var best = Math.round(bestScore[d.device_id]||0);
       return '<div class="lb-row'+(isMe?' lb-me':'')+'">'+
         '<div class="lb-rank">'+medal(i)+'</div>'+
