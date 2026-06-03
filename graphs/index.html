@@ -1767,7 +1767,7 @@ var params    = new URLSearchParams(window.location.search);
   var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ5eXN2d2RzYnBtYnlwZmxxY2pzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MTEwNTYsImV4cCI6MjA5NDE4NzA1Nn0.uAKOkd9vNhtN7umEGrVLcQLNjWOnn33n-xKVT25mFzw';
 
   var fetchUrl = SUPABASE_URL + '/rest/v1/devices?device_id=eq.' + encodeURIComponent(idParam)
-      + '&select=last_t_param,last_d_param,last_a_param,last_s_param,last_ws_param,last_tz_param,firmware_ver&limit=1';
+      + '&select=last_t_param,last_d_param,last_a_param,last_s_param,last_ws_param,last_tz_param,firmware_ver,last_measurement_at&limit=1';
   console.log('[clinic] fetching:', fetchUrl);
 
   fetch(fetchUrl,
@@ -1788,8 +1788,22 @@ var params    = new URLSearchParams(window.location.search);
     else                   u.searchParams.delete('a');
     if (row.last_s_param)  u.searchParams.set('s',  row.last_s_param);
     else                   u.searchParams.delete('s');
-    if (row.last_ws_param) u.searchParams.set('ws', row.last_ws_param);
-    else                   u.searchParams.delete('ws');
+    // If ws is missing (older firmware), infer it from last_measurement_at.
+    // The firmware anchors to the Saturday on-or-after the measurement date,
+    // so we replicate that calculation here to decode day indices correctly.
+    var wsToUse = row.last_ws_param;
+    if (!wsToUse && row.last_measurement_at) {
+      var mDate = new Date(row.last_measurement_at);
+      var jsDow = mDate.getUTCDay(); // 0=Sun..6=Sat
+      var daysToSat = (6 - jsDow + 7) % 7;
+      var satMs = Date.UTC(mDate.getUTCFullYear(), mDate.getUTCMonth(), mDate.getUTCDate())
+                  + daysToSat * 86400000;
+      var satDays = Math.floor(satMs / 86400000);
+      wsToUse = satDays.toString(36);
+      console.log('[clinic] inferred ws=' + wsToUse + ' from last_measurement_at=' + row.last_measurement_at);
+    }
+    if (wsToUse) u.searchParams.set('ws', wsToUse);
+    else         u.searchParams.delete('ws');
     if (row.last_tz_param) u.searchParams.set('tz', row.last_tz_param);
     else                   u.searchParams.delete('tz');
     if (row.firmware_ver)  u.searchParams.set('v',  row.firmware_ver);
