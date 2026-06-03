@@ -1835,7 +1835,7 @@ var windowStart = (function() {
     var wsDay = parseInt(wsParam, 36);
     if (!isNaN(wsDay) && wsDay > 0) {
       // ws encodes the Saturday anchor (end of window); windowStart = Saturday - 20 days.
-      return (wsDay - 20) * 86400;
+      return (wsDay) * 86400;
     }
   }
 
