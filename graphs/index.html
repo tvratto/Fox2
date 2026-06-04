@@ -54,9 +54,6 @@ html, body {
   overflow-y: auto; scrollbar-width: none;
 }
 .page::-webkit-scrollbar { display: none; }
-/* Fuel and history pages: allow vertical scroll when content exceeds viewport
-   (e.g. iOS accessibility zoom). Page 1 (results) keeps its fixed height. */
-.page.page-scrollable { height: auto; min-height: 100svh; }
 .card-wrap { width: 100%; max-width: 420px; margin: auto 0; }
 .card-wrap canvas { width: 100%; height: auto; display: block; }
 .bottom-bar {
@@ -1741,7 +1738,7 @@ html, body {
 </div>
 </div>
   </div>
-  <div class="page page-scrollable">
+  <div class="page">
     <div class="card-wrap" style="position:relative;">
       <canvas id="card-fuel" style="cursor:pointer;"></canvas>
       <div id="dot-popup-fuel" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;">
@@ -1750,7 +1747,7 @@ html, body {
       </div>
     </div>
   </div>
-  <div class="page page-scrollable">
+  <div class="page">
     <div class="card-wrap"><canvas id="card-insights"></canvas></div>
   </div>
 </div>
@@ -1786,7 +1783,7 @@ html, body {
     <div id="info-modal-title">Squad Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.7 · 2026-06-04 23:30 UTC</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.7 · 2026-06-03 17:15 UTC</span></div>
     <div class="info-section-title">Leaderboard</div>
     <div class="info-toggle-row">
       <div>
@@ -1878,7 +1875,7 @@ var sParam    = params.get('s') || '';
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v3.7 · 2026-06-04 23:30 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v3.7 · 2026-06-03 17:15 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
