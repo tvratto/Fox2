@@ -4793,7 +4793,7 @@ function isoDateStr(i){
 function fmt(v){return Math.round(v).toLocaleString();}
 function ease(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2}
 
-function buildRail(){const rail=document.getElementById('rail');rail.innerHTML='';for(let i=Math.max(0,TODAY_IDX-8);i<=TODAY_IDX;i++){const d=DAYS[i];const el=document.createElement('div');el.className='day'+(i===selectedDay?' active':'')+(i===TODAY_IDX?' today':'');el.dataset.idx=i;el.innerHTML=`<div class="dow">${d.dow}</div><div class="date">${d.dateStr}</div><div class="dot"></div>`;el.onclick=()=>selectDay(i);rail.appendChild(el)}setTimeout(()=>document.querySelector('.day.active')?.scrollIntoView({behavior:'smooth',inline:'center'}),50)}
+function buildRail(){const rail=document.getElementById('rail');rail.innerHTML='';const railStart=Math.max(0,_slotOffset);for(let i=railStart;i<=TODAY_IDX;i++){const d=DAYS[i];const el=document.createElement('div');el.className='day'+(i===selectedDay?' active':'')+(i===TODAY_IDX?' today':'');el.dataset.idx=i;el.innerHTML=`<div class="dow">${d.dow}</div><div class="date">${d.dateStr}</div><div class="dot"></div>`;el.onclick=()=>selectDay(i);rail.appendChild(el)}setTimeout(()=>document.querySelector('.day.active')?.scrollIntoView({behavior:'smooth',inline:'center'}),50)}
 
 function closeAllPopups(){
   // Dismiss any floating popups when the day changes
