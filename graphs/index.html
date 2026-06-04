@@ -34,7 +34,6 @@ html, body {
   border: none; background: none;
 }
 .nav-tab.active { font-size: clamp(18px, 5.5vw, 24px); font-weight: 700; color: #fff; }
-#totalNum { font-size: clamp(13px, 4vw, 17px); }
 .scroll-x {
   display: flex; flex-direction: row;
   width: 100vw; height: 100svh;
@@ -286,7 +285,7 @@ html, body {
 .day{flex:0 0 58px;height:60px;border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:rgba(255,255,255,.42);border:1px solid transparent;cursor:pointer}
 .day.active{background:linear-gradient(180deg,rgba(255,210,60,.18),rgba(255,210,60,.04));border-color:rgba(255,210,60,.72);color:#fff;box-shadow:0 0 28px rgba(255,210,60,.13)}
 .day .dow{font-size:clamp(10px,1.5dvh,13px);font-weight:800}.day .date{font-size:clamp(11px,1.65dvh,14px);font-weight:650}.dot{width:5px;height:5px;border-radius:50%;background:transparent}.day.today .dot{background:var(--gold);box-shadow:0 0 12px var(--gold)}
-#totalNum{color:var(--orange);font-weight:950;letter-spacing:-.04em;font-variant-numeric:tabular-nums;text-shadow:0 0 20px rgba(251,146,60,.45);line-height:1}#totalNum.pop{animation:pop .52s cubic-bezier(.2,1.7,.35,1)}#fatNum{color:var(--violet)}
+/* #totalNum removed */#fatNum{color:var(--violet)}
 .card{flex:1;min-height:0;border-radius:28px;background:linear-gradient(135deg,rgba(255,255,255,.078),rgba(255,255,255,.028)),rgba(7,8,10,.9);border:1px solid rgba(255,255,255,.1);box-shadow:0 20px 80px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.06);overflow:hidden;display:flex;flex-direction:column}
 .cardbody{flex:1;min-height:0;display:flex;flex-direction:column;gap:0;padding:0 0 14px}
 .kicker{color:var(--gold);font-size:clamp(9px,1.2dvh,11px);letter-spacing:.16em;text-transform:uppercase;font-weight:950;margin-bottom:9px}
@@ -382,7 +381,7 @@ html, body {
 
 .pulse{animation:pulse .85s ease-in-out infinite alternate}@keyframes pulse{from{filter:drop-shadow(0 0 4px rgba(251,146,60,.2));transform:scale(1)}to{filter:drop-shadow(0 0 22px rgba(251,146,60,.55));transform:scale(1.035)}}
 .pop{animation:pop .52s cubic-bezier(.2,1.7,.35,1)}@keyframes pop{0%{transform:scale(1)}42%{transform:scale(1.12)}100%{transform:scale(1)}}
-.sealed #graph{opacity:.72;filter:saturate(.74)}.sealed #dailyScore{opacity:.58}
+/* .sealed styles removed */
 @media(max-width:760px){.rp-screen{padding:14px 0}.rp-control{padding:0 12px}.rail{width:100%}.card{border-radius:24px;border-left:0;border-right:0}.cardbody{padding:0 18px 12px}.summaryTop{flex-direction:row;align-items:flex-end;justify-content:space-between}#dateFull{margin-bottom:0}#dailyScore{}.graphSide{width:100%}#graphWrap{min-height:220px}.tags{padding:0 18px}.tag{flex-basis:112px}}
 @media(max-height:720px){.tags{min-height:82px}.tag{height:74px}#graphWrap{min-height:130px}}
 
@@ -1695,7 +1694,6 @@ html, body {
     <button class="nav-tab active" data-page="0">Results</button>
     <button class="nav-tab" data-page="1">History</button>
     <button class="nav-tab" data-page="2">Insights</button>
-    <span id="totalNum" style="margin-left:auto;align-self:center;">12,480</span>
   </div>
   <div id="debug-bar" style="display:none;">v1.1</div>
 </div>
@@ -2123,43 +2121,14 @@ if (!dParam || totalDays === 0) {
     lastMeasurementAt = maxTs;
   }
 
-  // ── Read daily_scores and day_tags FIRST, before any writes ──────
-  // This lets us know the pre-write state so the deposit animation
-  // plays whenever the total doesn't yet include the current score.
+  // ── Read day_tags and devices before writes ──────────────────────
   var readHeaders = {
     'Content-Type':  'application/json',
     'apikey':        SUPABASE_KEY,
     'Authorization': 'Bearer ' + SUPABASE_KEY
   };
 
-  var todayIso = localIso(new Date());
-  // Use the same Saturday-anchor windowStart for today's ISO date
-  // (already computed above as windowStart)
-  // Today's slot index in the payload:
-  var todaySlot = -1;
-  for (var ts = 0; ts < numDaysInPayload; ts++) {
-    var slotDate = localIso(new Date((windowStart + ts * 86400) * 1000));
-    if (slotDate === todayIso) { todaySlot = ts; break; }
-  }
-  // Today's date from the device's perspective = last aParam slot with a score
-  // (matches how TODAY_IDX is derived in the Results JS)
-  var todayDateFromWindow = (function(){
-    var last = '';
-    if(aParam){
-      for(var ai=0;ai*2+2<=aParam.length;ai++){
-        var auc=parseInt(aParam.substring(ai*2,ai*2+2),36);
-        if(auc>0){
-          last=localIso(new Date((windowStart+ai*86400)*1000));
-        }
-      }
-    }
-    return last || todayIso;
-  })();
-
   Promise.all([
-    fetch(SUPABASE_URL + '/rest/v1/daily_scores?device_id=eq.' + encodeURIComponent(deviceId)
-          + '&select=day_date,auc_score', { method:'GET', headers:readHeaders })
-      .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; }),
     fetch(SUPABASE_URL + '/rest/v1/day_tags?device_id=eq.' + encodeURIComponent(deviceId)
           + '&select=day_date,events,tray_tags,note', { method:'GET', headers:readHeaders })
       .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; }),
@@ -2167,38 +2136,8 @@ if (!dParam || totalDays === 0) {
           + '&select=leaderboard_opt_in,leaderboard_hash,last_d_param,last_ws_param,last_measurement_at&limit=1', { method:'GET', headers:readHeaders })
       .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; })
   ]).then(function(results) {
-    var scoreRows  = results[0];
-    var tagRows    = results[1];
-    var deviceRows = results[2];
-
-    // ── Determine pre-write total and animation state ──────────────
-    // DAILY_SCORE = what the URL says today's score is right now
-    // storedScore = what Supabase currently has for today (0 if no row)
-    var storedToday = 0;
-    var sumBefore   = 0;
-    scoreRows.forEach(function(row) {
-      if (row.day_date === todayDateFromWindow) {
-        storedToday = row.auc_score || 0;
-      } else {
-        sumBefore += row.auc_score || 0;
-      }
-    });
-
-    // Animate if today's stored score doesn't match current score.
-    // This covers: first scan of day (storedToday=0), and mid-day
-    // rescans where score has grown (storedToday < DAILY_SCORE).
-    // Skip animation only if score is already up to date.
-    var alreadyDeposited = (storedToday === DAILY_SCORE && DAILY_SCORE > 0);
-
-    // TOTAL_BEFORE = sum of all other days + whatever was already stored for today
-    // so the counter animates only the new delta
-    var TOTAL_BEFORE_LOCAL = sumBefore + storedToday;
-    // TOTAL_AFTER = what it will be once today's current score is included
-    var TOTAL_AFTER_LOCAL  = sumBefore + DAILY_SCORE;
-
-    // Pass these into the Results page globals
-    TOTAL_BEFORE = TOTAL_BEFORE_LOCAL;
-    TOTAL_AFTER  = TOTAL_AFTER_LOCAL;
+    var tagRows    = results[0];
+    var deviceRows = results[1];
 
     // ── Now fire the writes (after we've captured pre-write state) ──
     if (readingRows.length > 0) {
@@ -2262,13 +2201,10 @@ if (!dParam || totalDays === 0) {
       }).catch(function() {});
     }
 
-    // ── Init Results page with pre-write totals and loaded tags ────
+    // ── Init Results page with loaded tags ────────────────────────
     initWithSupabase(SUPABASE_URL, readHeaders, deviceId, {
-      alreadyDeposited: alreadyDeposited,
-      totalBefore:      TOTAL_BEFORE_LOCAL,
-      totalAfter:       TOTAL_AFTER_LOCAL,
-      tagRows:          tagRows,
-      deviceRow:        deviceRows && deviceRows[0] ? deviceRows[0] : null
+      tagRows:   tagRows,
+      deviceRow: deviceRows && deviceRows[0] ? deviceRows[0] : null
     });
 
   }).catch(function() {
@@ -4771,8 +4707,7 @@ function handleBottomShare() {
 let TODAY_IDX=29;
 let selectedDay=TODAY_IDX,hasDeposited=false;
 
-// TOTAL_BEFORE and DAILY_SCORE are set after Supabase fetch; use placeholders until then
-let DAILY_SCORE=0,TOTAL_BEFORE=0,TOTAL_AFTER=0;
+
 
 const ALL_TAGS=[['✏️','Note'],['🍎','Snack'],['🍽️','Meal'],['🍳','Low carb'],['🍕','High carb'],['🍷','Alcohol'],['🚶','Walk'],['🏃','Run'],['🏋️','Workout'],['⏱️','Fasting'],['😴','Poor sleep'],['🧠','Stress']];
 const DAYS=[];
@@ -4853,7 +4788,6 @@ function isoDateStr(i){
     if(found >= 0 && found < 30){TODAY_IDX=found;selectedDay=found;}
   }
 
-  DAILY_SCORE=DAYS[TODAY_IDX].score;
 })();
 
 function fmt(v){return Math.round(v).toLocaleString();}
@@ -5047,9 +4981,9 @@ function updateCard(){
   const card=document.getElementById('card');
   if(card){
     if(isToday){
-      card.classList.toggle('sealed',hasDeposited);
+      // card sealed removed
     }else{
-      card.classList.remove('sealed');
+      // card sealed removed
     }
   }
   const v=getVerdict(d,isToday);
@@ -6273,15 +6207,8 @@ function counter(el,from,to,dur,format,done){
 }
 
 function flow(fromEl,toEl,dur){
-  const fromRect=document.getElementById('dailyScore').getBoundingClientRect();
-  const totalRect=document.getElementById('totalNum').getBoundingClientRect();
-
-  const startX=fromRect.left+fromRect.width*.52;
-  const startY=fromRect.top+fromRect.height*.55;
-  const endX=totalRect.left+totalRect.width*.48;
-  const endY=totalRect.top+totalRect.height*.55;
-  const dx=endX-startX;
-
+  // deposit animation removed
+  return;
   activeTransfers=[];
 
   let startTime=performance.now();
@@ -6333,22 +6260,8 @@ function flow(fromEl,toEl,dur){
 
 
 
-function reset(){hasDeposited=false;card.classList.remove('sealed');totalNum.textContent=fmt(TOTAL_BEFORE);}
-function deposit(){
-  if(hasDeposited)return;
-  hasDeposited=true;
-
-  setTimeout(()=>{
-    flow(null,null,4000);
-    counter(totalNum,TOTAL_BEFORE,TOTAL_AFTER,4000,v=>fmt(v),()=>{
-      totalNum.classList.add('pop');
-      card.classList.add('sealed');
-      burst(totalNum,'rgba(110,231,135,.95)',34);
-      setTimeout(()=>{totalNum.classList.remove('pop')},1100);
-    });
-  },700);
-}
-// deposit triggered automatically on load
+function reset(){ hasDeposited=false; }
+function deposit(){ hasDeposited=true; }
 
 // ── Supabase tag save ─────────────────────────────────────────────
 var _tagSaveTimer={};
@@ -6615,12 +6528,7 @@ function saveTagsForDay(idx){
 }
 
 
-// ── Show already-deposited state immediately ──────────────────────
-function showDeposited(){
-  hasDeposited=true;
-  totalNum.textContent=fmt(TOTAL_AFTER);
-  card.classList.add('sealed');
-}
+function showDeposited(){ hasDeposited=true; }
 
 // ── Supabase read + init ──────────────────────────────────────────
 var _sbUrl='',_sbHeaders={},_sbDeviceId='';
@@ -6629,13 +6537,8 @@ var _lbOptIn='', _lbStoredHash='', _lbCurrentHash='';
 
 function initWithSupabase(sbUrl,sbHeaders,deviceId,preRead){
   _sbUrl=sbUrl;_sbHeaders=sbHeaders;_sbDeviceId=deviceId;
-  // Flush any leaderboard opt-in that was toggled before init completed
   if(_pendingLbOptIn !== null){ saveLeaderboardPrefs(_pendingLbOptIn); }
-  var alreadyDeposited=preRead.alreadyDeposited;
   var tagRows=preRead.tagRows||[];
-  TOTAL_BEFORE=preRead.totalBefore;
-  TOTAL_AFTER=preRead.totalAfter;
-  totalNum.textContent=fmt(TOTAL_BEFORE);
   var tagLookup={};
   tagRows.forEach(function(row){tagLookup[row.day_date]=row;});
   DAYS.forEach(function(d){
@@ -6651,16 +6554,13 @@ function initWithSupabase(sbUrl,sbHeaders,deviceId,preRead){
     _lbOptIn      = preRead.deviceRow.leaderboard_opt_in || '';
     _lbStoredHash = preRead.deviceRow.leaderboard_hash   || '';
   }
-  _doInit(alreadyDeposited);
+  _doInit();
 }
 
-function _doInit(alreadyDeposited){
-  // Fetch leaderboard silently on load so dot can appear immediately
+function _doInit(){
   if(_lbOptIn === 'LB-1') setTimeout(fetchLeaderboard, 1200);
   resizeP();loop();buildRail();updateCard();buildTags();enableGraphDaySwipe();initDayGraphPopup();
   setTimeout(function(){drawGraph();renderEvents();},80);
-  if(alreadyDeposited){setTimeout(showDeposited,200);}
-  else{setTimeout(deposit,900);}
 }
 
 let activeDrag=null;
@@ -6916,11 +6816,8 @@ function renderEvents(force){
 }
 
 function initResultsPage(){
-  totalNum.textContent=fmt(TOTAL_BEFORE||0);
   resizeP();loop();buildRail();updateCard();buildTags();enableGraphDaySwipe();initDayGraphPopup();
   setTimeout(function(){drawGraph();renderEvents();},80);
-  // Supabase read failed — no pre-read data, so don't animate; just seal quietly.
-  setTimeout(showDeposited,900);
 }
 // Install pager DOM structure immediately so layout is stable before Supabase resolves.
 // _doInit will call enableGraphDaySwipe() later but installDayPager() guards against double-install.
