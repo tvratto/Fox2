@@ -1783,7 +1783,7 @@ html, body {
     <div id="info-modal-title">Squad Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.7 · 2026-06-03 17:15 UTC</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.71 · 2026-06-10 00:00 UTC</span></div>
     <div class="info-section-title">Leaderboard</div>
     <div class="info-toggle-row">
       <div>
@@ -1875,7 +1875,7 @@ var sParam    = params.get('s') || '';
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v3.7 · 2026-06-03 17:15 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v3.71 · 2026-06-10 00:00 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
@@ -2812,18 +2812,6 @@ function buildGraphCard(forcedView) {
   var WEEKS   = 3;
   var chunkStart = Math.max(0, totalDays - WEEKS * DAYS_PER_WEEK);
 
-  // ── Compute shared y scale across displayed 21 days only ─────
-  var rawMax = 0;
-  for (var d = chunkStart; d < totalDays; d++) {
-    for (var i = 0; i < days[d].vals.length; i++) {
-      if (days[d].vals[i] > rawMax) rawMax = days[d].vals[i];
-    }
-  }
-  if (rawMax < 4) rawMax = 4;
-  var step = rawMax <= 4 ? 0.5 : rawMax <= 8 ? 1 : rawMax <= 15 ? 2 : 5;
-  var maxY = Math.ceil(rawMax * 1.15 / step) * step;
-  if (maxY < 2) maxY = 2;
-
   // Today = last day of payload
   var todayIdx = lastMeasuredDayIdx();
 
@@ -2845,6 +2833,18 @@ function buildGraphCard(forcedView) {
     var weekDays   = days.slice(dayOffset, dayOffset + DAYS_PER_WEEK);
     var gTop       = rowTop;
     var gBottom    = gTop + GRAPH_H;
+
+    // ── Per-week y scale ─────────────────────────────────────────
+    var wRawMax = 0;
+    for (var d = dayOffset; d < dayOffset + DAYS_PER_WEEK && d < totalDays; d++) {
+      for (var i = 0; i < days[d].vals.length; i++) {
+        if (days[d].vals[i] > wRawMax) wRawMax = days[d].vals[i];
+      }
+    }
+    if (wRawMax < 4) wRawMax = 4;
+    var wStep = wRawMax <= 4 ? 0.5 : wRawMax <= 8 ? 1 : wRawMax <= 15 ? 2 : 5;
+    var maxY = Math.ceil(wRawMax * 1.15 / wStep) * wStep;
+    if (maxY < 2) maxY = 2;
 
     // Last measurement from previous week
     var prevPt = null;
@@ -6904,7 +6904,7 @@ function initDayGraphPopup(){
   function showPopup(dot, clientX, clientY){
     const vv=(dot.val!=null?dot.val:dot.v);
     const c=vv<=2?'#22D3EE':vv<=4?'#4ADE80':'#A855F7';
-    popVal.textContent=vv.toFixed(1)+' ppm'; popVal.style.color=c;
+    popVal.textContent='Level '+Math.round(vv); popVal.style.color=c;
     popTime.textContent=fmtDayGraphTime(dot.epoch,dot.minute);
     popup.style.display='block'; popup.style.left='0'; popup.style.top='0';
     void popup.offsetWidth;
