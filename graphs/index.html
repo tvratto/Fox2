@@ -1783,7 +1783,7 @@ html, body {
     <div id="info-modal-title">Squad Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.76 · 2026-06-11 20:51 UTC</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.77 · 2026-06-11 20:57 UTC</span></div>
     <div class="info-section-title">Leaderboard</div>
     <div class="info-toggle-row">
       <div>
@@ -1875,7 +1875,7 @@ var sParam    = params.get('s') || '';
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v3.76 · 2026-06-11 20:51 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v3.77 · 2026-06-11 20:57 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
@@ -6488,6 +6488,7 @@ function fetchLeaderboard(){
 
 function saveLeaderboardHash(hash){
   if(!_sbUrl || !_sbDeviceId) return;
+  if(!_isNewerPayload) return; // stale pages must not overwrite a newer hash
   fetch(_sbUrl+'/rest/v1/devices?on_conflict=device_id',{
     method:'POST',
     headers:Object.assign({},_sbHeaders,{'Prefer':'resolution=merge-duplicates,return=minimal'}),
@@ -6850,10 +6851,11 @@ function openInfoModal(){
   };
   if(_lbOptIn === 'LB-1') fetchLeaderboard();
   // Clear dot and persist current hash when user opens Squad —
-  // but only if this page has newer data than what's stored.
+  // always allowed regardless of payload freshness, since this just
+  // records that the user has seen the current leaderboard state.
   var dot = document.getElementById('squad-dot');
   if(dot) dot.style.display = 'none';
-  if(_isNewerPayload && _lbCurrentHash && _lbCurrentHash !== _lbStoredHash){
+  if(_lbCurrentHash && _lbCurrentHash !== _lbStoredHash){
     _lbStoredHash = _lbCurrentHash;
     saveLeaderboardHash(_lbCurrentHash);
   }
