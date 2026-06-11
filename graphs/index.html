@@ -196,7 +196,7 @@ html, body {
 .lb-me .lb-score-sub { color:rgba(74,222,128,.58); }
 
 .lb-row.lb-me.lb-flash {
-  animation: lbSelfFlash 1.8s cubic-bezier(.2,1.35,.25,1) 0s 2;
+  animation: lbSelfFlash 2.4s linear 0s 1;
 }
 @keyframes lbSelfFlash {
   0%   { background:rgba(74,222,128,.13); box-shadow:0 0 24px rgba(74,222,128,.12), inset 0 1px 0 rgba(255,255,255,.08); transform:scale(1) rotate(0deg); }
@@ -1619,18 +1619,14 @@ html, body {
 }
 
 @keyframes lbSelfFlash {
-  0% {
-    background: rgba(74,222,128,.08);
-    box-shadow: 0 0 0 rgba(245,200,66,0);
-  }
-  35% {
-    background: rgba(245,200,66,.24);
-    box-shadow: 0 0 26px rgba(245,200,66,.75);
-  }
-  100% {
-    background: rgba(74,222,128,.08);
-    box-shadow: 0 0 0 rgba(245,200,66,0);
-  }
+  0%   { background: rgba(74,222,128,.08);  box-shadow: 0 0 0px rgba(245,200,66,0);    transform: scale(1); }
+  5%   { background: rgba(245,200,66,.22);  box-shadow: 0 0 22px rgba(245,200,66,.55); transform: scale(1.030); }
+  25%  { background: rgba(74,222,128,.08);  box-shadow: 0 0 0px rgba(245,200,66,0);    transform: scale(1); }
+  30%  { background: rgba(245,200,66,.22);  box-shadow: 0 0 22px rgba(245,200,66,.55); transform: scale(1.030); }
+  55%  { background: rgba(74,222,128,.08);  box-shadow: 0 0 0px rgba(245,200,66,0);    transform: scale(1); }
+  75%  { background: rgba(74,222,128,.08);  box-shadow: 0 0 0px rgba(245,200,66,0);    transform: scale(1); }
+  80%  { background: rgba(245,200,66,.40);  box-shadow: 0 0 42px rgba(245,200,66,.90), 0 0 0 2px rgba(245,200,66,.45); transform: scale(1.055); }
+  100% { background: rgba(74,222,128,.08);  box-shadow: 0 0 0px rgba(245,200,66,0);    transform: scale(1); }
 }
 
 .lb-self-attention-shake {
@@ -1638,7 +1634,7 @@ html, body {
 }
 
 .lb-self-attention-flash {
-  animation: lbSelfFlash .75s ease-out both;
+  animation: lbSelfFlash 2.4s linear both;
 }
 
 
@@ -1783,7 +1779,7 @@ html, body {
     <div id="info-modal-title">Squad Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.78 · 2026-06-11 21:20 UTC</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.81 · 2026-06-11 21:44 UTC</span></div>
     <div class="info-section-title">Leaderboard</div>
     <div class="info-toggle-row">
       <div>
@@ -1875,7 +1871,7 @@ var sParam    = params.get('s') || '';
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v3.78 · 2026-06-11 21:20 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v3.81 · 2026-06-11 21:44 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
@@ -2762,16 +2758,21 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
     var heart   = hit ? '\u2665' : '\u2661';
     var aucStr  = hasData ? String(Math.round(auc)) : '\u2014';
 
-    ctx.fillStyle = hit ? '#e53935' : 'rgba(255,255,255,0.25)';
-    ctx.font = heartFS + 'px -apple-system,sans-serif';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(heart, cx, aucY - aucFS * 0.6);
+    // Only show hearts when a goal is set
+    if (targetAUC > 0) {
+      ctx.fillStyle = hit ? '#e53935' : 'rgba(255,255,255,0.25)';
+      ctx.font = heartFS + 'px -apple-system,sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(heart, cx, aucY - aucFS * 0.6);
+    }
 
     ctx.fillStyle = isToday ? (hit ? '#FFFF00' : '#FF8C00')
-                            : (hit ? '#FFA500' : 'rgba(255,255,255,0.45)');
+                            : (hit ? '#FFA500' : (targetAUC > 0 ? 'rgba(255,255,255,0.45)' : '#FF8C00'));
     ctx.font = (isToday ? 'bold ' : '') + aucFS + 'px -apple-system,sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(aucStr, cx, aucY + heartFS * 0.5);
+    // When no goal, move AUC number to where the heart would be
+    var aucTextY = targetAUC > 0 ? aucY + heartFS * 0.5 : aucY - aucFS * 0.1;
+    ctx.fillText(aucStr, cx, aucTextY);
   }
 }
 
@@ -6468,7 +6469,7 @@ function fetchLeaderboard(){
         myRow.classList.remove('lb-flash');
         void myRow.offsetWidth; // restart animation if leaderboard is reopened/refreshed
         myRow.classList.add('lb-flash');
-        setTimeout(function(){ myRow.classList.remove('lb-flash'); }, 3400);
+        setTimeout(function(){ myRow.classList.remove('lb-flash'); }, 2400);
       }, 650);
     }, 120);
 
