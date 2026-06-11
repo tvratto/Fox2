@@ -1783,7 +1783,7 @@ html, body {
     <div id="info-modal-title">Squad Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.71 · 2026-06-10 00:00 UTC</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.72 · 2026-06-11 17:46 UTC</span></div>
     <div class="info-section-title">Leaderboard</div>
     <div class="info-toggle-row">
       <div>
@@ -1875,7 +1875,7 @@ var sParam    = params.get('s') || '';
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v3.71 · 2026-06-10 00:00 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v3.72 · 2026-06-11 17:46 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
@@ -2161,16 +2161,13 @@ if (!dParam || totalDays === 0) {
     var storedDeviceRow = deviceRows && deviceRows[0] ? deviceRows[0] : null;
     // Determine if this page carries newer data than what's stored.
     // Primary signal: ws (windowStart epoch, base36) — higher = newer window.
-    // Tiebreaker when ws matches: d param length — more chars = more measurements in same window.
-    var storedDParam   = storedDeviceRow ? (storedDeviceRow.last_d_param        || '') : '';
+    // Tiebreaker when ws matches: lastMeasurementAt derived from d param — later = newer.
     var storedWs       = storedDeviceRow ? (storedDeviceRow.last_ws_param       || '') : '';
     var storedMeasAt   = storedDeviceRow ? (storedDeviceRow.last_measurement_at || '') : '';
     var wsVal          = parseInt(wsParam  || '0', 36);
     var storedWsVal    = parseInt(storedWs || '0', 36);
     var isNewerPayload = wsVal > storedWsVal ||
-                         (wsVal === storedWsVal && dParam.length > storedDParam.length) ||
-                         (wsVal === storedWsVal && dParam.length === storedDParam.length &&
-                          lastMeasurementAt && lastMeasurementAt > storedMeasAt);
+                         (wsVal === storedWsVal && lastMeasurementAt && lastMeasurementAt > storedMeasAt);
     // Only write if this page carries new data — prevents stale reloads clobbering anything.
     if (isNewerPayload) {
       var deviceWriteBody = {
