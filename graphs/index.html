@@ -1783,7 +1783,7 @@ html, body {
     <div id="info-modal-title">Squad Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.72 · 2026-06-11 17:46 UTC</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.72 · 2026-06-11 18:32 UTC</span></div>
     <div class="info-section-title">Leaderboard</div>
     <div class="info-toggle-row">
       <div>
@@ -1875,7 +1875,7 @@ var sParam    = params.get('s') || '';
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v3.72 · 2026-06-11 17:46 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v3.72 · 2026-06-11 18:32 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
@@ -6936,7 +6936,7 @@ function initDayGraphPopup(){
 // current page's dParam, a new sync has happened — show the banner.
 // Tapping reloads to a URL rebuilt from the stored params.
 (function(){
-  var POLL_INTERVAL = 30000000000000000;
+  var POLL_INTERVAL = 30000;
   var _pollTimer    = null;
   var _newUrl       = null;
 
@@ -6982,20 +6982,15 @@ function initDayGraphPopup(){
   function poll() {
     if (!_sbUrl || !_sbDeviceId) return;
     fetch(_sbUrl + '/rest/v1/devices?device_id=eq.' + encodeURIComponent(_sbDeviceId)
-          + '&select=last_d_param,last_t_param,last_a_param,last_s_param,last_ws_param,last_tz_param&limit=1',
+          + '&select=last_d_param,last_t_param,last_a_param,last_s_param,last_ws_param,last_tz_param,last_measurement_at&limit=1',
       { method: 'GET', headers: _sbHeaders })
     .then(function(r){ return r.ok ? r.json() : []; })
     .then(function(rows){
       if (!rows || !rows.length) return;
       var row = rows[0];
-      var currentWs = params.get('ws') || null;
-      var currentTz = params.get('tz') || null;
-      var rowWs = row.last_ws_param || null;
-      var rowTz = row.last_tz_param || null;
-
-      if ((row.last_d_param && row.last_d_param !== dParam) ||
-          (rowWs !== currentWs) ||
-          (rowTz !== currentTz)) {
+      // Show banner only if Supabase has a genuinely newer measurement than
+      // what this page loaded with — uses the same signal as isNewerPayload.
+      if (row.last_measurement_at && row.last_measurement_at > (lastMeasurementAt || '')) {
         showBanner(buildNewUrl(row));
         clearInterval(_pollTimer); // stop polling once banner is up
       }
