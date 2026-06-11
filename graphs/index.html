@@ -2119,6 +2119,7 @@ if (!dParam || totalDays === 0) {
       return r.reading_ts > max ? r.reading_ts : max;
     }, readingRows[0].reading_ts);
     lastMeasurementAt = maxTs;
+    _lastMeasurementAt = maxTs; // expose to banner polling
   }
 
   // ── Read day_tags and devices before writes ──────────────────────
@@ -6529,6 +6530,7 @@ function showDeposited(){ hasDeposited=true; }
 
 // ── Supabase read + init ──────────────────────────────────────────
 var _sbUrl='',_sbHeaders={},_sbDeviceId='';
+var _lastMeasurementAt='';
 var _pendingLbOptIn=null; // queued if save fires before Supabase init
 var _lbOptIn='', _lbStoredHash='', _lbCurrentHash='';
 
@@ -6990,7 +6992,7 @@ function initDayGraphPopup(){
       var row = rows[0];
       // Show banner only if Supabase has a genuinely newer measurement than
       // what this page loaded with — uses the same signal as isNewerPayload.
-      if (row.last_measurement_at && row.last_measurement_at > (lastMeasurementAt || '')) {
+      if (row.last_measurement_at && row.last_measurement_at > (_lastMeasurementAt || '')) {
         showBanner(buildNewUrl(row));
         clearInterval(_pollTimer); // stop polling once banner is up
       }
