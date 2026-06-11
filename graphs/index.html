@@ -1783,7 +1783,7 @@ html, body {
     <div id="info-modal-title">Squad Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.75 · 2026-06-11 19:21 UTC</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.75-trace · 2026-06-11 20:48 UTC</span></div>
     <div class="info-section-title">Leaderboard</div>
     <div class="info-toggle-row">
       <div>
@@ -1875,7 +1875,7 @@ var sParam    = params.get('s') || '';
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v3.75 · 2026-06-11 19:21 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v3.75-trace · 2026-06-11 20:48 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
@@ -2114,12 +2114,14 @@ if (!dParam || totalDays === 0) {
   var pctFat     = Math.round(ztDb.fat     / ztTotal * 100);
 
   var lastMeasurementAt = null;
+  console.log('[trace] readingRows.length:', readingRows.length);
   if (readingRows.length > 0) {
     var maxTs = readingRows.reduce(function(max, r) {
       return r.reading_ts > max ? r.reading_ts : max;
     }, readingRows[0].reading_ts);
     lastMeasurementAt = maxTs;
     _lastMeasurementAt = maxTs; // expose to banner polling
+    console.log('[trace] _lastMeasurementAt set to:', _lastMeasurementAt);
   }
 
   // ── Read day_tags and devices before writes ──────────────────────
