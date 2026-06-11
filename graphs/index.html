@@ -1783,7 +1783,7 @@ html, body {
     <div id="info-modal-title">Squad Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.77 · 2026-06-11 20:57 UTC</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.78 · 2026-06-11 21:20 UTC</span></div>
     <div class="info-section-title">Leaderboard</div>
     <div class="info-toggle-row">
       <div>
@@ -1875,7 +1875,7 @@ var sParam    = params.get('s') || '';
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v3.77 · 2026-06-11 20:57 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v3.78 · 2026-06-11 21:20 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
@@ -6488,7 +6488,6 @@ function fetchLeaderboard(){
 
 function saveLeaderboardHash(hash){
   if(!_sbUrl || !_sbDeviceId) return;
-  if(!_isNewerPayload) return; // stale pages must not overwrite a newer hash
   fetch(_sbUrl+'/rest/v1/devices?on_conflict=device_id',{
     method:'POST',
     headers:Object.assign({},_sbHeaders,{'Prefer':'resolution=merge-duplicates,return=minimal'}),
