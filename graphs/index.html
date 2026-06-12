@@ -1744,7 +1744,7 @@ html, body {
     </div>
   </div>
   <div class="page">
-    <div class="card-wrap" style="position:relative;"><canvas id="card-insights"></canvas>
+    <div class="card-wrap" style="position:relative;"><canvas id="card-insights" style="cursor:pointer;"></canvas>
       <div id="tag-pattern-popup" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;">
         <div id="tag-pattern-popup-text" style="font-size:13px;color:rgba(255,255,255,0.85);text-align:center;"></div>
       </div>
@@ -1783,7 +1783,7 @@ html, body {
     <div id="info-modal-title">Squad Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.87 · 2026-06-12 16:06 UTC</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.91 · 2026-06-12 18:53 UTC</span></div>
     <div class="info-section-title">Leaderboard</div>
     <div class="info-toggle-row">
       <div>
@@ -1875,7 +1875,7 @@ var sParam    = params.get('s') || '';
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v3.87 · 2026-06-12 16:06 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v3.91 · 2026-06-12 18:53 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
@@ -3338,7 +3338,7 @@ function computeTagInsights(insightsStart, totalDaysLocal) {
   if (typeof DAYS === 'undefined') return results;
   var slotOffset = (typeof _slotOffset !== 'undefined') ? _slotOffset : 0;
   ALL_TAGS.forEach(function(tagDef) {
-    var icon = tagDef[0], name = tagDef[1];
+    var icon = tagDef[0], name = tagDef[1], expectedSign = tagDef[2] || 0;
     if (icon === '✏️') return; // notes aren't a behavior tag
     var withSame = [], withoutSame = [], withNext = [], withoutNext = [];
     for (var d = insightsStart; d < totalDaysLocal; d++) {
@@ -3359,10 +3359,17 @@ function computeTagInsights(insightsStart, totalDaysLocal) {
     var rawPctSame = (avgWithoutSame > 0) ? Math.round((avgWithSame - avgWithoutSame) / avgWithoutSame * 100) : null;
     var rawPctNext = (withNext.length >= MIN_DAYS && withoutNext.length >= MIN_DAYS && avgWithoutNext > 0)
       ? Math.round((avgWithNext - avgWithoutNext) / avgWithoutNext * 100) : null;
-    // Only surface changes of at least 10% — smaller swings aren't worth showing yet.
-    var MIN_PCT = 10;
+    // Only surface changes of at least 5% — smaller swings aren't worth showing yet.
+    var MIN_PCT = 5;
     var pctSame = (rawPctSame !== null && Math.abs(rawPctSame) >= MIN_PCT) ? rawPctSame : null;
     var pctNext = (rawPctNext !== null && Math.abs(rawPctNext) >= MIN_PCT) ? rawPctNext : null;
+    // Some tags have a known expected direction (e.g. Low carb should only
+    // ever show as raising AUC). A result going the "wrong" way is more
+    // likely noise/confounding than a real effect, so drop it.
+    if (expectedSign !== 0) {
+      if (pctSame !== null && Math.sign(pctSame) !== expectedSign) pctSame = null;
+      if (pctNext !== null && Math.sign(pctNext) !== expectedSign) pctNext = null;
+    }
     if (pctSame === null && pctNext === null) return;
     results.push({
       icon: icon, name: name,
@@ -4893,7 +4900,24 @@ let selectedDay=TODAY_IDX,hasDeposited=false;
 
 
 
-const ALL_TAGS=[['✏️','Note'],['🍎','Snack'],['🍽️','Meal'],['🍳','Low carb'],['🍕','High carb'],['🍷','Alcohol'],['🚶','Walk'],['🏃','Run'],['🏋️','Workout'],['⏱️','Fasting'],['😴','Poor sleep'],['🧠','Stress']];
+// Third element: expected direction of effect on AUC, where known
+// (+1 = should only show positive same/next-day changes, -1 = negative only,
+// 0/absent = no directional expectation — show whichever way it goes).
+const ALL_TAGS=[
+  ['✏️','Note',0],
+  ['🍎','Snack',0],
+  ['🍽️','Meal',0],
+  ['🍳','Low carb',1],
+  ['🍕','High carb',-1],
+  ['🍷','Alcohol',-1],
+  ['🚶','Walk',0],
+  ['🏃','Run',0],
+  ['🏋️','Workout',1],
+  ['⏱️','Fasting',1],
+  ['😴','Poor sleep',-1],
+  ['🧠','Stress',-1],
+  ['💉','GLP-1',1]
+];
 const DAYS=[];
 // Local-time ISO date string — avoids UTC midnight rollover issues
 function localIso(d){
