@@ -1779,7 +1779,7 @@ html, body {
     <div id="info-modal-title">Squad Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.81 · 2026-06-11 21:44 UTC</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.85 · 2026-06-12 04:37 UTC</span></div>
     <div class="info-section-title">Leaderboard</div>
     <div class="info-toggle-row">
       <div>
@@ -1871,7 +1871,7 @@ var sParam    = params.get('s') || '';
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v3.81 · 2026-06-11 21:44 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v3.85 · 2026-06-12 04:37 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
@@ -3326,6 +3326,46 @@ function wrapText(ctx, text, x, y, maxW, lineH) {
   return y;
 }
 
+// Compare each tag's same-day and next-day AUC score against days without
+// that tag, over the given range of `days[]` indices (insightsStart..totalDays-1).
+function computeTagInsights(insightsStart, totalDaysLocal) {
+  var MIN_DAYS = 3;
+  var results = [];
+  if (typeof DAYS === 'undefined') return results;
+  var slotOffset = (typeof _slotOffset !== 'undefined') ? _slotOffset : 0;
+  ALL_TAGS.forEach(function(tagDef) {
+    var icon = tagDef[0], name = tagDef[1];
+    if (icon === '✏️') return; // notes aren't a behavior tag
+    var withSame = [], withoutSame = [], withNext = [], withoutNext = [];
+    for (var d = insightsStart; d < totalDaysLocal; d++) {
+      var idx = d + slotOffset;
+      var day = DAYS[idx];
+      if (!day || !(day.score > 0)) continue;
+      var hasTag = day.tags && day.tags.indexOf(icon) !== -1;
+      if (hasTag) withSame.push(day.score); else withoutSame.push(day.score);
+      var next = DAYS[idx + 1];
+      if (next && next.score > 0) {
+        if (hasTag) withNext.push(next.score); else withoutNext.push(next.score);
+      }
+    }
+    function avg(arr) { return arr.length ? arr.reduce(function(a,b){return a+b;},0) / arr.length : null; }
+    var avgWithSame = avg(withSame), avgWithoutSame = avg(withoutSame);
+    var avgWithNext = avg(withNext), avgWithoutNext = avg(withoutNext);
+    if (withSame.length < MIN_DAYS || withoutSame.length < MIN_DAYS) return;
+    var pctSame = (avgWithoutSame > 0) ? Math.round((avgWithSame - avgWithoutSame) / avgWithoutSame * 100) : null;
+    var pctNext = (withNext.length >= MIN_DAYS && withoutNext.length >= MIN_DAYS && avgWithoutNext > 0)
+      ? Math.round((avgWithNext - avgWithoutNext) / avgWithoutNext * 100) : null;
+    if (pctSame === null && pctNext === null) return;
+    results.push({ icon: icon, name: name, n: withSame.length, pctSame: pctSame, pctNext: pctNext });
+  });
+  results.sort(function(a, b) {
+    var av = Math.max(Math.abs(a.pctSame || 0), Math.abs(a.pctNext || 0));
+    var bv = Math.max(Math.abs(b.pctSame || 0), Math.abs(b.pctNext || 0));
+    return bv - av;
+  });
+  return results;
+}
+
 function buildInsightsCard() {
   var SCALE = 2;
   var CW = 400;
@@ -3350,6 +3390,7 @@ function buildInsightsCard() {
     if (days[d].vals.length > 0) todayIdx = d;
   }
   var insightsStart = Math.max(0, totalDays - 21);
+  var tagInsights = computeTagInsights(insightsStart, totalDays);
   var daysWithData = 0;
   for (var d = insightsStart; d < totalDays; d++) {
     if (days[d].vals.length > 0) daysWithData++;
@@ -3444,10 +3485,17 @@ function buildInsightsCard() {
   var FT_WK_H     = FT_BAR_H + 9 + FT_LABEL_FS + 8 + FT_SUMMARY_FS + 15 + 21;
   var FUELTIME_H  = SECTION_TITLE_H + 3 * FT_WK_H;
 
+  var TAG_ROW_H   = 34;
+  var TAG_TOP_N   = 4;
+  var TAG_EMPTY_H = 40;
+  var tagInsightsShown = tagInsights.slice(0, TAG_TOP_N);
+  var TAGPAT_H = SECTION_TITLE_H + (tagInsightsShown.length ? tagInsightsShown.length * TAG_ROW_H : TAG_EMPTY_H) + 8;
+
   var BOX_INNER_PAD = BOX_PAD * 2;
   var CH = PAD
          + MOMENTUM_H + BOX_INNER_PAD + SECTION_GAP
          + SHAPE_SECTION_H + PATTERN_INSIGHTS_H + BOX_INNER_PAD + SECTION_GAP
+         + TAGPAT_H + BOX_INNER_PAD + SECTION_GAP
          + FUELTIME_H + BOX_INNER_PAD
          + PAD + FOOTER_H + 200; // buffer for wrapped text overflow
 
@@ -3570,6 +3618,76 @@ function buildInsightsCard() {
   ctx.fillText(verdictStr, gLeft, curY);
   curY += MOM_VERDICT_H + BOX_PAD;
   drawBox(momBoxY, curY - momBoxY - BOX_PAD);
+  curY += SECTION_GAP;
+
+  // ════════════════════════════════════════════════════════════════
+  // SECTION 1.5: Tag Patterns
+  // ════════════════════════════════════════════════════════════════
+  var tagBoxY = curY;
+  curY += BOX_PAD;
+  curY = drawSectionTitle(curY, 'Tag Patterns');
+
+  if (tagInsightsShown.length) {
+    for (var ti = 0; ti < tagInsightsShown.length; ti++) {
+      var tInfo = tagInsightsShown[ti];
+      var ry = curY + ti * TAG_ROW_H;
+      var midY = ry + TAG_ROW_H / 2;
+
+      ctx.fillStyle = '#fff';
+      ctx.font = '21px -apple-system,sans-serif';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillText(tInfo.icon, gLeft, midY);
+
+      ctx.fillStyle = 'rgba(255,255,255,0.65)';
+      ctx.font = 'bold 15px -apple-system,sans-serif';
+      ctx.fillText(tInfo.name, gLeft + 30, midY);
+
+      var parts = [];
+      if (tInfo.pctSame !== null) {
+        parts.push({ label: 'Same day', pct: tInfo.pctSame });
+      }
+      if (tInfo.pctNext !== null) {
+        parts.push({ label: 'Next day', pct: tInfo.pctNext });
+      }
+
+      var fx = gRight;
+      ctx.textAlign = 'right';
+      for (var pi2 = parts.length - 1; pi2 >= 0; pi2--) {
+        var part = parts[pi2];
+        var sign = part.pct > 0 ? '+' : '';
+        var valStr = sign + part.pct + '%';
+        var color = part.pct > 0 ? '#4ADE80' : (part.pct < 0 ? '#f87171' : 'rgba(255,255,255,0.5)');
+
+        ctx.font = 'bold 15px -apple-system,sans-serif';
+        ctx.fillStyle = color;
+        ctx.fillText(valStr, fx, midY);
+        var valW = ctx.measureText(valStr).width;
+
+        ctx.font = '15px -apple-system,sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,0.38)';
+        var labelStr = part.label + ' ';
+        ctx.fillText(labelStr, fx - valW, midY);
+        var labelW = ctx.measureText(labelStr).width;
+
+        fx -= (valW + labelW + 18);
+      }
+
+      if (ti > 0) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 0.5;
+        ctx.beginPath(); ctx.moveTo(gLeft, ry); ctx.lineTo(gRight, ry); ctx.stroke();
+      }
+    }
+    curY += tagInsightsShown.length * TAG_ROW_H + 8;
+  } else {
+    ctx.fillStyle = 'rgba(255,255,255,0.38)';
+    ctx.font = '15px -apple-system,sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText('Log a few tags to start seeing how they relate to your score.', gLeft, curY + TAG_EMPTY_H / 2);
+    curY += TAG_EMPTY_H + 8;
+  }
+
+  curY += BOX_PAD;
+  drawBox(tagBoxY, curY - tagBoxY);
   curY += SECTION_GAP;
 
   // ════════════════════════════════════════════════════════════════
@@ -6444,7 +6562,7 @@ function fetchLeaderboard(){
             '<div style="width:'+m+'%;background:#4ADE80;"></div>'+
             '<div style="width:'+f+'%;background:#A855F7;"></div>'+
           '</div>'+
-          '<div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:3px;">measured '+sync+'</div>'+
+          '<div style="font-size:15px;color:rgba(255,255,255,.3);margin-top:3px;">measured '+sync+'</div>'+
         '</div>'+
         '<div class="lb-score-box">'+
           '<div class="lb-score">'+score+'</div>'+
@@ -6569,6 +6687,18 @@ function _doInit(){
   if(_lbOptIn === 'LB-1') setTimeout(fetchLeaderboard, 1200);
   resizeP();loop();buildRail();updateCard();buildTags();enableGraphDaySwipe();initDayGraphPopup();
   setTimeout(function(){drawGraph();renderEvents();},80);
+  // Tags have just been merged into DAYS — rebuild the Insights card so the
+  // Tag Patterns section reflects real data (initial render may have run
+  // before this Supabase response came back).
+  setTimeout(function(){
+    var destI = document.getElementById('card-insights');
+    if(!destI) return;
+    try{
+      insightsCanvas = buildInsightsCard();
+      destI.width = insightsCanvas.width; destI.height = insightsCanvas.height;
+      destI.getContext('2d').drawImage(insightsCanvas, 0, 0);
+    }catch(e){ console.error('FOX2 insights rebuild error:', e && e.message); }
+  }, 80);
 }
 
 let activeDrag=null;
@@ -6584,12 +6714,23 @@ function minuteToTime(min){
 function minuteFromClientX(clientX){
   const layer=document.getElementById("eventLayer");
   const r=layer.getBoundingClientRect();
-  let x=Math.max(0,Math.min(r.width,clientX-r.left));
-  let minute=Math.round((x/r.width)*1440/15)*15;
+  let x=clientX-r.left;
+  const seps=window._graphSeps;
+  let minute;
+  if(seps && (seps.x1-seps.x0)>0){
+    minute=Math.round(((x-seps.x0)/(seps.x1-seps.x0))*1440/15)*15;
+  }else{
+    x=Math.max(0,Math.min(r.width,x));
+    minute=Math.round((x/r.width)*1440/15)*15;
+  }
   return Math.max(0,Math.min(1439,minute));
 }
 
 function xFromMinute(minute){
+  const seps=window._graphSeps;
+  if(seps && (seps.x1-seps.x0)>0){
+    return seps.x0+(minute/1440)*(seps.x1-seps.x0);
+  }
   const layer=document.getElementById("eventLayer");
   const r=layer.getBoundingClientRect();
   return (minute/1440)*r.width;
@@ -6788,7 +6929,7 @@ function renderEvents(force){
   d.events.forEach((ev,idx)=>{
     const chip=document.createElement("div");
     chip.className="placed-tag"+(ev.icon==='✏️'?' is-note':'');
-    chip.style.left=(ev.minute/1440*100)+"%";
+    chip.style.left=xFromMinute(ev.minute)+"px";
     chip.innerHTML="<span>"+ev.icon+"</span>";
     const notePreview=ev.icon==='✏️' && ev.note ? ev.note.substring(0,40)+(ev.note.length>40?'…':'') : '';
     chip.title=(notePreview||ev.name)+" \u2022 "+minuteToTime(ev.minute);
