@@ -1744,7 +1744,11 @@ html, body {
     </div>
   </div>
   <div class="page">
-    <div class="card-wrap"><canvas id="card-insights"></canvas></div>
+    <div class="card-wrap" style="position:relative;"><canvas id="card-insights"></canvas>
+      <div id="tag-pattern-popup" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;">
+        <div id="tag-pattern-popup-text" style="font-size:13px;color:rgba(255,255,255,0.85);text-align:center;"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1779,7 +1783,7 @@ html, body {
     <div id="info-modal-title">Squad Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.85 · 2026-06-12 04:37 UTC</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.86 · 2026-06-12 15:58 UTC</span></div>
     <div class="info-section-title">Leaderboard</div>
     <div class="info-toggle-row">
       <div>
@@ -1871,7 +1875,7 @@ var sParam    = params.get('s') || '';
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v3.85 · 2026-06-12 04:37 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v3.86 · 2026-06-12 15:58 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
@@ -3352,11 +3356,20 @@ function computeTagInsights(insightsStart, totalDaysLocal) {
     var avgWithSame = avg(withSame), avgWithoutSame = avg(withoutSame);
     var avgWithNext = avg(withNext), avgWithoutNext = avg(withoutNext);
     if (withSame.length < MIN_DAYS || withoutSame.length < MIN_DAYS) return;
-    var pctSame = (avgWithoutSame > 0) ? Math.round((avgWithSame - avgWithoutSame) / avgWithoutSame * 100) : null;
-    var pctNext = (withNext.length >= MIN_DAYS && withoutNext.length >= MIN_DAYS && avgWithoutNext > 0)
+    var rawPctSame = (avgWithoutSame > 0) ? Math.round((avgWithSame - avgWithoutSame) / avgWithoutSame * 100) : null;
+    var rawPctNext = (withNext.length >= MIN_DAYS && withoutNext.length >= MIN_DAYS && avgWithoutNext > 0)
       ? Math.round((avgWithNext - avgWithoutNext) / avgWithoutNext * 100) : null;
+    // Only surface changes of at least 10% — smaller swings aren't worth showing yet.
+    var MIN_PCT = 10;
+    var pctSame = (rawPctSame !== null && Math.abs(rawPctSame) >= MIN_PCT) ? rawPctSame : null;
+    var pctNext = (rawPctNext !== null && Math.abs(rawPctNext) >= MIN_PCT) ? rawPctNext : null;
     if (pctSame === null && pctNext === null) return;
-    results.push({ icon: icon, name: name, n: withSame.length, pctSame: pctSame, pctNext: pctNext });
+    results.push({
+      icon: icon, name: name,
+      pctSame: pctSame, pctNext: pctNext,
+      nSame: withSame.length, nWithoutSame: withoutSame.length,
+      nNext: withNext.length, nWithoutNext: withoutNext.length
+    });
   });
   results.sort(function(a, b) {
     var av = Math.max(Math.abs(a.pctSame || 0), Math.abs(a.pctNext || 0));
@@ -3628,6 +3641,7 @@ function buildInsightsCard() {
   curY = drawSectionTitle(curY, 'Tag Patterns');
 
   if (tagInsightsShown.length) {
+    window.tagPatternHitboxes = [];
     for (var ti = 0; ti < tagInsightsShown.length; ti++) {
       var tInfo = tagInsightsShown[ti];
       var ry = curY + ti * TAG_ROW_H;
@@ -3644,10 +3658,10 @@ function buildInsightsCard() {
 
       var parts = [];
       if (tInfo.pctSame !== null) {
-        parts.push({ label: 'Same day', pct: tInfo.pctSame });
+        parts.push({ label: 'Same day', pct: tInfo.pctSame, n: tInfo.nSame, nWithout: tInfo.nWithoutSame });
       }
       if (tInfo.pctNext !== null) {
-        parts.push({ label: 'Next day', pct: tInfo.pctNext });
+        parts.push({ label: 'Next day', pct: tInfo.pctNext, n: tInfo.nNext, nWithout: tInfo.nWithoutNext });
       }
 
       var fx = gRight;
@@ -3669,6 +3683,12 @@ function buildInsightsCard() {
         ctx.fillText(labelStr, fx - valW, midY);
         var labelW = ctx.measureText(labelStr).width;
 
+        // Tappable hitbox for this stat — shows the underlying day counts.
+        window.tagPatternHitboxes.push({
+          x: fx - valW - labelW, y: ry, w: valW + labelW, h: TAG_ROW_H,
+          text: tInfo.name + ' \u00b7 ' + part.label + ': n=' + part.n + ' with, n=' + part.nWithout + ' without'
+        });
+
         fx -= (valW + labelW + 18);
       }
 
@@ -3679,6 +3699,7 @@ function buildInsightsCard() {
     }
     curY += tagInsightsShown.length * TAG_ROW_H + 8;
   } else {
+    window.tagPatternHitboxes = [];
     ctx.fillStyle = 'rgba(255,255,255,0.38)';
     ctx.font = '15px -apple-system,sans-serif';
     ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
@@ -4438,13 +4459,39 @@ window.addEventListener('load', function() {
       destI.width = insightsCanvas.width; destI.height = insightsCanvas.height;
       destI.getContext('2d').drawImage(insightsCanvas, 0, 0);
 
-      // Click handler for pattern toggle button
+      // Click handler for pattern toggle button & tag pattern stats
+      var tagPopup = document.getElementById('tag-pattern-popup');
+      var tagPopupText = document.getElementById('tag-pattern-popup-text');
       destI.addEventListener('click', function(e) {
         var rect = destI.getBoundingClientRect();
         var scale = 400 / rect.width; // map CSS px → logical canvas coords (0..400)
         var clickX = (e.clientX - rect.left) * scale;
         var clickY = (e.clientY - rect.top)  * scale;
-        
+
+        // Check if click is on a tag pattern stat (n=... popup)
+        var hbs = window.tagPatternHitboxes || [];
+        var hit = null;
+        for (var hi = 0; hi < hbs.length; hi++) {
+          var hb = hbs[hi];
+          if (clickX >= hb.x && clickX <= hb.x + hb.w && clickY >= hb.y && clickY <= hb.y + hb.h) { hit = hb; break; }
+        }
+        if (hit) {
+          var cssScale = rect.width / 400;
+          tagPopupText.textContent = hit.text;
+          tagPopup.style.cssText = 'display:block;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;left:0;top:0;';
+          void tagPopup.offsetWidth;
+          var pw = tagPopup.offsetWidth || 90, ph = tagPopup.offsetHeight || 30;
+          var hbCx = (hb.x + hb.w / 2) * cssScale;
+          var hbTop = hb.y * cssScale;
+          var px = Math.max(4, Math.min(hbCx - pw / 2, rect.width - pw - 4));
+          var py = Math.max(4, hbTop - ph - 8);
+          tagPopup.style.left = px + 'px';
+          tagPopup.style.top  = py + 'px';
+          return;
+        } else {
+          tagPopup.style.display = 'none';
+        }
+
         // Check if click is on pattern toggle button
         var btn = window.patternToggleHitbox;
         if (btn && clickX >= btn.x && clickX <= btn.x + btn.w &&
@@ -4931,6 +4978,8 @@ function closeAllPopups(){
   if(p2) p2.style.display='none';
   var p3 = document.getElementById('day-graph-popup');
   if(p3) p3.style.display='none';
+  var p4 = document.getElementById('tag-pattern-popup');
+  if(p4) p4.style.display='none';
   var cursor = document.getElementById('timeCursor');
   if(cursor) cursor.classList.remove('show');
 }
