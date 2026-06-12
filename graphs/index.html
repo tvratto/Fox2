@@ -1783,7 +1783,7 @@ html, body {
     <div id="info-modal-title">Squad Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.86 · 2026-06-12 15:58 UTC</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.87 · 2026-06-12 16:06 UTC</span></div>
     <div class="info-section-title">Leaderboard</div>
     <div class="info-toggle-row">
       <div>
@@ -1875,7 +1875,7 @@ var sParam    = params.get('s') || '';
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v3.86 · 2026-06-12 15:58 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v3.87 · 2026-06-12 16:06 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
@@ -4855,8 +4855,10 @@ function handleBottomShare() {
     // Clear any open popups when switching pages
     var p1 = document.getElementById('dot-popup');
     var p2 = document.getElementById('dot-popup-fuel');
+    var p3 = document.getElementById('tag-pattern-popup');
     if (p1) p1.style.display = 'none';
     if (p2) p2.style.display = 'none';
+    if (p3) p3.style.display = 'none';
     if (selectedDot) { selectedDot = null; renderCard(); }
   }
 
@@ -4872,6 +4874,15 @@ function handleBottomShare() {
       };
     })(i));
   }
+
+  // Dismiss the tag-pattern popup on any tap/click outside the insights canvas
+  document.addEventListener('click', function(e) {
+    var popup = document.getElementById('tag-pattern-popup');
+    var canvas = document.getElementById('card-insights');
+    if (!popup || popup.style.display === 'none') return;
+    if (canvas && canvas.contains(e.target)) return; // handled by canvas's own click logic
+    popup.style.display = 'none';
+  }, true);
 })();
 
 
