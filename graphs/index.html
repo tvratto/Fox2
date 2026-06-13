@@ -34,6 +34,14 @@ html, body {
   border: none; background: none;
 }
 .nav-tab.active { font-size: clamp(18px, 5.5vw, 24px); font-weight: 700; color: #fff; }
+.nav-tab { position: relative; overflow: visible; }
+.nav-tab .new-dot {
+  position: absolute; top: -2px; right: -9px;
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #f87171; box-shadow: 0 0 6px rgba(248,113,113,0.8);
+  display: none;
+}
+.nav-tab .new-dot.show { display: block; }
 .scroll-x {
   display: flex; flex-direction: row;
   width: 100vw; height: 100svh;
@@ -1689,7 +1697,7 @@ html, body {
   <div class="top-header-inner">
     <button class="nav-tab active" data-page="0">Results</button>
     <button class="nav-tab" data-page="1">History</button>
-    <button class="nav-tab" data-page="2">Insights</button>
+    <button class="nav-tab" data-page="2">Insights<span class="new-dot" id="insightsNewDot"></span></button>
   </div>
   <div id="debug-bar" style="display:none;">v1.1</div>
 </div>
@@ -1721,7 +1729,7 @@ html, body {
           </div>
         </div>
         <div id="graphWrap">
-<canvas id="graph"></canvas><div id="prevGraphDayLabel" class="graph-day-label"></div><div id="nextGraphDayLabel" class="graph-day-label"></div><div id="day-graph-popup" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;"><div id="day-graph-popup-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div><div id="day-graph-popup-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div></div><div id="dot-popup" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;"><div id="dot-popup-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div><div id="dot-popup-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div></div><div id="eventLayer"><div class="event-rail"></div><div class="event-hint">Drag tags here</div></div>
+<canvas id="graph"></canvas><div id="prevGraphDayLabel" class="graph-day-label"></div><div id="nextGraphDayLabel" class="graph-day-label"></div><div id="day-graph-popup" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;"><div id="day-graph-popup-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div><div id="day-graph-popup-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div></div><div id="dot-popup" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;"><div id="dot-popup-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div><div id="dot-popup-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div></div><div id="eventLayer"><div class="event-rail"></div><div class="event-hint">Drag actions here</div></div>
         </div>
         <div class="axis"><span style="left:8.333%;">12a</span><span style="left:29.167%;">6a</span><span style="left:50%;">12p</span><span style="left:70.833%;">6p</span><span style="left:91.667%;">12a</span></div>
       </section>
@@ -1783,7 +1791,7 @@ html, body {
     <div id="info-modal-title">Squad Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.91 · 2026-06-12 18:53 UTC</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v3.95 · 2026-06-12 20:10 UTC</span></div>
     <div class="info-section-title">Leaderboard</div>
     <div class="info-toggle-row">
       <div>
@@ -1875,7 +1883,7 @@ var sParam    = params.get('s') || '';
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v3.91 · 2026-06-12 18:53 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v3.95 · 2026-06-12 20:10 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
@@ -3332,6 +3340,58 @@ function wrapText(ctx, text, x, y, maxW, lineH) {
 
 // Compare each tag's same-day and next-day AUC score against days without
 // that tag, over the given range of `days[]` indices (insightsStart..totalDays-1).
+// ── Action Effects "new insight" tracking (localStorage-persisted) ──
+var SEEN_INSIGHTS_KEY = 'fox2_seenInsightKeys';
+var SEEN_INSIGHT_VALUES_KEY = 'fox2_seenInsightValues';
+function getSeenInsightKeys() {
+  try {
+    var raw = window.localStorage.getItem(SEEN_INSIGHTS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) { return []; }
+}
+function saveSeenInsightKeys(keys) {
+  try { window.localStorage.setItem(SEEN_INSIGHTS_KEY, JSON.stringify(keys)); } catch (e) {}
+}
+function getSeenInsightValues() {
+  try {
+    var raw = window.localStorage.getItem(SEEN_INSIGHT_VALUES_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) { return {}; }
+}
+function saveSeenInsightValues(values) {
+  try { window.localStorage.setItem(SEEN_INSIGHT_VALUES_KEY, JSON.stringify(values)); } catch (e) {}
+}
+function consistencyLabel(rate) {
+  if (rate === null || rate === undefined) return '';
+  if (rate >= 0.999) return 'Every time';
+  if (rate >= 0.5) return 'Most of the time';
+  return 'Some of the time';
+}
+function updateInsightsNewDot() {
+  var dot = document.getElementById('insightsNewDot');
+  if (!dot) return;
+  dot.classList.toggle('show', !!window.hasNewActionInsight);
+}
+// Called when the user views the Insights page. Replaces the seen-set with
+// exactly what's currently shown (so an insight that disappears and later
+// reappears is treated as new again), records the current % values so we
+// can tell which numbers have moved since last viewed, clears the red dot,
+// and redraws the card without the "NEW" badge / "changed" highlighting.
+function markInsightsSeen() {
+  var needsRedraw = window.hasNewActionInsight || window.hasChangedActionInsight;
+  saveSeenInsightKeys(window.currentInsightKeys || []);
+  saveSeenInsightValues(window.currentInsightValues || {});
+  window.hasNewActionInsight = false;
+  updateInsightsNewDot();
+  if (!needsRedraw) return;
+  try {
+    insightsCanvas = buildInsightsCard();
+    var destI = document.getElementById('card-insights');
+    destI.width = insightsCanvas.width; destI.height = insightsCanvas.height;
+    destI.getContext('2d').drawImage(insightsCanvas, 0, 0);
+  } catch (e) { console.error('FOX2 insights reseen rebuild error:', e && e.message); }
+}
+
 function computeTagInsights(insightsStart, totalDaysLocal) {
   var MIN_DAYS = 3;
   var results = [];
@@ -3371,9 +3431,22 @@ function computeTagInsights(insightsStart, totalDaysLocal) {
       if (pctNext !== null && Math.sign(pctNext) !== expectedSign) pctNext = null;
     }
     if (pctSame === null && pctNext === null) return;
+    // Consistency: of the days the action was logged, how often did the
+    // score actually move in the direction the average suggests?
+    function hitRate(arr, baseline, dir) {
+      if (!arr.length || !dir) return null;
+      var hits = 0;
+      for (var i = 0; i < arr.length; i++) {
+        if (dir > 0 ? arr[i] > baseline : arr[i] < baseline) hits++;
+      }
+      return hits / arr.length;
+    }
+    var hitRateSame = (pctSame !== null) ? hitRate(withSame, avgWithoutSame, Math.sign(pctSame)) : null;
+    var hitRateNext = (pctNext !== null) ? hitRate(withNext, avgWithoutNext, Math.sign(pctNext)) : null;
     results.push({
       icon: icon, name: name,
       pctSame: pctSame, pctNext: pctNext,
+      hitRateSame: hitRateSame, hitRateNext: hitRateNext,
       nSame: withSame.length, nWithoutSame: withoutSame.length,
       nNext: withNext.length, nWithoutNext: withoutNext.length
     });
@@ -3509,6 +3582,38 @@ function buildInsightsCard() {
   var TAG_TOP_N   = 4;
   var TAG_EMPTY_H = 40;
   var tagInsightsShown = tagInsights.slice(0, TAG_TOP_N);
+
+  // ── New / changed insight detection: compare against the action effects
+  // shown last time the user viewed the Insights page ──
+  var seenInsightKeys = getSeenInsightKeys();
+  var seenInsightValues = getSeenInsightValues();
+  var newInsightKeysNow = [];
+  window.currentInsightValues = {};
+  window.hasChangedActionInsight = false;
+  for (var nii = 0; nii < tagInsightsShown.length; nii++) {
+    var tI = tagInsightsShown[nii];
+    var nik = tI.icon + '|' + tI.name;
+    tI._isNew = seenInsightKeys.indexOf(nik) === -1;
+    if (tI._isNew) newInsightKeysNow.push(nik);
+
+    // Pick a single headline stat — whichever of same-day/next-day shows
+    // the larger effect — so each action gets one tight phrase.
+    var useSame = (tI.pctSame !== null) && (tI.pctNext === null || Math.abs(tI.pctSame) >= Math.abs(tI.pctNext));
+    tI._primaryLabel = useSame ? 'Same day' : 'Next day';
+    tI._primaryPct = useSame ? tI.pctSame : tI.pctNext;
+    tI._primaryConsistency = consistencyLabel(useSame ? tI.hitRateSame : tI.hitRateNext);
+
+    var prevVals = seenInsightValues[nik];
+    var changed = tI._isNew || !prevVals ||
+      prevVals.primaryLabel !== tI._primaryLabel ||
+      prevVals.primaryConsistency !== tI._primaryConsistency;
+    tI._changed = changed;
+    if (!tI._isNew && changed) window.hasChangedActionInsight = true;
+    window.currentInsightValues[nik] = { primaryLabel: tI._primaryLabel, primaryConsistency: tI._primaryConsistency };
+  }
+  window.hasNewActionInsight = newInsightKeysNow.length > 0;
+  window.currentInsightKeys = tagInsightsShown.map(function(t){ return t.icon + '|' + t.name; });
+  updateInsightsNewDot();
   var TAGPAT_H = SECTION_TITLE_H + (tagInsightsShown.length ? tagInsightsShown.length * TAG_ROW_H : TAG_EMPTY_H) + 8;
 
   var BOX_INNER_PAD = BOX_PAD * 2;
@@ -3549,7 +3654,95 @@ function buildInsightsCard() {
   }
 
   // ════════════════════════════════════════════════════════════════
-  // SECTION 1: Momentum
+  // SECTION 1: Action Effects
+  // ════════════════════════════════════════════════════════════════
+  var tagBoxY = curY;
+  curY += BOX_PAD;
+  curY = drawSectionTitle(curY, 'Action Effects');
+
+  if (tagInsightsShown.length) {
+    window.tagPatternHitboxes = [];
+    for (var ti = 0; ti < tagInsightsShown.length; ti++) {
+      var tInfo = tagInsightsShown[ti];
+      var ry = curY + ti * TAG_ROW_H;
+      var midY = ry + TAG_ROW_H / 2;
+
+      ctx.fillStyle = '#fff';
+      ctx.font = '21px -apple-system,sans-serif';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillText(tInfo.icon, gLeft, midY);
+
+      ctx.fillStyle = 'rgba(255,255,255,0.65)';
+      ctx.font = 'bold 15px -apple-system,sans-serif';
+      ctx.fillText(tInfo.name, gLeft + 30, midY);
+
+      if (tInfo._isNew) {
+        var newBadgeW = 38, newBadgeH = 16;
+        var newBadgeX = gLeft + 30 + ctx.measureText(tInfo.name).width + 8;
+        ctx.fillStyle = '#f87171';
+        roundRect(ctx, newBadgeX, midY - newBadgeH / 2, newBadgeW, newBadgeH, newBadgeH / 2); ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 10px -apple-system,sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('NEW', newBadgeX + newBadgeW / 2, midY + 0.5);
+        ctx.textAlign = 'left';
+      }
+
+      // Single tight headline phrase: "Same day · Most of the time"
+      var pct = tInfo._primaryPct;
+      var color;
+      if (!tInfo._isNew && !tInfo._changed) {
+        // Unchanged since the last time Insights was viewed — dim it so
+        // freshly-changed insights stand out.
+        color = pct > 0 ? 'rgba(74,222,128,0.35)' : (pct < 0 ? 'rgba(248,113,113,0.35)' : 'rgba(255,255,255,0.25)');
+      } else {
+        color = pct > 0 ? '#4ADE80' : (pct < 0 ? '#f87171' : 'rgba(255,255,255,0.5)');
+      }
+
+      var consistencyStr = tInfo._primaryConsistency;
+      var labelStr = tInfo._primaryLabel + ' \u00b7 ';
+
+      ctx.textAlign = 'right';
+      ctx.font = 'bold 15px -apple-system,sans-serif';
+      ctx.fillStyle = color;
+      ctx.fillText(consistencyStr, gRight, midY);
+      var valW = ctx.measureText(consistencyStr).width;
+
+      ctx.font = '15px -apple-system,sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.38)';
+      ctx.fillText(labelStr, gRight - valW, midY);
+      var labelW = ctx.measureText(labelStr).width;
+
+      // Tappable hitbox — reveals the underlying numbers on tap.
+      var pctStr = (tInfo.pctSame !== null ? 'Same day ' + (tInfo.pctSame > 0 ? '+' : '') + tInfo.pctSame + '% (n=' + tInfo.nSame + '/' + tInfo.nWithoutSame + ')' : '');
+      var pctStrNext = (tInfo.pctNext !== null ? 'Next day ' + (tInfo.pctNext > 0 ? '+' : '') + tInfo.pctNext + '% (n=' + tInfo.nNext + '/' + tInfo.nWithoutNext + ')' : '');
+      var detailParts = [pctStr, pctStrNext].filter(Boolean);
+      window.tagPatternHitboxes.push({
+        x: gRight - valW - labelW, y: ry, w: valW + labelW, h: TAG_ROW_H,
+        text: tInfo.name + ' \u00b7 ' + detailParts.join(' \u00b7 ')
+      });
+
+      if (ti > 0) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 0.5;
+        ctx.beginPath(); ctx.moveTo(gLeft, ry); ctx.lineTo(gRight, ry); ctx.stroke();
+      }
+    }
+    curY += tagInsightsShown.length * TAG_ROW_H + 8;
+  } else {
+    window.tagPatternHitboxes = [];
+    ctx.fillStyle = 'rgba(255,255,255,0.38)';
+    ctx.font = '15px -apple-system,sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText('Log a few actions to start seeing how they relate to your score.', gLeft, curY + TAG_EMPTY_H / 2);
+    curY += TAG_EMPTY_H + 8;
+  }
+
+  curY += BOX_PAD;
+  drawBox(tagBoxY, curY - tagBoxY);
+  curY += SECTION_GAP;
+
+  // ════════════════════════════════════════════════════════════════
+  // SECTION 1.5: Momentum
   // ════════════════════════════════════════════════════════════════
   var momBoxY = curY;
   curY += BOX_PAD;
@@ -3638,84 +3831,6 @@ function buildInsightsCard() {
   ctx.fillText(verdictStr, gLeft, curY);
   curY += MOM_VERDICT_H + BOX_PAD;
   drawBox(momBoxY, curY - momBoxY - BOX_PAD);
-  curY += SECTION_GAP;
-
-  // ════════════════════════════════════════════════════════════════
-  // SECTION 1.5: Tag Patterns
-  // ════════════════════════════════════════════════════════════════
-  var tagBoxY = curY;
-  curY += BOX_PAD;
-  curY = drawSectionTitle(curY, 'Tag Patterns');
-
-  if (tagInsightsShown.length) {
-    window.tagPatternHitboxes = [];
-    for (var ti = 0; ti < tagInsightsShown.length; ti++) {
-      var tInfo = tagInsightsShown[ti];
-      var ry = curY + ti * TAG_ROW_H;
-      var midY = ry + TAG_ROW_H / 2;
-
-      ctx.fillStyle = '#fff';
-      ctx.font = '21px -apple-system,sans-serif';
-      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-      ctx.fillText(tInfo.icon, gLeft, midY);
-
-      ctx.fillStyle = 'rgba(255,255,255,0.65)';
-      ctx.font = 'bold 15px -apple-system,sans-serif';
-      ctx.fillText(tInfo.name, gLeft + 30, midY);
-
-      var parts = [];
-      if (tInfo.pctSame !== null) {
-        parts.push({ label: 'Same day', pct: tInfo.pctSame, n: tInfo.nSame, nWithout: tInfo.nWithoutSame });
-      }
-      if (tInfo.pctNext !== null) {
-        parts.push({ label: 'Next day', pct: tInfo.pctNext, n: tInfo.nNext, nWithout: tInfo.nWithoutNext });
-      }
-
-      var fx = gRight;
-      ctx.textAlign = 'right';
-      for (var pi2 = parts.length - 1; pi2 >= 0; pi2--) {
-        var part = parts[pi2];
-        var sign = part.pct > 0 ? '+' : '';
-        var valStr = sign + part.pct + '%';
-        var color = part.pct > 0 ? '#4ADE80' : (part.pct < 0 ? '#f87171' : 'rgba(255,255,255,0.5)');
-
-        ctx.font = 'bold 15px -apple-system,sans-serif';
-        ctx.fillStyle = color;
-        ctx.fillText(valStr, fx, midY);
-        var valW = ctx.measureText(valStr).width;
-
-        ctx.font = '15px -apple-system,sans-serif';
-        ctx.fillStyle = 'rgba(255,255,255,0.38)';
-        var labelStr = part.label + ' ';
-        ctx.fillText(labelStr, fx - valW, midY);
-        var labelW = ctx.measureText(labelStr).width;
-
-        // Tappable hitbox for this stat — shows the underlying day counts.
-        window.tagPatternHitboxes.push({
-          x: fx - valW - labelW, y: ry, w: valW + labelW, h: TAG_ROW_H,
-          text: tInfo.name + ' \u00b7 ' + part.label + ': n=' + part.n + ' with, n=' + part.nWithout + ' without'
-        });
-
-        fx -= (valW + labelW + 18);
-      }
-
-      if (ti > 0) {
-        ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 0.5;
-        ctx.beginPath(); ctx.moveTo(gLeft, ry); ctx.lineTo(gRight, ry); ctx.stroke();
-      }
-    }
-    curY += tagInsightsShown.length * TAG_ROW_H + 8;
-  } else {
-    window.tagPatternHitboxes = [];
-    ctx.fillStyle = 'rgba(255,255,255,0.38)';
-    ctx.font = '15px -apple-system,sans-serif';
-    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-    ctx.fillText('Log a few tags to start seeing how they relate to your score.', gLeft, curY + TAG_EMPTY_H / 2);
-    curY += TAG_EMPTY_H + 8;
-  }
-
-  curY += BOX_PAD;
-  drawBox(tagBoxY, curY - tagBoxY);
   curY += SECTION_GAP;
 
   // ════════════════════════════════════════════════════════════════
@@ -4859,6 +4974,7 @@ function handleBottomShare() {
     if (idx === currentPage) return;
     currentPage = idx;
     for (var i = 0; i < tabs.length; i++) tabs[i].classList.toggle('active', i === idx);
+    if (idx === 2) markInsightsSeen();
     // Clear any open popups when switching pages
     var p1 = document.getElementById('dot-popup');
     var p2 = document.getElementById('dot-popup-fuel');
@@ -5868,7 +5984,7 @@ function renderDayCardHTML(dayIdx){
             <canvas class="ghostGraphCanvas"></canvas>
             <div class="graph-day-label ghostPrevDayLabel">${prevLabel}</div>
             <div class="graph-day-label ghostNextDayLabel">${nextLabel}</div>
-            <div class="ghostEventLayer"><div class="event-rail"></div><div class="event-hint">Drag tags here</div></div>
+            <div class="ghostEventLayer"><div class="event-rail"></div><div class="event-hint">Drag actions here</div></div>
           </div>
           ${axisHTMLForPanel()}
         </section>
@@ -6772,7 +6888,7 @@ function _doInit(){
   resizeP();loop();buildRail();updateCard();buildTags();enableGraphDaySwipe();initDayGraphPopup();
   setTimeout(function(){drawGraph();renderEvents();},80);
   // Tags have just been merged into DAYS — rebuild the Insights card so the
-  // Tag Patterns section reflects real data (initial render may have run
+  // Action Effects section reflects real data (initial render may have run
   // before this Supabase response came back).
   setTimeout(function(){
     var destI = document.getElementById('card-insights');
