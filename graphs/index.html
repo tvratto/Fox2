@@ -1783,7 +1783,7 @@ html, body {
     <div id="info-modal-title">Squad Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v4.20 · 2026-06-16 21:56 UTC</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v4.21 · 2026-06-16 22:27 UTC</span></div>
     <div class="info-section-title">Leaderboard</div>
     <div class="info-toggle-row">
       <div>
@@ -1875,7 +1875,7 @@ var sParam    = params.get('s') || '';
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v4.20 · 2026-06-16 21:56 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v4.21 · 2026-06-16 22:27 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
@@ -6026,10 +6026,32 @@ function renderGhostEvents(panel){
 
   layer.classList.toggle('has-events', events.length>0);
 
+  // Match the live card's xFromMinute(): position using the same pixel-based
+  // graph separators (seps.x0/seps.x1) that drawResultsSplineGraph computed
+  // for this canvas, rather than a naive minute/1440 percentage. The canvas
+  // draws the day's curve inset by padL/padR, so percentage-of-width placement
+  // drifts from the actual data points — most visible near the day edges.
+  const canvas=panel.querySelector('.ghostGraphCanvas');
+  const seps=canvas && canvas._graphSeps;
+  const wrapWidth=panel.querySelector('.ghostGraphWrap')?.clientWidth||0;
+
+  function leftPxForMinute(minute){
+    const m=Math.max(0,Math.min(1439,minute||0));
+    if(seps && (seps.x1-seps.x0)>0){
+      return seps.x0+(m/1440)*(seps.x1-seps.x0);
+    }
+    return wrapWidth ? (m/1440)*wrapWidth : null;
+  }
+
   events.forEach(ev=>{
     const chip=document.createElement('div');
     chip.className='ghostPlacedTag';
-    chip.style.left=(Math.max(0,Math.min(1439,ev.minute||0))/1440*100)+'%';
+    const px=leftPxForMinute(ev.minute);
+    if(px!=null){
+      chip.style.left=px+'px';
+    }else{
+      chip.style.left=(Math.max(0,Math.min(1439,ev.minute||0))/1440*100)+'%';
+    }
     chip.textContent=ev.icon||'•';
     chip.title=(ev.name||'Tag')+' • '+minuteToTime(ev.minute||0);
     layer.appendChild(chip);
@@ -6046,10 +6068,14 @@ function redrawPagerGhostCanvases(){
     if(wrap && canvas){
       requestAnimationFrame(()=>{
         drawGraphToCanvas(canvas, wrap, dayIdx, false);
+        // Render tags after the draw so canvas._graphSeps reflects this
+        // frame's layout, not a stale value from a previous panel/size.
+        renderGhostEvents(panel);
         requestAnimationFrame(()=>positionGraphOverlay(panel));
       });
+    }else{
+      renderGhostEvents(panel);
     }
-    renderGhostEvents(panel);
   }
 
   panels.forEach(drawOne);
