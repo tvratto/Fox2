@@ -1783,7 +1783,7 @@ html, body {
     <div id="info-modal-title">Squad Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v4.28 · 2026-06-17 18:16 UTC</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v4.29-debug4 · 2026-06-17 18:38 UTC</span></div>
     <div class="info-section-title">Leaderboard</div>
     <div class="info-toggle-row">
       <div>
@@ -1875,7 +1875,7 @@ var sParam    = params.get('s') || '';
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v4.28 · 2026-06-17 18:16 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v4.29-debug4 · 2026-06-17 18:38 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
@@ -4660,6 +4660,35 @@ window.addEventListener('load', function() {
       var tagPopup = document.getElementById('tag-pattern-popup');
       var tagPopupText = document.getElementById('tag-pattern-popup-text');
 
+      // TEMP DEBUG OVERLAY round 2 — testing actual stacking via elementFromPoint
+      (function() {
+        var dbg = document.createElement('div');
+        dbg.id = 'fox2-debug-overlay';
+        dbg.style.cssText = 'position:fixed;left:4px;right:4px;bottom:4px;max-height:46vh;overflow-y:auto;background:rgba(0,0,0,0.9);color:#0f0;font-size:10px;font-family:monospace;z-index:999999;padding:6px;border-radius:6px;pointer-events:none;white-space:pre-wrap;';
+        dbg.textContent = '[debug v2 ready]';
+        document.body.appendChild(dbg);
+        window._fox2Log = function(msg) {
+          dbg.textContent += '\n' + msg;
+          if (dbg.textContent.length > 5000) dbg.textContent = dbg.textContent.slice(-5000);
+          dbg.scrollTop = dbg.scrollHeight;
+        };
+      })();
+
+      function _fox2DescribeStack(x, y) {
+        var el = document.elementFromPoint(x, y);
+        if (!el) return 'elementFromPoint: null';
+        var chain = [];
+        var cur = el;
+        var depth = 0;
+        while (cur && depth < 6) {
+          var cs = window.getComputedStyle(cur);
+          chain.push((cur.id ? '#' + cur.id : cur.tagName) + '[z=' + cs.zIndex + ',pos=' + cs.position + ']');
+          cur = cur.parentElement;
+          depth++;
+        }
+        return 'topmost at (' + x.toFixed(0) + ',' + y.toFixed(0) + ') = ' + chain.join(' < ');
+      }
+
       function handleInsightsTap(clientX, clientY) {
         var rect = destI.getBoundingClientRect();
         var scale = 400 / rect.width; // map CSS px → logical canvas coords (0..400)
@@ -4708,6 +4737,17 @@ window.addEventListener('load', function() {
 
           tagPopup.style.left = rpx + 'px';
           tagPopup.style.top  = rpy + 'px';
+
+          setTimeout(function() {
+            var tpRect = tagPopup.getBoundingClientRect();
+            var cx = tpRect.left + tpRect.width / 2;
+            var cy = tpRect.top + tpRect.height / 2;
+            window._fox2Log && window._fox2Log('popup rect: top=' + tpRect.top.toFixed(0) + ' left=' + tpRect.left.toFixed(0) + ' w=' + tpRect.width.toFixed(0) + ' h=' + tpRect.height.toFixed(0));
+            window._fox2Log && window._fox2Log(_fox2DescribeStack(cx, cy));
+            var tpCs = window.getComputedStyle(tagPopup);
+            window._fox2Log && window._fox2Log('tagPopup itself: display=' + tpCs.display + ' opacity=' + tpCs.opacity + ' z=' + tpCs.zIndex + ' transform=' + tpCs.transform);
+          }, 30);
+
           return;
         }
 
