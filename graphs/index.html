@@ -4659,7 +4659,7 @@ window.addEventListener('load', function() {
       // while the lower-level touch events behave correctly.
       var tagPopup = document.getElementById('tag-pattern-popup');
       var tagPopupText = document.getElementById('tag-pattern-popup-text');
-
+/*
       // TEMP DEBUG OVERLAY round 2 — testing actual stacking via elementFromPoint
       (function() {
         var dbg = document.createElement('div');
@@ -4673,7 +4673,7 @@ window.addEventListener('load', function() {
           dbg.scrollTop = dbg.scrollHeight;
         };
       })();
-
+*/
       function _fox2DescribeStack(x, y) {
         var el = document.elementFromPoint(x, y);
         if (!el) return 'elementFromPoint: null';
@@ -4737,7 +4737,7 @@ if (py + ph > window.innerHeight - 90) {
 
 tagPopup.style.left = px + 'px';
 tagPopup.style.top = py + 'px';
-
+          /*
           setTimeout(function() {
             var tpRect = tagPopup.getBoundingClientRect();
             var cx = tpRect.left + tpRect.width / 2;
@@ -4747,7 +4747,7 @@ tagPopup.style.top = py + 'px';
             var tpCs = window.getComputedStyle(tagPopup);
             window._fox2Log && window._fox2Log('tagPopup itself: display=' + tpCs.display + ' opacity=' + tpCs.opacity + ' z=' + tpCs.zIndex + ' transform=' + tpCs.transform);
           }, 30);
-
+*/
           return;
         }
 
