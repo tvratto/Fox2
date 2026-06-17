@@ -1783,7 +1783,7 @@ html, body {
     <div id="info-modal-title">Squad Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v4.23 · 2026-06-16 23:10 UTC</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v4.24 · 2026-06-17 14:37 UTC</span></div>
     <div class="info-section-title">Leaderboard</div>
     <div class="info-toggle-row">
       <div>
@@ -1875,7 +1875,7 @@ var sParam    = params.get('s') || '';
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v4.23 · 2026-06-16 23:10 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v4.24 · 2026-06-17 14:37 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
@@ -3508,20 +3508,17 @@ function buildInsightsCard() {
   curY += BOX_PAD;
   curY = drawSectionTitle(curY, '7-Day Summary');
 
-  // If no fat-zone engagement this week, show Mixed Engaged instead — a 0%
-  // Fat ring next to two healthy rings reads as "broken," and Mixed is the
-  // more informative number when someone hasn't reached the fat zone yet.
-  var showMixedInsteadOfFat = summaryStats.fatPct === 0;
-  var thirdRingLabel = showMixedInsteadOfFat ? 'MIXED ENGAGED' : 'FAT ENGAGED';
-  var thirdRingPct   = showMixedInsteadOfFat ? summaryStats.mixPct : summaryStats.fatPct;
-  var thirdRingDelta = showMixedInsteadOfFat ? summaryStats.deltas.mix : summaryStats.deltas.fat;
-  var thirdDeltaLabel = showMixedInsteadOfFat ? 'Mixed Engaged' : 'Fat Engaged';
+  // Time in Range = share of measured time in Mixed or Fat zone (i.e. not
+  // pure Glucose) — shown as a double ring: outer = Mixed, inner = Fat.
+  var timeInRangePct = Math.max(0, Math.min(100, summaryStats.mixPct + summaryStats.fatPct));
+  var timeInRangeDelta = (summaryStats.deltas.mix !== null && summaryStats.deltas.fat !== null)
+    ? (summaryStats.deltas.mix + summaryStats.deltas.fat) : null;
 
   // ── Week-over-week deltas (always show all 3, small) ──
   var deltaDefs = [
     { label: 'AUC',                  val: summaryStats.deltas.auc },
     { label: 'Metabolic Flexibility', val: summaryStats.deltas.flex },
-    { label: thirdDeltaLabel,        val: thirdRingDelta }
+    { label: 'Time in Range',        val: timeInRangeDelta }
   ];
   function fmtDelta(v) {
     if (v === null) return '—';
@@ -3549,60 +3546,94 @@ function buildInsightsCard() {
   }
   curY += SUMMARY_DELTA_H + SUMMARY_GAP;
 
-  // ── 3 rings, with glow highlight on the biggest week-over-week improvement ──
-  var ringDefs = [
-    { label: 'AUC SCORE',            pct: summaryStats.aucPct,  color: '#FFA500', delta: summaryStats.deltas.auc,
-      desc: 'AUC Score is the area under your breath-acetone curve today, measured against your target (' + (targetAUC > 0 ? targetAUC : '—') + '). It rewards both how high you measure and how long you stay there — a higher score means more sustained metabolic engagement, not just a single high reading.' },
-    { label: 'METABOLIC FLEXIBILITY', pct: summaryStats.flexPct, color: '#4ADE80', delta: summaryStats.deltas.flex,
-      desc: 'Metabolic Flexibility reflects how evenly your time was spread across the glucose, mixed, and fat zones this week. Moving fluidly between zones scores higher than staying parked in just one — it\u2019s a measure of your body\u2019s ability to switch fuel sources.' },
-    { label: thirdRingLabel,         pct: thirdRingPct,         color: '#A855F7', delta: thirdRingDelta,
-      desc: showMixedInsteadOfFat
-        ? 'Mixed Engaged is the share of your measured time this week spent in the Mixed zone (3\u20135ppm), where your body is drawing on both glucose and fat. You haven\u2019t logged Fat zone time yet \u2014 this is the step before it.'
-        : 'Fat Engaged is the share of your measured time this week spent in the Fat zone (>5ppm), where your body is primarily burning fat for fuel.' }
-  ];
-  var bestIdx = -1, bestDelta = 0;
-  for (var i = 0; i < ringDefs.length; i++) {
-    var dv = ringDefs[i].delta;
-    if (dv !== null && dv > 0 && dv > bestDelta) { bestDelta = dv; bestIdx = i; }
-  }
-
+  // ── 3 rings: AUC, Metabolic Flexibility, and a double ring for Time in Range ──
   var ringColW = gW / 3;
   var ringCY = curY + SUMMARY_RING_GLOW_PAD + SUMMARY_RING_R;
+  var INNER_RING_GAP = 3; // px gap between the two strokes of the double ring
+  var innerRingR = SUMMARY_RING_R - SUMMARY_RING_LW - INNER_RING_GAP;
+  var innerRingLW = Math.max(5, SUMMARY_RING_LW - 3);
 
   window.ringHitboxes = [];
-  for (var i = 0; i < ringDefs.length; i++) {
-    var rd = ringDefs[i];
-    var cx = gLeft + ringColW * i + ringColW / 2;
-    var isStandout = (i === bestIdx);
 
-    if (isStandout) {
-      ctx.save();
-      ctx.shadowColor = rd.color;
-      ctx.shadowBlur = 12;
-      drawRing(ctx, cx, ringCY, SUMMARY_RING_R, SUMMARY_RING_LW, rd.pct, rd.color);
-      ctx.restore();
-    } else {
-      drawRing(ctx, cx, ringCY, SUMMARY_RING_R, SUMMARY_RING_LW, rd.pct, rd.color);
-    }
+  // -- Ring 1: AUC --
+  var cx0 = gLeft + ringColW * 0 + ringColW / 2;
+  var aucStandout = (summaryStats.deltas.auc !== null && summaryStats.deltas.auc > 0 &&
+                      summaryStats.deltas.auc >= (summaryStats.deltas.flex || 0) &&
+                      summaryStats.deltas.auc >= (timeInRangeDelta || 0));
+  if (aucStandout) { ctx.save(); ctx.shadowColor = '#FFA500'; ctx.shadowBlur = 12; }
+  drawRing(ctx, cx0, ringCY, SUMMARY_RING_R, SUMMARY_RING_LW, summaryStats.aucPct, '#FFA500');
+  if (aucStandout) ctx.restore();
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 20px -apple-system,sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(summaryStats.aucPct + '%', cx0, ringCY);
+  ctx.fillStyle = aucStandout ? '#FFA500' : 'rgba(255,255,255,0.55)';
+  ctx.font = 'bold 10px -apple-system,sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  ctx.fillText('AUC SCORE', cx0, ringCY + SUMMARY_RING_R + SUMMARY_RING_GLOW_PAD + SUMMARY_RING_LABEL_GAP);
+  var hb0Top = ringCY - SUMMARY_RING_R - SUMMARY_RING_GLOW_PAD;
+  var hb0Bottom = ringCY + SUMMARY_RING_R + SUMMARY_RING_GLOW_PAD + SUMMARY_RING_LABEL_GAP + SUMMARY_RING_LABEL_H;
+  window.ringHitboxes.push({
+    x: cx0 - ringColW / 2, y: hb0Top, w: ringColW, h: hb0Bottom - hb0Top,
+    title: 'AUC SCORE',
+    text: 'AUC Score is the area under your breath-acetone curve today, measured against your target (' + (targetAUC > 0 ? targetAUC : '—') + '). It rewards both how high you measure and how long you stay there — a higher score means more sustained metabolic engagement, not just a single high reading.'
+  });
 
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 20px -apple-system,sans-serif';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(rd.pct + '%', cx, ringCY);
+  // -- Ring 2: Metabolic Flexibility --
+  var cx1 = gLeft + ringColW * 1 + ringColW / 2;
+  var flexStandout = (summaryStats.deltas.flex !== null && summaryStats.deltas.flex > 0 &&
+                       summaryStats.deltas.flex >= (summaryStats.deltas.auc || 0) &&
+                       summaryStats.deltas.flex >= (timeInRangeDelta || 0));
+  if (flexStandout) { ctx.save(); ctx.shadowColor = '#FFD23C'; ctx.shadowBlur = 12; }
+  drawRing(ctx, cx1, ringCY, SUMMARY_RING_R, SUMMARY_RING_LW, summaryStats.flexPct, '#FFD23C');
+  if (flexStandout) ctx.restore();
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 20px -apple-system,sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(summaryStats.flexPct + '%', cx1, ringCY);
+  ctx.fillStyle = flexStandout ? '#FFD23C' : 'rgba(255,255,255,0.55)';
+  ctx.font = 'bold 10px -apple-system,sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  ctx.fillText('METABOLIC FLEXIBILITY', cx1, ringCY + SUMMARY_RING_R + SUMMARY_RING_GLOW_PAD + SUMMARY_RING_LABEL_GAP);
+  var hb1Top = ringCY - SUMMARY_RING_R - SUMMARY_RING_GLOW_PAD;
+  var hb1Bottom = ringCY + SUMMARY_RING_R + SUMMARY_RING_GLOW_PAD + SUMMARY_RING_LABEL_GAP + SUMMARY_RING_LABEL_H;
+  window.ringHitboxes.push({
+    x: cx1 - ringColW / 2, y: hb1Top, w: ringColW, h: hb1Bottom - hb1Top,
+    title: 'METABOLIC FLEXIBILITY',
+    text: 'Metabolic Flexibility reflects how evenly your time was spread across the glucose, mixed, and fat zones this week. Moving fluidly between zones scores higher than staying parked in just one — it\u2019s a measure of your body\u2019s ability to switch fuel sources.'
+  });
 
-    ctx.fillStyle = isStandout ? rd.color : 'rgba(255,255,255,0.55)';
-    ctx.font = 'bold 10px -apple-system,sans-serif';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-    ctx.fillText(rd.label, cx, ringCY + SUMMARY_RING_R + SUMMARY_RING_GLOW_PAD + SUMMARY_RING_LABEL_GAP);
+  // -- Ring 3: Time in Range (double ring — outer Mixed, inner Fat) --
+  var cx2 = gLeft + ringColW * 2 + ringColW / 2;
+  var tirStandout = (timeInRangeDelta !== null && timeInRangeDelta > 0 &&
+                      timeInRangeDelta >= (summaryStats.deltas.auc || 0) &&
+                      timeInRangeDelta >= (summaryStats.deltas.flex || 0));
+  if (tirStandout) { ctx.save(); ctx.shadowColor = '#A855F7'; ctx.shadowBlur = 12; }
+  drawRing(ctx, cx2, ringCY, SUMMARY_RING_R, SUMMARY_RING_LW, summaryStats.mixPct, '#4ADE80');
+  drawRing(ctx, cx2, ringCY, innerRingR, innerRingLW, summaryStats.fatPct, '#A855F7');
+  if (tirStandout) ctx.restore();
 
-    // Tappable hitbox spanning the ring + its label, for the description popup.
-    var hbTop = ringCY - SUMMARY_RING_R - SUMMARY_RING_GLOW_PAD;
-    var hbBottom = ringCY + SUMMARY_RING_R + SUMMARY_RING_GLOW_PAD + SUMMARY_RING_LABEL_GAP + SUMMARY_RING_LABEL_H;
-    window.ringHitboxes.push({
-      x: cx - ringColW / 2, y: hbTop, w: ringColW, h: hbBottom - hbTop,
-      title: rd.label, text: rd.desc
-    });
-  }
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 18px -apple-system,sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(timeInRangePct + '%', cx2, ringCY - 7);
+  ctx.font = '9px -apple-system,sans-serif';
+  ctx.fillStyle = '#4ADE80';
+  ctx.fillText('M ' + summaryStats.mixPct + '%', cx2 - 16, ringCY + 9);
+  ctx.fillStyle = '#A855F7';
+  ctx.fillText('F ' + summaryStats.fatPct + '%', cx2 + 16, ringCY + 9);
+
+  ctx.fillStyle = tirStandout ? '#A855F7' : 'rgba(255,255,255,0.55)';
+  ctx.font = 'bold 10px -apple-system,sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  ctx.fillText('TIME IN RANGE', cx2, ringCY + SUMMARY_RING_R + SUMMARY_RING_GLOW_PAD + SUMMARY_RING_LABEL_GAP);
+  var hb2Top = ringCY - SUMMARY_RING_R - SUMMARY_RING_GLOW_PAD;
+  var hb2Bottom = ringCY + SUMMARY_RING_R + SUMMARY_RING_GLOW_PAD + SUMMARY_RING_LABEL_GAP + SUMMARY_RING_LABEL_H;
+  window.ringHitboxes.push({
+    x: cx2 - ringColW / 2, y: hb2Top, w: ringColW, h: hb2Bottom - hb2Top,
+    title: 'TIME IN RANGE',
+    text: 'Time in Range is the share of your measured time this week spent off pure glucose — in the Mixed zone (3\u20135ppm, green) or Fat zone (>5ppm, violet), where your body is drawing on stored fuel. The outer ring tracks Mixed, the inner ring tracks Fat; together they show how much of your day moved beyond baseline glucose burning.'
+  });
 
   curY += SUMMARY_RING_SECTION_H + SUMMARY_GAP;
 
@@ -4620,22 +4651,27 @@ window.addEventListener('load', function() {
       destI.width = insightsCanvas.width; destI.height = insightsCanvas.height;
       destI.getContext('2d').drawImage(insightsCanvas, 0, 0);
 
-      // Click handler for pattern toggle button, tag pattern stats & ring descriptions
+      // Tap handler for pattern toggle button, tag pattern stats & ring descriptions.
+      // Uses the same pointerdown/pointerup tap-detection pattern as the other
+      // cards (see card-graph above) instead of relying on 'click' alone — inside
+      // the horizontal scroll-snap container, iOS Safari frequently fails to
+      // synthesize a click after a touch, even for a stationary tap.
       var tagPopup = document.getElementById('tag-pattern-popup');
       var tagPopupText = document.getElementById('tag-pattern-popup-text');
-      destI.addEventListener('click', function(e) {
+
+      function handleInsightsTap(clientX, clientY) {
         var rect = destI.getBoundingClientRect();
         var scale = 400 / rect.width; // map CSS px → logical canvas coords (0..400)
-        var clickX = (e.clientX - rect.left) * scale;
-        var clickY = (e.clientY - rect.top)  * scale;
+        var tapX = (clientX - rect.left) * scale;
+        var tapY = (clientY - rect.top)  * scale;
         var cssScale = rect.width / 400;
 
-        // Check if click is on a ring (AUC / Metabolic Flexibility / Fat-Mixed Engaged)
+        // Check if tap is on a ring (AUC / Metabolic Flexibility / Fat-Mixed Engaged)
         var ringHbs = window.ringHitboxes || [];
         var ringHit = null;
         for (var ri = 0; ri < ringHbs.length; ri++) {
           var rb = ringHbs[ri];
-          if (clickX >= rb.x && clickX <= rb.x + rb.w && clickY >= rb.y && clickY <= rb.y + rb.h) { ringHit = rb; break; }
+          if (tapX >= rb.x && tapX <= rb.x + rb.w && tapY >= rb.y && tapY <= rb.y + rb.h) { ringHit = rb; break; }
         }
         if (ringHit) {
           tagPopupText.innerHTML = '<div style="font-weight:700;color:#fff;margin-bottom:3px;">' + ringHit.title + '</div>' + ringHit.text;
@@ -4652,12 +4688,12 @@ window.addEventListener('load', function() {
           return;
         }
 
-        // Check if click is on a tag pattern stat (n=... popup)
+        // Check if tap is on a tag pattern stat (n=... popup)
         var hbs = window.tagPatternHitboxes || [];
         var hit = null;
         for (var hi = 0; hi < hbs.length; hi++) {
           var hb = hbs[hi];
-          if (clickX >= hb.x && clickX <= hb.x + hb.w && clickY >= hb.y && clickY <= hb.y + hb.h) { hit = hb; break; }
+          if (tapX >= hb.x && tapX <= hb.x + hb.w && tapY >= hb.y && tapY <= hb.y + hb.h) { hit = hb; break; }
         }
         if (hit) {
           tagPopupText.textContent = hit.text;
@@ -4676,16 +4712,42 @@ window.addEventListener('load', function() {
           tagPopup.style.display = 'none';
         }
 
-        // Check if click is on pattern toggle button
+        // Check if tap is on pattern toggle button
         var btn = window.patternToggleHitbox;
-        if (btn && clickX >= btn.x && clickX <= btn.x + btn.w &&
-            clickY >= btn.y && clickY <= btn.y + btn.h) {
+        if (btn && tapX >= btn.x && tapX <= btn.x + btn.w &&
+            tapY >= btn.y && tapY <= btn.y + btn.h) {
           window.showPatternDetail = !window.showPatternDetail;
           // Rebuild and redraw insights card
           insightsCanvas = buildInsightsCard();
           destI.width = insightsCanvas.width; destI.height = insightsCanvas.height;
           destI.getContext('2d').drawImage(insightsCanvas, 0, 0);
         }
+      }
+
+      var insightsTouchStartTime = 0, insightsTouchStartX = 0, insightsTouchStartY = 0;
+      var insightsLastTouch = 0;
+
+      destI.addEventListener('pointerdown', function(e) {
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        insightsTouchStartTime = Date.now();
+        insightsTouchStartX = e.clientX;
+        insightsTouchStartY = e.clientY;
+      }, { passive: true });
+
+      destI.addEventListener('pointerup', function(e) {
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        var dt = Date.now() - insightsTouchStartTime;
+        var dx = Math.abs(e.clientX - insightsTouchStartX);
+        var dy = Math.abs(e.clientY - insightsTouchStartY);
+        if (dt < 300 && dx < 12 && dy < 12) {
+          insightsLastTouch = Date.now();
+          handleInsightsTap(insightsTouchStartX, insightsTouchStartY);
+        }
+      }, { passive: true });
+
+      destI.addEventListener('click', function(e) {
+        if (Date.now() - insightsLastTouch < 500) return; // already handled via pointer events
+        handleInsightsTap(e.clientX, e.clientY);
       });
 
     } catch(e) {
