@@ -1783,7 +1783,7 @@ html, body {
     <div id="info-modal-title">Squad Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v4.28-debug2 · 2026-06-17 16:54 UTC</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v4.29-debug3 · 2026-06-17 17:15 UTC</span></div>
     <div class="info-section-title">Leaderboard</div>
     <div class="info-toggle-row">
       <div>
@@ -1875,7 +1875,7 @@ var sParam    = params.get('s') || '';
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v4.28-debug2 · 2026-06-17 16:54 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v4.29-debug3 · 2026-06-17 17:15 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
@@ -4690,6 +4690,14 @@ window.addEventListener('load', function() {
           window._fox2Log && window._fox2Log('popup pw=' + rpw + ' ph=' + rph + ' -> left=' + rpx.toFixed(1) + ' top=' + rpy.toFixed(1) + ' display=' + tagPopup.style.display);
           tagPopup.style.left = rpx + 'px';
           tagPopup.style.top  = rpy + 'px';
+          setTimeout(function() {
+            var cs = window.getComputedStyle(tagPopup);
+            var tpRect = tagPopup.getBoundingClientRect();
+            var pageEl = insightsWrap.closest('.page');
+            window._fox2Log && window._fox2Log('POST-SET computed display=' + cs.display + ' visibility=' + cs.visibility + ' opacity=' + cs.opacity + ' z=' + cs.zIndex);
+            window._fox2Log && window._fox2Log('POST-SET tagPopup viewport rect: top=' + tpRect.top.toFixed(0) + ' left=' + tpRect.left.toFixed(0) + ' w=' + tpRect.width.toFixed(0) + ' h=' + tpRect.height.toFixed(0));
+            window._fox2Log && window._fox2Log('page scrollTop=' + (pageEl ? pageEl.scrollTop : 'no .page found') + ' innerHeight=' + window.innerHeight);
+          }, 0);
           return;
         } else {
           window._fox2Log && window._fox2Log('no ring hit');
