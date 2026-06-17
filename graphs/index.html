@@ -1783,7 +1783,7 @@ html, body {
     <div id="info-modal-title">Squad Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v4.21 · 2026-06-16 22:27 UTC</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v4.23 · 2026-06-16 23:10 UTC</span></div>
     <div class="info-section-title">Leaderboard</div>
     <div class="info-toggle-row">
       <div>
@@ -1875,7 +1875,7 @@ var sParam    = params.get('s') || '';
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v4.21 · 2026-06-16 22:27 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v4.23 · 2026-06-16 23:10 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
@@ -3436,13 +3436,13 @@ function buildInsightsCard() {
   var SUMMARY_STREAK_H = 56;
   var SUMMARY_DELTA_H  = 28;
   var SUMMARY_GAP      = 14;
-  var SUMMARY_RING_R   = 32;
-  var SUMMARY_RING_LW  = 8;
+  var SUMMARY_RING_R   = 40;
+  var SUMMARY_RING_LW  = 10;
   var SUMMARY_RING_GLOW_PAD  = 6;
   var SUMMARY_RING_LABEL_GAP = 9;
   var SUMMARY_RING_LABEL_H   = 14;
   var SUMMARY_RING_SECTION_H = (SUMMARY_RING_R + SUMMARY_RING_GLOW_PAD) * 2 + SUMMARY_RING_LABEL_GAP + SUMMARY_RING_LABEL_H + 8;
-  var MOMENTUM_H = SUMMARY_STREAK_H + SUMMARY_DELTA_H + SUMMARY_GAP + SUMMARY_RING_SECTION_H;
+  var MOMENTUM_H = SUMMARY_DELTA_H + SUMMARY_GAP + SUMMARY_RING_SECTION_H + SUMMARY_GAP + SUMMARY_STREAK_H;
 
   var SHAPE_SECTION_H = SECTION_TITLE_H + (window.showPatternDetail ? Math.min(daysWithData, 21) : 4) * SHAPE_ROW_H + 8;
 
@@ -3502,65 +3502,26 @@ function buildInsightsCard() {
   }
 
   // ════════════════════════════════════════════════════════════════
-  // SECTION 1: 7-Day Summary (streak, week-over-week deltas, 3 rings)
+  // SECTION 1: 7-Day Summary (week-over-week deltas, 3 rings, streak)
   // ════════════════════════════════════════════════════════════════
   var momBoxY = curY;
   curY += BOX_PAD;
   curY = drawSectionTitle(curY, '7-Day Summary');
 
-  // ── Streak hero ──
-  var streakColor = summaryStats.streak > 0 ? '#FFA500' : 'rgba(255,255,255,0.3)';
-  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-  var streakMidY = curY + SUMMARY_STREAK_H / 2 - 4;
-
-  if (summaryStats.streak > 0) {
-    ctx.font = 'bold 36px -apple-system,sans-serif';
-    ctx.fillStyle = streakColor;
-    var streakNumStr = String(summaryStats.streak);
-    ctx.fillText(streakNumStr, gLeft, streakMidY);
-    var numW = ctx.measureText(streakNumStr).width;
-
-    ctx.font = 'bold 14px -apple-system,sans-serif';
-    ctx.fillStyle = 'rgba(255,255,255,0.85)';
-    ctx.fillText(
-      summaryStats.streak === 1 ? 'day in target' : 'days in target',
-      gLeft + numW + 9, streakMidY - 8
-    );
-    ctx.font = '11px -apple-system,sans-serif';
-    ctx.fillStyle = 'rgba(255,255,255,0.4)';
-    ctx.fillText('in a row', gLeft + numW + 9, streakMidY + 9);
-  } else {
-    ctx.font = 'bold 18px -apple-system,sans-serif';
-    ctx.fillStyle = 'rgba(255,255,255,0.55)';
-    ctx.fillText('No active streak', gLeft, streakMidY - 8);
-    ctx.font = '11px -apple-system,sans-serif';
-    ctx.fillStyle = 'rgba(255,255,255,0.35)';
-    ctx.fillText('Hit your target today to start one', gLeft, streakMidY + 10);
-  }
-
-  // Best-streak badge, right-aligned on the same row — only when meaningfully
-  // different from the current streak (avoids redundant "5 / best 5" noise).
-  if (summaryStats.bestStreak !== null && summaryStats.bestStreak > 0 &&
-      summaryStats.bestStreak !== summaryStats.streak) {
-    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-    ctx.font = 'bold 15px -apple-system,sans-serif';
-    ctx.fillStyle = 'rgba(255,255,255,0.7)';
-    var bestStr = String(summaryStats.bestStreak);
-    ctx.fillText(bestStr, gRight, streakMidY - 7);
-    var bestW = ctx.measureText(bestStr).width;
-
-    ctx.font = '10px -apple-system,sans-serif';
-    ctx.fillStyle = 'rgba(255,255,255,0.35)';
-    ctx.fillText('best streak', gRight, streakMidY + 8);
-  }
-
-  curY += SUMMARY_STREAK_H;
+  // If no fat-zone engagement this week, show Mixed Engaged instead — a 0%
+  // Fat ring next to two healthy rings reads as "broken," and Mixed is the
+  // more informative number when someone hasn't reached the fat zone yet.
+  var showMixedInsteadOfFat = summaryStats.fatPct === 0;
+  var thirdRingLabel = showMixedInsteadOfFat ? 'MIXED ENGAGED' : 'FAT ENGAGED';
+  var thirdRingPct   = showMixedInsteadOfFat ? summaryStats.mixPct : summaryStats.fatPct;
+  var thirdRingDelta = showMixedInsteadOfFat ? summaryStats.deltas.mix : summaryStats.deltas.fat;
+  var thirdDeltaLabel = showMixedInsteadOfFat ? 'Mixed Engaged' : 'Fat Engaged';
 
   // ── Week-over-week deltas (always show all 3, small) ──
   var deltaDefs = [
-    { label: 'AUC',         val: summaryStats.deltas.auc },
-    { label: 'Flexibility', val: summaryStats.deltas.flex },
-    { label: 'Fat Engaged', val: summaryStats.deltas.fat }
+    { label: 'AUC',                  val: summaryStats.deltas.auc },
+    { label: 'Metabolic Flexibility', val: summaryStats.deltas.flex },
+    { label: thirdDeltaLabel,        val: thirdRingDelta }
   ];
   function fmtDelta(v) {
     if (v === null) return '—';
@@ -3590,9 +3551,14 @@ function buildInsightsCard() {
 
   // ── 3 rings, with glow highlight on the biggest week-over-week improvement ──
   var ringDefs = [
-    { label: 'AUC SCORE',   pct: summaryStats.aucPct,  color: '#FFA500', delta: summaryStats.deltas.auc },
-    { label: 'FLEXIBILITY', pct: summaryStats.flexPct, color: '#4ADE80', delta: summaryStats.deltas.flex },
-    { label: 'FAT ENGAGED', pct: summaryStats.fatPct,  color: '#A855F7', delta: summaryStats.deltas.fat }
+    { label: 'AUC SCORE',            pct: summaryStats.aucPct,  color: '#FFA500', delta: summaryStats.deltas.auc,
+      desc: 'AUC Score is the area under your breath-acetone curve today, measured against your target (' + (targetAUC > 0 ? targetAUC : '—') + '). It rewards both how high you measure and how long you stay there — a higher score means more sustained metabolic engagement, not just a single high reading.' },
+    { label: 'METABOLIC FLEXIBILITY', pct: summaryStats.flexPct, color: '#4ADE80', delta: summaryStats.deltas.flex,
+      desc: 'Metabolic Flexibility reflects how evenly your time was spread across the glucose, mixed, and fat zones this week. Moving fluidly between zones scores higher than staying parked in just one — it\u2019s a measure of your body\u2019s ability to switch fuel sources.' },
+    { label: thirdRingLabel,         pct: thirdRingPct,         color: '#A855F7', delta: thirdRingDelta,
+      desc: showMixedInsteadOfFat
+        ? 'Mixed Engaged is the share of your measured time this week spent in the Mixed zone (3\u20135ppm), where your body is drawing on both glucose and fat. You haven\u2019t logged Fat zone time yet \u2014 this is the step before it.'
+        : 'Fat Engaged is the share of your measured time this week spent in the Fat zone (>5ppm), where your body is primarily burning fat for fuel.' }
   ];
   var bestIdx = -1, bestDelta = 0;
   for (var i = 0; i < ringDefs.length; i++) {
@@ -3603,6 +3569,7 @@ function buildInsightsCard() {
   var ringColW = gW / 3;
   var ringCY = curY + SUMMARY_RING_GLOW_PAD + SUMMARY_RING_R;
 
+  window.ringHitboxes = [];
   for (var i = 0; i < ringDefs.length; i++) {
     var rd = ringDefs[i];
     var cx = gLeft + ringColW * i + ringColW / 2;
@@ -3619,7 +3586,7 @@ function buildInsightsCard() {
     }
 
     ctx.fillStyle = '#fff';
-    ctx.font = 'bold 18px -apple-system,sans-serif';
+    ctx.font = 'bold 20px -apple-system,sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(rd.pct + '%', cx, ringCY);
 
@@ -3627,9 +3594,66 @@ function buildInsightsCard() {
     ctx.font = 'bold 10px -apple-system,sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'top';
     ctx.fillText(rd.label, cx, ringCY + SUMMARY_RING_R + SUMMARY_RING_GLOW_PAD + SUMMARY_RING_LABEL_GAP);
+
+    // Tappable hitbox spanning the ring + its label, for the description popup.
+    var hbTop = ringCY - SUMMARY_RING_R - SUMMARY_RING_GLOW_PAD;
+    var hbBottom = ringCY + SUMMARY_RING_R + SUMMARY_RING_GLOW_PAD + SUMMARY_RING_LABEL_GAP + SUMMARY_RING_LABEL_H;
+    window.ringHitboxes.push({
+      x: cx - ringColW / 2, y: hbTop, w: ringColW, h: hbBottom - hbTop,
+      title: rd.label, text: rd.desc
+    });
   }
 
-  curY += SUMMARY_RING_SECTION_H + BOX_PAD;
+  curY += SUMMARY_RING_SECTION_H + SUMMARY_GAP;
+
+  // ── Streak hero, below the rings ──
+  var streakColor = summaryStats.streak > 0 ? '#FFA500' : 'rgba(255,255,255,0.3)';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  var streakMidY = curY + SUMMARY_STREAK_H / 2 - 4;
+  var streakTargetLabel = targetAUC > 0 ? ('Streaks \u00b7 Target ' + targetAUC) : 'Streaks';
+
+  if (summaryStats.streak > 0) {
+    ctx.font = 'bold 36px -apple-system,sans-serif';
+    ctx.fillStyle = streakColor;
+    var streakNumStr = String(summaryStats.streak);
+    ctx.fillText(streakNumStr, gLeft, streakMidY);
+    var numW = ctx.measureText(streakNumStr).width;
+
+    ctx.font = 'bold 14px -apple-system,sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.fillText(
+      summaryStats.streak === 1 ? 'day in target' : 'days in target',
+      gLeft + numW + 9, streakMidY - 8
+    );
+    ctx.font = '11px -apple-system,sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.fillText(streakTargetLabel, gLeft + numW + 9, streakMidY + 9);
+  } else {
+    ctx.font = 'bold 18px -apple-system,sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.fillText('No active streak', gLeft, streakMidY - 8);
+    ctx.font = '11px -apple-system,sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.fillText(streakTargetLabel, gLeft, streakMidY + 10);
+  }
+
+  // Best-streak badge, right-aligned on the same row — only when meaningfully
+  // different from the current streak (avoids redundant "5 / best 5" noise).
+  if (summaryStats.bestStreak !== null && summaryStats.bestStreak > 0 &&
+      summaryStats.bestStreak !== summaryStats.streak) {
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    ctx.font = 'bold 15px -apple-system,sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    var bestStr = String(summaryStats.bestStreak);
+    ctx.fillText(bestStr, gRight, streakMidY - 7);
+    var bestW = ctx.measureText(bestStr).width;
+
+    ctx.font = '10px -apple-system,sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.fillText('best streak', gRight, streakMidY + 8);
+  }
+
+  curY += SUMMARY_STREAK_H + BOX_PAD;
   drawBox(momBoxY, curY - momBoxY - BOX_PAD);
   curY += SECTION_GAP;
 
@@ -4412,12 +4436,12 @@ function calcDayZoneTimes(dayIdx) {
   return { glucose: glucose, mixed: mixed, fat: fat };
 }
 
-// ── Summary card: 7-day rolling rings (AUC, Flexibility, Fat Engagement) ──
-// Compute avg AUC%/Flexibility%/FatEngaged% over an arbitrary [start, end) day range.
+// ── Summary card: 7-day rolling rings (AUC, Metabolic Flexibility, Fat/Mixed Engagement) ──
+// Compute avg AUC%/Flexibility%/FatEngaged%/MixedEngaged% over an arbitrary [start, end) day range.
 // Shared by the current-week and prior-week calculations so the two stay consistent.
 function computeWindowAverages(start, end) {
   var daysWithData = 0;
-  var aucSum = 0, fatSum = 0, flexSum = 0;
+  var aucSum = 0, fatSum = 0, mixSum = 0, flexSum = 0;
 
   for (var d = start; d < end; d++) {
     if (d < 0 || d >= totalDays) continue;
@@ -4434,6 +4458,7 @@ function computeWindowAverages(start, end) {
       if (total > 0) {
         var pG = zt.glucose / total, pM = zt.mixed / total, pF = zt.fat / total;
         fatSum += pF;
+        mixSum += pM;
 
         // Normalized Shannon entropy across the 3 zone proportions
         var H = 0;
@@ -4447,16 +4472,18 @@ function computeWindowAverages(start, end) {
     }
   }
 
-  var aucPct = 0, fatPct = 0, flexPct = 0;
+  var aucPct = 0, fatPct = 0, mixPct = 0, flexPct = 0;
   if (daysWithData > 0) {
     aucPct  = targetAUC > 0 ? Math.round((aucSum  / daysWithData) * 100) : 0;
     fatPct  = Math.round((fatSum  / daysWithData) * 100);
+    mixPct  = Math.round((mixSum  / daysWithData) * 100);
     flexPct = Math.round((flexSum / daysWithData) * 100);
   }
 
   return {
     aucPct:  Math.max(0, Math.min(100, aucPct)),
     fatPct:  Math.max(0, Math.min(100, fatPct)),
+    mixPct:  Math.max(0, Math.min(100, mixPct)),
     flexPct: Math.max(0, Math.min(100, flexPct)),
     daysWithData: daysWithData
   };
@@ -4502,6 +4529,7 @@ function computeSummaryStats() {
   return {
     aucPct:  thisWeek.aucPct,
     fatPct:  thisWeek.fatPct,
+    mixPct:  thisWeek.mixPct,
     flexPct: thisWeek.flexPct,
     daysWithData: thisWeek.daysWithData,
     windowDays: WINDOW,
@@ -4515,6 +4543,7 @@ function computeSummaryStats() {
     deltas: {
       auc:  (lastWeek.daysWithData > 0) ? (thisWeek.aucPct  - lastWeek.aucPct)  : null,
       fat:  (lastWeek.daysWithData > 0) ? (thisWeek.fatPct  - lastWeek.fatPct)  : null,
+      mix:  (lastWeek.daysWithData > 0) ? (thisWeek.mixPct  - lastWeek.mixPct)  : null,
       flex: (lastWeek.daysWithData > 0) ? (thisWeek.flexPct - lastWeek.flexPct) : null
     }
   };
@@ -4591,7 +4620,7 @@ window.addEventListener('load', function() {
       destI.width = insightsCanvas.width; destI.height = insightsCanvas.height;
       destI.getContext('2d').drawImage(insightsCanvas, 0, 0);
 
-      // Click handler for pattern toggle button & tag pattern stats
+      // Click handler for pattern toggle button, tag pattern stats & ring descriptions
       var tagPopup = document.getElementById('tag-pattern-popup');
       var tagPopupText = document.getElementById('tag-pattern-popup-text');
       destI.addEventListener('click', function(e) {
@@ -4599,6 +4628,29 @@ window.addEventListener('load', function() {
         var scale = 400 / rect.width; // map CSS px → logical canvas coords (0..400)
         var clickX = (e.clientX - rect.left) * scale;
         var clickY = (e.clientY - rect.top)  * scale;
+        var cssScale = rect.width / 400;
+
+        // Check if click is on a ring (AUC / Metabolic Flexibility / Fat-Mixed Engaged)
+        var ringHbs = window.ringHitboxes || [];
+        var ringHit = null;
+        for (var ri = 0; ri < ringHbs.length; ri++) {
+          var rb = ringHbs[ri];
+          if (clickX >= rb.x && clickX <= rb.x + rb.w && clickY >= rb.y && clickY <= rb.y + rb.h) { ringHit = rb; break; }
+        }
+        if (ringHit) {
+          tagPopupText.innerHTML = '<div style="font-weight:700;color:#fff;margin-bottom:3px;">' + ringHit.title + '</div>' + ringHit.text;
+          tagPopupText.style.textAlign = 'left';
+          tagPopup.style.cssText = 'display:block;position:absolute;background:rgba(20,20,35,0.97);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:10px 12px;pointer-events:none;z-index:10;white-space:normal;max-width:260px;left:0;top:0;';
+          void tagPopup.offsetWidth;
+          var rpw = tagPopup.offsetWidth || 220, rph = tagPopup.offsetHeight || 60;
+          var rbCx = (ringHit.x + ringHit.w / 2) * cssScale;
+          var rbTop = ringHit.y * cssScale;
+          var rpx = Math.max(4, Math.min(rbCx - rpw / 2, rect.width - rpw - 4));
+          var rpy = Math.max(4, rbTop - rph - 8);
+          tagPopup.style.left = rpx + 'px';
+          tagPopup.style.top  = rpy + 'px';
+          return;
+        }
 
         // Check if click is on a tag pattern stat (n=... popup)
         var hbs = window.tagPatternHitboxes || [];
@@ -4608,8 +4660,8 @@ window.addEventListener('load', function() {
           if (clickX >= hb.x && clickX <= hb.x + hb.w && clickY >= hb.y && clickY <= hb.y + hb.h) { hit = hb; break; }
         }
         if (hit) {
-          var cssScale = rect.width / 400;
           tagPopupText.textContent = hit.text;
+          tagPopupText.style.textAlign = 'center';
           tagPopup.style.cssText = 'display:block;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;left:0;top:0;';
           void tagPopup.offsetWidth;
           var pw = tagPopup.offsetWidth || 90, ph = tagPopup.offsetHeight || 30;
