@@ -1745,7 +1745,7 @@ html, body {
   </div>
   <div class="page">
     <div class="card-wrap" id="card-insights-wrap" style="position:relative;"><canvas id="card-insights" style="cursor:pointer;"></canvas>
-      <div id="tag-pattern-popup" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:1000;white-space:nowrap;">
+      <div id="tag-pattern-popup" style="display:none;position:fixed;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:1000;white-space:nowrap;">
         <div id="tag-pattern-popup-text" style="font-size:13px;color:rgba(255,255,255,0.85);text-align:center;"></div>
       </div>
     </div>
@@ -4704,39 +4704,39 @@ window.addEventListener('load', function() {
           if (tapX >= rb.x && tapX <= rb.x + rb.w && tapY >= rb.y && tapY <= rb.y + rb.h) { ringHit = rb; break; }
         }
         if (ringHit) {
-          tagPopupText.innerHTML = '<div style="font-weight:700;color:#fff;margin-bottom:3px;">' + ringHit.title + '</div>' + ringHit.text;
-          tagPopupText.style.textAlign = 'left';
-          tagPopup.style.cssText = 'display:block;position:absolute;background:rgba(20,20,35,0.97);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:10px 12px;pointer-events:none;z-index:1000;white-space:normal;max-width:260px;left:0;top:0;';
-          void tagPopup.offsetWidth;
-          var rpw = tagPopup.offsetWidth || 220, rph = tagPopup.offsetHeight || 60;
-          var rbCx = (ringHit.x + ringHit.w / 2) * cssScale;
-          var rbTop = ringHit.y * cssScale;
-          var rbBottom = (ringHit.y + ringHit.h) * cssScale;
-          var rpx = Math.max(4, Math.min(rbCx - rpw / 2, rect.width - rpw - 4));
+tagPopupText.innerHTML =
+  '<div style="font-weight:700;color:#fff;margin-bottom:3px;">' +
+  ringHit.title +
+  '</div>' +
+  ringHit.text;
 
-          // Popups normally render above the tapped ring. But on short
-          // viewports (mobile) the ring section sits close to the fixed
-          // top-header (.top-header, z-index:60, opaque) — a popup placed
-          // above the ring can land underneath that header and be
-          // invisible even though it's technically "displayed". Detect
-          // that collision using the header's live on-screen bottom edge
-          // (in viewport coords) vs. the popup's would-be viewport top,
-          // and flip to rendering below the ring instead when it would
-          // collide.
-          var rpyAbove = rbTop - rph - 8;
-          var headerEl = document.querySelector('.top-header');
-          var headerBottom = headerEl ? headerEl.getBoundingClientRect().bottom : 0;
-          var rpyAboveViewport = rect.top + rpyAbove; // wrap-relative -> viewport coords
-          var rpy;
-          if (rpyAboveViewport < headerBottom + 4) {
-            // Not enough room above the ring before hitting the header — place below instead.
-            rpy = rbBottom + 8;
-          } else {
-            rpy = Math.max(4, rpyAbove);
-          }
+tagPopupText.style.textAlign = 'left';
 
-          tagPopup.style.left = rpx + 'px';
-          tagPopup.style.top  = rpy + 'px';
+tagPopup.style.cssText =
+  'display:block;position:fixed;background:rgba(20,20,35,0.97);' +
+  'border:1px solid rgba(255,255,255,0.2);border-radius:8px;' +
+  'padding:10px 12px;pointer-events:auto;z-index:999999;' +
+  'white-space:normal;max-width:260px;left:0;top:0;';
+
+void tagPopup.offsetWidth;
+
+var pw = tagPopup.offsetWidth || 220;
+var ph = tagPopup.offsetHeight || 80;
+
+var cx = rect.left + ((ringHit.x + ringHit.w / 2) * cssScale);
+var top = rect.top + (ringHit.y * cssScale);
+var bottom = rect.top + ((ringHit.y + ringHit.h) * cssScale);
+
+var px = Math.max(8, Math.min(cx - pw / 2, window.innerWidth - pw - 8));
+
+var py = top - ph - 8;
+if (py < 90) py = bottom + 8;
+if (py + ph > window.innerHeight - 90) {
+  py = window.innerHeight - ph - 90;
+}
+
+tagPopup.style.left = px + 'px';
+tagPopup.style.top = py + 'px';
 
           setTimeout(function() {
             var tpRect = tagPopup.getBoundingClientRect();
