@@ -1721,7 +1721,7 @@ html, body {
           </div>
         </div>
         <div id="graphWrap">
-<canvas id="graph"></canvas><div id="prevGraphDayLabel" class="graph-day-label"></div><div id="nextGraphDayLabel" class="graph-day-label"></div><div id="day-graph-popup" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;"><div id="day-graph-popup-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div><div id="day-graph-popup-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div></div><div id="dot-popup" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;"><div id="dot-popup-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div><div id="dot-popup-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div></div><div id="eventLayer"><div class="event-rail"></div><div class="event-hint">Drag tags here</div></div>
+<canvas id="graph"></canvas><div id="prevGraphDayLabel" class="graph-day-label"></div><div id="nextGraphDayLabel" class="graph-day-label"></div><div id="day-graph-popup" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:1000;white-space:nowrap;"><div id="day-graph-popup-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div><div id="day-graph-popup-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div></div><div id="dot-popup" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:1000;white-space:nowrap;"><div id="dot-popup-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div><div id="dot-popup-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div></div><div id="eventLayer"><div class="event-rail"></div><div class="event-hint">Drag tags here</div></div>
         </div>
         <div class="axis"><span style="left:8.333%;">12a</span><span style="left:29.167%;">6a</span><span style="left:50%;">12p</span><span style="left:70.833%;">6p</span><span style="left:91.667%;">12a</span></div>
       </section>
@@ -1737,7 +1737,7 @@ html, body {
   <div class="page">
     <div class="card-wrap" style="position:relative;">
       <canvas id="card-fuel" style="cursor:pointer;"></canvas>
-      <div id="dot-popup-fuel" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;">
+      <div id="dot-popup-fuel" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:1000;white-space:nowrap;">
         <div id="dot-popup-fuel-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div>
         <div id="dot-popup-fuel-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div>
       </div>
@@ -1745,7 +1745,7 @@ html, body {
   </div>
   <div class="page">
     <div class="card-wrap" id="card-insights-wrap" style="position:relative;"><canvas id="card-insights" style="cursor:pointer;"></canvas>
-      <div id="tag-pattern-popup" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;">
+      <div id="tag-pattern-popup" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:1000;white-space:nowrap;">
         <div id="tag-pattern-popup-text" style="font-size:13px;color:rgba(255,255,255,0.85);text-align:center;"></div>
       </div>
     </div>
@@ -1783,7 +1783,7 @@ html, body {
     <div id="info-modal-title">Squad Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v4.27 · 2026-06-17 18:08 UTC</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v4.28 · 2026-06-17 18:16 UTC</span></div>
     <div class="info-section-title">Leaderboard</div>
     <div class="info-toggle-row">
       <div>
@@ -1875,7 +1875,7 @@ var sParam    = params.get('s') || '';
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v4.27 · 2026-06-17 18:08 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v4.28 · 2026-06-17 18:16 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
@@ -4677,7 +4677,7 @@ window.addEventListener('load', function() {
         if (ringHit) {
           tagPopupText.innerHTML = '<div style="font-weight:700;color:#fff;margin-bottom:3px;">' + ringHit.title + '</div>' + ringHit.text;
           tagPopupText.style.textAlign = 'left';
-          tagPopup.style.cssText = 'display:block;position:absolute;background:rgba(20,20,35,0.97);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:10px 12px;pointer-events:none;z-index:10;white-space:normal;max-width:260px;left:0;top:0;';
+          tagPopup.style.cssText = 'display:block;position:absolute;background:rgba(20,20,35,0.97);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:10px 12px;pointer-events:none;z-index:1000;white-space:normal;max-width:260px;left:0;top:0;';
           void tagPopup.offsetWidth;
           var rpw = tagPopup.offsetWidth || 220, rph = tagPopup.offsetHeight || 60;
           var rbCx = (ringHit.x + ringHit.w / 2) * cssScale;
@@ -4721,7 +4721,7 @@ window.addEventListener('load', function() {
         if (hit) {
           tagPopupText.textContent = hit.text;
           tagPopupText.style.textAlign = 'center';
-          tagPopup.style.cssText = 'display:block;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;left:0;top:0;';
+          tagPopup.style.cssText = 'display:block;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:1000;white-space:nowrap;left:0;top:0;';
           void tagPopup.offsetWidth;
           var pw = tagPopup.offsetWidth || 90, ph = tagPopup.offsetHeight || 30;
           var hbCx = (hb.x + hb.w / 2) * cssScale;
@@ -4847,7 +4847,7 @@ window.addEventListener('load', function() {
   function showPopup(dot) {
     popupVal.textContent  = 'Level ' + Math.round(dot.val);
     popupTime.textContent = fmtPopupTime(dot.epoch);
-    popup.style.cssText = 'display:block;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;left:0;top:0;';
+    popup.style.cssText = 'display:block;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:1000;white-space:nowrap;left:0;top:0;';
     void popup.offsetWidth;
     positionPopup(dot);
   }
@@ -4965,7 +4965,7 @@ window.addEventListener('load', function() {
   function showFuelPopup(dot) {
     popupFVal.textContent  = 'Level ' + Math.round(dot.val);
     popupFTime.textContent = fmtTime(dot.epoch);
-    popupF.style.cssText = 'display:block;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;left:0;top:0;';
+    popupF.style.cssText = 'display:block;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:1000;white-space:nowrap;left:0;top:0;';
     void popupF.offsetWidth;
     positionFuelPopup(dot);
   }
