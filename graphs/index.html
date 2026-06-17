@@ -1783,7 +1783,7 @@ html, body {
     <div id="info-modal-title">Squad Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v4.26 · 2026-06-17 15:27 UTC</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v4.27-debug · 2026-06-17 16:29 UTC</span></div>
     <div class="info-section-title">Leaderboard</div>
     <div class="info-toggle-row">
       <div>
@@ -1875,7 +1875,7 @@ var sParam    = params.get('s') || '';
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v4.26 · 2026-06-17 15:27 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v4.27-debug · 2026-06-17 16:29 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
@@ -4733,7 +4733,24 @@ window.addEventListener('load', function() {
       // Safari that the wrapping div doesn't share.
       var insightsWrap = document.getElementById('card-insights-wrap') || destI;
 
+      // TEMP DEBUG OVERLAY — remove after diagnosing mobile tap issue
+      (function() {
+        var dbg = document.createElement('div');
+        dbg.id = 'fox2-debug-overlay';
+        dbg.style.cssText = 'position:fixed;left:4px;right:4px;bottom:4px;max-height:40vh;overflow-y:auto;background:rgba(0,0,0,0.85);color:#0f0;font-size:10px;font-family:monospace;z-index:99999;padding:6px;border-radius:6px;pointer-events:none;white-space:pre-wrap;';
+        dbg.textContent = '[debug ready]';
+        document.body.appendChild(dbg);
+        window._fox2Log = function(msg) {
+          dbg.textContent += '\n' + msg;
+          if (dbg.textContent.length > 4000) dbg.textContent = dbg.textContent.slice(-4000);
+          dbg.scrollTop = dbg.scrollHeight;
+        };
+        window._fox2Log('wrap=' + (insightsWrap ? insightsWrap.tagName + '#' + insightsWrap.id : 'NULL'));
+        window._fox2Log('ringHitboxes=' + ((window.ringHitboxes||[]).length));
+      })();
+
       insightsWrap.addEventListener('touchstart', function(e) {
+        window._fox2Log && window._fox2Log('touchstart touches=' + e.touches.length + ' target=' + (e.target && e.target.id));
         if (e.touches.length !== 1) return;
         insightsTouchStartTime = Date.now();
         insightsTouchStartX = e.touches[0].clientX;
@@ -4741,24 +4758,41 @@ window.addEventListener('load', function() {
       }, { passive: true });
 
       insightsWrap.addEventListener('touchend', function(e) {
+        window._fox2Log && window._fox2Log('touchend changedTouches=' + e.changedTouches.length);
         if (e.changedTouches.length !== 1) return;
         var t = e.changedTouches[0];
         var dt = Date.now() - insightsTouchStartTime;
         var dx = Math.abs(t.clientX - insightsTouchStartX);
         var dy = Math.abs(t.clientY - insightsTouchStartY);
+        window._fox2Log && window._fox2Log('dt=' + dt + ' dx=' + dx.toFixed(1) + ' dy=' + dy.toFixed(1) + ' clientX=' + t.clientX + ' clientY=' + t.clientY);
         if (dt < 300 && dx < 14 && dy < 14) {
           insightsLastTouch = Date.now();
-          handleInsightsTap(t.clientX, t.clientY);
+          try {
+            handleInsightsTap(t.clientX, t.clientY);
+            window._fox2Log && window._fox2Log('handleInsightsTap OK');
+          } catch (err) {
+            window._fox2Log && window._fox2Log('handleInsightsTap ERROR: ' + err.message);
+          }
+        } else {
+          window._fox2Log && window._fox2Log('tap REJECTED by guard (dt/dx/dy)');
         }
       }, { passive: true });
 
       insightsWrap.addEventListener('click', function(e) {
+        window._fox2Log && window._fox2Log('click fired, target=' + (e.target && e.target.id));
         if (Date.now() - insightsLastTouch < 500) return; // already handled via touch events
         handleInsightsTap(e.clientX, e.clientY);
       });
 
     } catch(e) {
       console.error('FOX2 render error:', e && e.message, e && e.stack);
+      if (window._fox2Log) window._fox2Log('RENDER ERROR: ' + (e && e.message));
+      else {
+        var dbg2 = document.createElement('div');
+        dbg2.style.cssText = 'position:fixed;left:4px;right:4px;bottom:4px;background:rgba(120,0,0,0.9);color:#fff;font-size:11px;font-family:monospace;z-index:99999;padding:6px;border-radius:6px;white-space:pre-wrap;';
+        dbg2.textContent = 'RENDER ERROR (caught before debug overlay existed): ' + (e && e.message) + '\n' + (e && e.stack);
+        document.body.appendChild(dbg2);
+      }
     }
 
     // Always hide spinner regardless of render outcome
