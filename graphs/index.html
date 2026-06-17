@@ -1783,7 +1783,7 @@ html, body {
     <div id="info-modal-title">Squad Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v4.27-debug · 2026-06-17 16:29 UTC</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v4.28-debug2 · 2026-06-17 16:54 UTC</span></div>
     <div class="info-section-title">Leaderboard</div>
     <div class="info-toggle-row">
       <div>
@@ -1875,7 +1875,7 @@ var sParam    = params.get('s') || '';
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v4.27-debug · 2026-06-17 16:29 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v4.28-debug2 · 2026-06-17 16:54 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
@@ -4666,15 +4666,18 @@ window.addEventListener('load', function() {
         var tapX = (clientX - rect.left) * scale;
         var tapY = (clientY - rect.top)  * scale;
         var cssScale = rect.width / 400;
+        window._fox2Log && window._fox2Log('tap logical x=' + tapX.toFixed(1) + ' y=' + tapY.toFixed(1) + ' (rect.w=' + rect.width.toFixed(1) + ' rect.top=' + rect.top.toFixed(1) + ')');
 
         // Check if tap is on a ring (AUC / Metabolic Flexibility / Fat-Mixed Engaged)
         var ringHbs = window.ringHitboxes || [];
         var ringHit = null;
         for (var ri = 0; ri < ringHbs.length; ri++) {
           var rb = ringHbs[ri];
+          window._fox2Log && window._fox2Log('  ring[' + ri + '] box x=' + rb.x.toFixed(0) + ' y=' + rb.y.toFixed(0) + ' w=' + rb.w.toFixed(0) + ' h=' + rb.h.toFixed(0));
           if (tapX >= rb.x && tapX <= rb.x + rb.w && tapY >= rb.y && tapY <= rb.y + rb.h) { ringHit = rb; break; }
         }
         if (ringHit) {
+          window._fox2Log && window._fox2Log('RING HIT: ' + ringHit.title);
           tagPopupText.innerHTML = '<div style="font-weight:700;color:#fff;margin-bottom:3px;">' + ringHit.title + '</div>' + ringHit.text;
           tagPopupText.style.textAlign = 'left';
           tagPopup.style.cssText = 'display:block;position:absolute;background:rgba(20,20,35,0.97);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:10px 12px;pointer-events:none;z-index:10;white-space:normal;max-width:260px;left:0;top:0;';
@@ -4684,9 +4687,12 @@ window.addEventListener('load', function() {
           var rbTop = ringHit.y * cssScale;
           var rpx = Math.max(4, Math.min(rbCx - rpw / 2, rect.width - rpw - 4));
           var rpy = Math.max(4, rbTop - rph - 8);
+          window._fox2Log && window._fox2Log('popup pw=' + rpw + ' ph=' + rph + ' -> left=' + rpx.toFixed(1) + ' top=' + rpy.toFixed(1) + ' display=' + tagPopup.style.display);
           tagPopup.style.left = rpx + 'px';
           tagPopup.style.top  = rpy + 'px';
           return;
+        } else {
+          window._fox2Log && window._fox2Log('no ring hit');
         }
 
         // Check if tap is on a tag pattern stat (n=... popup)
