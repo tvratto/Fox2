@@ -1783,7 +1783,7 @@ html, body {
     <div id="info-modal-title">Squad Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v4.24 · 2026-06-17 14:37 UTC</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v4.25 · 2026-06-17 14:51 UTC</span></div>
     <div class="info-section-title">Leaderboard</div>
     <div class="info-toggle-row">
       <div>
@@ -1875,7 +1875,7 @@ var sParam    = params.get('s') || '';
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v4.24 · 2026-06-17 14:37 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v4.25 · 2026-06-17 14:51 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
@@ -3584,14 +3584,14 @@ function buildInsightsCard() {
   var flexStandout = (summaryStats.deltas.flex !== null && summaryStats.deltas.flex > 0 &&
                        summaryStats.deltas.flex >= (summaryStats.deltas.auc || 0) &&
                        summaryStats.deltas.flex >= (timeInRangeDelta || 0));
-  if (flexStandout) { ctx.save(); ctx.shadowColor = '#FFD23C'; ctx.shadowBlur = 12; }
-  drawRing(ctx, cx1, ringCY, SUMMARY_RING_R, SUMMARY_RING_LW, summaryStats.flexPct, '#FFD23C');
+  if (flexStandout) { ctx.save(); ctx.shadowColor = '#3B82F6'; ctx.shadowBlur = 12; }
+  drawRing(ctx, cx1, ringCY, SUMMARY_RING_R, SUMMARY_RING_LW, summaryStats.flexPct, '#3B82F6');
   if (flexStandout) ctx.restore();
   ctx.fillStyle = '#fff';
   ctx.font = 'bold 20px -apple-system,sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(summaryStats.flexPct + '%', cx1, ringCY);
-  ctx.fillStyle = flexStandout ? '#FFD23C' : 'rgba(255,255,255,0.55)';
+  ctx.fillStyle = flexStandout ? '#3B82F6' : 'rgba(255,255,255,0.55)';
   ctx.font = 'bold 10px -apple-system,sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
   ctx.fillText('METABOLIC FLEXIBILITY', cx1, ringCY + SUMMARY_RING_R + SUMMARY_RING_GLOW_PAD + SUMMARY_RING_LABEL_GAP);
@@ -4652,10 +4652,11 @@ window.addEventListener('load', function() {
       destI.getContext('2d').drawImage(insightsCanvas, 0, 0);
 
       // Tap handler for pattern toggle button, tag pattern stats & ring descriptions.
-      // Uses the same pointerdown/pointerup tap-detection pattern as the other
-      // cards (see card-graph above) instead of relying on 'click' alone — inside
-      // the horizontal scroll-snap container, iOS Safari frequently fails to
-      // synthesize a click after a touch, even for a stationary tap.
+      // Uses touchstart/touchend + a guarded click fallback — the same pattern
+      // as initDayGraphPopup() for the results page — instead of pointerdown/
+      // pointerup. Inside this horizontal scroll-snap container, iOS Safari's
+      // Pointer Events are unreliable for touch (taps can simply not fire),
+      // while the lower-level touch events behave correctly.
       var tagPopup = document.getElementById('tag-pattern-popup');
       var tagPopupText = document.getElementById('tag-pattern-popup-text');
 
@@ -4727,26 +4728,27 @@ window.addEventListener('load', function() {
       var insightsTouchStartTime = 0, insightsTouchStartX = 0, insightsTouchStartY = 0;
       var insightsLastTouch = 0;
 
-      destI.addEventListener('pointerdown', function(e) {
-        if (e.pointerType === 'mouse' && e.button !== 0) return;
+      destI.addEventListener('touchstart', function(e) {
+        if (e.touches.length !== 1) return;
         insightsTouchStartTime = Date.now();
-        insightsTouchStartX = e.clientX;
-        insightsTouchStartY = e.clientY;
+        insightsTouchStartX = e.touches[0].clientX;
+        insightsTouchStartY = e.touches[0].clientY;
       }, { passive: true });
 
-      destI.addEventListener('pointerup', function(e) {
-        if (e.pointerType === 'mouse' && e.button !== 0) return;
+      destI.addEventListener('touchend', function(e) {
+        if (e.changedTouches.length !== 1) return;
+        var t = e.changedTouches[0];
         var dt = Date.now() - insightsTouchStartTime;
-        var dx = Math.abs(e.clientX - insightsTouchStartX);
-        var dy = Math.abs(e.clientY - insightsTouchStartY);
-        if (dt < 300 && dx < 12 && dy < 12) {
+        var dx = Math.abs(t.clientX - insightsTouchStartX);
+        var dy = Math.abs(t.clientY - insightsTouchStartY);
+        if (dt < 300 && dx < 14 && dy < 14) {
           insightsLastTouch = Date.now();
-          handleInsightsTap(insightsTouchStartX, insightsTouchStartY);
+          handleInsightsTap(t.clientX, t.clientY);
         }
       }, { passive: true });
 
       destI.addEventListener('click', function(e) {
-        if (Date.now() - insightsLastTouch < 500) return; // already handled via pointer events
+        if (Date.now() - insightsLastTouch < 500) return; // already handled via touch events
         handleInsightsTap(e.clientX, e.clientY);
       });
 
