@@ -1721,7 +1721,7 @@ html, body {
           </div>
         </div>
         <div id="graphWrap">
-<canvas id="graph"></canvas><div id="prevGraphDayLabel" class="graph-day-label"></div><div id="nextGraphDayLabel" class="graph-day-label"></div><div id="day-graph-popup" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:1000;white-space:nowrap;"><div id="day-graph-popup-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div><div id="day-graph-popup-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div></div><div id="dot-popup" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:1000;white-space:nowrap;"><div id="dot-popup-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div><div id="dot-popup-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div></div><div id="eventLayer"><div class="event-rail"></div><div class="event-hint">Drag tags here</div></div>
+<canvas id="graph"></canvas><div id="prevGraphDayLabel" class="graph-day-label"></div><div id="nextGraphDayLabel" class="graph-day-label"></div><div id="day-graph-popup" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;"><div id="day-graph-popup-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div><div id="day-graph-popup-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div></div><div id="dot-popup" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;"><div id="dot-popup-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div><div id="dot-popup-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div></div><div id="eventLayer"><div class="event-rail"></div><div class="event-hint">Drag tags here</div></div>
         </div>
         <div class="axis"><span style="left:8.333%;">12a</span><span style="left:29.167%;">6a</span><span style="left:50%;">12p</span><span style="left:70.833%;">6p</span><span style="left:91.667%;">12a</span></div>
       </section>
@@ -1737,7 +1737,7 @@ html, body {
   <div class="page">
     <div class="card-wrap" style="position:relative;">
       <canvas id="card-fuel" style="cursor:pointer;"></canvas>
-      <div id="dot-popup-fuel" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:1000;white-space:nowrap;">
+      <div id="dot-popup-fuel" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;">
         <div id="dot-popup-fuel-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div>
         <div id="dot-popup-fuel-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div>
       </div>
@@ -1783,7 +1783,7 @@ html, body {
     <div id="info-modal-title">Squad Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v4.29-debug4 · 2026-06-17 18:38 UTC</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v4.29 · 2026-06-18 18:00 UTC</span></div>
     <div class="info-section-title">Leaderboard</div>
     <div class="info-toggle-row">
       <div>
@@ -1875,7 +1875,7 @@ var sParam    = params.get('s') || '';
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v4.29-debug4 · 2026-06-17 18:38 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v4.29 · 2026-06-18 18:00 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
@@ -3600,7 +3600,7 @@ function buildInsightsCard() {
   window.ringHitboxes.push({
     x: cx1 - ringColW / 2, y: hb1Top, w: ringColW, h: hb1Bottom - hb1Top,
     title: 'METABOLIC FLEXIBILITY',
-    text: 'Metabolic Flexibility reflects how evenly your time was spread across the glucose, mixed, and fat zones this week. Moving fluidly between zones scores higher than staying parked in just one — it\u2019s a measure of your body\u2019s ability to switch fuel sources.'
+    text: 'Metabolic Flexibility measures how completely you switched between fuel zones this week. A full crossing from glucose to fat (or fat to glucose) earns full credit; reaching mixed zone earns partial credit. A round trip in both directions scores 100%.'
   });
 
   // -- Ring 3: Time in Range (double ring — outer Mixed, inner Fat) --
@@ -4490,16 +4490,12 @@ function computeWindowAverages(start, end) {
         var pG = zt.glucose / total, pM = zt.mixed / total, pF = zt.fat / total;
         fatSum += pF;
         mixSum += pM;
-
-        // Normalized Shannon entropy across the 3 zone proportions
-        var H = 0;
-        var ps = [pG, pM, pF];
-        for (var pi = 0; pi < ps.length; pi++) {
-          if (ps[pi] > 0) H += -ps[pi] * Math.log(ps[pi]);
-        }
-        var Hmax = Math.log(3);
-        flexSum += (Hmax > 0) ? (H / Hmax) : 0;
       }
+    }
+
+    // Zone-transition flexibility score (pre-computed by calcAllDayFlexScores)
+    if (typeof days[d].flexScore === 'number') {
+      flexSum += days[d].flexScore / 100;
     }
   }
 
@@ -4613,6 +4609,38 @@ function calcAllDayZoneTimes() {
   }
 }
 
+// Calculate and store metabolic flexibility score for all days.
+// Model: full crossing between glucose and fat zones = 1.0 credit per crossing;
+// touching mixed (halfway point) = 0.5 credit ceiling per leg (not cumulative);
+// cap at 2.0 total (100%) representing a full round trip G<->F.
+// Anchor (last confirmed extreme zone) carries across midnight; mixed-touch
+// credit is day-scoped and resets each morning.
+function calcAllDayFlexScores() {
+  var anchor = null; // last confirmed extreme zone: 'g' or 'f', carries across days
+  for (var d = 0; d < totalDays; d++) {
+    if (days[d].vals.length === 0) continue;
+    var legBest = 0, completed = 0;
+    for (var i = 0; i < days[d].vals.length; i++) {
+      var p = Math.round(days[d].vals[i]);
+      var z = p <= 2 ? 'g' : p <= 4 ? 'm' : 'f';
+      if (z === 'm') {
+        if (legBest < 0.5) legBest = 0.5;
+      } else if (anchor === null) {
+        anchor = z;
+      } else if (z === anchor) {
+        // no-op — back at same extreme
+      } else {
+        // reached opposite extreme: bank full credit, start fresh leg
+        completed += 1.0;
+        anchor = z;
+        legBest = 0;
+      }
+    }
+    // anchor carries to next day; legBest (mixed-touch partial) does NOT
+    days[d].flexScore = Math.min(100, Math.round((completed + legBest) / 2 * 100));
+  }
+}
+
 function fmtHM(minutes) {
   var h = Math.floor(minutes / 60);
   var m = Math.round(minutes % 60);
@@ -4639,6 +4667,7 @@ window.addEventListener('load', function() {
   // Phase 1: zone time calc (heavy) — yields to browser between phases
   setTimeout(function() {
     calcAllDayZoneTimes();
+    calcAllDayFlexScores();
 
   // Phase 2: render — separate turn so spinner animation stays alive
   setTimeout(function() {
@@ -4659,35 +4688,6 @@ window.addEventListener('load', function() {
       // while the lower-level touch events behave correctly.
       var tagPopup = document.getElementById('tag-pattern-popup');
       var tagPopupText = document.getElementById('tag-pattern-popup-text');
-/*
-      // TEMP DEBUG OVERLAY round 2 — testing actual stacking via elementFromPoint
-      (function() {
-        var dbg = document.createElement('div');
-        dbg.id = 'fox2-debug-overlay';
-        dbg.style.cssText = 'position:fixed;left:4px;right:4px;bottom:4px;max-height:46vh;overflow-y:auto;background:rgba(0,0,0,0.9);color:#0f0;font-size:10px;font-family:monospace;z-index:999999;padding:6px;border-radius:6px;pointer-events:none;white-space:pre-wrap;';
-        dbg.textContent = '[debug v2 ready]';
-        document.body.appendChild(dbg);
-        window._fox2Log = function(msg) {
-          dbg.textContent += '\n' + msg;
-          if (dbg.textContent.length > 5000) dbg.textContent = dbg.textContent.slice(-5000);
-          dbg.scrollTop = dbg.scrollHeight;
-        };
-      })();
-*/
-      function _fox2DescribeStack(x, y) {
-        var el = document.elementFromPoint(x, y);
-        if (!el) return 'elementFromPoint: null';
-        var chain = [];
-        var cur = el;
-        var depth = 0;
-        while (cur && depth < 6) {
-          var cs = window.getComputedStyle(cur);
-          chain.push((cur.id ? '#' + cur.id : cur.tagName) + '[z=' + cs.zIndex + ',pos=' + cs.position + ']');
-          cur = cur.parentElement;
-          depth++;
-        }
-        return 'topmost at (' + x.toFixed(0) + ',' + y.toFixed(0) + ') = ' + chain.join(' < ');
-      }
 
       function handleInsightsTap(clientX, clientY) {
         var rect = destI.getBoundingClientRect();
@@ -4704,50 +4704,21 @@ window.addEventListener('load', function() {
           if (tapX >= rb.x && tapX <= rb.x + rb.w && tapY >= rb.y && tapY <= rb.y + rb.h) { ringHit = rb; break; }
         }
         if (ringHit) {
-tagPopupText.innerHTML =
-  '<div style="font-weight:700;color:#fff;margin-bottom:3px;">' +
-  ringHit.title +
-  '</div>' +
-  ringHit.text;
-
-tagPopupText.style.textAlign = 'left';
-
-tagPopup.style.cssText =
-  'display:block;position:fixed;background:rgba(20,20,35,0.97);' +
-  'border:1px solid rgba(255,255,255,0.2);border-radius:8px;' +
-  'padding:10px 12px;pointer-events:auto;z-index:999999;' +
-  'white-space:normal;max-width:260px;left:0;top:0;';
-
-void tagPopup.offsetWidth;
-
-var pw = tagPopup.offsetWidth || 220;
-var ph = tagPopup.offsetHeight || 80;
-
-var cx = rect.left + ((ringHit.x + ringHit.w / 2) * cssScale);
-var top = rect.top + (ringHit.y * cssScale);
-var bottom = rect.top + ((ringHit.y + ringHit.h) * cssScale);
-
-var px = Math.max(8, Math.min(cx - pw / 2, window.innerWidth - pw - 8));
-
-var py = top - ph - 8;
-if (py < 90) py = bottom + 8;
-if (py + ph > window.innerHeight - 90) {
-  py = window.innerHeight - ph - 90;
-}
-
-tagPopup.style.left = px + 'px';
-tagPopup.style.top = py + 'px';
-          /*
-          setTimeout(function() {
-            var tpRect = tagPopup.getBoundingClientRect();
-            var cx = tpRect.left + tpRect.width / 2;
-            var cy = tpRect.top + tpRect.height / 2;
-            window._fox2Log && window._fox2Log('popup rect: top=' + tpRect.top.toFixed(0) + ' left=' + tpRect.left.toFixed(0) + ' w=' + tpRect.width.toFixed(0) + ' h=' + tpRect.height.toFixed(0));
-            window._fox2Log && window._fox2Log(_fox2DescribeStack(cx, cy));
-            var tpCs = window.getComputedStyle(tagPopup);
-            window._fox2Log && window._fox2Log('tagPopup itself: display=' + tpCs.display + ' opacity=' + tpCs.opacity + ' z=' + tpCs.zIndex + ' transform=' + tpCs.transform);
-          }, 30);
-*/
+          tagPopupText.innerHTML = '<div style="font-weight:700;color:#fff;margin-bottom:3px;">' + ringHit.title + '</div>' + ringHit.text;
+          tagPopupText.style.textAlign = 'left';
+          tagPopup.style.cssText = 'display:block;position:fixed;background:rgba(20,20,35,0.97);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:10px 12px;pointer-events:auto;z-index:999999;white-space:normal;max-width:260px;left:0;top:0;';
+          void tagPopup.offsetWidth;
+          var pw = tagPopup.offsetWidth || 220;
+          var ph = tagPopup.offsetHeight || 80;
+          var cx = rect.left + ((ringHit.x + ringHit.w / 2) * cssScale);
+          var top = rect.top + (ringHit.y * cssScale);
+          var bottom = rect.top + ((ringHit.y + ringHit.h) * cssScale);
+          var px = Math.max(8, Math.min(cx - pw / 2, window.innerWidth - pw - 8));
+          var py = top - ph - 8;
+          if (py < 90) py = bottom + 8;
+          if (py + ph > window.innerHeight - 90) py = window.innerHeight - ph - 90;
+          tagPopup.style.left = px + 'px';
+          tagPopup.style.top  = py + 'px';
           return;
         }
 
@@ -4761,7 +4732,7 @@ tagPopup.style.top = py + 'px';
         if (hit) {
           tagPopupText.textContent = hit.text;
           tagPopupText.style.textAlign = 'center';
-          tagPopup.style.cssText = 'display:block;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:1000;white-space:nowrap;left:0;top:0;';
+          tagPopup.style.cssText = 'display:block;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;left:0;top:0;';
           void tagPopup.offsetWidth;
           var pw = tagPopup.offsetWidth || 90, ph = tagPopup.offsetHeight || 30;
           var hbCx = (hb.x + hb.w / 2) * cssScale;
@@ -4887,7 +4858,7 @@ tagPopup.style.top = py + 'px';
   function showPopup(dot) {
     popupVal.textContent  = 'Level ' + Math.round(dot.val);
     popupTime.textContent = fmtPopupTime(dot.epoch);
-    popup.style.cssText = 'display:block;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:1000;white-space:nowrap;left:0;top:0;';
+    popup.style.cssText = 'display:block;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;left:0;top:0;';
     void popup.offsetWidth;
     positionPopup(dot);
   }
@@ -5005,7 +4976,7 @@ window.addEventListener('load', function() {
   function showFuelPopup(dot) {
     popupFVal.textContent  = 'Level ' + Math.round(dot.val);
     popupFTime.textContent = fmtTime(dot.epoch);
-    popupF.style.cssText = 'display:block;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:1000;white-space:nowrap;left:0;top:0;';
+    popupF.style.cssText = 'display:block;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;left:0;top:0;';
     void popupF.offsetWidth;
     positionFuelPopup(dot);
   }
