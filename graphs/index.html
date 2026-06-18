@@ -1783,7 +1783,7 @@ html, body {
     <div id="info-modal-title">Squad Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v4.29 · 2026-06-18 18:00 UTC</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v4.30 · 2026-06-18 18:00 UTC</span></div>
     <div class="info-section-title">Leaderboard</div>
     <div class="info-toggle-row">
       <div>
@@ -1875,7 +1875,7 @@ var sParam    = params.get('s') || '';
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v4.29 · 2026-06-18 18:00 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v4.30 · 2026-06-18 18:00 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
@@ -3444,6 +3444,11 @@ function buildInsightsCard() {
   var SUMMARY_RING_SECTION_H = (SUMMARY_RING_R + SUMMARY_RING_GLOW_PAD) * 2 + SUMMARY_RING_LABEL_GAP + SUMMARY_RING_LABEL_H + 8;
   var MOMENTUM_H = SUMMARY_DELTA_H + SUMMARY_GAP + SUMMARY_RING_SECTION_H + SUMMARY_GAP + SUMMARY_STREAK_H;
 
+  // Daily Patterns / Pattern Insights sections are computed but no longer
+  // shown in the Insights card — replaced by Daily Score Trend below.
+  // SHOW_SHAPE_PATTERNS flag kept so this can be re-enabled later without
+  // re-deriving the layout math.
+  var SHOW_SHAPE_PATTERNS = false;
   var SHAPE_SECTION_H = SECTION_TITLE_H + (window.showPatternDetail ? Math.min(daysWithData, 21) : 4) * SHAPE_ROW_H + 8;
 
   var PATTERN_DESC_FS = 15;
@@ -3451,6 +3456,14 @@ function buildInsightsCard() {
   var PATTERN_BLOCK_H = 18 + 4 + PATTERN_DESC_FS * 2 + 4 + PATTERN_SUGG_FS * 2 + 10;
   var PATTERN_GAP = 28;
   var PATTERN_INSIGHTS_H = PATTERN_BLOCK_H * 3 + PATTERN_GAP * 2;
+
+  // ── Daily Score Trend: 3 stacked weekly rows of daily AUC score ──
+  var TREND_GRAPH_H  = 70;  // plot area height per week row
+  var TREND_LABEL_H  = 14;  // day-of-week labels below each row
+  var TREND_ROW_H    = TREND_GRAPH_H + TREND_LABEL_H;
+  var TREND_ROW_GAP  = 16;
+  var TREND_WEEKS    = 3;
+  var TREND_SECTION_H = SECTION_TITLE_H + TREND_WEEKS * TREND_ROW_H + (TREND_WEEKS - 1) * TREND_ROW_GAP + 8;
 
   var FT_BAR_H    = 18;
   var FT_LABEL_FS = 15;
@@ -3467,7 +3480,7 @@ function buildInsightsCard() {
   var BOX_INNER_PAD = BOX_PAD * 2;
   var CH = PAD
          + MOMENTUM_H + BOX_INNER_PAD + SECTION_GAP
-         + SHAPE_SECTION_H + PATTERN_INSIGHTS_H + BOX_INNER_PAD + SECTION_GAP
+         + TREND_SECTION_H + BOX_INNER_PAD + SECTION_GAP
          + TAGPAT_H + BOX_INNER_PAD + SECTION_GAP
          + FUELTIME_H + BOX_INNER_PAD
          + PAD + FOOTER_H + 200; // buffer for wrapped text overflow
@@ -3767,8 +3780,152 @@ function buildInsightsCard() {
   curY += SECTION_GAP;
 
   // ════════════════════════════════════════════════════════════════
-  // SECTION 2: Daily Patterns
+  // SECTION 2: Daily Score Trend — 3 stacked weekly rows of daily AUC
   // ════════════════════════════════════════════════════════════════
+  var trendBoxY = curY;
+  curY += BOX_PAD;
+  curY = drawSectionTitle(curY, 'Daily Score Trend');
+
+  var TREND_DAYS_PER_WEEK = 7;
+  var trendChunkStart = Math.max(0, totalDays - TREND_WEEKS * TREND_DAYS_PER_WEEK);
+  var trendDayNames = ['S','M','T','W','T','F','S'];
+
+  // Shared y-scale across all 3 weeks so trend is comparable week-to-week.
+  var trendMaxAUC = targetAUC > 0 ? targetAUC : 0;
+  for (var d = trendChunkStart; d < totalDays; d++) {
+    if (days[d].auc > trendMaxAUC) trendMaxAUC = days[d].auc;
+  }
+  trendMaxAUC = trendMaxAUC > 0 ? trendMaxAUC * 1.12 : 1; // headroom so top dot/line isn't clipped
+
+  function drawScoreWeekRow(weekStartIdx, rowTop) {
+    var rGraphTop = rowTop;
+    var rGraphBottom = rowTop + TREND_GRAPH_H;
+    var bandW = gW / TREND_DAYS_PER_WEEK;
+
+    function sx(dayInWeek) { return gLeft + dayInWeek * bandW + bandW / 2; }
+    function sy(v) { return rGraphBottom - (Math.min(Math.max(v, 0), trendMaxAUC) / trendMaxAUC) * TREND_GRAPH_H; }
+
+    // Day bands + gridlines (visual language matches drawWeekRow)
+    for (var wd = 0; wd < TREND_DAYS_PER_WEEK; wd++) {
+      var bandX = gLeft + wd * bandW;
+      var dIdx = weekStartIdx + wd;
+      var isToday = (dIdx === todayIdx);
+      if (wd % 2 === 1) {
+        ctx.fillStyle = 'rgba(255,255,255,0.04)';
+        ctx.fillRect(bandX, rGraphTop, bandW, TREND_GRAPH_H);
+      }
+      if (wd > 0) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+        ctx.lineWidth = 0.75;
+        ctx.beginPath(); ctx.moveTo(bandX, rGraphTop); ctx.lineTo(bandX, rGraphBottom); ctx.stroke();
+      }
+      if (isToday) {
+        ctx.strokeStyle = 'rgba(245,200,66,0.5)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(bandX + 0.5, rGraphTop + 0.5, bandW - 1, TREND_GRAPH_H - 1);
+      }
+      ctx.fillStyle = isToday ? '#f5c842' : 'rgba(255,255,255,0.45)';
+      ctx.font = (isToday ? 'bold ' : '') + '10px -apple-system,sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText(trendDayNames[wd], bandX + bandW / 2, rGraphBottom + 3);
+    }
+
+    // X axis
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    ctx.lineWidth = 0.75;
+    ctx.beginPath(); ctx.moveTo(gLeft, rGraphBottom); ctx.lineTo(gRight, rGraphBottom); ctx.stroke();
+
+    // Target line
+    if (targetAUC > 0 && targetAUC <= trendMaxAUC) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      ctx.lineWidth = 0.75;
+      ctx.setLineDash([4, 3]);
+      ctx.beginPath(); ctx.moveTo(gLeft, sy(targetAUC)); ctx.lineTo(gRight, sy(targetAUC)); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // Bars — filled with each day's actual zone-time proportions (same
+    // Glucose/Mixed/Fat colors as Fuel Balance below), stacked bottom-up
+    // Glucose → Mixed → Fat so the bar visually doubles as a mini fuel
+    // breakdown for that specific day, not just a flat magnitude indicator.
+    var BAR_W_FRAC = 0.46; // bar width as a fraction of the day band
+    var TREND_ZONE_COLORS = ['#22D3EE', '#4ADE80', '#A855F7']; // glucose, mixed, fat
+    for (var wd = 0; wd < TREND_DAYS_PER_WEEK; wd++) {
+      var dIdx = weekStartIdx + wd;
+      if (dIdx < 0 || dIdx >= totalDays || days[dIdx].vals.length === 0) continue;
+      var barW = bandW * BAR_W_FRAC;
+      var barX = sx(wd) - barW / 2;
+      var barY = sy(days[dIdx].auc);
+      var barH = rGraphBottom - barY;
+      if (barH < 1) continue;
+
+      var zt = days[dIdx].zoneTimes;
+      var ztTotal = zt ? (zt.glucose + zt.mixed + zt.fat) : 0;
+      if (ztTotal > 0) {
+        var segs = [zt.glucose / ztTotal, zt.mixed / ztTotal, zt.fat / ztTotal];
+        var segY = rGraphBottom;
+        for (var z = 0; z < 3; z++) {
+          var segH = segs[z] * barH;
+          if (segH < 0.5) continue;
+          ctx.fillStyle = TREND_ZONE_COLORS[z];
+          ctx.globalAlpha = 0.55;
+          ctx.fillRect(barX, segY - segH, barW, segH);
+          ctx.globalAlpha = 1;
+          segY -= segH;
+        }
+      } else {
+        // No zone breakdown available — fall back to flat fill
+        ctx.fillStyle = 'rgba(255,165,0,0.20)';
+        ctx.fillRect(barX, barY, barW, barH);
+      }
+    }
+
+    // Connecting line — gaps at days with no data, not interpolated across
+    ctx.strokeStyle = '#FFA500';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    var penDown = false;
+    for (var wd = 0; wd < TREND_DAYS_PER_WEEK; wd++) {
+      var dIdx = weekStartIdx + wd;
+      if (dIdx < 0 || dIdx >= totalDays || days[dIdx].vals.length === 0) { penDown = false; continue; }
+      var px = sx(wd), py = sy(days[dIdx].auc);
+      if (!penDown) { ctx.moveTo(px, py); penDown = true; }
+      else { ctx.lineTo(px, py); }
+    }
+    ctx.stroke();
+
+    // Dots
+    for (var wd = 0; wd < TREND_DAYS_PER_WEEK; wd++) {
+      var dIdx = weekStartIdx + wd;
+      if (dIdx < 0 || dIdx >= totalDays || days[dIdx].vals.length === 0) continue;
+      var isToday = (dIdx === todayIdx);
+      var hit = targetAUC > 0 && days[dIdx].auc >= targetAUC;
+      var px = sx(wd), py = sy(days[dIdx].auc);
+      ctx.fillStyle = isToday ? (hit ? '#FFFF00' : '#FF8C00') : '#FFA500';
+      ctx.beginPath(); ctx.arc(px, py, isToday ? 4 : 3, 0, Math.PI * 2); ctx.fill();
+      if (isToday) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+    }
+  }
+
+  for (var tw = 0; tw < TREND_WEEKS; tw++) {
+    var weekStartIdx = trendChunkStart + tw * TREND_DAYS_PER_WEEK;
+    var rowTop = curY + tw * (TREND_ROW_H + TREND_ROW_GAP);
+    drawScoreWeekRow(weekStartIdx, rowTop);
+  }
+  curY += TREND_WEEKS * TREND_ROW_H + (TREND_WEEKS - 1) * TREND_ROW_GAP + 8;
+  curY += BOX_PAD;
+  drawBox(trendBoxY, curY - trendBoxY);
+  curY += SECTION_GAP;
+
+  // ════════════════════════════════════════════════════════════════
+  // SECTION 2 (legacy): Daily Patterns — kept for possible future use,
+  // not currently rendered. See SHOW_SHAPE_PATTERNS above.
+  // ════════════════════════════════════════════════════════════════
+  if (SHOW_SHAPE_PATTERNS) {
   var patBoxY = curY;
   curY += BOX_PAD;
   curY = drawSectionTitle(curY, 'Daily Patterns');
@@ -4140,6 +4297,7 @@ function buildInsightsCard() {
   curY += BOX_PAD;
   drawBox(patBoxY, curY - patBoxY);
   curY += SECTION_GAP;
+  } // end if (SHOW_SHAPE_PATTERNS)
 
   // ════════════════════════════════════════════════════════════════
   // SECTION 4: Weekly Fuel Breakdown
