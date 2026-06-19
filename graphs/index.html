@@ -3789,6 +3789,7 @@ function buildInsightsCard() {
   var TREND_DAYS_PER_WEEK = 7;
   var trendChunkStart = Math.max(0, totalDays - TREND_WEEKS * TREND_DAYS_PER_WEEK);
   var trendDayNames = ['S','M','T','W','T','F','S'];
+  var trendMonths = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
   // Shared y-scale across all 3 weeks so trend is comparable week-to-week.
   var trendMaxAUC = targetAUC > 0 ? targetAUC : 0;
@@ -3880,21 +3881,33 @@ function buildInsightsCard() {
       }
     }
 
-    // Connecting line — gaps at days with no data, not interpolated across
+    // Connecting line — smooth Catmull-Rom curve through each contiguous
+    // run of data days (same splinePath helper used by the breath-ppm
+    // graphs). Gaps at days with no data are not interpolated across —
+    // each run gets its own independent curve.
     ctx.strokeStyle = '#FFA500';
     ctx.lineWidth = 2;
-    ctx.beginPath();
-    var penDown = false;
+    var runPts = [];
+    function flushRun() {
+      if (runPts.length >= 2) {
+        ctx.beginPath();
+        splinePath(ctx, runPts);
+        ctx.stroke();
+      } else if (runPts.length === 1) {
+        // Single isolated day — no line to draw, dot still renders below.
+      }
+      runPts = [];
+    }
     for (var wd = 0; wd < TREND_DAYS_PER_WEEK; wd++) {
       var dIdx = weekStartIdx + wd;
-      if (dIdx < 0 || dIdx >= totalDays || days[dIdx].vals.length === 0) { penDown = false; continue; }
-      var px = sx(wd), py = sy(days[dIdx].auc);
-      if (!penDown) { ctx.moveTo(px, py); penDown = true; }
-      else { ctx.lineTo(px, py); }
+      if (dIdx < 0 || dIdx >= totalDays || days[dIdx].vals.length === 0) { flushRun(); continue; }
+      runPts.push({ x: sx(wd), y: sy(days[dIdx].auc) });
     }
-    ctx.stroke();
+    flushRun();
 
-    // Dots
+    // Dots — tappable, pushed into window.ringHitboxes so the existing
+    // popup mechanism (same one used for the 7-Day Summary rings) shows
+    // this day's date, score, target-hit status, and zone breakdown.
     for (var wd = 0; wd < TREND_DAYS_PER_WEEK; wd++) {
       var dIdx = weekStartIdx + wd;
       if (dIdx < 0 || dIdx >= totalDays || days[dIdx].vals.length === 0) continue;
@@ -3908,6 +3921,31 @@ function buildInsightsCard() {
         ctx.lineWidth = 1;
         ctx.stroke();
       }
+
+      var dDate = new Date((windowStart + dIdx * 86400) * 1000);
+      var dateLabel = trendMonths[dDate.getUTCMonth()] + ' ' + dDate.getUTCDate() + (isToday ? ' (Today)' : '');
+      var zt = days[dIdx].zoneTimes;
+      var ztTotal = zt ? (zt.glucose + zt.mixed + zt.fat) : 0;
+      var zoneLine = '';
+      if (ztTotal > 0) {
+        var gP = Math.round(zt.glucose / ztTotal * 100);
+        var mP = Math.round(zt.mixed   / ztTotal * 100);
+        var fP = Math.round(zt.fat     / ztTotal * 100);
+        zoneLine = '<div style="margin-top:4px;font-size:13px;color:rgba(255,255,255,0.7);">' +
+          '<span style="color:#22D3EE;">' + gP + '% Glucose</span> &nbsp;' +
+          '<span style="color:#4ADE80;">' + mP + '% Mixed</span> &nbsp;' +
+          '<span style="color:#A855F7;">' + fP + '% Fat</span></div>';
+      }
+      var targetLine = targetAUC > 0
+        ? '<div style="margin-top:2px;font-size:13px;color:' + (hit ? '#4ADE80' : 'rgba(255,255,255,0.5)') + ';">' +
+          (hit ? 'Hit target' : 'Below target') + ' (' + targetAUC + ')</div>'
+        : '';
+
+      window.ringHitboxes.push({
+        x: px - bandW / 2, y: rGraphTop, w: bandW, h: TREND_GRAPH_H,
+        title: dateLabel + ' — Score ' + days[dIdx].auc,
+        text: zoneLine + targetLine
+      });
     }
   }
 
