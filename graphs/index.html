@@ -1783,7 +1783,7 @@ html, body {
     <div id="info-modal-title">Squad Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v4.30 · 2026-06-18 18:00 UTC</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v4.31 · 2026-06-19 16:55 UTC</span></div>
     <div class="info-section-title">Leaderboard</div>
     <div class="info-toggle-row">
       <div>
@@ -1875,7 +1875,7 @@ var sParam    = params.get('s') || '';
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v4.30 · 2026-06-18 18:00 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v4.31 · 2026-06-19 16:55 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
@@ -3328,60 +3328,38 @@ function wrapText(ctx, text, x, y, maxW, lineH) {
   return y;
 }
 
-// Compare each tag's same-day and next-day AUC score against days without
-// that tag, over the given range of `days[]` indices (insightsStart..totalDays-1).
-function computeTagInsights(insightsStart, totalDaysLocal) {
+// Simple same-day average for one tag: avg AUC score on days that carry
+// this tag vs. avg AUC score on days that don't, over the given range of
+// `DAYS[]` indices (insightsStart..totalDaysLocal-1). No next-day lag, no
+// expected-direction filtering — just the plain numbers so the popup can
+// show exactly what happened without implying more precision than it has.
+// Returns null if there isn't enough data on both sides (n>=MIN_DAYS each).
+function computeTagAverage(icon, insightsStart, totalDaysLocal) {
   var MIN_DAYS = 3;
-  var results = [];
-  if (typeof DAYS === 'undefined') return results;
+  if (typeof DAYS === 'undefined') return null;
   var slotOffset = (typeof _slotOffset !== 'undefined') ? _slotOffset : 0;
-  ALL_TAGS.forEach(function(tagDef) {
-    var icon = tagDef[0], name = tagDef[1], expectedSign = tagDef[2] || 0;
-    if (icon === '✏️') return; // notes aren't a behavior tag
-    var withSame = [], withoutSame = [], withNext = [], withoutNext = [];
-    for (var d = insightsStart; d < totalDaysLocal; d++) {
-      var idx = d + slotOffset;
-      var day = DAYS[idx];
-      if (!day || !(day.score > 0)) continue;
-      var hasTag = day.tags && day.tags.indexOf(icon) !== -1;
-      if (hasTag) withSame.push(day.score); else withoutSame.push(day.score);
-      var next = DAYS[idx + 1];
-      if (next && next.score > 0) {
-        if (hasTag) withNext.push(next.score); else withoutNext.push(next.score);
-      }
-    }
-    function avg(arr) { return arr.length ? arr.reduce(function(a,b){return a+b;},0) / arr.length : null; }
-    var avgWithSame = avg(withSame), avgWithoutSame = avg(withoutSame);
-    var avgWithNext = avg(withNext), avgWithoutNext = avg(withoutNext);
-    if (withSame.length < MIN_DAYS || withoutSame.length < MIN_DAYS) return;
-    var rawPctSame = (avgWithoutSame > 0) ? Math.round((avgWithSame - avgWithoutSame) / avgWithoutSame * 100) : null;
-    var rawPctNext = (withNext.length >= MIN_DAYS && withoutNext.length >= MIN_DAYS && avgWithoutNext > 0)
-      ? Math.round((avgWithNext - avgWithoutNext) / avgWithoutNext * 100) : null;
-    // Only surface changes of at least 5% — smaller swings aren't worth showing yet.
-    var MIN_PCT = 5;
-    var pctSame = (rawPctSame !== null && Math.abs(rawPctSame) >= MIN_PCT) ? rawPctSame : null;
-    var pctNext = (rawPctNext !== null && Math.abs(rawPctNext) >= MIN_PCT) ? rawPctNext : null;
-    // Some tags have a known expected direction (e.g. Low carb should only
-    // ever show as raising AUC). A result going the "wrong" way is more
-    // likely noise/confounding than a real effect, so drop it.
-    if (expectedSign !== 0) {
-      if (pctSame !== null && Math.sign(pctSame) !== expectedSign) pctSame = null;
-      if (pctNext !== null && Math.sign(pctNext) !== expectedSign) pctNext = null;
-    }
-    if (pctSame === null && pctNext === null) return;
-    results.push({
-      icon: icon, name: name,
-      pctSame: pctSame, pctNext: pctNext,
-      nSame: withSame.length, nWithoutSame: withoutSame.length,
-      nNext: withNext.length, nWithoutNext: withoutNext.length
-    });
-  });
-  results.sort(function(a, b) {
-    var av = Math.max(Math.abs(a.pctSame || 0), Math.abs(a.pctNext || 0));
-    var bv = Math.max(Math.abs(b.pctSame || 0), Math.abs(b.pctNext || 0));
-    return bv - av;
-  });
-  return results;
+  var withTag = [], withoutTag = [];
+  for (var d = insightsStart; d < totalDaysLocal; d++) {
+    var idx = d + slotOffset;
+    var day = DAYS[idx];
+    if (!day || !(day.score > 0)) continue;
+    var hasTag = day.tags && day.tags.indexOf(icon) !== -1;
+    if (hasTag) withTag.push(day.score); else withoutTag.push(day.score);
+  }
+  if (withTag.length < MIN_DAYS || withoutTag.length < MIN_DAYS) return null;
+  function avg(arr) { return arr.reduce(function(a,b){return a+b;},0) / arr.length; }
+  return {
+    avgWith: avg(withTag), avgWithout: avg(withoutTag),
+    nWith: withTag.length, nWithout: withoutTag.length
+  };
+}
+
+// Look up a tag's display name from its icon.
+function tagNameForIcon(icon) {
+  for (var i = 0; i < ALL_TAGS.length; i++) {
+    if (ALL_TAGS[i][0] === icon) return ALL_TAGS[i][1];
+  }
+  return '';
 }
 
 function buildInsightsCard() {
@@ -3408,7 +3386,6 @@ function buildInsightsCard() {
     if (days[d].vals.length > 0) todayIdx = d;
   }
   var insightsStart = Math.max(0, totalDays - 21);
-  var tagInsights = computeTagInsights(insightsStart, totalDays);
   var daysWithData = 0;
   for (var d = insightsStart; d < totalDays; d++) {
     if (days[d].vals.length > 0) daysWithData++;
@@ -3434,15 +3411,16 @@ function buildInsightsCard() {
 
   // ── Section heights ─────────────────────────────────────────────
   var SUMMARY_STREAK_H = 56;
-  var SUMMARY_DELTA_H  = 28;
   var SUMMARY_GAP      = 14;
   var SUMMARY_RING_R   = 40;
   var SUMMARY_RING_LW  = 10;
   var SUMMARY_RING_GLOW_PAD  = 6;
   var SUMMARY_RING_LABEL_GAP = 9;
   var SUMMARY_RING_LABEL_H   = 14;
-  var SUMMARY_RING_SECTION_H = (SUMMARY_RING_R + SUMMARY_RING_GLOW_PAD) * 2 + SUMMARY_RING_LABEL_GAP + SUMMARY_RING_LABEL_H + 8;
-  var MOMENTUM_H = SUMMARY_DELTA_H + SUMMARY_GAP + SUMMARY_RING_SECTION_H + SUMMARY_GAP + SUMMARY_STREAK_H;
+  var SUMMARY_RING_DELTA_GAP = 2;  // gap between ring label and "vs last week" line
+  var SUMMARY_RING_DELTA_H   = 14; // height of the "vs last week" line itself
+  var SUMMARY_RING_SECTION_H = (SUMMARY_RING_R + SUMMARY_RING_GLOW_PAD) * 2 + SUMMARY_RING_LABEL_GAP + SUMMARY_RING_LABEL_H + SUMMARY_RING_DELTA_GAP + SUMMARY_RING_DELTA_H + 8;
+  var MOMENTUM_H = SUMMARY_RING_SECTION_H + SUMMARY_GAP + SUMMARY_STREAK_H;
 
   // Daily Patterns / Pattern Insights sections are computed but no longer
   // shown in the Insights card — replaced by Daily Score Trend below.
@@ -3471,17 +3449,10 @@ function buildInsightsCard() {
   var FT_WK_H     = FT_BAR_H + 9 + FT_LABEL_FS + 8 + FT_SUMMARY_FS + 15 + 21;
   var FUELTIME_H  = SECTION_TITLE_H + 3 * FT_WK_H;
 
-  var TAG_ROW_H   = 34;
-  var TAG_TOP_N   = 4;
-  var TAG_EMPTY_H = 40;
-  var tagInsightsShown = tagInsights.slice(0, TAG_TOP_N);
-  var TAGPAT_H = SECTION_TITLE_H + (tagInsightsShown.length ? tagInsightsShown.length * TAG_ROW_H : TAG_EMPTY_H) + 8;
-
   var BOX_INNER_PAD = BOX_PAD * 2;
   var CH = PAD
          + MOMENTUM_H + BOX_INNER_PAD + SECTION_GAP
          + TREND_SECTION_H + BOX_INNER_PAD + SECTION_GAP
-         + TAGPAT_H + BOX_INNER_PAD + SECTION_GAP
          + FUELTIME_H + BOX_INNER_PAD
          + PAD + FOOTER_H + 200; // buffer for wrapped text overflow
 
@@ -3527,37 +3498,17 @@ function buildInsightsCard() {
   var timeInRangeDelta = (summaryStats.deltas.mix !== null && summaryStats.deltas.fat !== null)
     ? (summaryStats.deltas.mix + summaryStats.deltas.fat) : null;
 
-  // ── Week-over-week deltas (always show all 3, small) ──
-  var deltaDefs = [
-    { label: 'AUC',                  val: summaryStats.deltas.auc },
-    { label: 'Metabolic Flexibility', val: summaryStats.deltas.flex },
-    { label: 'Time in Range',        val: timeInRangeDelta }
-  ];
+  // Per-ring "vs last week" deltas are now drawn beneath each ring's
+  // label (see rings below) instead of as a separate row above them.
   function fmtDelta(v) {
     if (v === null) return '—';
-    if (v === 0) return '±0';
+    if (v === 0) return '±0%';
     return (v > 0 ? '+' : '') + v + '%';
   }
   function deltaColor(v) {
     if (v === null || v === 0) return 'rgba(255,255,255,0.4)';
     return v > 0 ? '#4ADE80' : '#f87171';
   }
-  var dColW = gW / 3;
-  for (var i = 0; i < deltaDefs.length; i++) {
-    var dd = deltaDefs[i];
-    var dx = gLeft + dColW * i;
-    var dcy = curY + SUMMARY_DELTA_H / 2;
-
-    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-    ctx.fillStyle = 'rgba(255,255,255,0.4)';
-    ctx.font = '10px -apple-system,sans-serif';
-    ctx.fillText(dd.label + ' vs last wk', dx, dcy - 6);
-
-    ctx.fillStyle = deltaColor(dd.val);
-    ctx.font = 'bold 12px -apple-system,sans-serif';
-    ctx.fillText(fmtDelta(dd.val), dx, dcy + 7);
-  }
-  curY += SUMMARY_DELTA_H + SUMMARY_GAP;
 
   // ── 3 rings: AUC, Metabolic Flexibility, and a double ring for Time in Range ──
   var ringColW = gW / 3;
@@ -3568,28 +3519,42 @@ function buildInsightsCard() {
 
   window.ringHitboxes = [];
 
-  // -- Ring 1: AUC --
+  // -- Ring 1: Daily Goal (avg % of daily target reached this week) --
   var cx0 = gLeft + ringColW * 0 + ringColW / 2;
-  var aucStandout = (summaryStats.deltas.auc !== null && summaryStats.deltas.auc > 0 &&
+  var hasTarget = targetAUC > 0;
+  var aucStandout = hasTarget && (summaryStats.deltas.auc !== null && summaryStats.deltas.auc > 0 &&
                       summaryStats.deltas.auc >= (summaryStats.deltas.flex || 0) &&
                       summaryStats.deltas.auc >= (timeInRangeDelta || 0));
   if (aucStandout) { ctx.save(); ctx.shadowColor = '#FFA500'; ctx.shadowBlur = 12; }
-  drawRing(ctx, cx0, ringCY, SUMMARY_RING_R, SUMMARY_RING_LW, summaryStats.aucPct, '#FFA500');
+  drawRing(ctx, cx0, ringCY, SUMMARY_RING_R, SUMMARY_RING_LW, hasTarget ? summaryStats.aucPct : 0, '#FFA500');
   if (aucStandout) ctx.restore();
-  ctx.fillStyle = '#fff';
-  ctx.font = 'bold 20px -apple-system,sans-serif';
+  ctx.fillStyle = hasTarget ? '#fff' : 'rgba(255,255,255,0.35)';
+  ctx.font = 'bold ' + (hasTarget ? '20' : '15') + 'px -apple-system,sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText(summaryStats.aucPct + '%', cx0, ringCY);
+  ctx.fillText(hasTarget ? (summaryStats.aucPct + '%') : 'No goal', cx0, ringCY);
+  var ring0LabelY = ringCY + SUMMARY_RING_R + SUMMARY_RING_GLOW_PAD + SUMMARY_RING_LABEL_GAP;
   ctx.fillStyle = aucStandout ? '#FFA500' : 'rgba(255,255,255,0.55)';
   ctx.font = 'bold 10px -apple-system,sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-  ctx.fillText('AUC SCORE', cx0, ringCY + SUMMARY_RING_R + SUMMARY_RING_GLOW_PAD + SUMMARY_RING_LABEL_GAP);
+  ctx.fillText('DAILY GOAL', cx0, ring0LabelY);
+  var ring0DeltaY = ring0LabelY + SUMMARY_RING_LABEL_H + SUMMARY_RING_DELTA_GAP;
+  if (hasTarget) {
+    ctx.fillStyle = deltaColor(summaryStats.deltas.auc);
+    ctx.font = '10px -apple-system,sans-serif';
+    ctx.fillText(fmtDelta(summaryStats.deltas.auc) + ' vs last week', cx0, ring0DeltaY);
+  } else {
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.font = '10px -apple-system,sans-serif';
+    ctx.fillText('Set a target to track', cx0, ring0DeltaY);
+  }
   var hb0Top = ringCY - SUMMARY_RING_R - SUMMARY_RING_GLOW_PAD;
-  var hb0Bottom = ringCY + SUMMARY_RING_R + SUMMARY_RING_GLOW_PAD + SUMMARY_RING_LABEL_GAP + SUMMARY_RING_LABEL_H;
+  var hb0Bottom = ring0DeltaY + SUMMARY_RING_DELTA_H;
   window.ringHitboxes.push({
     x: cx0 - ringColW / 2, y: hb0Top, w: ringColW, h: hb0Bottom - hb0Top,
-    title: 'AUC SCORE',
-    text: 'AUC Score is the area under your breath-acetone curve today, measured against your target (' + (targetAUC > 0 ? targetAUC : '—') + '). It rewards both how high you measure and how long you stay there — a higher score means more sustained metabolic engagement, not just a single high reading.'
+    title: 'DAILY GOAL',
+    text: hasTarget
+      ? ('Daily Goal is how close you got to your target score (' + targetAUC + ') on an average day this week. It rewards both how high you measure and how long you stay there — a higher score means more sustained metabolic engagement, not just a single high reading.')
+      : 'No daily target is set yet, so there\'s nothing to measure progress against. Set a target score to start tracking how close you get to it each day.'
   });
 
   // -- Ring 2: Metabolic Flexibility --
@@ -3607,9 +3572,13 @@ function buildInsightsCard() {
   ctx.fillStyle = flexStandout ? '#3B82F6' : 'rgba(255,255,255,0.55)';
   ctx.font = 'bold 10px -apple-system,sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-  ctx.fillText('METABOLIC FLEXIBILITY', cx1, ringCY + SUMMARY_RING_R + SUMMARY_RING_GLOW_PAD + SUMMARY_RING_LABEL_GAP);
+  ctx.fillText('METABOLIC FLEXIBILITY', cx1, ring0LabelY);
+  var ring1DeltaY = ring0LabelY + SUMMARY_RING_LABEL_H + SUMMARY_RING_DELTA_GAP;
+  ctx.fillStyle = deltaColor(summaryStats.deltas.flex);
+  ctx.font = '10px -apple-system,sans-serif';
+  ctx.fillText(fmtDelta(summaryStats.deltas.flex) + ' vs last week', cx1, ring1DeltaY);
   var hb1Top = ringCY - SUMMARY_RING_R - SUMMARY_RING_GLOW_PAD;
-  var hb1Bottom = ringCY + SUMMARY_RING_R + SUMMARY_RING_GLOW_PAD + SUMMARY_RING_LABEL_GAP + SUMMARY_RING_LABEL_H;
+  var hb1Bottom = ring1DeltaY + SUMMARY_RING_DELTA_H;
   window.ringHitboxes.push({
     x: cx1 - ringColW / 2, y: hb1Top, w: ringColW, h: hb1Bottom - hb1Top,
     title: 'METABOLIC FLEXIBILITY',
@@ -3639,9 +3608,13 @@ function buildInsightsCard() {
   ctx.fillStyle = tirStandout ? '#A855F7' : 'rgba(255,255,255,0.55)';
   ctx.font = 'bold 10px -apple-system,sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-  ctx.fillText('TIME IN RANGE', cx2, ringCY + SUMMARY_RING_R + SUMMARY_RING_GLOW_PAD + SUMMARY_RING_LABEL_GAP);
+  ctx.fillText('TIME IN RANGE', cx2, ring0LabelY);
+  var ring2DeltaY = ring0LabelY + SUMMARY_RING_LABEL_H + SUMMARY_RING_DELTA_GAP;
+  ctx.fillStyle = deltaColor(timeInRangeDelta);
+  ctx.font = '10px -apple-system,sans-serif';
+  ctx.fillText(fmtDelta(timeInRangeDelta) + ' vs last week', cx2, ring2DeltaY);
   var hb2Top = ringCY - SUMMARY_RING_R - SUMMARY_RING_GLOW_PAD;
-  var hb2Bottom = ringCY + SUMMARY_RING_R + SUMMARY_RING_GLOW_PAD + SUMMARY_RING_LABEL_GAP + SUMMARY_RING_LABEL_H;
+  var hb2Bottom = ring2DeltaY + SUMMARY_RING_DELTA_H;
   window.ringHitboxes.push({
     x: cx2 - ringColW / 2, y: hb2Top, w: ringColW, h: hb2Bottom - hb2Top,
     title: 'TIME IN RANGE',
@@ -3701,84 +3674,11 @@ function buildInsightsCard() {
   drawBox(momBoxY, curY - momBoxY - BOX_PAD);
   curY += SECTION_GAP;
 
-  // ════════════════════════════════════════════════════════════════
-  // SECTION 1.5: Tag Patterns
-  // ════════════════════════════════════════════════════════════════
-  var tagBoxY = curY;
-  curY += BOX_PAD;
-  curY = drawSectionTitle(curY, 'Tag Patterns');
-
-  if (tagInsightsShown.length) {
-    window.tagPatternHitboxes = [];
-    for (var ti = 0; ti < tagInsightsShown.length; ti++) {
-      var tInfo = tagInsightsShown[ti];
-      var ry = curY + ti * TAG_ROW_H;
-      var midY = ry + TAG_ROW_H / 2;
-
-      ctx.fillStyle = '#fff';
-      ctx.font = '21px -apple-system,sans-serif';
-      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-      ctx.fillText(tInfo.icon, gLeft, midY);
-
-      ctx.fillStyle = 'rgba(255,255,255,0.65)';
-      ctx.font = 'bold 15px -apple-system,sans-serif';
-      ctx.fillText(tInfo.name, gLeft + 30, midY);
-
-      var parts = [];
-      if (tInfo.pctSame !== null) {
-        parts.push({ label: 'Same day', pct: tInfo.pctSame, n: tInfo.nSame, nWithout: tInfo.nWithoutSame });
-      }
-      if (tInfo.pctNext !== null) {
-        parts.push({ label: 'Next day', pct: tInfo.pctNext, n: tInfo.nNext, nWithout: tInfo.nWithoutNext });
-      }
-
-      var fx = gRight;
-      ctx.textAlign = 'right';
-      for (var pi2 = parts.length - 1; pi2 >= 0; pi2--) {
-        var part = parts[pi2];
-        var sign = part.pct > 0 ? '+' : '';
-        var valStr = sign + part.pct + '%';
-        var color = part.pct > 0 ? '#4ADE80' : (part.pct < 0 ? '#f87171' : 'rgba(255,255,255,0.5)');
-
-        ctx.font = 'bold 15px -apple-system,sans-serif';
-        ctx.fillStyle = color;
-        ctx.fillText(valStr, fx, midY);
-        var valW = ctx.measureText(valStr).width;
-
-        ctx.font = '15px -apple-system,sans-serif';
-        ctx.fillStyle = 'rgba(255,255,255,0.38)';
-        var labelStr = part.label + ' ';
-        ctx.fillText(labelStr, fx - valW, midY);
-        var labelW = ctx.measureText(labelStr).width;
-
-        // Tappable hitbox for this stat — shows the underlying day counts.
-        window.tagPatternHitboxes.push({
-          x: fx - valW - labelW, y: ry, w: valW + labelW, h: TAG_ROW_H,
-          text: tInfo.name + ' \u00b7 ' + part.label + ': n=' + part.n + ' with, n=' + part.nWithout + ' without'
-        });
-
-        fx -= (valW + labelW + 18);
-      }
-
-      if (ti > 0) {
-        ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 0.5;
-        ctx.beginPath(); ctx.moveTo(gLeft, ry); ctx.lineTo(gRight, ry); ctx.stroke();
-      }
-    }
-    curY += tagInsightsShown.length * TAG_ROW_H + 8;
-  } else {
-    window.tagPatternHitboxes = [];
-    ctx.fillStyle = 'rgba(255,255,255,0.38)';
-    ctx.font = '15px -apple-system,sans-serif';
-    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-    ctx.fillText('Log a few tags to start seeing how they relate to your score.', gLeft, curY + TAG_EMPTY_H / 2);
-    curY += TAG_EMPTY_H + 8;
-  }
-
-  curY += BOX_PAD;
-  drawBox(tagBoxY, curY - tagBoxY);
-  curY += SECTION_GAP;
-
+  // ══════════════════════════════════════════════════════════════
+  // (Tag Patterns card removed — tags are now shown directly on the
+  // Daily Score Trend graph below, annotated per-day with a simple
+  // tagged-vs-untagged average surfaced on tap. See SECTION 2.)
+  // ══════════════════════════════════════════════════════════════
   // ════════════════════════════════════════════════════════════════
   // SECTION 2: Daily Score Trend — 3 stacked weekly rows of daily AUC
   // ════════════════════════════════════════════════════════════════
@@ -3907,7 +3807,13 @@ function buildInsightsCard() {
 
     // Dots — tappable, pushed into window.ringHitboxes so the existing
     // popup mechanism (same one used for the 7-Day Summary rings) shows
-    // this day's date, score, target-hit status, and zone breakdown.
+    // this day's date, score, target-hit status, zone breakdown, and —
+    // when tags were logged that day — the tags themselves plus a simple
+    // tagged-vs-untagged average score (see computeTagAverage above).
+    var slotOffset = (typeof _slotOffset !== 'undefined') ? _slotOffset : 0;
+    var TAG_ICON_FS = 11;     // icon font size in the small stack above each dot
+    var TAG_ICON_GAP = 1;     // gap between stacked icons
+    var TAG_ICON_MAX = 3;     // cap before showing "+N" overflow
     for (var wd = 0; wd < TREND_DAYS_PER_WEEK; wd++) {
       var dIdx = weekStartIdx + wd;
       if (dIdx < 0 || dIdx >= totalDays || days[dIdx].vals.length === 0) continue;
@@ -3920,6 +3826,29 @@ function buildInsightsCard() {
         ctx.strokeStyle = 'rgba(255,255,255,0.6)';
         ctx.lineWidth = 1;
         ctx.stroke();
+      }
+
+      // Tags for this day, looked up via the DAYS[] array (which carries
+      // tags/notes), mapped from this payload index through _slotOffset.
+      var dayTags = [];
+      var daysEntry = (typeof DAYS !== 'undefined') ? DAYS[dIdx + slotOffset] : null;
+      if (daysEntry && daysEntry.tags && daysEntry.tags.length) {
+        // Drop the note icon — it's not a behavior tag, just free text.
+        dayTags = daysEntry.tags.filter(function(t) { return t !== '\u270F\uFE0F'; });
+      }
+
+      if (dayTags.length) {
+        var shown = dayTags.slice(0, TAG_ICON_MAX);
+        var overflow = dayTags.length - shown.length;
+        ctx.font = TAG_ICON_FS + 'px -apple-system,sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        // Stack icons just above the dot (and above the line if the dot
+        // sits high in its band), clamped so they don't poke into the
+        // section title above.
+        var iconY = Math.max(rGraphTop + TAG_ICON_FS, py - 7);
+        var label = shown.join('');
+        if (overflow > 0) label += '+' + overflow;
+        ctx.fillText(label, px, iconY);
       }
 
       var dDate = new Date((windowStart + dIdx * 86400) * 1000);
@@ -3941,10 +3870,27 @@ function buildInsightsCard() {
           (hit ? 'Hit target' : 'Below target') + ' (' + targetAUC + ')</div>'
         : '';
 
+      // Tags logged this day, each with its simple tagged-vs-untagged
+      // average when there's enough data (n>=3 both sides) — otherwise
+      // just the tag name with no stat, rather than implying a result
+      // that isn't backed by enough days yet.
+      var tagsLine = '';
+      if (dayTags.length) {
+        var tagRows = dayTags.map(function(icon) {
+          var nm = tagNameForIcon(icon);
+          var stat = computeTagAverage(icon, insightsStart, totalDays);
+          var statStr = stat
+            ? ' \u2014 ' + stat.avgWith.toFixed(1) + ' avg on ' + nm + ' days vs ' + stat.avgWithout.toFixed(1) + ' other days'
+            : '';
+          return '<div style="margin-top:2px;">' + icon + ' ' + nm + statStr + '</div>';
+        }).join('');
+        tagsLine = '<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.12);font-size:12px;color:rgba(255,255,255,0.65);">' + tagRows + '</div>';
+      }
+
       window.ringHitboxes.push({
         x: px - bandW / 2, y: rGraphTop, w: bandW, h: TREND_GRAPH_H,
         title: dateLabel + ' — Score ' + days[dIdx].auc,
-        text: zoneLine + targetLine
+        text: zoneLine + targetLine + tagsLine
       });
     }
   }
@@ -4918,29 +4864,7 @@ window.addEventListener('load', function() {
           return;
         }
 
-        // Check if tap is on a tag pattern stat (n=... popup)
-        var hbs = window.tagPatternHitboxes || [];
-        var hit = null;
-        for (var hi = 0; hi < hbs.length; hi++) {
-          var hb = hbs[hi];
-          if (tapX >= hb.x && tapX <= hb.x + hb.w && tapY >= hb.y && tapY <= hb.y + hb.h) { hit = hb; break; }
-        }
-        if (hit) {
-          tagPopupText.textContent = hit.text;
-          tagPopupText.style.textAlign = 'center';
-          tagPopup.style.cssText = 'display:block;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;left:0;top:0;';
-          void tagPopup.offsetWidth;
-          var pw = tagPopup.offsetWidth || 90, ph = tagPopup.offsetHeight || 30;
-          var hbCx = (hb.x + hb.w / 2) * cssScale;
-          var hbTop = hb.y * cssScale;
-          var px = Math.max(4, Math.min(hbCx - pw / 2, rect.width - pw - 4));
-          var py = Math.max(4, hbTop - ph - 8);
-          tagPopup.style.left = px + 'px';
-          tagPopup.style.top  = py + 'px';
-          return;
-        } else {
-          tagPopup.style.display = 'none';
-        }
+        tagPopup.style.display = 'none';
 
         // Check if tap is on pattern toggle button
         var btn = window.patternToggleHitbox;
