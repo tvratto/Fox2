@@ -1783,7 +1783,7 @@ html, body {
     <div id="info-modal-title">Squad Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v4.31 · 2026-06-19 16:55 UTC</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v4.41 · 2026-06-19 22:44 UTC</span></div>
     <div class="info-section-title">Leaderboard</div>
     <div class="info-toggle-row">
       <div>
@@ -1875,7 +1875,7 @@ var sParam    = params.get('s') || '';
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v4.31 · 2026-06-19 16:55 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v4.41 · 2026-06-19 22:44 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
@@ -3328,30 +3328,24 @@ function wrapText(ctx, text, x, y, maxW, lineH) {
   return y;
 }
 
-// Simple same-day average for one tag: avg AUC score on days that carry
-// this tag vs. avg AUC score on days that don't, over the given range of
-// `DAYS[]` indices (insightsStart..totalDaysLocal-1). No next-day lag, no
-// expected-direction filtering — just the plain numbers so the popup can
-// show exactly what happened without implying more precision than it has.
-// Returns null if there isn't enough data on both sides (n>=MIN_DAYS each).
-function computeTagAverage(icon, insightsStart, totalDaysLocal) {
-  var MIN_DAYS = 3;
-  if (typeof DAYS === 'undefined') return null;
+// Simple frequency count for one tag: how many days in the given window
+// (insightsStart..totalDaysLocal-1, restricted to days that actually have
+// a measurement) carry this tag, out of how many measured days total.
+// Purely descriptive — "this happened on X of Y days you measured" — with
+// no comparison to score, since that comparison was confounded and easy
+// to misread as causal even when stated plainly.
+function computeTagFrequency(icon, insightsStart, totalDaysLocal) {
+  if (typeof DAYS === 'undefined') return { withTag: 0, measured: 0 };
   var slotOffset = (typeof _slotOffset !== 'undefined') ? _slotOffset : 0;
-  var withTag = [], withoutTag = [];
+  var measured = 0, withTag = 0;
   for (var d = insightsStart; d < totalDaysLocal; d++) {
     var idx = d + slotOffset;
     var day = DAYS[idx];
     if (!day || !(day.score > 0)) continue;
-    var hasTag = day.tags && day.tags.indexOf(icon) !== -1;
-    if (hasTag) withTag.push(day.score); else withoutTag.push(day.score);
+    measured++;
+    if (day.tags && day.tags.indexOf(icon) !== -1) withTag++;
   }
-  if (withTag.length < MIN_DAYS || withoutTag.length < MIN_DAYS) return null;
-  function avg(arr) { return arr.reduce(function(a,b){return a+b;},0) / arr.length; }
-  return {
-    avgWith: avg(withTag), avgWithout: avg(withoutTag),
-    nWith: withTag.length, nWithout: withoutTag.length
-  };
+  return { withTag: withTag, measured: measured };
 }
 
 // Look up a tag's display name from its icon.
@@ -3360,6 +3354,44 @@ function tagNameForIcon(icon) {
     if (ALL_TAGS[i][0] === icon) return ALL_TAGS[i][1];
   }
   return '';
+}
+
+// Tallies every tag's frequency in one pass over the window (instead of
+// re-scanning per tag), excludes the Note icon (free text, not a behavior),
+// drops anything under minCount so one-off tags don't clutter the list,
+// and returns results ranked most-to-least frequent (ties broken by
+// ALL_TAGS order, so the ranking is stable run to run).
+function computeTagFrequencyList(insightsStart, totalDaysLocal, minCount) {
+  var result = { items: [], measured: 0 };
+  if (typeof DAYS === 'undefined') return result;
+  var slotOffset = (typeof _slotOffset !== 'undefined') ? _slotOffset : 0;
+  var counts = {};
+  var measured = 0;
+  for (var d = insightsStart; d < totalDaysLocal; d++) {
+    var idx = d + slotOffset;
+    var day = DAYS[idx];
+    if (!day || !(day.score > 0)) continue;
+    measured++;
+    if (!day.tags) continue;
+    for (var t = 0; t < day.tags.length; t++) {
+      var icon = day.tags[t];
+      if (icon === '\u270F\uFE0F') continue; // Note isn't a behavior tag
+      counts[icon] = (counts[icon] || 0) + 1;
+    }
+  }
+  var items = [];
+  for (var ti = 0; ti < ALL_TAGS.length; ti++) {
+    var icon2 = ALL_TAGS[ti][0];
+    if (icon2 === '\u270F\uFE0F') continue;
+    var n = counts[icon2] || 0;
+    if (n >= minCount) {
+      items.push({ icon: icon2, name: ALL_TAGS[ti][1], count: n });
+    }
+  }
+  items.sort(function(a, b) { return b.count - a.count; }); // stable sort preserves ALL_TAGS order on ties
+  result.items = items;
+  result.measured = measured;
+  return result;
 }
 
 function buildInsightsCard() {
@@ -3390,6 +3422,11 @@ function buildInsightsCard() {
   for (var d = insightsStart; d < totalDays; d++) {
     if (days[d].vals.length > 0) daysWithData++;
   }
+
+  // Tags used at least twice in the 3-week window, ranked most-to-least
+  // frequent — feeds the Tag Frequency card below the trend graph.
+  var TAG_FREQ_MIN_COUNT = 2;
+  var tagFreq = computeTagFrequencyList(insightsStart, totalDays, TAG_FREQ_MIN_COUNT);
 
   // ── 7-day rolling summary stats (streak, week-over-week deltas, 3 rings) ──
   var summaryStats = computeSummaryStats();
@@ -3443,6 +3480,13 @@ function buildInsightsCard() {
   var TREND_WEEKS    = 3;
   var TREND_SECTION_H = SECTION_TITLE_H + TREND_WEEKS * TREND_ROW_H + (TREND_WEEKS - 1) * TREND_ROW_GAP + 8;
 
+  // ── Tag Frequency: ranked bar list, own card right after the trend graph ──
+  var TAGFREQ_ROW_H   = 22;
+  var TAGFREQ_EMPTY_H = 40;
+  var TAGFREQ_SECTION_H = SECTION_TITLE_H +
+    (tagFreq.items.length ? tagFreq.items.length * TAGFREQ_ROW_H : TAGFREQ_EMPTY_H) + 8;
+
+
   var FT_BAR_H    = 18;
   var FT_LABEL_FS = 15;
   var FT_SUMMARY_FS = 15;
@@ -3453,6 +3497,7 @@ function buildInsightsCard() {
   var CH = PAD
          + MOMENTUM_H + BOX_INNER_PAD + SECTION_GAP
          + TREND_SECTION_H + BOX_INNER_PAD + SECTION_GAP
+         + TAGFREQ_SECTION_H + BOX_INNER_PAD + SECTION_GAP
          + FUELTIME_H + BOX_INNER_PAD
          + PAD + FOOTER_H + 200; // buffer for wrapped text overflow
 
@@ -3509,6 +3554,19 @@ function buildInsightsCard() {
     if (v === null || v === 0) return 'rgba(255,255,255,0.4)';
     return v > 0 ? '#4ADE80' : '#f87171';
   }
+  // Draws centered text at the given size, shrinking down (to a floor) if
+  // it would otherwise overflow maxWidth — used for the ring delta lines,
+  // since "vs prev. 7 days" is long enough to risk bleeding into a
+  // neighboring ring's column at the columns' ~124px width.
+  function fitText(text, cx, y, maxWidth, basePx, minPx) {
+    var px = basePx;
+    ctx.font = px + 'px -apple-system,sans-serif';
+    while (ctx.measureText(text).width > maxWidth && px > minPx) {
+      px -= 0.5;
+      ctx.font = px + 'px -apple-system,sans-serif';
+    }
+    ctx.fillText(text, cx, y);
+  }
 
   // ── 3 rings: AUC, Metabolic Flexibility, and a double ring for Time in Range ──
   var ringColW = gW / 3;
@@ -3519,42 +3577,55 @@ function buildInsightsCard() {
 
   window.ringHitboxes = [];
 
-  // -- Ring 1: Daily Goal (avg % of daily target reached this week) --
+  // -- Ring 1: Avg Daily Score (raw 7-day average AUC, tiered scale) --
+  // Always orange. The ring's full-scale max steps up with the average
+  // itself (0–72 / 0–120 / 0–180) so the fill stays visually meaningful
+  // at low, medium, and high score ranges instead of using one fixed
+  // scale that looks nearly-empty for most real averages.
   var cx0 = gLeft + ringColW * 0 + ringColW / 2;
-  var hasTarget = targetAUC > 0;
-  var aucStandout = hasTarget && (summaryStats.deltas.auc !== null && summaryStats.deltas.auc > 0 &&
-                      summaryStats.deltas.auc >= (summaryStats.deltas.flex || 0) &&
-                      summaryStats.deltas.auc >= (timeInRangeDelta || 0));
+  var hasAvg = summaryStats.daysWithData > 0;
+  var aucAvgRounded = Math.round(summaryStats.aucAvg);
+  var bandMax = aucBandMax(summaryStats.aucAvg);
+  var aucRingPct = hasAvg ? Math.max(0, Math.min(100, (summaryStats.aucAvg / bandMax) * 100)) : 0;
+  var aucAvgDelta = summaryStats.deltas.aucAvg;
+  var aucStandout = hasAvg && (aucAvgDelta !== null && aucAvgDelta > 0 &&
+                      aucAvgDelta >= (summaryStats.deltas.flex || 0) &&
+                      aucAvgDelta >= (timeInRangeDelta || 0));
   if (aucStandout) { ctx.save(); ctx.shadowColor = '#FFA500'; ctx.shadowBlur = 12; }
-  drawRing(ctx, cx0, ringCY, SUMMARY_RING_R, SUMMARY_RING_LW, hasTarget ? summaryStats.aucPct : 0, '#FFA500');
+  drawRing(ctx, cx0, ringCY, SUMMARY_RING_R, SUMMARY_RING_LW, aucRingPct, '#FFA500');
   if (aucStandout) ctx.restore();
-  ctx.fillStyle = hasTarget ? '#fff' : 'rgba(255,255,255,0.35)';
-  ctx.font = 'bold ' + (hasTarget ? '20' : '15') + 'px -apple-system,sans-serif';
+  ctx.fillStyle = hasAvg ? '#fff' : 'rgba(255,255,255,0.35)';
+  // Bump the number up a size when it's only 1-2 digits (<100) so it fills
+  // more of the ring — at 3 digits we drop back to the same size as the
+  // other two rings' center labels to avoid crowding/clipping.
+  var ring0NumPx = hasAvg ? (aucAvgRounded < 100 ? 28 : 20) : 15;
+  ctx.font = 'bold ' + ring0NumPx + 'px -apple-system,sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText(hasTarget ? (summaryStats.aucPct + '%') : 'No goal', cx0, ringCY);
+  ctx.fillText(hasAvg ? String(aucAvgRounded) : '\u2014', cx0, ringCY);
   var ring0LabelY = ringCY + SUMMARY_RING_R + SUMMARY_RING_GLOW_PAD + SUMMARY_RING_LABEL_GAP;
   ctx.fillStyle = aucStandout ? '#FFA500' : 'rgba(255,255,255,0.55)';
   ctx.font = 'bold 10px -apple-system,sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-  ctx.fillText('DAILY GOAL', cx0, ring0LabelY);
+  ctx.fillText('AVG DAILY SCORE', cx0, ring0LabelY);
   var ring0DeltaY = ring0LabelY + SUMMARY_RING_LABEL_H + SUMMARY_RING_DELTA_GAP;
-  if (hasTarget) {
-    ctx.fillStyle = deltaColor(summaryStats.deltas.auc);
-    ctx.font = '10px -apple-system,sans-serif';
-    ctx.fillText(fmtDelta(summaryStats.deltas.auc) + ' vs last week', cx0, ring0DeltaY);
+  if (hasAvg) {
+    var deltaStr = (aucAvgDelta === null) ? '\u2014'
+      : (aucAvgDelta === 0 ? '\u00b10' : (aucAvgDelta > 0 ? '+' : '') + aucAvgDelta.toFixed(1));
+    ctx.fillStyle = (aucAvgDelta === null || aucAvgDelta === 0) ? 'rgba(255,255,255,0.4)' : (aucAvgDelta > 0 ? '#4ADE80' : '#f87171');
+    fitText(deltaStr + ' vs prev. 7 days', cx0, ring0DeltaY, ringColW - 8, 10, 7.5);
   } else {
     ctx.fillStyle = 'rgba(255,255,255,0.35)';
     ctx.font = '10px -apple-system,sans-serif';
-    ctx.fillText('Set a target to track', cx0, ring0DeltaY);
+    ctx.fillText('No data yet', cx0, ring0DeltaY);
   }
   var hb0Top = ringCY - SUMMARY_RING_R - SUMMARY_RING_GLOW_PAD;
   var hb0Bottom = ring0DeltaY + SUMMARY_RING_DELTA_H;
   window.ringHitboxes.push({
     x: cx0 - ringColW / 2, y: hb0Top, w: ringColW, h: hb0Bottom - hb0Top,
-    title: 'DAILY GOAL',
-    text: hasTarget
-      ? ('Daily Goal is how close you got to your target score (' + targetAUC + ') on an average day this week. It rewards both how high you measure and how long you stay there — a higher score means more sustained metabolic engagement, not just a single high reading.')
-      : 'No daily target is set yet, so there\'s nothing to measure progress against. Set a target score to start tracking how close you get to it each day.'
+    title: 'AVG DAILY SCORE',
+    text: hasAvg
+      ? ('Your average daily score over the last 7 days — ' + aucAvgRounded + ' points. This is the plain average of each day\'s AUC score, not compared against any target, so it reflects exactly how you\'ve been measuring lately.')
+      : 'No measurements yet this week — your average daily score will show up here once you start logging.'
   });
 
   // -- Ring 2: Metabolic Flexibility --
@@ -3575,8 +3646,7 @@ function buildInsightsCard() {
   ctx.fillText('METABOLIC FLEXIBILITY', cx1, ring0LabelY);
   var ring1DeltaY = ring0LabelY + SUMMARY_RING_LABEL_H + SUMMARY_RING_DELTA_GAP;
   ctx.fillStyle = deltaColor(summaryStats.deltas.flex);
-  ctx.font = '10px -apple-system,sans-serif';
-  ctx.fillText(fmtDelta(summaryStats.deltas.flex) + ' vs last week', cx1, ring1DeltaY);
+  fitText(fmtDelta(summaryStats.deltas.flex) + ' vs prev. 7 days', cx1, ring1DeltaY, ringColW - 8, 10, 7.5);
   var hb1Top = ringCY - SUMMARY_RING_R - SUMMARY_RING_GLOW_PAD;
   var hb1Bottom = ring1DeltaY + SUMMARY_RING_DELTA_H;
   window.ringHitboxes.push({
@@ -3611,8 +3681,7 @@ function buildInsightsCard() {
   ctx.fillText('TIME IN RANGE', cx2, ring0LabelY);
   var ring2DeltaY = ring0LabelY + SUMMARY_RING_LABEL_H + SUMMARY_RING_DELTA_GAP;
   ctx.fillStyle = deltaColor(timeInRangeDelta);
-  ctx.font = '10px -apple-system,sans-serif';
-  ctx.fillText(fmtDelta(timeInRangeDelta) + ' vs last week', cx2, ring2DeltaY);
+  fitText(fmtDelta(timeInRangeDelta) + ' vs prev. 7 days', cx2, ring2DeltaY, ringColW - 8, 10, 7.5);
   var hb2Top = ringCY - SUMMARY_RING_R - SUMMARY_RING_GLOW_PAD;
   var hb2Bottom = ring2DeltaY + SUMMARY_RING_DELTA_H;
   window.ringHitboxes.push({
@@ -3808,12 +3877,15 @@ function buildInsightsCard() {
     // Dots — tappable, pushed into window.ringHitboxes so the existing
     // popup mechanism (same one used for the 7-Day Summary rings) shows
     // this day's date, score, target-hit status, zone breakdown, and —
-    // when tags were logged that day — the tags themselves plus a simple
-    // tagged-vs-untagged average score (see computeTagAverage above).
+    // when tags were logged that day — the tags themselves plus how many
+    // of the measured days in this 3-week window also carry each tag
+    // (see computeTagFrequency above).
     var slotOffset = (typeof _slotOffset !== 'undefined') ? _slotOffset : 0;
-    var TAG_ICON_FS = 11;     // icon font size in the small stack above each dot
-    var TAG_ICON_GAP = 1;     // gap between stacked icons
-    var TAG_ICON_MAX = 3;     // cap before showing "+N" overflow
+    var TAG_ICON_FS = 18;             // icon font size above each dot
+    var TAG_ICON_GAP = 1;             // (unused now that only 1 icon shows, kept for reference)
+    var TAG_ICON_MAX = 1;             // show only the first tag logged that day; rest fold into "+N"
+    var TAG_ICON_OVERFLOW_FS = 9;     // "+N" badge font size — smaller than the icon itself
+    var TAG_ICON_OVERFLOW_GAP = 2;    // gap between the icon and the "+N" badge
     for (var wd = 0; wd < TREND_DAYS_PER_WEEK; wd++) {
       var dIdx = weekStartIdx + wd;
       if (dIdx < 0 || dIdx >= totalDays || days[dIdx].vals.length === 0) continue;
@@ -3838,17 +3910,39 @@ function buildInsightsCard() {
       }
 
       if (dayTags.length) {
-        var shown = dayTags.slice(0, TAG_ICON_MAX);
+        var shown = dayTags.slice(0, TAG_ICON_MAX); // first tag logged that day
         var overflow = dayTags.length - shown.length;
-        ctx.font = TAG_ICON_FS + 'px -apple-system,sans-serif';
-        ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-        // Stack icons just above the dot (and above the line if the dot
-        // sits high in its band), clamped so they don't poke into the
+        // Single icon just above the dot (and above the line if the dot
+        // sits high in its band), clamped so it doesn't poke into the
         // section title above.
         var iconY = Math.max(rGraphTop + TAG_ICON_FS, py - 7);
-        var label = shown.join('');
-        if (overflow > 0) label += '+' + overflow;
-        ctx.fillText(label, px, iconY);
+        var iconsLabel = shown.join('');
+        var overflowLabel = overflow > 0 ? ('+' + overflow) : '';
+
+        // Icon and the "+N" overflow badge render at different sizes, so
+        // measure each piece separately (at its own font) and lay them out
+        // side-by-side centered on the dot, rather than one fillText call
+        // at a single size.
+        ctx.textBaseline = 'bottom';
+        ctx.font = TAG_ICON_FS + 'px -apple-system,sans-serif';
+        var iconsW = ctx.measureText(iconsLabel).width;
+        var overflowW = 0;
+        if (overflowLabel) {
+          ctx.font = TAG_ICON_OVERFLOW_FS + 'px -apple-system,sans-serif';
+          overflowW = ctx.measureText(overflowLabel).width;
+        }
+        var totalW = iconsW + (overflowLabel ? TAG_ICON_OVERFLOW_GAP + overflowW : 0);
+        var startX = px - totalW / 2;
+
+        ctx.textAlign = 'left';
+        ctx.font = TAG_ICON_FS + 'px -apple-system,sans-serif';
+        ctx.fillText(iconsLabel, startX, iconY);
+        if (overflowLabel) {
+          ctx.font = TAG_ICON_OVERFLOW_FS + 'px -apple-system,sans-serif';
+          ctx.fillStyle = 'rgba(255,255,255,0.7)';
+          ctx.fillText(overflowLabel, startX + iconsW + TAG_ICON_OVERFLOW_GAP, iconY);
+          ctx.fillStyle = '#FFA500'; // restore for any subsequent same-pass fills
+        }
       }
 
       var dDate = new Date((windowStart + dIdx * 86400) * 1000);
@@ -3870,19 +3964,18 @@ function buildInsightsCard() {
           (hit ? 'Hit target' : 'Below target') + ' (' + targetAUC + ')</div>'
         : '';
 
-      // Tags logged this day, each with its simple tagged-vs-untagged
-      // average when there's enough data (n>=3 both sides) — otherwise
-      // just the tag name with no stat, rather than implying a result
-      // that isn't backed by enough days yet.
+      // Tags logged this day, listed with a simple frequency count — how
+      // many of the measured days in this 3-week window also carry that
+      // tag. Purely descriptive, no comparison to score.
       var tagsLine = '';
       if (dayTags.length) {
         var tagRows = dayTags.map(function(icon) {
           var nm = tagNameForIcon(icon);
-          var stat = computeTagAverage(icon, insightsStart, totalDays);
-          var statStr = stat
-            ? ' \u2014 ' + stat.avgWith.toFixed(1) + ' avg on ' + nm + ' days vs ' + stat.avgWithout.toFixed(1) + ' other days'
+          var freq = computeTagFrequency(icon, insightsStart, totalDays);
+          var freqStr = freq.measured > 0
+            ? ' \u2014 ' + freq.withTag + ' of ' + freq.measured + ' days'
             : '';
-          return '<div style="margin-top:2px;">' + icon + ' ' + nm + statStr + '</div>';
+          return '<div style="margin-top:2px;">' + icon + ' ' + nm + freqStr + '</div>';
         }).join('');
         tagsLine = '<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.12);font-size:12px;color:rgba(255,255,255,0.65);">' + tagRows + '</div>';
       }
@@ -3903,6 +3996,65 @@ function buildInsightsCard() {
   curY += TREND_WEEKS * TREND_ROW_H + (TREND_WEEKS - 1) * TREND_ROW_GAP + 8;
   curY += BOX_PAD;
   drawBox(trendBoxY, curY - trendBoxY);
+  curY += SECTION_GAP;
+
+  // ════════════════════════════════════════════════════════════════
+  // SECTION 1.5: Tag Frequency — ranked bar list, own card right after
+  // the trend graph. Purely descriptive (how often each tag was used in
+  // the same 3-week window the trend graph shows), no comparison to
+  // score. Tags used fewer than TAG_FREQ_MIN_COUNT times are omitted so
+  // one-off entries don't clutter the list.
+  // ════════════════════════════════════════════════════════════════
+  var tagFreqBoxY = curY;
+  curY += BOX_PAD;
+  curY = drawSectionTitle(curY, 'Tag Frequency');
+
+  if (tagFreq.items.length) {
+    var tfMaxN = tagFreq.items[0].count;
+    var tfBarLeft = gLeft + 112;
+    var tfBarRight = gRight - 72;
+    var tfBarMaxW = tfBarRight - tfBarLeft;
+
+    for (var fi = 0; fi < tagFreq.items.length; fi++) {
+      var fItem = tagFreq.items[fi];
+      var fRowY = curY + fi * TAGFREQ_ROW_H;
+      var fMidY = fRowY + TAGFREQ_ROW_H / 2;
+
+      ctx.font = '14px -apple-system,sans-serif';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#fff';
+      ctx.fillText(fItem.icon, gLeft, fMidY);
+
+      ctx.font = '11px -apple-system,sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.fillText(fItem.name, gLeft + 20, fMidY);
+
+      var fBarW = (fItem.count / tfMaxN) * tfBarMaxW;
+      ctx.fillStyle = 'rgba(255,165,0,0.6)';
+      roundRect(ctx, tfBarLeft, fMidY - 3, Math.max(2, fBarW), 6, 3);
+      ctx.fill();
+
+      ctx.font = 'bold 11px -apple-system,sans-serif';
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'right';
+      ctx.fillText(fItem.count + '/' + tagFreq.measured + ' days', gRight, fMidY);
+
+      if (fi > 0) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 0.5;
+        ctx.beginPath(); ctx.moveTo(gLeft, fRowY); ctx.lineTo(gRight, fRowY); ctx.stroke();
+      }
+    }
+    curY += tagFreq.items.length * TAGFREQ_ROW_H + 8;
+  } else {
+    ctx.fillStyle = 'rgba(255,255,255,0.38)';
+    ctx.font = '15px -apple-system,sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText('Log a tag at least twice to see it here.', gLeft, curY + TAGFREQ_EMPTY_H / 2);
+    curY += TAGFREQ_EMPTY_H + 8;
+  }
+
+  curY += BOX_PAD;
+  drawBox(tagFreqBoxY, curY - tagFreqBoxY);
   curY += SECTION_GAP;
 
   // ════════════════════════════════════════════════════════════════
@@ -4614,12 +4766,14 @@ function calcDayZoneTimes(dayIdx) {
 // Shared by the current-week and prior-week calculations so the two stay consistent.
 function computeWindowAverages(start, end) {
   var daysWithData = 0;
-  var aucSum = 0, fatSum = 0, mixSum = 0, flexSum = 0;
+  var aucSum = 0, aucRawSum = 0, fatSum = 0, mixSum = 0, flexSum = 0;
 
   for (var d = start; d < end; d++) {
     if (d < 0 || d >= totalDays) continue;
     if (days[d].vals.length === 0) continue;
     daysWithData++;
+
+    aucRawSum += days[d].auc; // raw daily AUC score, no target involved
 
     if (targetAUC > 0) {
       aucSum += Math.min(1.5, days[d].auc / targetAUC); // soft-cap so one huge day doesn't blow out the average
@@ -4641,16 +4795,18 @@ function computeWindowAverages(start, end) {
     }
   }
 
-  var aucPct = 0, fatPct = 0, mixPct = 0, flexPct = 0;
+  var aucPct = 0, fatPct = 0, mixPct = 0, flexPct = 0, aucAvg = 0;
   if (daysWithData > 0) {
     aucPct  = targetAUC > 0 ? Math.round((aucSum  / daysWithData) * 100) : 0;
     fatPct  = Math.round((fatSum  / daysWithData) * 100);
     mixPct  = Math.round((mixSum  / daysWithData) * 100);
     flexPct = Math.round((flexSum / daysWithData) * 100);
+    aucAvg  = aucRawSum / daysWithData; // raw average daily score, e.g. 90.3
   }
 
   return {
     aucPct:  Math.max(0, Math.min(100, aucPct)),
+    aucAvg:  aucAvg,
     fatPct:  Math.max(0, Math.min(100, fatPct)),
     mixPct:  Math.max(0, Math.min(100, mixPct)),
     flexPct: Math.max(0, Math.min(100, flexPct)),
@@ -4697,6 +4853,7 @@ function computeSummaryStats() {
 
   return {
     aucPct:  thisWeek.aucPct,
+    aucAvg:  thisWeek.aucAvg,
     fatPct:  thisWeek.fatPct,
     mixPct:  thisWeek.mixPct,
     flexPct: thisWeek.flexPct,
@@ -4711,11 +4868,23 @@ function computeSummaryStats() {
     bestStreak: (typeof bestStreak === 'number' && sParam) ? bestStreak : null,
     deltas: {
       auc:  (lastWeek.daysWithData > 0) ? (thisWeek.aucPct  - lastWeek.aucPct)  : null,
+      aucAvg: (lastWeek.daysWithData > 0) ? (thisWeek.aucAvg - lastWeek.aucAvg) : null,
       fat:  (lastWeek.daysWithData > 0) ? (thisWeek.fatPct  - lastWeek.fatPct)  : null,
       mix:  (lastWeek.daysWithData > 0) ? (thisWeek.mixPct  - lastWeek.mixPct)  : null,
       flex: (lastWeek.daysWithData > 0) ? (thisWeek.flexPct - lastWeek.flexPct) : null
     }
   };
+}
+
+// Avg Daily Score ring scale: the ring's full-scale max changes depending
+// on which band the 7-day average AUC falls into, so a low average isn't
+// stuck looking nearly-empty against a scale built for much higher scores.
+// Always drawn in orange — only the scale (and how full the ring looks)
+// changes with the number itself.
+function aucBandMax(avg) {
+  if (avg < 72)  return 72;
+  if (avg < 120) return 120;
+  return 180;
 }
 
 function drawRing(ctx, cx, cy, r, lineWidth, pct, color, trackColor) {
@@ -5308,6 +5477,8 @@ const ALL_TAGS=[
   ['✏️','Note',0],
   ['🍎','Snack',0],
   ['🍽️','Meal',0],
+  ['🥩','Protein',0],
+  ['💧','Hydration',0],
   ['🍳','Low carb',1],
   ['🍕','High carb',-1],
   ['🍷','Alcohol',-1],
