@@ -3603,9 +3603,16 @@ function buildInsightsCard() {
   window.ringHitboxes.push({
     x: cx0 - ringColW / 2, y: hb0Top, w: ringColW, h: hb0Bottom - hb0Top,
     title: 'AVG DAILY SCORE',
-    text: hasAvg
-      ? ('Your average daily score over the last 7 days — ' + aucAvgRounded + ' points. This is the plain average of each day\'s AUC score, not compared against any target, so it reflects exactly how you\'ve been measuring lately.')
-      : 'No measurements yet this week — your average daily score will show up here once you start logging.'
+    text: (function() {
+      if (!hasAvg) return 'No measurements yet this week — your average daily score will show up here once you start logging.';
+      var n = summaryStats.daysWithData;
+      var listStr = summaryStats.aucVals.map(function(v) { return Math.round(v); }).join(', ');
+      if (n < 2) {
+        return 'Your 7-day average is <b style="color:#FFA500;">' + aucAvgRounded + '</b>, from the only day you measured this week (score: ' + listStr + '). Not compared against any target — just how you\u2019ve been measuring lately.';
+      }
+      var stdStr = Math.round(summaryStats.aucStd);
+      return 'Your 7-day average is <b style="color:#FFA500;">' + aucAvgRounded + ' \u00b1 ' + stdStr + '</b> \u2014 the mean and spread of your daily AUC across the ' + n + ' days you measured this week (' + listStr + '). Not compared against any target, just how consistent your measuring has been.';
+    })()
   });
 
   // -- Ring 2: Metabolic Flexibility --
@@ -3632,7 +3639,13 @@ function buildInsightsCard() {
   window.ringHitboxes.push({
     x: cx1 - ringColW / 2, y: hb1Top, w: ringColW, h: hb1Bottom - hb1Top,
     title: 'METABOLIC FLEXIBILITY',
-    text: 'Metabolic Flexibility measures how completely you switched between fuel zones this week. A full crossing from glucose to fat (or fat to glucose) earns full credit; reaching mixed zone earns partial credit. A round trip in both directions scores 100%.'
+    text: (summaryStats.daysWithData > 0)
+      ? ('This week: <b style="color:#3B82F6;">' + summaryStats.flexPct + '%</b>. You completed ' + summaryStats.flexCrossings + ' full glucose\u2194fat crossing' + (summaryStats.flexCrossings === 1 ? '' : 's') +
+         (summaryStats.flexPartialDays > 0
+           ? (', plus a partial mixed-zone credit on ' + summaryStats.flexPartialDays + ' day' + (summaryStats.flexPartialDays === 1 ? '' : 's') + ' that didn\u2019t finish the crossing')
+           : '') +
+         '. Each full crossing between zones is worth 1.0 point (capped at 2.0/day = 100%); touching mixed without finishing the crossing earns 0.5.')
+      : 'Metabolic Flexibility measures how completely you switched between fuel zones this week. A full crossing from glucose to fat (or fat to glucose) earns full credit; reaching mixed zone earns partial credit. A round trip in both directions scores 100%.'
   });
 
   // -- Ring 3: Time in Range (double ring — outer Mixed, inner Fat) --
@@ -3667,7 +3680,9 @@ function buildInsightsCard() {
   window.ringHitboxes.push({
     x: cx2 - ringColW / 2, y: hb2Top, w: ringColW, h: hb2Bottom - hb2Top,
     title: 'TIME IN RANGE',
-    text: 'Time in Range is the share of your measured time this week spent off pure glucose — in the Mixed zone (3\u20135ppm, green) or Fat zone (>5ppm, violet), where your body is drawing on stored fuel. The outer ring tracks Mixed, the inner ring tracks Fat; together they show how much of your day moved beyond baseline glucose burning.'
+    text: (summaryStats.daysWithData > 0)
+      ? ('This week you spent <b style="color:#4ADE80;">' + summaryStats.mixPct + '%</b> of your measured time in the Mixed zone and <b style="color:#A855F7;">' + summaryStats.fatPct + '%</b> in the Fat zone \u2014 ' + timeInRangePct + '% total off pure glucose. The outer ring tracks Mixed (3\u20135ppm), the inner ring tracks Fat (>5ppm).')
+      : 'Time in Range is the share of your measured time this week spent off pure glucose — in the Mixed zone (3\u20135ppm, green) or Fat zone (>5ppm, violet), where your body is drawing on stored fuel. The outer ring tracks Mixed, the inner ring tracks Fat; together they show how much of your day moved beyond baseline glucose burning.'
   });
 
   curY += SUMMARY_RING_SECTION_H + SUMMARY_GAP;
@@ -4751,6 +4766,8 @@ function calcDayZoneTimes(dayIdx) {
 function computeWindowAverages(start, end) {
   var daysWithData = 0;
   var aucSum = 0, aucRawSum = 0, fatSum = 0, mixSum = 0, flexSum = 0;
+  var aucVals = [];
+  var flexCrossingsSum = 0, flexPartialDays = 0;
 
   for (var d = start; d < end; d++) {
     if (d < 0 || d >= totalDays) continue;
@@ -4758,6 +4775,7 @@ function computeWindowAverages(start, end) {
     daysWithData++;
 
     aucRawSum += days[d].auc; // raw daily AUC score, no target involved
+    aucVals.push(days[d].auc);
 
     if (targetAUC > 0) {
       aucSum += Math.min(1.5, days[d].auc / targetAUC); // soft-cap so one huge day doesn't blow out the average
@@ -4777,23 +4795,37 @@ function computeWindowAverages(start, end) {
     if (typeof days[d].flexScore === 'number') {
       flexSum += days[d].flexScore / 100;
     }
+    if (typeof days[d].flexCrossings === 'number') flexCrossingsSum += days[d].flexCrossings;
+    if (days[d].flexPartial) flexPartialDays++;
   }
 
-  var aucPct = 0, fatPct = 0, mixPct = 0, flexPct = 0, aucAvg = 0;
+  var aucPct = 0, fatPct = 0, mixPct = 0, flexPct = 0, aucAvg = 0, aucStd = 0;
   if (daysWithData > 0) {
     aucPct  = targetAUC > 0 ? Math.round((aucSum  / daysWithData) * 100) : 0;
     fatPct  = Math.round((fatSum  / daysWithData) * 100);
     mixPct  = Math.round((mixSum  / daysWithData) * 100);
     flexPct = Math.round((flexSum / daysWithData) * 100);
     aucAvg  = aucRawSum / daysWithData; // raw average daily score, e.g. 90.3
+    // Population standard deviation of this window's daily AUC scores —
+    // describes how much these specific days varied, not an inference
+    // about some larger population, so divide by N rather than N-1.
+    var variance = 0;
+    for (var vi = 0; vi < aucVals.length; vi++) {
+      variance += Math.pow(aucVals[vi] - aucAvg, 2);
+    }
+    aucStd = Math.sqrt(variance / daysWithData);
   }
 
   return {
     aucPct:  Math.max(0, Math.min(100, aucPct)),
     aucAvg:  aucAvg,
+    aucStd:  aucStd,
+    aucVals: aucVals,
     fatPct:  Math.max(0, Math.min(100, fatPct)),
     mixPct:  Math.max(0, Math.min(100, mixPct)),
     flexPct: Math.max(0, Math.min(100, flexPct)),
+    flexCrossings:   flexCrossingsSum,
+    flexPartialDays: flexPartialDays,
     daysWithData: daysWithData
   };
 }
@@ -4846,9 +4878,13 @@ function computeSummaryStats() {
   return {
     aucPct:  thisWeek.aucPct,
     aucAvg:  thisWeek.aucAvg,
+    aucStd:  thisWeek.aucStd,
+    aucVals: thisWeek.aucVals,
     fatPct:  thisWeek.fatPct,
     mixPct:  thisWeek.mixPct,
     flexPct: thisWeek.flexPct,
+    flexCrossings:   thisWeek.flexCrossings,
+    flexPartialDays: thisWeek.flexPartialDays,
     daysWithData: thisWeek.daysWithData,
     windowDays: WINDOW,
     // Device-reported, full-history streaks (from the s= URL param written by
@@ -4941,6 +4977,8 @@ function calcAllDayFlexScores() {
     }
     // anchor carries to next day; legBest (mixed-touch partial) does NOT
     days[d].flexScore = Math.min(100, Math.round((completed + legBest) / 2 * 100));
+    days[d].flexCrossings = completed;   // full glucose<->fat crossings completed today
+    days[d].flexPartial   = legBest > 0; // touched mixed on the trailing, unfinished leg
   }
 }
 
