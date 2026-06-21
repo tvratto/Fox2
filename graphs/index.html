@@ -1737,7 +1737,7 @@ html, body {
   <div class="page">
     <div class="card-wrap" style="position:relative;">
       <canvas id="card-fuel" style="cursor:pointer;"></canvas>
-      <div id="dot-popup-fuel" style="display:none;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;">
+      <div id="dot-popup-fuel" style="display:none;position:fixed;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:999999;white-space:nowrap;">
         <div id="dot-popup-fuel-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div>
         <div id="dot-popup-fuel-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div>
       </div>
@@ -1783,7 +1783,7 @@ html, body {
     <div id="info-modal-title">Squad Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v4.41 · 2026-06-19 22:44 UTC</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v4.43 · 2026-06-21 23:19 UTC</span></div>
     <div class="info-section-title">Leaderboard</div>
     <div class="info-toggle-row">
       <div>
@@ -1875,7 +1875,7 @@ var sParam    = params.get('s') || '';
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v4.41 · 2026-06-19 22:44 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v4.43 · 2026-06-21 23:19 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
@@ -3328,26 +3328,6 @@ function wrapText(ctx, text, x, y, maxW, lineH) {
   return y;
 }
 
-// Simple frequency count for one tag: how many days in the given window
-// (insightsStart..totalDaysLocal-1, restricted to days that actually have
-// a measurement) carry this tag, out of how many measured days total.
-// Purely descriptive — "this happened on X of Y days you measured" — with
-// no comparison to score, since that comparison was confounded and easy
-// to misread as causal even when stated plainly.
-function computeTagFrequency(icon, insightsStart, totalDaysLocal) {
-  if (typeof DAYS === 'undefined') return { withTag: 0, measured: 0 };
-  var slotOffset = (typeof _slotOffset !== 'undefined') ? _slotOffset : 0;
-  var measured = 0, withTag = 0;
-  for (var d = insightsStart; d < totalDaysLocal; d++) {
-    var idx = d + slotOffset;
-    var day = DAYS[idx];
-    if (!day || !(day.score > 0)) continue;
-    measured++;
-    if (day.tags && day.tags.indexOf(icon) !== -1) withTag++;
-  }
-  return { withTag: withTag, measured: measured };
-}
-
 // Look up a tag's display name from its icon.
 function tagNameForIcon(icon) {
   for (var i = 0; i < ALL_TAGS.length; i++) {
@@ -3877,9 +3857,10 @@ function buildInsightsCard() {
     // Dots — tappable, pushed into window.ringHitboxes so the existing
     // popup mechanism (same one used for the 7-Day Summary rings) shows
     // this day's date, score, target-hit status, zone breakdown, and —
-    // when tags were logged that day — the tags themselves plus how many
-    // of the measured days in this 3-week window also carry each tag
-    // (see computeTagFrequency above).
+    // when tags were logged that day — the tags themselves plus the
+    // time(s) each was placed at on the Results page timeline (pulled
+    // from day.events). Frequency-across-days lives in the Tag Frequency
+    // card below instead of repeating it here.
     var slotOffset = (typeof _slotOffset !== 'undefined') ? _slotOffset : 0;
     var TAG_ICON_FS = 18;             // icon font size above each dot
     var TAG_ICON_GAP = 1;             // (unused now that only 1 icon shows, kept for reference)
@@ -3964,18 +3945,21 @@ function buildInsightsCard() {
           (hit ? 'Hit target' : 'Below target') + ' (' + targetAUC + ')</div>'
         : '';
 
-      // Tags logged this day, listed with a simple frequency count — how
-      // many of the measured days in this 3-week window also carry that
-      // tag. Purely descriptive, no comparison to score.
+      // Tags logged this day, listed with the time(s) each was placed at
+      // on the Results page timeline (frequency now lives in the Tag
+      // Frequency card below, so no need to repeat it here).
       var tagsLine = '';
       if (dayTags.length) {
+        var dayEvents = (daysEntry && Array.isArray(daysEntry.events)) ? daysEntry.events : [];
         var tagRows = dayTags.map(function(icon) {
           var nm = tagNameForIcon(icon);
-          var freq = computeTagFrequency(icon, insightsStart, totalDays);
-          var freqStr = freq.measured > 0
-            ? ' \u2014 ' + freq.withTag + ' of ' + freq.measured + ' days'
-            : '';
-          return '<div style="margin-top:2px;">' + icon + ' ' + nm + freqStr + '</div>';
+          var times = dayEvents
+            .filter(function(ev) { return ev.icon === icon; })
+            .map(function(ev) { return ev.minute; })
+            .sort(function(a, b) { return a - b; })
+            .map(function(m) { return minuteToTime(m); });
+          var timesStr = times.length ? (' \u2014 ' + times.join(', ')) : '';
+          return '<div style="margin-top:2px;">' + icon + ' ' + nm + timesStr + '</div>';
         }).join('');
         tagsLine = '<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.12);font-size:12px;color:rgba(255,255,255,0.65);">' + tagRows + '</div>';
       }
@@ -4845,10 +4829,18 @@ function computeCurrentStreak() {
 
 function computeSummaryStats() {
   var WINDOW = 7;
-  var thisWeekStart = Math.max(0, totalDays - WINDOW);
+  // Anchor the trailing window on the most recent day that actually has
+  // data, NOT on totalDays. The day array is Saturday-anchored and can
+  // run several days into the future past "today" (e.g. today=Sunday
+  // means 6 of the 21 slots are still-empty upcoming days) — using
+  // totalDays as the end of the window silently pulls those empty
+  // future days into the "past 7 days" average instead of real history.
+  var todayIdx = lastMeasuredDayIdx();
+  var thisWeekEnd = todayIdx + 1;
+  var thisWeekStart = Math.max(0, thisWeekEnd - WINDOW);
   var lastWeekStart = Math.max(0, thisWeekStart - WINDOW);
 
-  var thisWeek = computeWindowAverages(thisWeekStart, totalDays);
+  var thisWeek = computeWindowAverages(thisWeekStart, thisWeekEnd);
   var lastWeek = computeWindowAverages(lastWeekStart, thisWeekStart);
 
   return {
@@ -5249,15 +5241,19 @@ window.addEventListener('load', function() {
 
   function positionFuelPopup(dot) {
     var rect = destF.getBoundingClientRect();
-    var wrap = destF.parentElement.getBoundingClientRect();
     var logicalW = destF.width / graphScale;
     var cssScale  = rect.width / logicalW;
-    var dotCssX = dot.cx * cssScale + (rect.left - wrap.left);
-    var dotCssY = dot.cy * cssScale + (rect.top  - wrap.top);
+    // Viewport-space coordinates (not container-relative) since the popup
+    // is position:fixed now — it positions against the viewport, not
+    // against card-wrap.
+    var dotClientX = rect.left + dot.cx * cssScale;
+    var dotClientY = rect.top  + dot.cy * cssScale;
     var pw = popupF.offsetWidth || 90, ph = popupF.offsetHeight || 44;
     var GAP = 10;
-    var px = Math.max(4, Math.min(dotCssX - pw/2, wrap.width - pw - 4));
-    var py = Math.max(4, dotCssY - ph - GAP);
+    var px = Math.max(8, Math.min(dotClientX - pw/2, window.innerWidth - pw - 8));
+    var py = dotClientY - ph - GAP;
+    if (py < 90) py = dotClientY + GAP + 14; // flip below the dot if it'd land under the fixed header
+    if (py + ph > window.innerHeight - 90) py = window.innerHeight - ph - 90; // keep clear of bottom bar
     popupF.style.left = px + 'px';
     popupF.style.top  = py + 'px';
   }
@@ -5265,7 +5261,12 @@ window.addEventListener('load', function() {
   function showFuelPopup(dot) {
     popupFVal.textContent  = 'Level ' + Math.round(dot.val);
     popupFTime.textContent = fmtTime(dot.epoch);
-    popupF.style.cssText = 'display:block;position:absolute;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:10;white-space:nowrap;left:0;top:0;';
+    // position:fixed + very high z-index — position:absolute at z-index:10
+    // gets swallowed by the stacking context the #particles canvas
+    // (position:fixed; z-index:10) creates inside this horizontal
+    // scroll-snap shell. Same fix already applied to the Insights ring
+    // popup (tag-pattern-popup) for the identical symptom.
+    popupF.style.cssText = 'display:block;position:fixed;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:999999;white-space:nowrap;left:0;top:0;';
     void popupF.offsetWidth;
     positionFuelPopup(dot);
   }
