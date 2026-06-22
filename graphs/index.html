@@ -3563,7 +3563,8 @@ function buildInsightsCard() {
   var cx0 = gLeft + ringColW * 0 + ringColW / 2;
   var hasAvg = summaryStats.daysWithData > 0;
   var aucAvgRounded = Math.round(summaryStats.aucAvg);
-  var bandMax = aucBandMax(summaryStats.aucAvg);
+  var prevAucAvg = (aucAvgDelta !== null) ? (summaryStats.aucAvg - aucAvgDelta) : summaryStats.aucAvg;
+  var bandMax = aucBandMax(Math.max(summaryStats.aucAvg, prevAucAvg));
   var aucRingPct = hasAvg ? Math.max(0, Math.min(100, (summaryStats.aucAvg / bandMax) * 100)) : 0;
   var aucAvgDelta = summaryStats.deltas.aucAvg;
   var aucStandout = hasAvg && (aucAvgDelta !== null && aucAvgDelta > 0 &&
@@ -3571,7 +3572,7 @@ function buildInsightsCard() {
                       aucAvgDelta >= (timeInRangeDelta || 0));
   if (aucStandout) { ctx.save(); ctx.shadowColor = '#FFA500'; ctx.shadowBlur = 12; }
   var prevAucRingPct = (aucAvgDelta !== null && aucAvgDelta !== 0)
-    ? Math.max(0, Math.min(100, ((summaryStats.aucAvg - aucAvgDelta) / bandMax) * 100))
+    ? Math.max(0, Math.min(100, (prevAucAvg / bandMax) * 100))
     : null;
   drawRingWithDelta(ctx, cx0, ringCY, SUMMARY_RING_R, SUMMARY_RING_LW, aucRingPct, '#FFA500', prevAucRingPct);
   if (aucStandout) ctx.restore();
