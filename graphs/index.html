@@ -3563,10 +3563,10 @@ function buildInsightsCard() {
   var cx0 = gLeft + ringColW * 0 + ringColW / 2;
   var hasAvg = summaryStats.daysWithData > 0;
   var aucAvgRounded = Math.round(summaryStats.aucAvg);
+  var aucAvgDelta = summaryStats.deltas.aucAvg;
   var prevAucAvg = (aucAvgDelta !== null) ? (summaryStats.aucAvg - aucAvgDelta) : summaryStats.aucAvg;
   var bandMax = aucBandMax(Math.max(summaryStats.aucAvg, prevAucAvg));
   var aucRingPct = hasAvg ? Math.max(0, Math.min(100, (summaryStats.aucAvg / bandMax) * 100)) : 0;
-  var aucAvgDelta = summaryStats.deltas.aucAvg;
   var aucStandout = hasAvg && (aucAvgDelta !== null && aucAvgDelta > 0 &&
                       aucAvgDelta >= (summaryStats.deltas.flex || 0) &&
                       aucAvgDelta >= (timeInRangeDelta || 0));
@@ -4942,8 +4942,8 @@ function drawStackedRingWithDelta(ctx, cx, cy, r, lineWidth, mixPct, fatPct, pre
     var capY = cy + r * Math.sin(angle);
     ctx.save();
     ctx.beginPath();
-    ctx.moveTo(capX + (lineWidth/2)*Math.cos(angle), capY + (lineWidth/2)*Math.sin(angle));
-    ctx.arc(capX, capY, lineWidth/2, angle, angle+Math.PI, false);
+    ctx.moveTo(capX + lineWidth*0.72*Math.cos(angle), capY + lineWidth*0.72*Math.sin(angle));
+    ctx.arc(capX, capY, lineWidth*0.72, angle, angle+Math.PI, false);
     ctx.closePath();
     ctx.fillStyle = capColor;
     ctx.fill();
@@ -4954,8 +4954,8 @@ function drawStackedRingWithDelta(ctx, cx, cy, r, lineWidth, mixPct, fatPct, pre
     var capY = cy + r * Math.sin(angle);
     ctx.save();
     ctx.beginPath();
-    ctx.moveTo(capX + (lineWidth/2)*Math.cos(angle), capY + (lineWidth/2)*Math.sin(angle));
-    ctx.arc(capX, capY, lineWidth/2, angle, angle+Math.PI, true);
+    ctx.moveTo(capX + lineWidth*0.72*Math.cos(angle), capY + lineWidth*0.72*Math.sin(angle));
+    ctx.arc(capX, capY, lineWidth*0.72, angle, angle+Math.PI, true);
     ctx.closePath();
     ctx.fillStyle = capColor;
     ctx.fill();
@@ -4986,8 +4986,16 @@ function drawStackedRingWithDelta(ctx, cx, cy, r, lineWidth, mixPct, fatPct, pre
     ctx.arc(cx, cy, r, mixEndAngle, totEndAngle);
     ctx.strokeStyle = '#A855F7';
     ctx.stroke();
-    // Manually draw the round cap at the violet arc's end
-    drawCapForward(totEndAngle, '#A855F7');
+    // Natural-size round cap at the violet arc's end (lineWidth/2 = what lineCap:round produces).
+    // drawCapForward uses 0.72x which is oversized — use a plain filled circle instead.
+    var endCapX = cx + r * Math.cos(totEndAngle);
+    var endCapY = cy + r * Math.sin(totEndAngle);
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(endCapX, endCapY, lineWidth / 2, 0, Math.PI * 2);
+    ctx.fillStyle = '#A855F7';
+    ctx.fill();
+    ctx.restore();
   }
 
   // Delta treatment
@@ -5044,9 +5052,9 @@ function drawRingWithDelta(ctx, cx, cy, r, lineWidth, pct, color, prevPct, track
     var capY = cy + r * Math.sin(angle);
     ctx.save();
     ctx.beginPath();
-    ctx.moveTo(capX + (lineWidth / 2) * Math.cos(angle),
-               capY + (lineWidth / 2) * Math.sin(angle));
-    ctx.arc(capX, capY, lineWidth / 2, angle, angle + Math.PI, false);
+    ctx.moveTo(capX + lineWidth * 0.72 * Math.cos(angle),
+               capY + lineWidth * 0.72 * Math.sin(angle));
+    ctx.arc(capX, capY, lineWidth * 0.72, angle, angle + Math.PI, false);
     ctx.closePath();
     ctx.fillStyle = capColor;
     ctx.fill();
@@ -5056,14 +5064,16 @@ function drawRingWithDelta(ctx, cx, cy, r, lineWidth, pct, color, prevPct, track
   // Backward-facing cap: curved edge faces opposite the arc direction.
   // arc from angle → angle+π counterclockwise passes through angle-π/2.
   // Used for the "dropped" indicator — cap faces back toward the deficit.
+  // Backward-facing filled semicircle — flat edge perpendicular to arc travel,
+  // curved bump faces counterclockwise (toward the deficit).
   function drawCapBackward(angle, capColor) {
     var capX = cx + r * Math.cos(angle);
     var capY = cy + r * Math.sin(angle);
     ctx.save();
     ctx.beginPath();
-    ctx.moveTo(capX + (lineWidth / 2) * Math.cos(angle),
-               capY + (lineWidth / 2) * Math.sin(angle));
-    ctx.arc(capX, capY, lineWidth / 2, angle, angle + Math.PI, true);
+    ctx.moveTo(capX + lineWidth * 0.72 * Math.cos(angle),
+               capY + lineWidth * 0.72 * Math.sin(angle));
+    ctx.arc(capX, capY, lineWidth * 0.72, angle, angle + Math.PI, true);
     ctx.closePath();
     ctx.fillStyle = capColor;
     ctx.fill();
