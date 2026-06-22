@@ -3551,9 +3551,7 @@ function buildInsightsCard() {
   // ── 3 rings: AUC, Metabolic Flexibility, and a double ring for Time in Range ──
   var ringColW = gW / 3;
   var ringCY = curY + SUMMARY_RING_GLOW_PAD + SUMMARY_RING_R;
-  var INNER_RING_GAP = 3; // px gap between the two strokes of the double ring
-  var innerRingR = SUMMARY_RING_R - SUMMARY_RING_LW - INNER_RING_GAP;
-  var innerRingLW = Math.max(5, SUMMARY_RING_LW - 3);
+  // innerRingR/innerRingLW removed — ring 3 is now a single stacked arc
 
   window.ringHitboxes = [];
 
@@ -3572,7 +3570,10 @@ function buildInsightsCard() {
                       aucAvgDelta >= (summaryStats.deltas.flex || 0) &&
                       aucAvgDelta >= (timeInRangeDelta || 0));
   if (aucStandout) { ctx.save(); ctx.shadowColor = '#FFA500'; ctx.shadowBlur = 12; }
-  drawRing(ctx, cx0, ringCY, SUMMARY_RING_R, SUMMARY_RING_LW, aucRingPct, '#FFA500');
+  var prevAucRingPct = (aucAvgDelta !== null && aucAvgDelta !== 0)
+    ? Math.max(0, Math.min(100, ((summaryStats.aucAvg - aucAvgDelta) / bandMax) * 100))
+    : null;
+  drawRingWithDelta(ctx, cx0, ringCY, SUMMARY_RING_R, SUMMARY_RING_LW, aucRingPct, '#FFA500', prevAucRingPct);
   if (aucStandout) ctx.restore();
   ctx.fillStyle = hasAvg ? '#fff' : 'rgba(255,255,255,0.35)';
   // Bump the number up a size when it's only 1-2 digits (<100) so it fills
@@ -3621,7 +3622,10 @@ function buildInsightsCard() {
                        summaryStats.deltas.flex >= (summaryStats.deltas.auc || 0) &&
                        summaryStats.deltas.flex >= (timeInRangeDelta || 0));
   if (flexStandout) { ctx.save(); ctx.shadowColor = '#3B82F6'; ctx.shadowBlur = 12; }
-  drawRing(ctx, cx1, ringCY, SUMMARY_RING_R, SUMMARY_RING_LW, summaryStats.flexPct, '#3B82F6');
+  var prevFlexPct = (summaryStats.deltas.flex !== null && summaryStats.deltas.flex !== 0)
+    ? summaryStats.flexPct - summaryStats.deltas.flex
+    : null;
+  drawRingWithDelta(ctx, cx1, ringCY, SUMMARY_RING_R, SUMMARY_RING_LW, summaryStats.flexPct, '#3B82F6', prevFlexPct);
   if (flexStandout) ctx.restore();
   ctx.fillStyle = '#fff';
   ctx.font = 'bold 20px -apple-system,sans-serif';
@@ -3648,25 +3652,27 @@ function buildInsightsCard() {
       : 'Metabolic Flexibility measures how completely you switched between fuel zones this week. A full crossing from glucose to fat (or fat to glucose) earns full credit; reaching mixed zone earns partial credit. A round trip in both directions scores 100%.'
   });
 
-  // -- Ring 3: Time in Range (double ring — outer Mixed, inner Fat) --
+  // -- Ring 3: Time in Range (single stacked arc — green=Mixed, violet=Fat) --
   var cx2 = gLeft + ringColW * 2 + ringColW / 2;
   var tirStandout = (timeInRangeDelta !== null && timeInRangeDelta > 0 &&
                       timeInRangeDelta >= (summaryStats.deltas.auc || 0) &&
                       timeInRangeDelta >= (summaryStats.deltas.flex || 0));
+  var prevTirPct = (timeInRangeDelta !== null) ? (timeInRangePct - timeInRangeDelta) : null;
   if (tirStandout) { ctx.save(); ctx.shadowColor = '#A855F7'; ctx.shadowBlur = 12; }
-  drawRing(ctx, cx2, ringCY, SUMMARY_RING_R, SUMMARY_RING_LW, summaryStats.mixPct, '#4ADE80');
-  drawRing(ctx, cx2, ringCY, innerRingR, innerRingLW, summaryStats.fatPct, '#A855F7');
+  drawStackedRingWithDelta(ctx, cx2, ringCY, SUMMARY_RING_R, SUMMARY_RING_LW,
+                           summaryStats.mixPct, summaryStats.fatPct, prevTirPct);
   if (tirStandout) ctx.restore();
 
+  // Center label: total % large, M/F split small below in zone colors
   ctx.fillStyle = '#fff';
-  ctx.font = 'bold 18px -apple-system,sans-serif';
+  ctx.font = 'bold 20px -apple-system,sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText(timeInRangePct + '%', cx2, ringCY - 7);
-  ctx.font = '9px -apple-system,sans-serif';
+  ctx.fillText(timeInRangePct + '%', cx2, ringCY - 6);
+  ctx.font = 'bold 9px -apple-system,sans-serif';
   ctx.fillStyle = '#4ADE80';
-  ctx.fillText('M ' + summaryStats.mixPct + '%', cx2 - 16, ringCY + 9);
+  ctx.fillText('M ' + summaryStats.mixPct + '%', cx2 - 14, ringCY + 8);
   ctx.fillStyle = '#A855F7';
-  ctx.fillText('F ' + summaryStats.fatPct + '%', cx2 + 16, ringCY + 9);
+  ctx.fillText('F ' + summaryStats.fatPct + '%', cx2 + 14, ringCY + 8);
 
   ctx.fillStyle = tirStandout ? '#A855F7' : 'rgba(255,255,255,0.55)';
   ctx.font = 'bold 10px -apple-system,sans-serif';
@@ -4915,6 +4921,86 @@ function aucBandMax(avg) {
   return 180;
 }
 
+// Single ring with green (Mixed) and violet (Fat) arcs stacked sequentially.
+// mixPct fills first, then fatPct continues from there. Total fill = mixPct+fatPct.
+// prevTotalPct: previous week's total off-glucose %, for the delta cap (null = no data).
+function drawStackedRingWithDelta(ctx, cx, cy, r, lineWidth, mixPct, fatPct, prevTotalPct, trackColor) {
+  var startAngle  = -Math.PI / 2;
+  var totalPct    = Math.max(0, Math.min(100, mixPct + fatPct));
+  var cMix        = Math.max(0, Math.min(totalPct, mixPct));
+  var cFat        = Math.max(0, totalPct - cMix);
+  var mixEndAngle = startAngle + (Math.PI * 2) * cMix  / 100;
+  var totEndAngle = startAngle + (Math.PI * 2) * totalPct / 100;
+  var hasDelta    = (prevTotalPct !== null && prevTotalPct !== undefined && prevTotalPct !== totalPct);
+  var clampedPrev = hasDelta ? Math.max(0, Math.min(100, prevTotalPct)) : 0;
+  var prevAngle   = startAngle + (Math.PI * 2) * clampedPrev / 100;
+  var improved    = hasDelta && totalPct > prevTotalPct;
+
+  function drawCapForward(angle, capColor) {
+    var capX = cx + r * Math.cos(angle);
+    var capY = cy + r * Math.sin(angle);
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(capX + (lineWidth/2)*Math.cos(angle), capY + (lineWidth/2)*Math.sin(angle));
+    ctx.arc(capX, capY, lineWidth/2, angle, angle+Math.PI, false);
+    ctx.closePath();
+    ctx.fillStyle = capColor;
+    ctx.fill();
+    ctx.restore();
+  }
+  function drawCapBackward(angle, capColor) {
+    var capX = cx + r * Math.cos(angle);
+    var capY = cy + r * Math.sin(angle);
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(capX + (lineWidth/2)*Math.cos(angle), capY + (lineWidth/2)*Math.sin(angle));
+    ctx.arc(capX, capY, lineWidth/2, angle, angle+Math.PI, true);
+    ctx.closePath();
+    ctx.fillStyle = capColor;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  ctx.save();
+  ctx.lineCap   = 'round';
+  ctx.lineWidth = lineWidth;
+
+  // Track
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI*2);
+  ctx.strokeStyle = trackColor || 'rgba(255,255,255,0.08)';
+  ctx.stroke();
+
+  // Green (Mixed) arc — 0 → mixPct
+  if (cMix > 0) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, startAngle, mixEndAngle);
+    ctx.strokeStyle = '#4ADE80';
+    ctx.stroke();
+  }
+  // Violet (Fat) arc — mixPct → total. lineCap butt at start hides double-cap at transition.
+  if (cFat > 0) {
+    ctx.lineCap = 'butt';
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, mixEndAngle, totEndAngle);
+    ctx.strokeStyle = '#A855F7';
+    ctx.stroke();
+    // Manually draw the round cap at the violet arc's end
+    drawCapForward(totEndAngle, '#A855F7');
+  }
+
+  // Delta treatment
+  if (improved) {
+    // Green forward cap at the current fill tip
+    drawCapForward(totEndAngle, 'rgba(74,222,128,0.9)');
+  } else if (hasDelta && clampedPrev > 0) {
+    // Backward red cap at previous week's position
+    drawCapBackward(prevAngle, 'rgba(248,113,113,0.85)');
+  }
+
+  ctx.restore();
+}
+
 function drawRing(ctx, cx, cy, r, lineWidth, pct, color, trackColor) {
   var startAngle = -Math.PI / 2;
   var endAngle = startAngle + (Math.PI * 2) * Math.max(0, Math.min(100, pct)) / 100;
@@ -4936,6 +5022,103 @@ function drawRing(ctx, cx, cy, r, lineWidth, pct, color, trackColor) {
     ctx.lineWidth = lineWidth;
     ctx.stroke();
   }
+}
+
+// Draw a radial tick mark on a ring at prevPct position.
+// Green if current is ahead of previous, muted red if behind.
+// Extends slightly past the track edges for visibility.
+function drawRingWithDelta(ctx, cx, cy, r, lineWidth, pct, color, prevPct, trackColor) {
+  var startAngle  = -Math.PI / 2;
+  var clampedPct  = Math.max(0, Math.min(100, pct));
+  var endAngle    = startAngle + (Math.PI * 2) * clampedPct / 100;
+  var hasDelta    = (prevPct !== null && prevPct !== undefined && prevPct !== pct);
+  var clampedPrev = hasDelta ? Math.max(0, Math.min(100, prevPct)) : 0;
+  var prevAngle   = startAngle + (Math.PI * 2) * clampedPrev / 100;
+  var improved    = hasDelta && pct > prevPct;
+
+  // Forward-facing cap: curved edge faces in the direction of arc travel (clockwise).
+  // arc from angle → angle+π clockwise passes through the forward tangent (angle+π/2).
+  function drawCapForward(angle, capColor) {
+    var capX = cx + r * Math.cos(angle);
+    var capY = cy + r * Math.sin(angle);
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(capX + (lineWidth / 2) * Math.cos(angle),
+               capY + (lineWidth / 2) * Math.sin(angle));
+    ctx.arc(capX, capY, lineWidth / 2, angle, angle + Math.PI, false);
+    ctx.closePath();
+    ctx.fillStyle = capColor;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Backward-facing cap: curved edge faces opposite the arc direction.
+  // arc from angle → angle+π counterclockwise passes through angle-π/2.
+  // Used for the "dropped" indicator — cap faces back toward the deficit.
+  function drawCapBackward(angle, capColor) {
+    var capX = cx + r * Math.cos(angle);
+    var capY = cy + r * Math.sin(angle);
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(capX + (lineWidth / 2) * Math.cos(angle),
+               capY + (lineWidth / 2) * Math.sin(angle));
+    ctx.arc(capX, capY, lineWidth / 2, angle, angle + Math.PI, true);
+    ctx.closePath();
+    ctx.fillStyle = capColor;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Returns a darkened version of a 7-char hex color (e.g. '#FFA500').
+  function darkenHex(hex, factor) {
+    var r2 = Math.round(parseInt(hex.slice(1,3),16) * factor);
+    var g2 = Math.round(parseInt(hex.slice(3,5),16) * factor);
+    var b2 = Math.round(parseInt(hex.slice(5,7),16) * factor);
+    return 'rgb(' + r2 + ',' + g2 + ',' + b2 + ')';
+  }
+
+  ctx.save();
+  ctx.lineCap   = 'round';
+  ctx.lineWidth = lineWidth;
+
+  // Track
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.strokeStyle = trackColor || 'rgba(255,255,255,0.08)';
+  ctx.stroke();
+
+  if (improved) {
+    // Darker extension from 0 → current underneath, then full arc from 0 → prev on top.
+    // Green forward cap at the tip of the extension shows this week's position.
+    if (clampedPct > 0) {
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, startAngle, endAngle);
+      ctx.strokeStyle = darkenHex(color, 0.45);
+      ctx.stroke();
+    }
+    if (clampedPrev > 0) {
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, startAngle, prevAngle);
+      ctx.strokeStyle = color;
+      ctx.stroke();
+    }
+    // Green cap at end of darker extension (current week's tip)
+    if (clampedPct > 0) drawCapForward(endAngle, 'rgba(74,222,128,0.9)');
+  } else {
+    // Normal fill
+    if (clampedPct > 0) {
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, startAngle, endAngle);
+      ctx.strokeStyle = color;
+      ctx.stroke();
+    }
+    // Backward-facing red cap at previous position — points toward the deficit
+    if (hasDelta && !improved && clampedPrev > 0) {
+      drawCapBackward(prevAngle, 'rgba(248,113,113,0.85)');
+    }
+  }
+
+  ctx.restore();
 }
 
 
