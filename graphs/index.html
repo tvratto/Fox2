@@ -3608,10 +3608,10 @@ function buildInsightsCard() {
       var n = summaryStats.daysWithData;
       var listStr = summaryStats.aucVals.map(function(v) { return Math.round(v); }).join(', ');
       if (n < 2) {
-        return 'Your 7-day average is <b style="color:#FFA500;">' + aucAvgRounded + '</b>, from the only day you measured this week (score: ' + listStr + '). Not compared against any target — just how you\u2019ve been measuring lately.';
+        return 'Your 7-day average is <b style="color:#FFA500;">' + aucAvgRounded + '</b>, from the only day you measured this week (score: ' + listStr + ').';
       }
       var stdStr = Math.round(summaryStats.aucStd);
-      return 'Your 7-day average is <b style="color:#FFA500;">' + aucAvgRounded + ' \u00b1 ' + stdStr + '</b> \u2014 the mean and spread of your daily AUC across the ' + n + ' days you measured this week (' + listStr + '). Not compared against any target, just how consistent your measuring has been.';
+      return 'Your 7-day average is <b style="color:#FFA500;">' + aucAvgRounded + ' \u00b1 ' + stdStr + '</b> \u2014 the mean and spread of your daily AUC across the ' + n + ' days you measured this week (' + listStr + ').';
     })()
   });
 
@@ -3644,7 +3644,7 @@ function buildInsightsCard() {
          (summaryStats.flexPartialDays > 0
            ? (', plus a partial mixed-zone credit on ' + summaryStats.flexPartialDays + ' day' + (summaryStats.flexPartialDays === 1 ? '' : 's') + ' that didn\u2019t finish the crossing')
            : '') +
-         '. Each full crossing between zones is worth 1.0 point (capped at 2.0/day = 100%); touching mixed without finishing the crossing earns 0.5.')
+         '.')
       : 'Metabolic Flexibility measures how completely you switched between fuel zones this week. A full crossing from glucose to fat (or fat to glucose) earns full credit; reaching mixed zone earns partial credit. A round trip in both directions scores 100%.'
   });
 
