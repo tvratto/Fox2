@@ -3681,8 +3681,8 @@ function buildInsightsCard() {
     x: cx2 - ringColW / 2, y: hb2Top, w: ringColW, h: hb2Bottom - hb2Top,
     title: 'TIME IN RANGE',
     text: (summaryStats.daysWithData > 0)
-      ? ('This week you spent <b style="color:#4ADE80;">' + summaryStats.mixPct + '%</b> of your measured time in the Mixed zone and <b style="color:#A855F7;">' + summaryStats.fatPct + '%</b> in the Fat zone \u2014 ' + timeInRangePct + '% total off pure glucose. The outer ring tracks Mixed (3\u20135ppm), the inner ring tracks Fat (>5ppm).')
-      : 'Time in Range is the share of your measured time this week spent off pure glucose — in the Mixed zone (3\u20135ppm, green) or Fat zone (>5ppm, violet), where your body is drawing on stored fuel. The outer ring tracks Mixed, the inner ring tracks Fat; together they show how much of your day moved beyond baseline glucose burning.'
+      ? ('This week you spent <b style="color:#4ADE80;">' + summaryStats.mixPct + '%</b> of your measured time in the Mixed zone and <b style="color:#A855F7;">' + summaryStats.fatPct + '%</b> in the Fat zone \u2014 ' + timeInRangePct + '% total off pure glucose.')
+      : 'Time in Range is the share of your measured time this week spent off pure glucose — in the Mixed zone (3\u20135ppm, green) or Fat zone (>5ppm, violet), where your body is drawing on stored fuel.'
   });
 
   curY += SUMMARY_RING_SECTION_H + SUMMARY_GAP;
