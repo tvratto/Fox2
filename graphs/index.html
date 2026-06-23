@@ -1783,7 +1783,7 @@ html, body {
     <div id="info-modal-title">Squad Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic</span><span class="info-value" id="info-clinic-id">—</span></div>
-    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v4.43 · 2026-06-21 23:19 UTC</span></div>
+    <div class="info-row"><span class="info-label">Version</span><span class="info-value" id="info-version">v4.44 · 2026-06-22 23:19 UTC</span></div>
     <div class="info-section-title">Leaderboard</div>
     <div class="info-toggle-row">
       <div>
@@ -1875,7 +1875,7 @@ var sParam    = params.get('s') || '';
   var setVal = function(elId, val){ var e=document.getElementById(elId); if(e) e.textContent=val; };
   setVal('info-device-id', id);
   setVal('info-clinic-id', c);
-  setVal('info-version', 'v4.43 · 2026-06-21 23:19 UTC' + (v !== '—' ? ' · fw:' + v : ''));
+  setVal('info-version', 'v4.44 · 2026-06-22 23:19 UTC' + (v !== '—' ? ' · fw:' + v : ''));
   setVal('info-payload', src.toUpperCase());
   setVal('info-days', days ? days + ' days' : '—');
 })();
@@ -4937,30 +4937,7 @@ function drawStackedRingWithDelta(ctx, cx, cy, r, lineWidth, mixPct, fatPct, pre
   var prevAngle   = startAngle + (Math.PI * 2) * clampedPrev / 100;
   var improved    = hasDelta && totalPct > prevTotalPct;
 
-  function drawCapForward(angle, capColor) {
-    var capX = cx + r * Math.cos(angle);
-    var capY = cy + r * Math.sin(angle);
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(capX + lineWidth*0.72*Math.cos(angle), capY + lineWidth*0.72*Math.sin(angle));
-    ctx.arc(capX, capY, lineWidth*0.72, angle, angle+Math.PI, false);
-    ctx.closePath();
-    ctx.fillStyle = capColor;
-    ctx.fill();
-    ctx.restore();
-  }
-  function drawCapBackward(angle, capColor) {
-    var capX = cx + r * Math.cos(angle);
-    var capY = cy + r * Math.sin(angle);
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(capX + lineWidth*0.72*Math.cos(angle), capY + lineWidth*0.72*Math.sin(angle));
-    ctx.arc(capX, capY, lineWidth*0.72, angle, angle+Math.PI, true);
-    ctx.closePath();
-    ctx.fillStyle = capColor;
-    ctx.fill();
-    ctx.restore();
-  }
+
 
   ctx.save();
   ctx.lineCap   = 'round';
@@ -4998,13 +4975,16 @@ function drawStackedRingWithDelta(ctx, cx, cy, r, lineWidth, mixPct, fatPct, pre
     ctx.restore();
   }
 
-  // Delta treatment
-  if (improved) {
-    // Green forward cap at the current fill tip
-    drawCapForward(totEndAngle, 'rgba(74,222,128,0.9)');
-  } else if (hasDelta && clampedPrev > 0) {
-    // Backward red cap at previous week's position
-    drawCapBackward(prevAngle, 'rgba(248,113,113,0.85)');
+  // Dot at last week's position
+  if (hasDelta && clampedPrev > 0) {
+    var dotX = cx + r * Math.cos(prevAngle);
+    var dotY = cy + r * Math.sin(prevAngle);
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(dotX, dotY, lineWidth * 0.4, 0, Math.PI * 2);
+    ctx.fillStyle = improved ? '#4ADE80' : '#f87171';
+    ctx.fill();
+    ctx.restore();
   }
 
   ctx.restore();
@@ -5033,60 +5013,13 @@ function drawRing(ctx, cx, cy, r, lineWidth, pct, color, trackColor) {
   }
 }
 
-// Draw a radial tick mark on a ring at prevPct position.
-// Green if current is ahead of previous, muted red if behind.
-// Extends slightly past the track edges for visibility.
+// Ring with a small dot on the track marking last week's position.
+// Green dot = you've passed it (improved). Red dot = you haven't reached it (dropped).
 function drawRingWithDelta(ctx, cx, cy, r, lineWidth, pct, color, prevPct, trackColor) {
-  var startAngle  = -Math.PI / 2;
-  var clampedPct  = Math.max(0, Math.min(100, pct));
-  var endAngle    = startAngle + (Math.PI * 2) * clampedPct / 100;
-  var hasDelta    = (prevPct !== null && prevPct !== undefined && prevPct !== pct);
-  var clampedPrev = hasDelta ? Math.max(0, Math.min(100, prevPct)) : 0;
-  var prevAngle   = startAngle + (Math.PI * 2) * clampedPrev / 100;
-  var improved    = hasDelta && pct > prevPct;
-
-  // Forward-facing cap: curved edge faces in the direction of arc travel (clockwise).
-  // arc from angle → angle+π clockwise passes through the forward tangent (angle+π/2).
-  function drawCapForward(angle, capColor) {
-    var capX = cx + r * Math.cos(angle);
-    var capY = cy + r * Math.sin(angle);
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(capX + lineWidth * 0.72 * Math.cos(angle),
-               capY + lineWidth * 0.72 * Math.sin(angle));
-    ctx.arc(capX, capY, lineWidth * 0.72, angle, angle + Math.PI, false);
-    ctx.closePath();
-    ctx.fillStyle = capColor;
-    ctx.fill();
-    ctx.restore();
-  }
-
-  // Backward-facing cap: curved edge faces opposite the arc direction.
-  // arc from angle → angle+π counterclockwise passes through angle-π/2.
-  // Used for the "dropped" indicator — cap faces back toward the deficit.
-  // Backward-facing filled semicircle — flat edge perpendicular to arc travel,
-  // curved bump faces counterclockwise (toward the deficit).
-  function drawCapBackward(angle, capColor) {
-    var capX = cx + r * Math.cos(angle);
-    var capY = cy + r * Math.sin(angle);
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(capX + lineWidth * 0.72 * Math.cos(angle),
-               capY + lineWidth * 0.72 * Math.sin(angle));
-    ctx.arc(capX, capY, lineWidth * 0.72, angle, angle + Math.PI, true);
-    ctx.closePath();
-    ctx.fillStyle = capColor;
-    ctx.fill();
-    ctx.restore();
-  }
-
-  // Returns a darkened version of a 7-char hex color (e.g. '#FFA500').
-  function darkenHex(hex, factor) {
-    var r2 = Math.round(parseInt(hex.slice(1,3),16) * factor);
-    var g2 = Math.round(parseInt(hex.slice(3,5),16) * factor);
-    var b2 = Math.round(parseInt(hex.slice(5,7),16) * factor);
-    return 'rgb(' + r2 + ',' + g2 + ',' + b2 + ')';
-  }
+  var startAngle = -Math.PI / 2;
+  var clampedPct = Math.max(0, Math.min(100, pct));
+  var endAngle   = startAngle + (Math.PI * 2) * clampedPct / 100;
+  var hasDelta   = (prevPct !== null && prevPct !== undefined && prevPct !== pct);
 
   ctx.save();
   ctx.lineCap   = 'round';
@@ -5098,35 +5031,27 @@ function drawRingWithDelta(ctx, cx, cy, r, lineWidth, pct, color, prevPct, track
   ctx.strokeStyle = trackColor || 'rgba(255,255,255,0.08)';
   ctx.stroke();
 
-  if (improved) {
-    // Darker extension from 0 → current underneath, then full arc from 0 → prev on top.
-    // Green forward cap at the tip of the extension shows this week's position.
-    if (clampedPct > 0) {
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, startAngle, endAngle);
-      ctx.strokeStyle = darkenHex(color, 0.45);
-      ctx.stroke();
-    }
-    if (clampedPrev > 0) {
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, startAngle, prevAngle);
-      ctx.strokeStyle = color;
-      ctx.stroke();
-    }
-    // Green cap at end of darker extension (current week's tip)
-    if (clampedPct > 0) drawCapForward(endAngle, 'rgba(74,222,128,0.9)');
-  } else {
-    // Normal fill
-    if (clampedPct > 0) {
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, startAngle, endAngle);
-      ctx.strokeStyle = color;
-      ctx.stroke();
-    }
-    // Backward-facing red cap at previous position — points toward the deficit
-    if (hasDelta && !improved && clampedPrev > 0) {
-      drawCapBackward(prevAngle, 'rgba(248,113,113,0.85)');
-    }
+  // Fill
+  if (clampedPct > 0) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, startAngle, endAngle);
+    ctx.strokeStyle = color;
+    ctx.stroke();
+  }
+
+  // Dot at last week's position
+  if (hasDelta) {
+    var clampedPrev = Math.max(0, Math.min(100, prevPct));
+    var prevAngle   = startAngle + (Math.PI * 2) * clampedPrev / 100;
+    var improved    = pct > prevPct;
+    var dotX = cx + r * Math.cos(prevAngle);
+    var dotY = cy + r * Math.sin(prevAngle);
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(dotX, dotY, lineWidth * 0.4, 0, Math.PI * 2);
+    ctx.fillStyle = improved ? '#4ADE80' : '#f87171';
+    ctx.fill();
+    ctx.restore();
   }
 
   ctx.restore();
