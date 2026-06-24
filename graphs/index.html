@@ -3886,9 +3886,17 @@ function buildInsightsCard() {
     var slotOffset = (typeof _slotOffset !== 'undefined') ? _slotOffset : 0;
     var TAG_ICON_FS = 18;             // icon font size above each dot
     var TAG_ICON_GAP = 1;             // (unused now that only 1 icon shows, kept for reference)
-    var TAG_ICON_MAX = 1;             // show only the first tag logged that day; rest fold into "+N"
+    var TAG_ICON_MAX = 1;             // show only the rarest tag logged that day; rest fold into "+N"
     var TAG_ICON_OVERFLOW_FS = 9;     // "+N" badge font size — smaller than the icon itself
     var TAG_ICON_OVERFLOW_GAP = 2;    // gap between the icon and the "+N" badge
+
+    // Build a count lookup for sorting tags by rarity. Tags not in tagFreq.items
+    // (count < TAG_FREQ_MIN_COUNT, i.e. appeared only once) get count 0 — rarest.
+    var tagCountMap = {};
+    for (var tci = 0; tci < tagFreq.items.length; tci++) {
+      tagCountMap[tagFreq.items[tci].icon] = tagFreq.items[tci].count;
+    }
+
     for (var wd = 0; wd < TREND_DAYS_PER_WEEK; wd++) {
       var dIdx = weekStartIdx + wd;
       if (dIdx < 0 || dIdx >= totalDays || days[dIdx].vals.length === 0) continue;
@@ -3910,10 +3918,14 @@ function buildInsightsCard() {
       if (daysEntry && daysEntry.tags && daysEntry.tags.length) {
         // Drop the note icon — it's not a behavior tag, just free text.
         dayTags = daysEntry.tags.filter(function(t) { return t !== '\u270F\uFE0F'; });
+        // Keep only tags that meet TAG_FREQ_MIN_COUNT (appear in tagCountMap),
+        // then sort ascending so the rarest qualifying tag comes first.
+        dayTags = dayTags.filter(function(t) { return tagCountMap[t] !== undefined; })
+                         .sort(function(a, b) { return tagCountMap[a] - tagCountMap[b]; });
       }
 
       if (dayTags.length) {
-        var shown = dayTags.slice(0, TAG_ICON_MAX); // first tag logged that day
+        var shown = dayTags.slice(0, TAG_ICON_MAX); // rarest tag logged that day
         var overflow = dayTags.length - shown.length;
         // Single icon just above the dot (and above the line if the dot
         // sits high in its band), clamped so it doesn't poke into the
