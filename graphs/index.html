@@ -3913,20 +3913,21 @@ function buildInsightsCard() {
 
       // Tags for this day, looked up via the DAYS[] array (which carries
       // tags/notes), mapped from this payload index through _slotOffset.
-      var dayTags = [];
+      // dayTagsOriginal: time-ordered, for the popup list.
+      // dayTagsByRarity: filtered to min-count threshold + sorted rarest-first, for the icon.
+      var dayTagsOriginal = [];
+      var dayTagsByRarity = [];
       var daysEntry = (typeof DAYS !== 'undefined') ? DAYS[dIdx + slotOffset] : null;
       if (daysEntry && daysEntry.tags && daysEntry.tags.length) {
-        // Drop the note icon — it's not a behavior tag, just free text.
-        dayTags = daysEntry.tags.filter(function(t) { return t !== '\u270F\uFE0F'; });
-        // Keep only tags that meet TAG_FREQ_MIN_COUNT (appear in tagCountMap),
-        // then sort ascending so the rarest qualifying tag comes first.
-        dayTags = dayTags.filter(function(t) { return tagCountMap[t] !== undefined; })
-                         .sort(function(a, b) { return tagCountMap[a] - tagCountMap[b]; });
+        dayTagsOriginal = daysEntry.tags.filter(function(t) { return t !== '\u270F\uFE0F'; });
+        dayTagsByRarity = dayTagsOriginal
+          .filter(function(t) { return tagCountMap[t] !== undefined; })
+          .sort(function(a, b) { return tagCountMap[a] - tagCountMap[b]; });
       }
 
-      if (dayTags.length) {
-        var shown = dayTags.slice(0, TAG_ICON_MAX); // rarest tag logged that day
-        var overflow = dayTags.length - shown.length;
+      if (dayTagsByRarity.length) {
+        var shown = dayTagsByRarity.slice(0, TAG_ICON_MAX); // rarest qualifying tag
+        var overflow = dayTagsByRarity.length - shown.length;
         // Single icon just above the dot (and above the line if the dot
         // sits high in its band), clamped so it doesn't poke into the
         // section title above.
@@ -3983,9 +3984,17 @@ function buildInsightsCard() {
       // on the Results page timeline (frequency now lives in the Tag
       // Frequency card below, so no need to repeat it here).
       var tagsLine = '';
-      if (dayTags.length) {
+      if (dayTagsOriginal.length) {
         var dayEvents = (daysEntry && Array.isArray(daysEntry.events)) ? daysEntry.events : [];
-        var tagRows = dayTags.map(function(icon) {
+        // Sort tags by their earliest logged event time so popup list is chronological.
+        var sortedTagsForPopup = dayTagsOriginal.slice().sort(function(a, b) {
+          var aMin = dayEvents.filter(function(ev) { return ev.icon === a; })
+                              .reduce(function(mn, ev) { return Math.min(mn, ev.minute); }, Infinity);
+          var bMin = dayEvents.filter(function(ev) { return ev.icon === b; })
+                              .reduce(function(mn, ev) { return Math.min(mn, ev.minute); }, Infinity);
+          return aMin - bMin;
+        });
+        var tagRows = sortedTagsForPopup.map(function(icon) {
           var nm = tagNameForIcon(icon);
           var times = dayEvents
             .filter(function(ev) { return ev.icon === icon; })
@@ -6498,6 +6507,8 @@ function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
       const s0=samples[run.from],sN=samples[run.to];
       const sub=subsample(samples.slice(run.from,run.to+1),5);
       const pts=sub.map(s=>({x:relToX(s.rel),y:gy(s.v)}));
+      // Single-sample runs produce a zero-width fill — skip rather than crash on pts[1].
+      if(pts.length<2) return;
       ctx.fillStyle=zoneFill[run.zone];
       ctx.beginPath();
       ctx.moveTo(pts[0].x,gBot);
