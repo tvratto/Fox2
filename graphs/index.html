@@ -7755,7 +7755,7 @@ function initDayGraphPopup(){
   function fmtDayGraphTime(epoch, minute){
     if(epoch!=null && !isNaN(epoch)){
       const d=new Date(epoch*1000);
-      let h=d.getUTCHours(), m=d.getUTCMinutes();
+      let h=d.getHours(), m=d.getMinutes();
       const ampm=h>=12?'pm':'am'; h=h%12||12;
       return h+':'+(m<10?'0'+m:String(m))+ampm;
     }
