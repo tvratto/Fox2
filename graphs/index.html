@@ -5471,7 +5471,8 @@ function handleBottomShare() {
 
 // Export every stored reading for the device in this page's `id` parameter,
 // with the matching stored daily AUC repeated beside each measurement.
-// AUC-only dates are included too, so the export never drops a daily score.
+// AUC-only dates are also retained in that file, and a second compact file
+// contains one row per stored daily AUC.
 function exportUserCsv() {
   var deviceId = params.get('id') || '';
   var button = document.getElementById('bottom-export');
@@ -5537,12 +5538,12 @@ function exportUserCsv() {
   Promise.all([
     fetchAll(
       'readings',
-      'device_id,patient_id,clinic_id,reading_ts,ppm,target_auc,payload_ver',
+      'device_id,patient_id,clinic_id,reading_ts,ppm',
       'reading_ts'
     ),
     fetchAll(
       'daily_scores',
-      'device_id,patient_id,clinic_id,day_date,auc_score,target_auc,payload_ver',
+      'device_id,patient_id,clinic_id,day_date,auc_score',
       'day_date'
     )
   ]).then(function(results) {
@@ -5560,8 +5561,7 @@ function exportUserCsv() {
 
     var columns = [
       'row_type', 'device_id', 'patient_id', 'clinic_id',
-      'reading_timestamp', 'day_date', 'ppm', 'daily_auc',
-      'target_auc', 'reading_payload_version', 'auc_payload_version'
+      'reading_timestamp', 'day_date', 'ppm', 'daily_auc'
     ];
     var csvRows = [columns.map(csvCell).join(',')];
 
@@ -5574,34 +5574,40 @@ function exportUserCsv() {
       csvRows.push([
         'measurement', reading.device_id, reading.patient_id, reading.clinic_id,
         reading.reading_ts, dayDate, reading.ppm,
-        score ? score.auc_score : null,
-        score && score.target_auc !== null ? score.target_auc : reading.target_auc,
-        reading.payload_ver, score ? score.payload_ver : null
+        score ? score.auc_score : null
       ].map(csvCell).join(','));
     });
 
+    var aucRows = [['day_date', 'daily_auc'].map(csvCell).join(',')];
     scores.forEach(function(score) {
-      if (datesWithReadings[score.day_date]) return;
-      csvRows.push([
-        'daily_auc', score.device_id, score.patient_id, score.clinic_id,
-        null, score.day_date, null, score.auc_score, score.target_auc,
-        null, score.payload_ver
-      ].map(csvCell).join(','));
+      if (!datesWithReadings[score.day_date]) {
+        csvRows.push([
+          'daily_auc', score.device_id, score.patient_id, score.clinic_id,
+          null, score.day_date, null, score.auc_score
+        ].map(csvCell).join(','));
+      }
+      aucRows.push([score.day_date, score.auc_score].map(csvCell).join(','));
     });
 
     var safeDeviceId = deviceId.replace(/[^a-zA-Z0-9_-]/g, '_');
     var today = new Date().toISOString().substring(0, 10);
-    var blob = new Blob(['\uFEFF' + csvRows.join('\r\n') + '\r\n'], {
-      type: 'text/csv;charset=utf-8'
-    });
-    var downloadUrl = URL.createObjectURL(blob);
-    var link = document.createElement('a');
-    link.href = downloadUrl;
-    link.download = 'fox2_' + safeDeviceId + '_data_' + today + '.csv';
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    setTimeout(function() { URL.revokeObjectURL(downloadUrl); }, 1000);
+
+    function downloadCsv(rows, filename) {
+      var blob = new Blob(['\uFEFF' + rows.join('\r\n') + '\r\n'], {
+        type: 'text/csv;charset=utf-8'
+      });
+      var downloadUrl = URL.createObjectURL(blob);
+      var link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(function() { URL.revokeObjectURL(downloadUrl); }, 1000);
+    }
+
+    downloadCsv(csvRows, 'fox2_' + safeDeviceId + '_measurements_' + today + '.csv');
+    downloadCsv(aucRows, 'fox2_' + safeDeviceId + '_daily_auc_' + today + '.csv');
   }).catch(function(error) {
     console.error('[CSV export]', error);
     alert('The CSV could not be created. Please check the database read policy and try again.');
