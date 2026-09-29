@@ -74,7 +74,12 @@ html, body {
   text-decoration: none;
 }
 .bar-btn:active { background: rgba(255,255,255,0.1); }
+.bar-btn:disabled { opacity: 0.45; cursor: wait; }
 .bar-btn svg { opacity: 0.5; }
+@media (max-width: 390px) {
+  .bottom-bar { gap: 6px; padding-left: 10px; padding-right: 10px; }
+  .bar-btn { padding-left: 10px; padding-right: 10px; }
+}
 #update-banner {
   display: none;
   position: fixed; bottom: calc(56px + env(safe-area-inset-bottom) + 8px);
@@ -1753,6 +1758,12 @@ html, body {
 </div>
 
 <div class="bottom-bar">
+  <button class="bar-btn" id="bottom-export" onclick="exportUserCsv()">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+      <path d="M8 1v9M4.5 7L8 10.5 11.5 7M3 13.5h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span id="bottom-export-label">CSV</span>
+  </button>
   <button class="bar-btn" id="bottom-share" onclick="handleBottomShare()">
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
       <path d="M8 1v9M4 4l4-3 4 3M3 10v4h10v-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -5456,6 +5467,147 @@ function handleBottomShare() {
   } else {
     navigator.clipboard && navigator.clipboard.writeText(url);
   }
+}
+
+// Export every stored reading for the device in this page's `id` parameter,
+// with the matching stored daily AUC repeated beside each measurement.
+// AUC-only dates are included too, so the export never drops a daily score.
+function exportUserCsv() {
+  var deviceId = params.get('id') || '';
+  var button = document.getElementById('bottom-export');
+  var label = document.getElementById('bottom-export-label');
+
+  if (!deviceId) {
+    alert('This page does not include a device ID, so its database records cannot be identified.');
+    return;
+  }
+
+  var SUPABASE_URL = 'https://byysvwdsbpmbypflqcjs.supabase.co';
+  var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ5eXN2d2RzYnBtYnlwZmxxY2pzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MTEwNTYsImV4cCI6MjA5NDE4NzA1Nn0.uAKOkd9vNhtN7umEGrVLcQLNjWOnn33n-xKVT25mFzw';
+  var exportHeaders = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': 'Bearer ' + SUPABASE_KEY
+  };
+
+  // Supabase/PostgREST projects commonly cap responses at 1,000 rows.
+  // Page explicitly so long-running users receive their complete history.
+  function fetchAll(table, select, orderColumn) {
+    var pageSize = 1000;
+    var allRows = [];
+
+    function fetchPage(offset) {
+      var url = SUPABASE_URL + '/rest/v1/' + table
+        + '?device_id=eq.' + encodeURIComponent(deviceId)
+        + '&select=' + encodeURIComponent(select)
+        + '&order=' + encodeURIComponent(orderColumn + '.asc')
+        + '&limit=' + pageSize
+        + '&offset=' + offset;
+
+      return fetch(url, { method: 'GET', headers: exportHeaders })
+        .then(function(response) {
+          if (!response.ok) {
+            throw new Error(table + ' request failed (' + response.status + ')');
+          }
+          return response.json();
+        })
+        .then(function(rows) {
+          allRows = allRows.concat(rows);
+          return rows.length === pageSize ? fetchPage(offset + pageSize) : allRows;
+        });
+    }
+
+    return fetchPage(0);
+  }
+
+  // Escape RFC 4180 CSV fields and neutralize spreadsheet formula prefixes.
+  function csvCell(value) {
+    if (value === null || value === undefined) return '';
+    var text = String(value);
+    if (/^[=+\-@\t\r]/.test(text)) text = "'" + text;
+    return '"' + text.replace(/"/g, '""') + '"';
+  }
+
+  function setExportState(isBusy, text) {
+    if (button) button.disabled = isBusy;
+    if (label) label.textContent = text;
+  }
+
+  setExportState(true, 'Exporting…');
+
+  Promise.all([
+    fetchAll(
+      'readings',
+      'device_id,patient_id,clinic_id,reading_ts,ppm,target_auc,payload_ver',
+      'reading_ts'
+    ),
+    fetchAll(
+      'daily_scores',
+      'device_id,patient_id,clinic_id,day_date,auc_score,target_auc,payload_ver',
+      'day_date'
+    )
+  ]).then(function(results) {
+    var readings = results[0];
+    var scores = results[1];
+
+    if (!readings.length && !scores.length) {
+      alert('No stored measurements or AUC values were found for this device.');
+      return;
+    }
+
+    var scoreByDate = {};
+    var datesWithReadings = {};
+    scores.forEach(function(score) { scoreByDate[score.day_date] = score; });
+
+    var columns = [
+      'row_type', 'device_id', 'patient_id', 'clinic_id',
+      'reading_timestamp', 'day_date', 'ppm', 'daily_auc',
+      'target_auc', 'reading_payload_version', 'auc_payload_version'
+    ];
+    var csvRows = [columns.map(csvCell).join(',')];
+
+    readings.forEach(function(reading) {
+      // FOX2 stores reading_ts as device-local time represented in ISO form,
+      // so its YYYY-MM-DD prefix matches daily_scores.day_date.
+      var dayDate = (reading.reading_ts || '').substring(0, 10);
+      var score = scoreByDate[dayDate] || null;
+      datesWithReadings[dayDate] = true;
+      csvRows.push([
+        'measurement', reading.device_id, reading.patient_id, reading.clinic_id,
+        reading.reading_ts, dayDate, reading.ppm,
+        score ? score.auc_score : null,
+        score && score.target_auc !== null ? score.target_auc : reading.target_auc,
+        reading.payload_ver, score ? score.payload_ver : null
+      ].map(csvCell).join(','));
+    });
+
+    scores.forEach(function(score) {
+      if (datesWithReadings[score.day_date]) return;
+      csvRows.push([
+        'daily_auc', score.device_id, score.patient_id, score.clinic_id,
+        null, score.day_date, null, score.auc_score, score.target_auc,
+        null, score.payload_ver
+      ].map(csvCell).join(','));
+    });
+
+    var safeDeviceId = deviceId.replace(/[^a-zA-Z0-9_-]/g, '_');
+    var today = new Date().toISOString().substring(0, 10);
+    var blob = new Blob(['\uFEFF' + csvRows.join('\r\n') + '\r\n'], {
+      type: 'text/csv;charset=utf-8'
+    });
+    var downloadUrl = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = 'fox2_' + safeDeviceId + '_data_' + today + '.csv';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(function() { URL.revokeObjectURL(downloadUrl); }, 1000);
+  }).catch(function(error) {
+    console.error('[CSV export]', error);
+    alert('The CSV could not be created. Please check the database read policy and try again.');
+  }).finally(function() {
+    setExportState(false, 'CSV');
+  });
 }
 
 (function() {
