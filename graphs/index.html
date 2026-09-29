@@ -58,54 +58,43 @@ html, body {
 .card-wrap canvas { width: 100%; height: auto; display: block; }
 .pattern-page { gap: 14px; }
 .pattern-page .card-wrap { margin: 0; }
-.metabolic-answer {
-  width: 100%; max-width: 420px; flex: 0 0 auto;
-  padding: 20px 20px 18px;
-  border: 1px solid rgba(255,255,255,.11);
-  border-radius: 26px;
-  background:
-    radial-gradient(circle at 92% 8%, rgba(255,210,60,.14), transparent 34%),
-    linear-gradient(145deg, rgba(255,255,255,.075), rgba(255,255,255,.025)),
-    #08090b;
-  box-shadow: 0 18px 55px rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.05);
+.analysis-page { gap: 14px; align-items: center; }
+.analysis-shell { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 12px; }
+.analysis-card {
+  padding: 18px; border-radius: 24px;
+  background: linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.025)),#08090b;
+  border: 1px solid rgba(255,255,255,.1);
+  box-shadow: 0 16px 48px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.04);
 }
-.metabolic-eyebrow {
-  color: var(--gold); font-size: 10px; line-height: 1;
-  font-weight: 900; letter-spacing: .16em; text-transform: uppercase;
+.analysis-hero {
+  background: radial-gradient(circle at 94% 4%,rgba(255,210,60,.16),transparent 38%),
+              linear-gradient(145deg,rgba(255,255,255,.075),rgba(255,255,255,.025)),#08090b;
 }
-.metabolic-title {
-  margin: 9px 0 8px; color: #fff;
-  font-size: clamp(25px, 7vw, 32px); line-height: 1.02;
-  letter-spacing: -.045em; font-weight: 900;
-}
-.metabolic-evidence {
-  margin: 0; color: rgba(255,255,255,.67);
-  font-size: 14px; line-height: 1.45; font-weight: 560;
-}
-.metabolic-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-  margin-top: 16px;
-}
-.metabolic-detail {
-  min-width: 0; padding: 13px 13px 14px; border-radius: 17px;
-  background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.07);
-}
-.metabolic-detail-label {
-  margin-bottom: 6px; color: rgba(255,255,255,.36);
-  font-size: 9px; line-height: 1; font-weight: 900;
-  letter-spacing: .13em; text-transform: uppercase;
-}
-.metabolic-detail p {
-  margin: 0; color: rgba(255,255,255,.76);
-  font-size: 12px; line-height: 1.42;
-}
-.metabolic-basis {
-  margin-top: 12px; color: rgba(255,255,255,.3);
-  font-size: 10px; line-height: 1.35;
-}
-@media(max-width:360px){
-  .metabolic-grid { grid-template-columns: 1fr; }
-}
+.analysis-eyebrow { color: var(--gold); font-size: 12px; line-height: 1; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; }
+.analysis-title { margin: 10px 0 9px; font-size: clamp(27px,7vw,34px); line-height: 1.02; letter-spacing: -.045em; font-weight: 900; }
+.analysis-summary { margin: 0; color: rgba(255,255,255,.68); font-size: 15px; line-height: 1.48; }
+.analysis-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 16px; }
+.analysis-kpi { padding: 12px; border-radius: 16px; background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.07); }
+.analysis-kpi-label { color: rgba(255,255,255,.4); font-size: 12px; line-height: 1.2; font-weight: 800; }
+.analysis-kpi-value { margin-top: 5px; color: #fff; font-size: 16px; line-height: 1.2; font-weight: 850; }
+.analysis-section-title { margin: 0 0 4px; font-size: 18px; line-height: 1.2; font-weight: 850; }
+.analysis-section-copy { margin: 0 0 13px; color: rgba(255,255,255,.5); font-size: 14px; line-height: 1.42; }
+.analysis-chart { width: 100%; display: block; overflow: visible; }
+.analysis-chart text { font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+.analysis-bars { display: flex; flex-direction: column; gap: 12px; }
+.analysis-bar-head { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 6px; color: rgba(255,255,255,.72); font-size: 14px; }
+.analysis-bar-head strong { color: #fff; }
+.analysis-bar-track { height: 9px; border-radius: 99px; overflow: hidden; background: rgba(255,255,255,.08); }
+.analysis-bar-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg,#22D3EE,#A855F7); }
+.analysis-pattern-strip { display: flex; gap: 4px; align-items: stretch; min-height: 38px; }
+.analysis-pattern-day { flex: 1 1 0; min-width: 3px; border-radius: 5px; opacity: .92; }
+.analysis-legend { display: flex; flex-wrap: wrap; gap: 7px 12px; margin-top: 11px; }
+.analysis-legend-item { display: inline-flex; align-items: center; gap: 6px; color: rgba(255,255,255,.52); font-size: 12px; }
+.analysis-legend-dot { width: 8px; height: 8px; border-radius: 3px; }
+.analysis-callout { padding: 15px 16px; border-left: 3px solid var(--gold); color: rgba(255,255,255,.72); font-size: 15px; line-height: 1.45; }
+.analysis-footnote { color: rgba(255,255,255,.34); font-size: 12px; line-height: 1.4; }
+.analysis-empty { padding: 34px 20px; text-align: center; color: rgba(255,255,255,.52); font-size: 15px; line-height: 1.5; }
+@media(max-width:360px){ .analysis-kpis { grid-template-columns: 1fr; } }
 .bottom-bar {
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 60;
   display: flex; align-items: center; justify-content: center;
@@ -1740,6 +1729,7 @@ html, body {
     <button class="nav-tab active" data-page="0">Results</button>
     <button class="nav-tab" data-page="1">History</button>
     <button class="nav-tab" data-page="2">Fuel Pattern</button>
+    <button class="nav-tab" data-page="3">Analysis</button>
   </div>
   <div id="debug-bar" style="display:none;">v1.1</div>
 </div>
@@ -1794,26 +1784,15 @@ html, body {
     </div>
   </div>
   <div class="page pattern-page">
-    <section class="metabolic-answer" id="metabolic-answer" aria-live="polite">
-      <div class="metabolic-eyebrow" id="metabolic-pattern-label">Your recent pattern</div>
-      <h1 class="metabolic-title" id="metabolic-title">Building your metabolic pattern</h1>
-      <p class="metabolic-evidence" id="metabolic-evidence">FOX2 is looking at your completed Daily Fuel Scores and how your readings move during each day.</p>
-      <div class="metabolic-grid">
-        <div class="metabolic-detail">
-          <div class="metabolic-detail-label">What this may mean</div>
-          <p id="metabolic-meaning">A few well-spaced days will turn your readings into a clearer answer.</p>
-        </div>
-        <div class="metabolic-detail">
-          <div class="metabolic-detail-label">What to watch</div>
-          <p id="metabolic-watch">Watch for a repeatable pattern rather than reacting to one reading.</p>
-        </div>
-      </div>
-      <div class="metabolic-basis" id="metabolic-basis">Based on recent completed days.</div>
-    </section>
     <div class="card-wrap" id="card-insights-wrap" style="position:relative;"><canvas id="card-insights" style="cursor:pointer;"></canvas>
       <div id="tag-pattern-popup" style="display:none;position:fixed;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:1000;white-space:nowrap;">
         <div id="tag-pattern-popup-text" style="font-size:13px;color:rgba(255,255,255,0.85);text-align:center;"></div>
       </div>
+    </div>
+  </div>
+  <div class="page analysis-page">
+    <div class="analysis-shell" id="analysis-shell">
+      <section class="analysis-card analysis-empty" id="analysis-loading">Loading your complete history…</section>
     </div>
   </div>
 </div>
@@ -2206,10 +2185,18 @@ var _isNewerPayload    = false;
       .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; }),
     fetch(SUPABASE_URL + '/rest/v1/devices?device_id=eq.' + encodeURIComponent(deviceId)
           + '&select=leaderboard_opt_in,leaderboard_hash,last_d_param,last_ws_param,last_measurement_at&limit=1', { method:'GET', headers:readHeaders })
+      .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; }),
+    fetch(SUPABASE_URL + '/rest/v1/readings?device_id=eq.' + encodeURIComponent(deviceId)
+          + '&select=reading_ts,ppm&order=reading_ts.asc&limit=10000', { method:'GET', headers:readHeaders })
+      .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; }),
+    fetch(SUPABASE_URL + '/rest/v1/daily_scores?device_id=eq.' + encodeURIComponent(deviceId)
+          + '&select=day_date,auc_score&order=day_date.asc&limit=10000', { method:'GET', headers:readHeaders })
       .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; })
   ]).then(function(results) {
     var tagRows    = results[0];
     var deviceRows = results[1];
+    var historyReadings = results[2];
+    var historyScores   = results[3];
 
     // ── Now fire the writes (after we've captured pre-write state) ──
     if (readingRows.length > 0) {
@@ -2277,7 +2264,9 @@ var _isNewerPayload    = false;
     // ── Init Results page with loaded tags ────────────────────────
     initWithSupabase(SUPABASE_URL, readHeaders, deviceId, {
       tagRows:   tagRows,
-      deviceRow: deviceRows && deviceRows[0] ? deviceRows[0] : null
+      deviceRow: deviceRows && deviceRows[0] ? deviceRows[0] : null,
+      historyReadings: historyReadings,
+      historyScores: historyScores
     });
 
   }).catch(function() {
@@ -5677,124 +5666,197 @@ function isoDateStr(i){
 
 })();
 
-// ── Consumer-facing metabolic interpretation ─────────────────────────────
-// A day has two independent dimensions:
-//   1. Daily Fuel Score level (Low / Medium / High)
-//   2. Meaningful movement between readings (Steady / Responsive)
-// Keep coverage checks behind the scenes; the card should lead with the answer.
-function classifyMetabolicDay(day){
-  if(!day || !day.score || !Array.isArray(day.pts)) return null;
-  var pts=day.pts.filter(function(p){
-    return p && isFinite(p[0]) && isFinite(p[1]);
-  }).sort(function(a,b){return a[0]-b[0];});
+// ── Complete-history analysis tab ────────────────────────────────────────
+// Daily scores written before this web fix were saved one calendar day early.
+// Keep this compatibility correction read-only; new rows are stored correctly.
+var SCORE_DATE_FIX_CUTOFF='2026-09-29';
 
-  // Three readings over at least six hours is the minimum for comparing
-  // movement during a day. Days that do not qualify are simply left out.
-  if(pts.length<3 || pts[pts.length-1][0]-pts[0][0]<360) return null;
-
-  var vals=pts.map(function(p){return Number(p[1]);});
-  var range=Math.max.apply(null,vals)-Math.min.apply(null,vals);
-  var level=day.score<=60?'low':day.score<=120?'medium':'high';
-  var movement=range>=3?'responsive':'steady';
-  return {level:level,movement:movement,key:level+'-'+movement,score:day.score,range:range};
+function addIsoDays(iso,amount){
+  var d=new Date(iso+'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate()+amount);
+  return d.toISOString().slice(0,10);
 }
 
-function metabolicCopyFor(key){
-  var copy={
-    'low-steady':{
-      title:'Your pattern may be stalled.',
-      meaning:'Your overall fat-use signal is low, with little switching between lower and higher fuel states.',
-      watch:'If this repeats alongside stalled progress, look at whether your food, activity, and recovery routine is producing the response you want.'
-    },
-    'low-responsive':{
-      title:'Your metabolism may be starting to respond.',
-      meaning:'Your overall fat-use signal is still low, but your readings are beginning to move between fuel states.',
-      watch:'Look for your Daily Fuel Score to rise while that movement continues.'
-    },
-    'medium-steady':{
-      title:'Your pattern is stable—but not very responsive.',
-      meaning:'Your fat-use signal is in the middle range, but your readings are staying in a fairly narrow band.',
-      watch:'Look for more movement between lower and higher fuel states over the next several days.'
-    },
-    'medium-responsive':{
-      title:'Your metabolism looks responsive.',
-      meaning:'Your overall fat-use signal is in the middle range while your body continues to move between fuel states.',
-      watch:'This is the kind of flexibility to preserve as you adjust food, activity, sleep, or your GLP-1 routine.'
-    },
-    'high-steady':{
-      title:'Your signal is high—but staying in one gear.',
-      meaning:'Strong fat-use readings with little movement can happen when intake is very low. This pattern alone does not prove muscle loss or a slowed metabolism.',
-      watch:'If it keeps repeating—especially on a GLP-1—make sure you are eating enough and getting adequate protein. Discuss persistent concerns with your clinician.'
-    },
-    'high-responsive':{
-      title:'You have a strong, responsive pattern.',
-      meaning:'Your Daily Fuel Score is high, and your readings still move meaningfully between lower and higher fuel states.',
-      watch:'That combination suggests strong fat use without being locked into one fuel state.'
-    }
-  };
-  return copy[key];
+function buildHistoricalAnalysis(readingRows,scoreRows){
+  var readingsByDay={};
+  (readingRows||[]).forEach(function(row){
+    if(!row.reading_ts || !isFinite(Number(row.ppm))) return;
+    var date=String(row.reading_ts).slice(0,10);
+    if(!readingsByDay[date]) readingsByDay[date]=[];
+    var d=new Date(row.reading_ts);
+    readingsByDay[date].push({
+      minute:d.getUTCHours()*60+d.getUTCMinutes(),
+      value:Number(row.ppm)
+    });
+  });
+
+  var scoreByDay={};
+  (scoreRows||[]).forEach(function(row){
+    if(!row.day_date || !isFinite(Number(row.auc_score))) return;
+    var date=String(row.day_date);
+    if(date<SCORE_DATE_FIX_CUTOFF) date=addIsoDays(date,1);
+    scoreByDay[date]=Number(row.auc_score);
+  });
+
+  var activeDate=(DAYS[TODAY_IDX]&&DAYS[TODAY_IDX].isoDate)||'';
+  var completedWithScore=0;
+  var classified=[];
+  Object.keys(readingsByDay).sort().forEach(function(date){
+    if(date===activeDate || !scoreByDay[date]) return;
+    completedWithScore++;
+    var pts=readingsByDay[date].sort(function(a,b){return a.minute-b.minute;});
+    var span=pts.length>1?pts[pts.length-1].minute-pts[0].minute:0;
+    if(pts.length<3 || span<360) return;
+    var vals=pts.map(function(p){return p.value;});
+    var range=Math.max.apply(null,vals)-Math.min.apply(null,vals);
+    var score=scoreByDay[date];
+    var level=score<=60?'low':score<=120?'medium':'high';
+    var movement=range>=3?'responsive':'steady';
+    classified.push({
+      date:date,score:score,level:level,movement:movement,
+      key:level+'-'+movement,range:range,count:pts.length,span:span
+    });
+  });
+  return {days:classified,completedWithScore:completedWithScore};
 }
 
-function renderMetabolicAnswer(){
-  var titleEl=document.getElementById('metabolic-title');
-  if(!titleEl) return;
+function analysisRate(days){
+  if(!days.length) return 0;
+  return days.filter(function(d){return d.movement==='responsive';}).length/days.length;
+}
 
-  var completed=[];
-  for(var i=0;i<TODAY_IDX;i++){
-    var result=classifyMetabolicDay(DAYS[i]);
-    if(result){result.index=i;completed.push(result);}
-  }
-  var recent=completed.slice(-7);
-  var labelEl=document.getElementById('metabolic-pattern-label');
-  var evidenceEl=document.getElementById('metabolic-evidence');
-  var meaningEl=document.getElementById('metabolic-meaning');
-  var watchEl=document.getElementById('metabolic-watch');
-  var basisEl=document.getElementById('metabolic-basis');
+function analysisDominantLevel(days){
+  var counts={low:0,medium:0,high:0};
+  days.forEach(function(d){counts[d.level]++;});
+  var best=days.length?days[days.length-1].level:'medium';
+  ['low','medium','high'].forEach(function(level){
+    if(counts[level]>counts[best]) best=level;
+  });
+  return {level:best,count:counts[best],counts:counts};
+}
 
-  if(recent.length<3){
-    labelEl.textContent='Your recent pattern';
-    titleEl.textContent='Building your metabolic pattern';
-    evidenceEl.textContent='FOX2 is comparing your completed Daily Fuel Scores with how your readings move during each day.';
-    meaningEl.textContent='A repeatable answer is not visible yet.';
-    watchEl.textContent='Keep measuring naturally at different points in the day.';
-    basisEl.textContent='More data needed: a few completed days with readings spread across the day.';
+function analysisMovementLabel(rate){
+  if(rate>=.65) return 'Responsive';
+  if(rate<=.35) return 'Steady';
+  return 'Mixed';
+}
+
+function analysisPct(rate){return Math.round(rate*100)+'%';}
+
+function scoreTrendSvg(days){
+  var w=360,h=190,left=34,right=8,top=13,bottom=28;
+  var pw=w-left-right,ph=h-top-bottom;
+  var maxScore=Math.max.apply(null,days.map(function(d){return d.score;}).concat([180]));
+  var maxY=Math.ceil(maxScore/30)*30;
+  var x=function(i){return left+(days.length===1?pw/2:i*pw/(days.length-1));};
+  var y=function(v){return top+ph-(Math.min(v,maxY)/maxY)*ph;};
+  var recentStart=Math.max(0,days.length-14);
+  var recentX=x(recentStart);
+  var path=days.map(function(d,i){return x(i).toFixed(1)+','+y(d.score).toFixed(1);}).join(' ');
+  var circles=days.map(function(d,i){
+    var fill=d.level==='low'?'#22D3EE':d.level==='medium'?'#4ADE80':'#C084FC';
+    return '<circle cx="'+x(i).toFixed(1)+'" cy="'+y(d.score).toFixed(1)+'" r="'+(i===days.length-1?3.8:2.2)+'" fill="'+fill+'"><title>'+d.date+': '+d.score+'</title></circle>';
+  }).join('');
+  return '<svg class="analysis-chart" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="Daily Fuel Score across complete classifiable history">'
+    +'<rect x="'+left+'" y="'+y(60)+'" width="'+pw+'" height="'+(y(0)-y(60))+'" fill="rgba(34,211,238,.07)"/>'
+    +'<rect x="'+left+'" y="'+y(120)+'" width="'+pw+'" height="'+(y(60)-y(120))+'" fill="rgba(74,222,128,.08)"/>'
+    +'<rect x="'+left+'" y="'+top+'" width="'+pw+'" height="'+(y(120)-top)+'" fill="rgba(168,85,247,.08)"/>'
+    +'<rect x="'+recentX.toFixed(1)+'" y="'+top+'" width="'+(left+pw-recentX).toFixed(1)+'" height="'+ph+'" fill="rgba(255,210,60,.035)" stroke="rgba(255,210,60,.2)" stroke-width="1"/>'
+    +'<line x1="'+left+'" y1="'+y(60)+'" x2="'+(left+pw)+'" y2="'+y(60)+'" stroke="rgba(255,255,255,.12)" stroke-dasharray="3 4"/>'
+    +'<line x1="'+left+'" y1="'+y(120)+'" x2="'+(left+pw)+'" y2="'+y(120)+'" stroke="rgba(255,255,255,.12)" stroke-dasharray="3 4"/>'
+    +'<text x="'+(left-7)+'" y="'+(y(60)+4)+'" text-anchor="end" font-size="10" fill="rgba(255,255,255,.38)">60</text>'
+    +'<text x="'+(left-7)+'" y="'+(y(120)+4)+'" text-anchor="end" font-size="10" fill="rgba(255,255,255,.38)">120</text>'
+    +'<polyline points="'+path+'" fill="none" stroke="rgba(255,255,255,.62)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'
+    +circles
+    +'<text x="'+left+'" y="'+(h-7)+'" font-size="10" fill="rgba(255,255,255,.4)">'+days[0].date.slice(5)+'</text>'
+    +'<text x="'+(left+pw)+'" y="'+(h-7)+'" text-anchor="end" font-size="10" fill="rgba(255,255,255,.4)">'+days[days.length-1].date.slice(5)+'</text>'
+    +'<text x="'+(left+pw-4)+'" y="'+(top+12)+'" text-anchor="end" font-size="10" fill="rgba(255,210,60,.68)">recent 14</text>'
+    +'</svg>';
+}
+
+function renderAnalysisBar(label,days){
+  var rate=analysisRate(days);
+  return '<div><div class="analysis-bar-head"><span>'+label+'</span><strong>'+analysisPct(rate)+'</strong></div>'
+    +'<div class="analysis-bar-track"><div class="analysis-bar-fill" style="width:'+analysisPct(rate)+'"></div></div></div>';
+}
+
+function renderHistoricalAnalysis(readingRows,scoreRows){
+  var shell=document.getElementById('analysis-shell');
+  if(!shell) return;
+  var history=buildHistoricalAnalysis(readingRows,scoreRows);
+  var all=history.days;
+  if(all.length<5){
+    shell.innerHTML='<section class="analysis-card analysis-empty">More completed days are needed before FOX2 can build a historical analysis.</section>';
     return;
   }
 
-  var counts={};
-  var levelCounts={low:0,medium:0,high:0};
-  var responsiveCount=0;
-  recent.forEach(function(r){
-    counts[r.key]=(counts[r.key]||0)+1;
-    levelCounts[r.level]++;
-    if(r.movement==='responsive') responsiveCount++;
-  });
-
-  // A tie goes to the most recently seen pattern, so the answer reflects
-  // the direction the user is moving rather than an arbitrary object order.
-  var dominant=recent[recent.length-1].key;
-  var dominantCount=counts[dominant];
-  for(var j=recent.length-1;j>=0;j--){
-    var candidate=recent[j].key;
-    if(counts[candidate]>dominantCount){
-      dominant=candidate;
-      dominantCount=counts[candidate];
-    }
+  var current=all.slice(-14);
+  var recent=current.slice(-Math.min(5,current.length));
+  var baseline=current.slice(0,Math.max(0,current.length-recent.length));
+  if(!baseline.length) baseline=all.slice(0,Math.max(0,all.length-recent.length));
+  var dominant=analysisDominantLevel(current);
+  var currentRate=analysisRate(current);
+  var recentRate=analysisRate(recent);
+  var baselineRate=analysisRate(baseline);
+  var lifetimeRate=analysisRate(all);
+  var movement=analysisMovementLabel(currentRate);
+  var delta=recentRate-baselineRate;
+  var momentum=delta>=.20?'Increasing':delta<=-.20?'Decreasing':'Holding steady';
+  var levelName=dominant.level.charAt(0).toUpperCase()+dominant.level.slice(1);
+  var title,callout;
+  if(dominant.level==='low' && movement==='Steady'){
+    title='Your recent pattern may be stalled.';
+    callout='Your current history is matching the Low + Steady pattern. That is a reason to look more closely at whether your routine is producing the response you want.';
+  }else if(dominant.level==='high' && movement==='Steady'){
+    title='Your signal is high—but staying in one gear.';
+    callout='A repeated High + Steady pattern can be a reason to check whether intake, especially protein, is adequate. The pattern alone cannot identify muscle loss or a slowed metabolism.';
+  }else{
+    title='Your fuel use has settled in the '+(dominant.level==='medium'?'middle':dominant.level)+' range.';
+    callout='Your recent history does not match either the Low + Steady stall pattern or the High + Steady under-fueling pattern.';
   }
 
-  var dominantLevel='low';
-  if(levelCounts.medium>levelCounts[dominantLevel]) dominantLevel='medium';
-  if(levelCounts.high>levelCounts[dominantLevel]) dominantLevel='high';
-  var levelPhrase={low:'low',medium:'in the middle range',high:'high'}[dominantLevel];
-  var copy=metabolicCopyFor(dominant);
-  var parts=dominant.split('-');
+  var comparison=baseline.length
+    ? Math.round(recentRate*recent.length)+' of '+recent.length+' recent days were responsive, compared with '+Math.round(baselineRate*baseline.length)+' of the preceding '+baseline.length+'.'
+    : Math.round(recentRate*recent.length)+' of '+recent.length+' recent days were responsive.';
+  var summary=dominant.count+' of your last '+current.length+' classifiable days were '+levelName.toLowerCase()+'. '+comparison;
+  var patternColors={
+    'low-steady':'#155E75','low-responsive':'#22D3EE',
+    'medium-steady':'#166534','medium-responsive':'#4ADE80',
+    'high-steady':'#6B21A8','high-responsive':'#C084FC'
+  };
+  var strip=all.map(function(day){
+    var label=day.date+' · '+day.level+' + '+day.movement+' · score '+day.score;
+    return '<div class="analysis-pattern-day" style="background:'+patternColors[day.key]+'" title="'+label+'" aria-label="'+label+'"></div>';
+  }).join('');
+  var legend=[['#22D3EE','Low'],['#4ADE80','Medium'],['#C084FC','High'],['rgba(255,255,255,.28)','Darker = steady']]
+    .map(function(item){return '<span class="analysis-legend-item"><span class="analysis-legend-dot" style="background:'+item[0]+'"></span>'+item[1]+'</span>';}).join('');
 
-  labelEl.textContent=parts[0].charAt(0).toUpperCase()+parts[0].slice(1)+' + '+parts[1].charAt(0).toUpperCase()+parts[1].slice(1);
-  titleEl.textContent=copy.title;
-  evidenceEl.textContent=responsiveCount+' of your last '+recent.length+' completed days showed meaningful movement between fuel states. Your Daily Fuel Score was most often '+levelPhrase+'.';
-  meaningEl.textContent=copy.meaning;
-  watchEl.textContent=copy.watch;
-  basisEl.textContent='Based on '+recent.length+' recent completed days.';
+  shell.innerHTML=''
+    +'<section class="analysis-card analysis-hero">'
+      +'<div class="analysis-eyebrow">Complete-history analysis</div>'
+      +'<h1 class="analysis-title">'+title+'</h1>'
+      +'<p class="analysis-summary">'+summary+'</p>'
+      +'<div class="analysis-kpis">'
+        +'<div class="analysis-kpi"><div class="analysis-kpi-label">Current level</div><div class="analysis-kpi-value">'+levelName+'</div></div>'
+        +'<div class="analysis-kpi"><div class="analysis-kpi-label">'+current.length+'-day response</div><div class="analysis-kpi-value">'+movement+'</div></div>'
+        +'<div class="analysis-kpi"><div class="analysis-kpi-label">Recent momentum</div><div class="analysis-kpi-value">'+momentum+'</div></div>'
+        +'<div class="analysis-kpi"><div class="analysis-kpi-label">History analyzed</div><div class="analysis-kpi-value">'+all.length+' days</div></div>'
+      +'</div>'
+    +'</section>'
+    +'<section class="analysis-card"><h2 class="analysis-section-title">Daily Fuel Score over time</h2>'
+      +'<p class="analysis-section-copy">Every classifiable day from the beginning. The highlighted area is your latest 14-day pattern.</p>'
+      +scoreTrendSvg(all)+'</section>'
+    +'<section class="analysis-card"><h2 class="analysis-section-title">Responsiveness is changing</h2>'
+      +'<p class="analysis-section-copy">The share of days with meaningful movement between lower and higher fuel states.</p>'
+      +'<div class="analysis-bars">'+renderAnalysisBar('Latest '+recent.length+' days',recent)
+        +renderAnalysisBar('Previous '+baseline.length+' days',baseline)
+        +renderAnalysisBar('Complete history',all)+'</div></section>'
+    +'<section class="analysis-card"><h2 class="analysis-section-title">Your pattern history</h2>'
+      +'<p class="analysis-section-copy">Each block is one classifiable day, from earliest to latest.</p>'
+      +'<div class="analysis-pattern-strip" role="img" aria-label="Daily pattern history from earliest to latest">'+strip+'</div>'
+      +'<div class="analysis-legend">'+legend+'</div></section>'
+    +'<section class="analysis-card analysis-callout">'+callout+'</section>'
+    +'<div class="analysis-footnote">Based on '+all.length+' of '+history.completedWithScore+' completed days. Days without enough readings across the day are left out of movement analysis.</div>';
 }
 
 function fmt(v){return Math.round(v).toLocaleString();}
@@ -7475,12 +7537,13 @@ function initWithSupabase(sbUrl,sbHeaders,deviceId,preRead){
     _lbOptIn      = preRead.deviceRow.leaderboard_opt_in || '';
     _lbStoredHash = preRead.deviceRow.leaderboard_hash   || '';
   }
+  renderHistoricalAnalysis(preRead.historyReadings||[],preRead.historyScores||[]);
   _doInit();
 }
 
 function _doInit(){
   if(_lbOptIn === 'LB-1') setTimeout(fetchLeaderboard, 1200);
-  resizeP();loop();buildRail();updateCard();buildTags();renderMetabolicAnswer();enableGraphDaySwipe();initDayGraphPopup();
+  resizeP();loop();buildRail();updateCard();buildTags();enableGraphDaySwipe();initDayGraphPopup();
   setTimeout(function(){drawGraph();renderEvents();},80);
   // Tags have just been merged into DAYS — rebuild the Insights card so the
   // Tag Patterns section reflects real data (initial render may have run
@@ -7760,13 +7823,13 @@ function renderEvents(force){
 }
 
 function initResultsPage(){
-  resizeP();loop();buildRail();updateCard();buildTags();renderMetabolicAnswer();enableGraphDaySwipe();initDayGraphPopup();
+  resizeP();loop();buildRail();updateCard();buildTags();enableGraphDaySwipe();initDayGraphPopup();
   setTimeout(function(){drawGraph();renderEvents();},80);
 }
 // Install pager DOM structure immediately so layout is stable before Supabase resolves.
 // _doInit will call enableGraphDaySwipe() later but installDayPager() guards against double-install.
 function earlyInit(){
-  resizeP();loop();buildRail();updateCard();buildTags();renderMetabolicAnswer();installDayPager();initDayGraphPopup();
+  resizeP();loop();buildRail();updateCard();buildTags();installDayPager();initDayGraphPopup();
   setTimeout(function(){drawGraph();renderEvents();},80);
 }
 if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',earlyInit);}else{setTimeout(earlyInit,0);}
