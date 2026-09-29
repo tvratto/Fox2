@@ -74,12 +74,7 @@ html, body {
   text-decoration: none;
 }
 .bar-btn:active { background: rgba(255,255,255,0.1); }
-.bar-btn:disabled { opacity: 0.45; cursor: wait; }
 .bar-btn svg { opacity: 0.5; }
-@media (max-width: 390px) {
-  .bottom-bar { gap: 6px; padding-left: 10px; padding-right: 10px; }
-  .bar-btn { padding-left: 10px; padding-right: 10px; }
-}
 #update-banner {
   display: none;
   position: fixed; bottom: calc(56px + env(safe-area-inset-bottom) + 8px);
@@ -1694,7 +1689,7 @@ html, body {
   <div class="top-header-inner">
     <button class="nav-tab active" data-page="0">Results</button>
     <button class="nav-tab" data-page="1">History</button>
-    <button class="nav-tab" data-page="2">Insights</button>
+    <button class="nav-tab" data-page="2">Fuel Pattern</button>
   </div>
   <div id="debug-bar" style="display:none;">v1.1</div>
 </div>
@@ -1720,7 +1715,7 @@ html, body {
           <div style="display:flex;align-items:flex-end;gap:18px;">
             <div id="dateFull">May 26</div>
             <div style="display:flex;flex-direction:column;align-items:flex-start;">
-              <div class="scoreLabel">Daily Score</div>
+              <div class="scoreLabel">Daily Fuel Score</div>
               <div id="dailyScore">140</div>
             </div>
           </div>
@@ -1758,12 +1753,6 @@ html, body {
 </div>
 
 <div class="bottom-bar">
-  <button class="bar-btn" id="bottom-export" onclick="exportUserCsv()">
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-      <path d="M8 1v9M4.5 7L8 10.5 11.5 7M3 13.5h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-    <span id="bottom-export-label">CSV</span>
-  </button>
   <button class="bar-btn" id="bottom-share" onclick="handleBottomShare()">
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
       <path d="M8 1v9M4 4l4-3 4 3M3 10v4h10v-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -1779,7 +1768,7 @@ html, body {
     Squad
     <span id="squad-dot"></span>
   </button>
-  <a class="bar-btn" href="https://tvratto.github.io/Fox2/" target="_blank">
+  <a class="bar-btn" href="/guide/" target="_blank">
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
       <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.8"/>
       <path d="M8 7v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
@@ -1799,7 +1788,7 @@ html, body {
     <div class="info-toggle-row">
       <div>
         <div class="info-toggle-label">Join leaderboard</div>
-        <div class="info-toggle-sub">Daily scores · your scores vs the community</div>
+        <div class="info-toggle-sub">Daily Fuel Scores · your scores vs the community</div>
         <div class="info-toggle-sub" style="margin-top:4px;color:rgba(255,255,255,.22);">Only people who opt in are included</div>
       </div>
       <label class="tog"><input type="checkbox" id="lb-optin"><span class="tog-slider"></span></label>
@@ -2107,7 +2096,9 @@ var _isNewerPayload    = false;
       var auc = parseInt(aParam.substring(ai * 2, ai * 2 + 2), 36);
       if (auc === 0) continue;
       var dayEpoch = windowStart + ai * 86400;
-      var dayDate  = localIso(new Date(dayEpoch * 1000));
+      // Device day epochs are local-midnight-as-UTC. Keep the payload's UTC
+      // calendar fields so browsers west of UTC do not save the prior date.
+      var dayDate  = new Date(dayEpoch * 1000).toISOString().slice(0, 10);
       writeScoreRows.push({
         device_id:   deviceId,
         patient_id:  patientId,
@@ -2587,8 +2578,8 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
       }
 
       // ── Zone fill colours ──────────────────────────────────────
-      var ZONE_COLORS_FILL   = ['rgba(34,211,238,0.45)',  'rgba(74,222,128,0.4)', 'rgba(168,85,247,0.35)'];
-      var ZONE_COLORS_STROKE = ['#22D3EE', '#4ADE80', '#A855F7'];
+      var ZONE_COLORS_FILL   = ['rgba(34,211,238,0.45)', 'rgba(74,222,128,0.4)', 'rgba(168,85,247,0.35)', 'rgba(255,140,0,0.38)'];
+      var ZONE_COLORS_STROKE = ['#22D3EE', '#4ADE80', '#A855F7', '#FF8C00'];
       var ORANGE_FILL_GRAD = (function() {
         var g = ctx.createLinearGradient(0, gTop, 0, gBottom);
         g.addColorStop(0,   'rgba(255,140,0,0.0)');
@@ -2598,7 +2589,7 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
       })();
 
       function zoneOf(ppm) {
-        var rounded = Math.round(ppm); return rounded <= 2 ? 0 : rounded <= 4 ? 1 : 2;
+        var rounded = Math.round(ppm); return rounded <= 2 ? 0 : rounded <= 4 ? 1 : rounded <= 7 ? 2 : 3;
       }
 
       if (viewMode === 'zones') {
@@ -2705,7 +2696,7 @@ function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, max
         var ap = allPts[globalI];
         var px = sPts[j + dOff].x, py = sPts[j + dOff].y;
         var isNewest = (ap.dayIdx + dayOffset === todayIdx) && (globalI === allPts.length - 1);
-        var dotRounded = Math.round(ap.val); var dc = dotRounded <= 2 ? '#22D3EE' : dotRounded <= 4 ? '#4ADE80' : '#A855F7';
+        var dotRounded = Math.round(ap.val); var dc = dotRounded <= 2 ? '#22D3EE' : dotRounded <= 4 ? '#4ADE80' : dotRounded <= 7 ? '#A855F7' : '#FF8C00';
         var isSelected = selectedDot && selectedDot.epoch === ap.epoch;
         if (isNewest) {
           ctx.globalAlpha=0.3; filledDot(ctx,px,py,dotR*2.2,dc);
@@ -3007,14 +2998,14 @@ function buildGraphCard(forcedView) {
     }
 
   } else {
-    // ── Zones view: Glucose / Mixed / Fat ──────────────────────
+    // ── Fuel-band summary. The legacy third bucket combines High + Strong. ──
     var zt = calcZoneTimes(chunkStart);
     var total = zt.glucose + zt.mixed + zt.fat || 1;
 
     var zones = [
-      { label: 'Glucose', value: Math.round(zt.glucose / total * 100) + '%', color: '#00d4ff', pct: zt.glucose / total },
-      { label: 'Mixed',   value: Math.round(zt.mixed   / total * 100) + '%', color: '#4caf82', pct: zt.mixed   / total },
-      { label: 'Fat',     value: Math.round(zt.fat     / total * 100) + '%', color: '#a855f7', pct: zt.fat     / total }
+      { label: 'Minimal', value: Math.round(zt.glucose / total * 100) + '%', color: '#00d4ff', pct: zt.glucose / total },
+      { label: 'Balanced', value: Math.round(zt.mixed / total * 100) + '%', color: '#4caf82', pct: zt.mixed / total },
+      { label: 'High +', value: Math.round(zt.fat / total * 100) + '%', color: '#a855f7', pct: zt.fat / total }
     ];
 
     for (var s = 0; s < zones.length; s++) {
@@ -3626,7 +3617,7 @@ function buildInsightsCard() {
     })()
   });
 
-  // -- Ring 2: Metabolic Flexibility --
+  // -- Ring 2: Signal Range --
   var cx1 = gLeft + ringColW * 1 + ringColW / 2;
   var flexStandout = (summaryStats.deltas.flex !== null && summaryStats.deltas.flex > 0 &&
                        summaryStats.deltas.flex >= (summaryStats.deltas.auc || 0) &&
@@ -3641,7 +3632,7 @@ function buildInsightsCard() {
   ctx.fillStyle = flexStandout ? '#3B82F6' : 'rgba(255,255,255,0.55)';
   ctx.font = 'bold 10px -apple-system,sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-  ctx.fillText('METABOLIC FLEXIBILITY', cx1, ring0LabelY);
+  ctx.fillText('SIGNAL RANGE', cx1, ring0LabelY);
   var ring1DeltaY = ring0LabelY + SUMMARY_RING_LABEL_H + SUMMARY_RING_DELTA_GAP;
   ctx.fillStyle = deltaColor(summaryStats.deltas.flex);
   fitText(fmtDelta(summaryStats.deltas.flex) + ' vs prev. 7 days', cx1, ring1DeltaY, ringColW - 8, 10, 7.5);
@@ -3649,17 +3640,17 @@ function buildInsightsCard() {
   var hb1Bottom = ring1DeltaY + SUMMARY_RING_DELTA_H;
   window.ringHitboxes.push({
     x: cx1 - ringColW / 2, y: hb1Top, w: ringColW, h: hb1Bottom - hb1Top,
-    title: 'METABOLIC FLEXIBILITY',
+    title: 'SIGNAL RANGE',
     text: (summaryStats.daysWithData > 0)
-      ? ('This week: <b style="color:#3B82F6;">' + summaryStats.flexPct + '%</b>. You completed ' + summaryStats.flexCrossings + ' full glucose\u2194fat crossing' + (summaryStats.flexCrossings === 1 ? '' : 's') +
+      ? ('This week: <b style="color:#3B82F6;">' + summaryStats.flexPct + '%</b>. Your signal completed ' + summaryStats.flexCrossings + ' full low\u2194high crossing' + (summaryStats.flexCrossings === 1 ? '' : 's') +
          (summaryStats.flexPartialDays > 0
-           ? (', plus a partial mixed-zone credit on ' + summaryStats.flexPartialDays + ' day' + (summaryStats.flexPartialDays === 1 ? '' : 's') + ' that didn\u2019t finish the crossing')
+           ? (', plus a partial-range credit on ' + summaryStats.flexPartialDays + ' day' + (summaryStats.flexPartialDays === 1 ? '' : 's'))
            : '') +
          '.')
-      : 'Metabolic Flexibility measures how completely you switched between fuel zones this week. A full crossing from glucose to fat (or fat to glucose) earns full credit; reaching mixed zone earns partial credit. A round trip in both directions scores 100%.'
+      : 'Signal Range summarizes how widely your Fuel Signal moved across bands this week. It describes the pattern in your FOX2 readings; it is not a clinical measure.'
   });
 
-  // -- Ring 3: Time in Range (double ring — outer Mixed, inner Fat) --
+  // -- Ring 3: Higher signal share (outer Balanced, inner High + Strong) --
   var cx2 = gLeft + ringColW * 2 + ringColW / 2;
   var tirStandout = (timeInRangeDelta !== null && timeInRangeDelta > 0 &&
                       timeInRangeDelta >= (summaryStats.deltas.auc || 0) &&
@@ -3675,14 +3666,14 @@ function buildInsightsCard() {
   ctx.fillText(timeInRangePct + '%', cx2, ringCY - 7);
   ctx.font = '9px -apple-system,sans-serif';
   ctx.fillStyle = '#4ADE80';
-  ctx.fillText('M ' + summaryStats.mixPct + '%', cx2 - 16, ringCY + 9);
+  ctx.fillText('B ' + summaryStats.mixPct + '%', cx2 - 16, ringCY + 9);
   ctx.fillStyle = '#A855F7';
-  ctx.fillText('F ' + summaryStats.fatPct + '%', cx2 + 16, ringCY + 9);
+  ctx.fillText('H+ ' + summaryStats.fatPct + '%', cx2 + 16, ringCY + 9);
 
   ctx.fillStyle = tirStandout ? '#A855F7' : 'rgba(255,255,255,0.55)';
   ctx.font = 'bold 10px -apple-system,sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-  ctx.fillText('TIME IN RANGE', cx2, ring0LabelY);
+  ctx.fillText('HIGHER SIGNAL', cx2, ring0LabelY);
   var ring2DeltaY = ring0LabelY + SUMMARY_RING_LABEL_H + SUMMARY_RING_DELTA_GAP;
   ctx.fillStyle = deltaColor(timeInRangeDelta);
   fitText(fmtDelta(timeInRangeDelta) + ' vs prev. 7 days', cx2, ring2DeltaY, ringColW - 8, 10, 7.5);
@@ -3690,10 +3681,10 @@ function buildInsightsCard() {
   var hb2Bottom = ring2DeltaY + SUMMARY_RING_DELTA_H;
   window.ringHitboxes.push({
     x: cx2 - ringColW / 2, y: hb2Top, w: ringColW, h: hb2Bottom - hb2Top,
-    title: 'TIME IN RANGE',
+    title: 'HIGHER SIGNAL',
     text: (summaryStats.daysWithData > 0)
-      ? ('This week you spent <b style="color:#4ADE80;">' + summaryStats.mixPct + '%</b> of your measured time in the Mixed zone and <b style="color:#A855F7;">' + summaryStats.fatPct + '%</b> in the Fat zone \u2014 ' + timeInRangePct + '% total off pure glucose. The outer ring tracks Mixed (3\u20135ppm), the inner ring tracks Fat (>5ppm).')
-      : 'Time in Range is the share of your measured time this week spent off pure glucose — in the Mixed zone (3\u20135ppm, green) or Fat zone (>5ppm, violet), where your body is drawing on stored fuel. The outer ring tracks Mixed, the inner ring tracks Fat; together they show how much of your day moved beyond baseline glucose burning.'
+      ? ('This week, <b style="color:#4ADE80;">' + summaryStats.mixPct + '%</b> of estimated measured time was Balanced and <b style="color:#A855F7;">' + summaryStats.fatPct + '%</b> was High or Strong. Together, those bands represented ' + timeInRangePct + '% of estimated measured time.')
+      : 'Higher Signal is the estimated share of measured time in the Balanced, High, or Strong bands. It is calculated between readings and becomes more useful with consistent measurements.'
   });
 
   curY += SUMMARY_RING_SECTION_H + SUMMARY_GAP;
@@ -3759,7 +3750,7 @@ function buildInsightsCard() {
   // ════════════════════════════════════════════════════════════════
   var trendBoxY = curY;
   curY += BOX_PAD;
-  curY = drawSectionTitle(curY, 'Daily Score Trend');
+  curY = drawSectionTitle(curY, 'Daily Fuel Score Trend');
 
   var TREND_DAYS_PER_WEEK = 7;
   var trendChunkStart = Math.max(0, totalDays - TREND_WEEKS * TREND_DAYS_PER_WEEK);
@@ -3962,9 +3953,9 @@ function buildInsightsCard() {
         var mP = Math.round(zt.mixed   / ztTotal * 100);
         var fP = Math.round(zt.fat     / ztTotal * 100);
         zoneLine = '<div style="margin-top:4px;font-size:13px;color:rgba(255,255,255,0.7);">' +
-          '<span style="color:#22D3EE;">' + gP + '% Glucose</span> &nbsp;' +
-          '<span style="color:#4ADE80;">' + mP + '% Mixed</span> &nbsp;' +
-          '<span style="color:#A855F7;">' + fP + '% Fat</span></div>';
+          '<span style="color:#22D3EE;">' + gP + '% Minimal</span> &nbsp;' +
+          '<span style="color:#4ADE80;">' + mP + '% Balanced</span> &nbsp;' +
+          '<span style="color:#A855F7;">' + fP + '% High+</span></div>';
       }
       var targetLine = targetAUC > 0
         ? '<div style="margin-top:2px;font-size:13px;color:' + (hit ? '#4ADE80' : 'rgba(255,255,255,0.5)') + ';">' +
@@ -4382,22 +4373,22 @@ function buildInsightsCard() {
   // ════════════════════════════════════════════════════════════════
 
   var PATTERN_DESCRIPTIONS = {
-    'Falling': 'Starts elevated from overnight fat-burning, then eases off as your body releases glucose to get you going in the morning.',
-    'Valley':  'Starts elevated from overnight fat-burning, dips as your body releases glucose after waking, then climbs back up as that glucose gets used up. A really positive pattern — it shows your body switching cleanly back into fat-burning through the day.',
-    'Peak':    'Fat-burning builds through the day and then comes back down, possibly from eating or evening activity.',
-    'Rising':  'Fat-burning deepens steadily as the day goes on and glucose gets used up without being replaced.',
-    'Flat':    'Readings stay similar all day. Whether that\'s good or not depends on the level — high and flat means you\'re consistently burning fat, low and flat suggests glucose is staying elevated throughout the day.',
-    'Wave':    'Starts elevated from overnight fat-burning, dips in the morning, recovers mid-day, then drops again toward evening.',
+    'Falling': 'Your Fuel Signal started higher and moved lower across the measured part of the day.',
+    'Valley':  'Your Fuel Signal moved lower and then recovered later in the measured day.',
+    'Peak':    'Your Fuel Signal built to a high point and then came back down.',
+    'Rising':  'Your Fuel Signal moved higher across the measured part of the day.',
+    'Flat':    'Your readings stayed in a relatively narrow range across the measured day.',
+    'Wave':    'Your Fuel Signal changed direction more than once across the measured day.',
     'Single':  'Only one reading for the day, so no pattern can be determined.'
   };
   var PATTERN_SUGGESTIONS = {
-    'Falling': 'Not coming back up before bed may mean carbs or calories at lunch are keeping glucose elevated. Try eating lighter at lunch or pushing it later in the day, or this might reflect not measuring late enough in the day.',
-    'Valley':  'Reducing carbs in the morning can help the recovery climb higher and faster through the day.',
-    'Peak':    'If the peak is earlier in the day, extending your fast or staying active afterward could help sustain it longer.',
-    'Rising':  'Already trending in the right direction. Eating earlier or reducing carbs or calories at dinner would likely push your morning reading even higher.',
-    'Flat':    'Reducing carbs, particularly at breakfast and lunch, would likely start shifting this pattern.',
-    'Wave':    'The afternoon drop may reflect too many carbs or calories at lunch. Try eating lighter at lunch, or exercising after lunch.',
-    'Single':  'Try to measure at least twice a day — once on waking and once in the evening — to start seeing your pattern emerge.'
+    'Falling': 'Compare several similar days before connecting this shape to a meal, activity, sleep, or timing choice.',
+    'Valley':  'Look for this shape across repeated days; a single curve cannot identify what caused it.',
+    'Peak':    'Use your tags and repeated routines to explore when this pattern tends to appear.',
+    'Rising':  'Compare the full Daily Fuel Score across similar days rather than judging one change in isolation.',
+    'Flat':    'The band matters, but consistency and measurement timing matter too. Compare like with like.',
+    'Wave':    'Multiple daily changes are common. Tags can help you form a hypothesis over repeated days.',
+    'Single':  'Measure at consistent times during the day to make the accumulated score and pattern more informative.'
   };
 
   var insightPatterns = [];
@@ -4450,7 +4441,7 @@ function buildInsightsCard() {
   // ════════════════════════════════════════════════════════════════
   var fuelBoxY = curY;
   curY += BOX_PAD;
-  curY = drawSectionTitle(curY, 'Fuel Balance');
+  curY = drawSectionTitle(curY, 'Fuel Signal Bands');
 
   function weekZoneTimes(w) {
     var fuelChunkStart = Math.max(0, totalDays - 21);
@@ -4466,11 +4457,11 @@ function buildInsightsCard() {
   }
 
   function fuelSummary(fatPct) {
-    if (fatPct < 0.1)  return 'Little fat burning detected';
-    if (fatPct < 0.25) return 'Mostly glucose-burning, brief fat windows';
-    if (fatPct < 0.5)  return 'Building fat-burning consistency';
-    if (fatPct < 0.7)  return 'Spending most measured time in fat zone';
-    return 'Strong fat burner — glucose spikes are brief';
+    if (fatPct < 0.1)  return 'Mostly Minimal or Balanced Fuel Signal';
+    if (fatPct < 0.25) return 'Brief periods in the High or Strong bands';
+    if (fatPct < 0.5)  return 'A mix of lower and higher Fuel Signal bands';
+    if (fatPct < 0.7)  return 'Most estimated measured time was High or Strong';
+    return 'High or Strong across much of estimated measured time';
   }
 
   function drawStackedBar(x, y, w, h, glucose, mixed, fat, r) {
@@ -4530,7 +4521,7 @@ function buildInsightsCard() {
       ctx.fillStyle = '#A855F7';
       ctx.font = 'bold 15px -apple-system,sans-serif';
       ctx.textAlign = 'right'; ctx.textBaseline = 'top';
-      ctx.fillText(Math.round(fatPct * 100) + '% fat', gRight, curY);
+      ctx.fillText(Math.round(fatPct * 100) + '% high+', gRight, curY);
     }
     curY += 21;
 
@@ -4544,7 +4535,7 @@ function buildInsightsCard() {
       for (var z = 0; z < zones.length; z++) {
         var segW = zones[z].pct * gW;
         if (segW < 20) { lx += segW; continue; }
-        var ZONE_NAMES = ['Glucose', 'Mixed', 'Fat'];
+        var ZONE_NAMES = ['Minimal', 'Balanced', 'High + Strong'];
         ctx.fillStyle = zones[z].color;
         ctx.font = FT_LABEL_FS + 'px -apple-system,sans-serif';
         ctx.textAlign = 'center'; ctx.textBaseline = 'top';
@@ -5469,153 +5460,6 @@ function handleBottomShare() {
   }
 }
 
-// Export every stored reading for the device in this page's `id` parameter,
-// with the matching stored daily AUC repeated beside each measurement.
-// AUC-only dates are also retained in that file, and a second compact file
-// contains one row per stored daily AUC.
-function exportUserCsv() {
-  var deviceId = params.get('id') || '';
-  var button = document.getElementById('bottom-export');
-  var label = document.getElementById('bottom-export-label');
-
-  if (!deviceId) {
-    alert('This page does not include a device ID, so its database records cannot be identified.');
-    return;
-  }
-
-  var SUPABASE_URL = 'https://byysvwdsbpmbypflqcjs.supabase.co';
-  var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ5eXN2d2RzYnBtYnlwZmxxY2pzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MTEwNTYsImV4cCI6MjA5NDE4NzA1Nn0.uAKOkd9vNhtN7umEGrVLcQLNjWOnn33n-xKVT25mFzw';
-  var exportHeaders = {
-    'apikey': SUPABASE_KEY,
-    'Authorization': 'Bearer ' + SUPABASE_KEY
-  };
-
-  // Supabase/PostgREST projects commonly cap responses at 1,000 rows.
-  // Page explicitly so long-running users receive their complete history.
-  function fetchAll(table, select, orderColumn) {
-    var pageSize = 1000;
-    var allRows = [];
-
-    function fetchPage(offset) {
-      var url = SUPABASE_URL + '/rest/v1/' + table
-        + '?device_id=eq.' + encodeURIComponent(deviceId)
-        + '&select=' + encodeURIComponent(select)
-        + '&order=' + encodeURIComponent(orderColumn + '.asc')
-        + '&limit=' + pageSize
-        + '&offset=' + offset;
-
-      return fetch(url, { method: 'GET', headers: exportHeaders })
-        .then(function(response) {
-          if (!response.ok) {
-            throw new Error(table + ' request failed (' + response.status + ')');
-          }
-          return response.json();
-        })
-        .then(function(rows) {
-          allRows = allRows.concat(rows);
-          return rows.length === pageSize ? fetchPage(offset + pageSize) : allRows;
-        });
-    }
-
-    return fetchPage(0);
-  }
-
-  // Escape RFC 4180 CSV fields and neutralize spreadsheet formula prefixes.
-  function csvCell(value) {
-    if (value === null || value === undefined) return '';
-    var text = String(value);
-    if (/^[=+\-@\t\r]/.test(text)) text = "'" + text;
-    return '"' + text.replace(/"/g, '""') + '"';
-  }
-
-  function setExportState(isBusy, text) {
-    if (button) button.disabled = isBusy;
-    if (label) label.textContent = text;
-  }
-
-  setExportState(true, 'Exporting…');
-
-  Promise.all([
-    fetchAll(
-      'readings',
-      'device_id,patient_id,clinic_id,reading_ts,ppm',
-      'reading_ts'
-    ),
-    fetchAll(
-      'daily_scores',
-      'device_id,patient_id,clinic_id,day_date,auc_score',
-      'day_date'
-    )
-  ]).then(function(results) {
-    var readings = results[0];
-    var scores = results[1];
-
-    if (!readings.length && !scores.length) {
-      alert('No stored measurements or AUC values were found for this device.');
-      return;
-    }
-
-    var scoreByDate = {};
-    var datesWithReadings = {};
-    scores.forEach(function(score) { scoreByDate[score.day_date] = score; });
-
-    var columns = [
-      'row_type', 'device_id', 'patient_id', 'clinic_id',
-      'reading_timestamp', 'day_date', 'ppm', 'daily_auc'
-    ];
-    var csvRows = [columns.map(csvCell).join(',')];
-
-    readings.forEach(function(reading) {
-      // FOX2 stores reading_ts as device-local time represented in ISO form,
-      // so its YYYY-MM-DD prefix matches daily_scores.day_date.
-      var dayDate = (reading.reading_ts || '').substring(0, 10);
-      var score = scoreByDate[dayDate] || null;
-      datesWithReadings[dayDate] = true;
-      csvRows.push([
-        'measurement', reading.device_id, reading.patient_id, reading.clinic_id,
-        reading.reading_ts, dayDate, reading.ppm,
-        score ? score.auc_score : null
-      ].map(csvCell).join(','));
-    });
-
-    var aucRows = [['day_date', 'daily_auc'].map(csvCell).join(',')];
-    scores.forEach(function(score) {
-      if (!datesWithReadings[score.day_date]) {
-        csvRows.push([
-          'daily_auc', score.device_id, score.patient_id, score.clinic_id,
-          null, score.day_date, null, score.auc_score
-        ].map(csvCell).join(','));
-      }
-      aucRows.push([score.day_date, score.auc_score].map(csvCell).join(','));
-    });
-
-    var safeDeviceId = deviceId.replace(/[^a-zA-Z0-9_-]/g, '_');
-    var today = new Date().toISOString().substring(0, 10);
-
-    function downloadCsv(rows, filename) {
-      var blob = new Blob(['\uFEFF' + rows.join('\r\n') + '\r\n'], {
-        type: 'text/csv;charset=utf-8'
-      });
-      var downloadUrl = URL.createObjectURL(blob);
-      var link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      setTimeout(function() { URL.revokeObjectURL(downloadUrl); }, 1000);
-    }
-
-    downloadCsv(csvRows, 'fox2_' + safeDeviceId + '_measurements_' + today + '.csv');
-    downloadCsv(aucRows, 'fox2_' + safeDeviceId + '_daily_auc_' + today + '.csv');
-  }).catch(function(error) {
-    console.error('[CSV export]', error);
-    alert('The CSV could not be created. Please check the database read policy and try again.');
-  }).finally(function() {
-    setExportState(false, 'CSV');
-  });
-}
-
 (function() {
   var scroller = document.getElementById('scroller');
   var tabs = document.querySelectorAll('.nav-tab');
@@ -5819,135 +5663,21 @@ function selectDay(i){
 function getVerdict(d, isToday) {
   const score = d.score;
   const lastPt = d.pts && d.pts.length ? d.pts[d.pts.length - 1] : null;
-  const lastMin = lastPt ? lastPt[0] : 720;
-  const lastPpm = lastPt ? lastPt[1] : 0;
+  const latest = lastPt ? Math.round(lastPt[1]) : 0;
+  const latestBand = latest <= 2 ? 'Minimal' : latest <= 4 ? 'Balanced' : latest <= 7 ? 'High' : 'Strong';
+  const scoreBand = score >= 120 ? 'Strong' : score >= 75 ? 'High' : score >= 35 ? 'Balanced' : 'Minimal';
 
-  const band = score >= 120 ? 'high' : score >= 75 ? 'good' : score >= 35 ? 'moderate' : 'low';
-  const zone = lastPpm > 5 ? 'fat' : lastPpm > 2 ? 'mixed' : 'glucose';
-
-  if (!isToday) {
-    const past = {
-      high: {
-        fat:     ['Strong day',      'Sustained fat-burning through the day.'],
-        mixed:   ['Strong day',      'Good fuel balance with time in fat-burning mode.'],
-        glucose: ['Strong day',      'Strong daily score despite finishing in glucose zone.'],
-      },
-      good: {
-        fat:     ['Good day',        'Solid fat-burning, finishing strong.'],
-        mixed:   ['Good day',        'Decent balance of fuel zones through the day.'],
-        glucose: ['Good day',        'Good progress — ended in glucose mode.'],
-      },
-      moderate: {
-        fat:     ['Moderate day',    'Some fat-burning — building in the right direction.'],
-        mixed:   ['Mixed day',       'Mostly in mixed zone — consistency will move the needle.'],
-        glucose: ['Glucose day',     'Spent most of the day in glucose mode.'],
-      },
-      low: {
-        fat:     ['Light day',       'Low score but finished in fat-burning mode.'],
-        mixed:   ['Light day',       'Low fuel balance — mixed zone through most of the day.'],
-        glucose: ['Light day',       'Low score with glucose as the dominant fuel.'],
-      },
-    };
-    return past[band][zone];
+  if (isToday) {
+    return [
+      'Today is still building',
+      'Partial Daily Fuel Score: ' + score + '. Latest Fuel Signal: ' + latestBand + '. Compare the result after the full day is complete.'
+    ];
   }
 
-  const slot = lastMin < 360 ? 'dawn'
-             : lastMin < 720 ? 'morning'
-             : lastMin < 1080 ? 'afternoon'
-             : 'evening';
-
-  const today = {
-    high: {
-      dawn:      {
-        fat:     ['Early mover',     'Fat-burning before dawn — exceptional start.'],
-        mixed:   ['Strong start',    'High score already and the day has barely begun.'],
-        glucose: ['Promising start', 'Strong daily score built early — shift out of glucose to finish well.'],
-      },
-      morning:   {
-        fat:     ['On fire',         'In fat-burning mode mid-morning — excellent trajectory.'],
-        mixed:   ['Strong morning',  'High score by mid-morning — afternoon can push it further.'],
-        glucose: ['Good so far',     'Strong score built — currently in glucose mode, keep an eye on it.'],
-      },
-      afternoon: {
-        fat:     ['Strong day',      'Solid fat-burning well into the afternoon.'],
-        mixed:   ['Solid progress',  'High daily score and in mixed zone — a strong day shaping up.'],
-        glucose: ['Good overall',    'Strong score despite glucose mode now — the day is mostly done.'],
-      },
-      evening:   {
-        fat:     ['Excellent day',   'Finishing in fat-burning mode with a high score.'],
-        mixed:   ['Great day',       'High daily score and finishing in mixed zone — well done.'],
-        glucose: ['Strong day',      'High score locked in — glucose mode at the end is fine.'],
-      },
-    },
-    good: {
-      dawn:      {
-        fat:     ['Great start',     'Fat-burning before sunrise — strong foundation.'],
-        mixed:   ['Good early',      'Mixed zone at dawn with a solid score building.'],
-        glucose: ['Early days',      'Good score so far — shift fuel balance as the day builds.'],
-      },
-      morning:   {
-        fat:     ['Good momentum',   'In fat-burning mode this morning — keep it going.'],
-        mixed:   ['Building well',   'Good score mid-morning in mixed zone.'],
-        glucose: ['Room to grow',    'Solid score so far — moving toward fat-burning would help.'],
-      },
-      afternoon: {
-        fat:     ['Good day',        'Fat-burning in the afternoon — strong position.'],
-        mixed:   ['Solid day',       'Good balance through the day, currently in mixed zone.'],
-        glucose: ['Decent day',      'Good daily score built — currently in glucose mode heading into evening.'],
-      },
-      evening:   {
-        fat:     ['Good day',        'Ending the day in fat-burning mode.'],
-        mixed:   ['Good day',        'Solid day finishing in mixed zone.'],
-        glucose: ['Good day',        'Good score for the day — evening glucose mode is common.'],
-      },
-    },
-    moderate: {
-      dawn:      {
-        fat:     ['Early effort',    'Fat-burning at dawn — the whole day is ahead of you.'],
-        mixed:   ['Slow start',      'Mixed zone early — plenty of time to build a strong score.'],
-        glucose: ['Day is young',    'In glucose mode — a lot of day left to shift the balance.'],
-      },
-      morning:   {
-        fat:     ['Getting there',   'Fat-burning this morning — score can climb from here.'],
-        mixed:   ['Keep going',      'In mixed zone mid-morning — push toward fat-burning.'],
-        glucose: ['Work to do',      'Moderate score in glucose mode — afternoon is the opportunity.'],
-      },
-      afternoon: {
-        fat:     ['Afternoon push',  'Fat-burning now — a good afternoon can still lift the score.'],
-        mixed:   ['Mixed afternoon', 'In mixed zone — score is moderate with a few hours left.'],
-        glucose: ['Tough day',       'Moderate score and in glucose mode — evening can still help.'],
-      },
-      evening:   {
-        fat:     ['Late push',       'Finishing in fat-burning mode — a good sign for tomorrow.'],
-        mixed:   ['Moderate day',    'Mixed zone at day\'s end — build on this tomorrow.'],
-        glucose: ['Moderate day',    'A moderate score finishing in glucose mode.'],
-      },
-    },
-    low: {
-      dawn:      {
-        fat:     ['Early bird',      'Fat-burning before 6am — the rest of the day will build on this.'],
-        mixed:   ['Just started',    'Very early still — plenty of time to build your score.'],
-        glucose: ['Day ahead',       'In glucose mode at dawn — the whole day is an opportunity.'],
-      },
-      morning:   {
-        fat:     ['Finding rhythm',  'In fat-burning mode — score is low but trajectory is right.'],
-        mixed:   ['Building slowly', 'Mixed zone mid-morning — a shift to fat-burning would help.'],
-        glucose: ['Slow morning',    'Low score in glucose mode — afternoon is key.'],
-      },
-      afternoon: {
-        fat:     ['Afternoon effort','Fat-burning now but score is low — a long evening push could help.'],
-        mixed:   ['Tough afternoon', 'Low score in mixed zone — a lot to recover in the evening.'],
-        glucose: ['Challenging day', 'Low score in glucose mode — hard to recover from here.'],
-      },
-      evening:   {
-        fat:     ['Light day',       'Low score despite finishing in fat-burning mode — happens sometimes.'],
-        mixed:   ['Light day',       'A low-score day finishing in mixed zone.'],
-        glucose: ['Rest day',        'Low score and in glucose mode — recovery day perhaps.'],
-      },
-    },
-  };
-
-  return today[band][slot][zone];
+  return [
+    scoreBand + ' daily pattern',
+    'Completed Daily Fuel Score: ' + score + '. Last measured Fuel Signal: ' + latestBand + '. Compare this with other completed days measured on a similar schedule.'
+  ];
 }
 
 function updateCard(){
@@ -6435,11 +6165,11 @@ function drawResultsSplineGraph(targetCanvas,targetWrap,dayIdx,drawLabels){
   }
 
   function zoneOf(v){
-    return Math.round(v)<=2?0:Math.round(v)<=4?1:2;
+    return Math.round(v)<=2?0:Math.round(v)<=4?1:Math.round(v)<=7?2:3;
   }
 
-  const zoneFill=['rgba(34,211,238,0.45)','rgba(74,222,128,0.40)','rgba(168,85,247,0.35)'];
-  const zoneStroke=['#22D3EE','#4ADE80','#A855F7'];
+  const zoneFill=['rgba(34,211,238,0.45)','rgba(74,222,128,0.40)','rgba(168,85,247,0.35)','rgba(255,140,0,0.38)'];
+  const zoneStroke=['#22D3EE','#4ADE80','#A855F7','#FF8C00'];
   function col(v){ return zoneStroke[zoneOf(v)]; }
 
   const xSep0=relToX(0);
@@ -6628,7 +6358,7 @@ function renderDayCardHTML(dayIdx){
             <div style="display:flex;align-items:flex-end;gap:18px;">
               <div class="ghostDateFull">${d.dateStr}</div>
               <div style="display:flex;flex-direction:column;align-items:flex-start;">
-                <div class="scoreLabel">Daily Score</div>
+                <div class="scoreLabel">Daily Fuel Score</div>
                 <div class="ghostDailyScore">${d.score}</div>
               </div>
             </div>
