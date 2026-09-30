@@ -273,8 +273,8 @@
       current:current,previous:previous,trajectory:'no_data',comparison:null
     };
     if(!current.classifiableDays) return result;
-    if(current.classifiableDays===1){result.trajectory='early';return result;}
-    if(current.safetyFlag==='watch_high_steady') result.trajectory='possibly_overextended';
+    var singleDay=current.classifiableDays===1;
+    if(!singleDay&&current.safetyFlag==='watch_high_steady') result.trajectory='possibly_overextended';
 
     var currentDays=current.days.slice().sort(function(a,b){return a.date.localeCompare(b.date);});
     if(currentDays.length>=3){
@@ -303,14 +303,20 @@
         above180Direction:direction(above180Delta,.20)
       };
       if(result.trajectory!=='recovering'&&result.trajectory!=='possibly_overextended'){
-        var positive=[scoreDelta>=10,responseDelta>=.20,above60Delta>=.20,above120Delta>=.20,above180Delta>=.20].filter(Boolean).length;
-        var negative=[scoreDelta<=-10,responseDelta<=-.20,above60Delta<=-.20,above120Delta<=-.20,above180Delta<=-.20].filter(Boolean).length;
-        if(positive>negative) result.trajectory='building';
-        else if(negative>positive) result.trajectory='fading';
-        else result.trajectory=current.level==='low'&&current.response==='quiet'?'still_quiet':'maintaining';
+        if(singleDay){
+          if(scoreDelta>=10||(scoreDelta>-10&&responseDelta>=.50)) result.trajectory='building';
+          else if(scoreDelta<=-10||(scoreDelta<10&&responseDelta<=-.50)) result.trajectory='fading';
+          else result.trajectory=current.level==='low'&&current.response==='quiet'?'still_quiet':'maintaining';
+        }else{
+          var positive=[scoreDelta>=10,responseDelta>=.20,above60Delta>=.20,above120Delta>=.20,above180Delta>=.20].filter(Boolean).length;
+          var negative=[scoreDelta<=-10,responseDelta<=-.20,above60Delta<=-.20,above120Delta<=-.20,above180Delta<=-.20].filter(Boolean).length;
+          if(positive>negative) result.trajectory='building';
+          else if(negative>positive) result.trajectory='fading';
+          else result.trajectory=current.level==='low'&&current.response==='quiet'?'still_quiet':'maintaining';
+        }
       }
     }else if(result.trajectory==='no_data'){
-      result.trajectory=current.level==='low'&&current.response==='quiet'?'still_quiet':'establishing';
+      result.trajectory=singleDay?'early':current.level==='low'&&current.response==='quiet'?'still_quiet':'establishing';
     }
     return result;
   }

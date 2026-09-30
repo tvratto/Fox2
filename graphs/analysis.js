@@ -353,6 +353,16 @@ function weekToDateCopy(week,lastOfficial){
     possibly_overextended:{title:'Your fat-use signal has stayed unusually high and quiet.',summary:'Higher readings without much movement can be a reason to check whether you are adequately fueled.',answer:'Your signal has stayed unusually high and quiet this week. Make sure you are adequately fueled, including enough protein—especially if this pattern continues.',tone:'is-watch',icon:'!'}
   }[week.trajectory]||null;
   if(!copy) copy={title:'This week is taking shape.',summary:'FOX2 is comparing it with the same part of last week.',answer:'Your current pattern is still developing.',tone:'is-change',icon:'→'};
+  if(count===1){
+    var firstDayCopy={
+      building:{title:'Your week opened with a stronger fat-use signal.',summary:'Your first classifiable day was stronger or more responsive than the same weekday last week.',answer:'Your first classifiable day is an encouraging start compared with the same weekday last week. More days will show whether that improvement continues.',tone:'is-change',icon:'↑'},
+      fading:{title:'Your week opened more quietly.',summary:'Your first classifiable day was lower or less responsive than the same weekday last week.',answer:'Your first classifiable day was quieter than the same weekday last week. It is an early signal, and there is plenty of time for the week to change.',tone:'is-watch',icon:'↓'},
+      maintaining:{title:'Your first day is close to last week’s start.',summary:'The opening fat-use signal is similar to the same weekday last week.',answer:'Your week has started close to last week’s pattern. More days will show whether it holds or begins to move.',tone:'',icon:'→'},
+      still_quiet:{title:'Your week opened with a quiet fat-use signal.',summary:'The first classifiable day was low and steady.',answer:'Your first day was low and steady. That is useful as a starting point, but it is too early to describe the whole week.',tone:'is-watch',icon:'→'},
+      early:{title:'Your first day gives us a starting point.',summary:'FOX2 can describe the opening signal even though the weekly direction is not established yet.',answer:'Your first classifiable day establishes this week’s starting point. The next few days will show whether the signal builds, holds, or becomes quieter.',tone:'is-change',icon:'→'}
+    }[week.trajectory];
+    if(firstDayCopy) copy=firstDayCopy;
+  }
   copy.question='How is this week going?';
   copy.detail=count+' classifiable day'+(count===1?'':'s')+' this week'+(priorCount?' compared with '+priorCount+' from the same weekdays last week':'')+'.';
   copy.lastOfficial=lastOfficial||null;

@@ -99,4 +99,22 @@ function days(start,scores,responsive){
   assert.equal(wtd.trajectory,'possibly_overextended');
 })();
 
+(function comparesAFirstDayWithThePriorWeek(){
+  const sample=[
+    {date:'2026-01-05',score:45,movement:'steady',responseAmplitude:0},
+    {date:'2026-01-12',score:75,movement:'responsive',responseAmplitude:3}
+  ];
+  const wtd=engine.buildWeekToDate(sample,{referenceDate:'2026-01-13'});
+  assert.equal(wtd.current.classifiableDays,1);
+  assert.equal(wtd.previous.classifiableDays,1);
+  assert.equal(wtd.trajectory,'building');
+  assert.equal(wtd.comparison.scoreDelta,30);
+})();
+
+(function describesAFirstDayWithoutHistory(){
+  const sample=[{date:'2026-01-12',score:75,movement:'steady',responseAmplitude:0}];
+  const wtd=engine.buildWeekToDate(sample,{referenceDate:'2026-01-13'});
+  assert.equal(wtd.trajectory,'early');
+})();
+
 console.log('state-engine tests passed');
