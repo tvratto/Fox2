@@ -383,7 +383,7 @@ function weekToDateEvidenceHtml(week,lastOfficial){
     +'</div></section>';
 }
 
-function buildTagInsight(tagRows,history){
+function buildTagInsights(tagRows,history){
   var excludedPositive={Note:true,Meal:true,Snack:true,'High carb':true,Alcohol:true,'Poor sleep':true,Stress:true};
   var dayByDate={};
   history.days.forEach(function(day){dayByDate[day.date]=day;});
@@ -419,7 +419,8 @@ function buildTagInsight(tagRows,history){
   });
 
   var allDates=Object.keys(dayByDate);
-  var candidates=[];
+  var immediateCandidates=[];
+  var sustainedCandidates=[];
   Object.keys(stats).forEach(function(key){
     var stat=stats[key];
     stat.events.forEach(function(event){
@@ -443,33 +444,58 @@ function buildTagInsight(tagRows,history){
     var otherNextScores=allDates.filter(function(date){return !following[date];}).map(function(date){return Number(dayByDate[date].score);});
     var nextDelta=nextScores.length>=3&&otherNextScores.length>=5?analysisMedian(nextScores)-analysisMedian(otherNextScores):null;
     var rate=stat.eligible?stat.rises/stat.eligible:0;
-    if(!excludedPositive[stat.name]&&stat.eligible>=3&&rate>=.60){
-      candidates.push({kind:'immediate',rank:100+rate*20,stat:stat,rate:rate});
+    var medianDelta=stat.deltas.length?analysisMedian(stat.deltas):null;
+    if(!excludedPositive[stat.name]&&stat.eligible>=5&&rate>=.50&&medianDelta>=1.5){
+      immediateCandidates.push({kind:'immediate',rank:rate*20+Math.min(stat.eligible,40)/100,stat:stat,rate:rate,medianDelta:medianDelta});
     }
     if(!excludedPositive[stat.name]&&taggedScores.length>=5&&sameDelta!==null&&sameDelta>=5){
-      candidates.push({kind:'same_day',rank:70+Math.min(sameDelta,40),stat:stat,delta:sameDelta,count:taggedScores.length});
+      sustainedCandidates.push({kind:'same_day',rank:70+Math.min(sameDelta,40),stat:stat,delta:sameDelta,count:taggedScores.length});
     }
     if(!excludedPositive[stat.name]&&nextDelta!==null&&nextDelta>=10){
-      candidates.push({kind:'next_day',rank:60+Math.min(nextDelta,40),stat:stat,delta:nextDelta,count:nextScores.length});
+      sustainedCandidates.push({kind:'next_day',rank:60+Math.min(nextDelta,40),stat:stat,delta:nextDelta,count:nextScores.length});
     }
   });
-  candidates.sort(function(a,b){return b.rank-a.rank;});
-  var best=candidates[0];
+  immediateCandidates.sort(function(a,b){return b.rank-a.rank;});
+  sustainedCandidates.sort(function(a,b){return b.rank-a.rank;});
   var tagCount=Object.keys(stats).length;
-  if(!best){
+  var selected=[];
+  if(immediateCandidates.length){
+    var immediateBest=immediateCandidates[0];
+    immediateBest.supporting=immediateCandidates.filter(function(candidate){
+      return candidate.stat!==immediateBest.stat&&candidate.rate>=immediateBest.rate-.10;
+    })[0]||null;
+    selected.push(immediateBest);
+  }
+  if(sustainedCandidates.length){
+    var different=sustainedCandidates.filter(function(candidate){return !selected.length||candidate.stat!==selected[0].stat;})[0];
+    selected.push(different||sustainedCandidates[0]);
+  }
+  if(!selected.length){
     if(!tagCount){
-      return {question:'What should I try next?',answer:'Make one small change and tag it. FOX2 will look at what happens later that day and whether the effect carries into tomorrow.',tone:'is-change',icon:'+'};
+      return [{question:'What should I try next?',answer:'Make one small change and tag it. FOX2 will look at what happens later that day and whether the effect carries into tomorrow.',tone:'is-change',icon:'+'}];
     }
-    return {question:'What appears to be helping?',answer:'You are building useful history, but no single tagged choice has repeated a clear effect yet. Keep testing one change at a time so FOX2 can separate a real response from a one-time result.',tone:'is-change',icon:'→'};
+    return [{question:'What appears to be helping?',answer:'You are building useful history, but no single tagged choice has repeated a clear effect yet. Keep testing one change at a time so FOX2 can separate a real response from a one-time result.',tone:'is-change',icon:'→'}];
   }
-  var label=best.stat.icon+' '+best.stat.name;
-  if(best.kind==='immediate'){
-    return {question:'What appears to be helping?',answer:label+' has been followed by an increase in your fat-use signal on '+best.stat.rises+' of '+best.stat.eligible+' measurable occasions. Try it again and see whether your body responds similarly.',tone:'is-change',icon:best.stat.icon,evidence:best};
-  }
-  if(best.kind==='same_day'){
-    return {question:'What appears to be helping?',answer:'Across '+best.count+' days when you tagged '+label+', your Daily Fuel Score has tended to be about '+Math.round(best.delta)+' points higher. That does not prove cause, but it is worth repeating as a one-change experiment.',tone:'is-change',icon:best.stat.icon,evidence:best};
-  }
-  return {question:'What may help tomorrow?',answer:'The day after you tagged '+label+', your Daily Fuel Score has typically been about '+Math.round(best.delta)+' points higher. Try it again and see whether the next-day effect repeats.',tone:'is-change',icon:best.stat.icon,evidence:best};
+  return selected.slice(0,2).map(function(best){
+    var label=best.stat.icon+' '+best.stat.name;
+    if(best.kind==='immediate'){
+      var immediateAnswer=label+' has been followed by an increase in your fat-use signal on '+best.stat.rises+' of '+best.stat.eligible+' measurable occasions. The typical increase was '+Math.round(best.medianDelta*10)/10+' levels.';
+      if(best.supporting){
+        immediateAnswer+=' '+best.supporting.stat.icon+' '+best.supporting.stat.name+' showed a similar short-term effect on '+best.supporting.stat.rises+' of '+best.supporting.stat.eligible+' measurable occasions.';
+      }
+      immediateAnswer+=' '+(best.supporting?'These activities appear':'This appears')+' to get your fat use moving; try repeating '+(best.supporting?'one':'it')+' and see what helps the effect last longer.';
+      return {question:'What gets my fat use moving?',answer:immediateAnswer,tone:'is-change',icon:best.stat.icon,evidence:best};
+    }
+    if(best.kind==='same_day'){
+      var activityWord={Walk:'walking',Run:'running',Workout:'workouts'}[best.stat.name]||best.stat.name.toLowerCase();
+      return {question:'What appears to help it last?',answer:'Across '+best.count+' days when you tagged '+label+', your Daily Fuel Score has tended to be about '+Math.round(best.delta)+' points higher. That suggests '+activityWord+' may help the increase contribute more to the whole day; try it again as a one-change experiment.',tone:'is-change',icon:best.stat.icon,evidence:best};
+    }
+    return {question:'What may help tomorrow?',answer:'The day after you tagged '+label+', your Daily Fuel Score has typically been about '+Math.round(best.delta)+' points higher. Try it again and see whether the next-day effect repeats.',tone:'is-change',icon:best.stat.icon,evidence:best};
+  });
+}
+
+function buildTagInsight(tagRows,history){
+  return buildTagInsights(tagRows,history)[0];
 }
 
 function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
@@ -497,8 +523,9 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   window._fox2WeekToDate=weekToDate;
   var lastOfficial=typeof Fox2StateEngine!=='undefined'?Fox2StateEngine.currentState(weeklyStates):null;
   var weekCopy=weekToDateCopy(weekToDate,lastOfficial);
-  var tagInsight=buildTagInsight(tagRows||[],history);
-  window._fox2TagInsight=tagInsight;
+  var tagInsights=buildTagInsights(tagRows||[],history);
+  window._fox2TagInsights=tagInsights;
+  window._fox2TagInsight=tagInsights[0];
 
   var current=all.slice(-14);
   var measurementPoints=history.points.filter(function(p){return p.date!==history.activeDate;});
@@ -528,7 +555,9 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
     insights.push({question:question,answer:answer,tone:tone||'',icon:icon||'→'});
   }
   addInsight(weekCopy.question,weekCopy.answer,weekCopy.tone,weekCopy.icon);
-  addInsight(tagInsight.question,tagInsight.answer,tagInsight.tone,tagInsight.icon);
+  tagInsights.forEach(function(tagInsight){
+    addInsight(tagInsight.question,tagInsight.answer,tagInsight.tone,tagInsight.icon);
+  });
   if(stallPattern){
     addInsight('Am I stalled?',
       'Your recent fat use has stayed low without a clear increase. That is a starting point, not a failure. Try one small change and tag it so FOX2 can look for an effect.',

@@ -11,29 +11,51 @@ vm.createContext(context);
 vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
 
 (function recommendsARepeatedTaggedResponse(){
-  const dates=['2026-01-05','2026-01-06','2026-01-07','2026-01-08','2026-01-09','2026-01-10'];
+  const dates=['2026-01-05','2026-01-06','2026-01-07','2026-01-08','2026-01-09','2026-01-10','2026-01-11'];
   const history={
     days:dates.map((date,index)=>({date,score:70+index*3})),
-    points:dates.slice(0,3).flatMap(date=>[
+    points:dates.slice(0,5).flatMap(date=>[
       {date,minute:400,value:2},
       {date,minute:520,value:4.5}
     ])
   };
-  const tags=dates.slice(0,3).map(date=>({
+  const tags=dates.slice(0,5).map(date=>({
     day_date:date,
     events:[{icon:'🚶',name:'Walk',minute:420}],
     tray_tags:['🚶']
   }));
   const insight=context.buildTagInsight(tags,history);
-  assert.equal(insight.question,'What appears to be helping?');
-  assert.ok(insight.answer.includes('3 of 3'));
-  assert.ok(insight.answer.includes('Try it again'));
+  assert.equal(insight.question,'What gets my fat use moving?');
+  assert.ok(insight.answer.includes('5 of 5'));
+  assert.ok(insight.answer.includes('typical increase was 2.5 levels'));
+})();
+
+(function separatesImmediateFromSustainedEffects(){
+  const dates=Array.from({length:12},(_,index)=>'2026-02-'+String(index+1).padStart(2,'0'));
+  const runDates=dates.slice(0,5);
+  const walkDates=dates.slice(5,10);
+  const history={
+    days:dates.map(date=>({date,score:walkDates.includes(date)?120:80})),
+    points:runDates.flatMap(date=>[
+      {date,minute:400,value:2},
+      {date,minute:520,value:4}
+    ])
+  };
+  const tags=runDates.map(date=>({day_date:date,events:[{icon:'🏃',name:'Run',minute:420}],tray_tags:['🏃']}))
+    .concat(walkDates.map(date=>({day_date:date,events:[],tray_tags:['🚶']})));
+  const insights=context.buildTagInsights(tags,history);
+  assert.equal(insights.length,2);
+  assert.equal(insights[0].question,'What gets my fat use moving?');
+  assert.ok(insights[0].answer.includes('🏃 Run'));
+  assert.equal(insights[1].question,'What appears to help it last?');
+  assert.ok(insights[1].answer.includes('🚶 Walk'));
 })();
 
 (function promptsForAnExperimentWithoutTags(){
-  const insight=context.buildTagInsight([], {days:[],points:[]});
-  assert.equal(insight.question,'What should I try next?');
-  assert.ok(insight.answer.includes('tag it'));
+  const insights=context.buildTagInsights([], {days:[],points:[]});
+  assert.equal(insights.length,1);
+  assert.equal(insights[0].question,'What should I try next?');
+  assert.ok(insights[0].answer.includes('tag it'));
 })();
 
 (function avoidsInternalLanguageInFirstDayCopy(){
