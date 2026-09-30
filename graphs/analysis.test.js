@@ -87,4 +87,28 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(!/quiet|responsive|pattern/i.test(copy.title+' '+copy.summary+' '+copy.answer));
 })();
 
+(function ordersCurrentAndCompletedWeeksForComparison(){
+  function state(start,end,score,coverage){
+    return {
+      startDate:start,endDate:end,coverage:coverage,classifiableDays:2,level:'moderate',
+      metrics:{medianScore:score,responsiveDays:1,bandDays:{low:0,moderate:2,higher:0,strong:0}},
+      transition:{kind:'same_state',scoreDirection:'stable',responseDirection:'stable'}
+    };
+  }
+  const current=state('2026-09-28','2026-09-29',64.5,'provisional');
+  const html=context.weeklyStateHistoryHtml([
+    state('2026-09-14','2026-09-20',80,'limited'),
+    state('2026-09-21','2026-09-27',110,'sufficient')
+  ],{
+    current,throughDate:'2026-09-29',
+    comparison:{scoreDirection:'falling'}
+  });
+  assert.ok(html.includes('Compare your weeks'));
+  assert.ok(html.includes('Incomplete'));
+  assert.ok(html.includes('64.5'));
+  assert.ok(html.indexOf('09-28 – 09-29')<html.indexOf('09-21 – 09-27'));
+  assert.ok(html.indexOf('09-21 – 09-27')<html.indexOf('09-14 – 09-20'));
+  assert.ok(!html.includes('1 days'));
+})();
+
 console.log('analysis tests passed');

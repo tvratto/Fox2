@@ -311,29 +311,49 @@ function scoreRangeDistributionHtml(days){
   }).join('');
 }
 
-function weeklyStateHistoryHtml(states){
-  var usable=states.filter(function(state){return state.coverage==='sufficient';});
-  if(!usable.length) return '';
-  var recent=usable.slice(-6);
+function weeklyStateHistoryHtml(states,week){
+  var completed=states.filter(function(state){return state.classifiableDays>0;}).slice().reverse();
+  var current=week&&week.current?week.current:null;
+  if(!completed.length&&(!current||!current.classifiableDays)) return '';
   var labels={low:'Lower fat use',moderate:'Balanced fat use',higher:'Higher fat use',strong:'Strong fat use',quiet:'few clear increases',intermittent:'some clear increases',active:'frequent increases'};
-  var rows=recent.map(function(state,index){
-    var current=index===recent.length-1;
+  function bandsFor(state){
+    var bands=state.metrics.bandDays;
+    return bands.low+' low · '+bands.moderate+' balanced · '+bands.higher+' higher · '+bands.strong+' strong';
+  }
+  function dayCountLabel(count){return count+' '+(count===1?'day':'days');}
+  function completedRow(state){
     var transition=state.transition||{};
     var changeLabel=transition.scoreDirection==='rising'?'more fat use than the prior week'
       :transition.scoreDirection==='falling'?'less fat use than the prior week'
       :transition.responseDirection==='rising'?'more days with clear increases'
       :transition.responseDirection==='falling'?'fewer days with clear increases'
       :transition.kind==='same_state'?'similar to the prior week':'starting reference';
-    return '<div class="analysis-week'+(current?' is-current':'')+'">'
-      +'<div class="analysis-week-state">'+labels[state.level]+'</div>'
-      +'<div class="analysis-week-score">'+state.metrics.medianScore+'</div>'
-      +'<div class="analysis-week-dates">'+state.startDate.slice(5)+' – '+state.endDate.slice(5)+' · '+state.classifiableDays+' days</div>'
-      +'<div class="analysis-week-detail">'+state.metrics.responsiveDays+' days with increases · '+changeLabel+'</div>'
-      +'<div class="analysis-week-bands">'+state.metrics.bandDays.low+' low · '+state.metrics.bandDays.moderate+' moderate · '+state.metrics.bandDays.higher+' higher · '+state.metrics.bandDays.strong+' strong</div>'
+    return '<div class="analysis-week">'
+      +'<div class="analysis-week-state">'+labels[state.level]+' <span class="analysis-week-badge is-complete">Completed</span></div>'
+      +'<div class="analysis-week-score"><span>Typical score</span>'+state.metrics.medianScore+'</div>'
+      +'<div class="analysis-week-dates">'+state.startDate.slice(5)+' – '+state.endDate.slice(5)+' · '+dayCountLabel(state.classifiableDays)+'</div>'
+      +'<div class="analysis-week-detail">'+dayCountLabel(state.metrics.responsiveDays)+' with increases · '+changeLabel+'</div>'
+      +'<div class="analysis-week-bands">'+bandsFor(state)+'</div>'
       +'</div>';
-  }).join('');
-  return '<section class="analysis-card"><h2 class="analysis-section-title">Your completed weeks</h2>'
-    +'<p class="analysis-section-copy">Each Monday–Sunday week combines the Daily Fuel Score with response patterns found in the individual measurements. Completed weeks do not change; the newest is highlighted.</p>'
+  }
+  var rows='';
+  if(current){
+    var hasCurrent=current.classifiableDays>0;
+    var comparison=week.comparison||{};
+    var currentChange=comparison.scoreDirection==='rising'?'higher than the same point last week'
+      :comparison.scoreDirection==='falling'?'lower than the same point last week'
+      :comparison.scoreDirection==='stable'?'similar to the same point last week':'comparison still developing';
+    rows='<div class="analysis-week is-current">'
+      +'<div class="analysis-week-state">'+(hasCurrent?labels[current.level]:'No classifiable days yet')+' <span class="analysis-week-badge">Incomplete</span></div>'
+      +'<div class="analysis-week-score"><span>Typical score</span>'+(hasCurrent?current.metrics.medianScore:'—')+'</div>'
+      +'<div class="analysis-week-dates">'+current.startDate.slice(5)+' – '+week.throughDate.slice(5)+' · '+dayCountLabel(current.classifiableDays)+' so far</div>'
+      +'<div class="analysis-week-detail">'+(hasCurrent?dayCountLabel(current.metrics.responsiveDays)+' with increases · '+currentChange:'Add measurements to begin this week’s comparison')+'</div>'
+      +(hasCurrent?'<div class="analysis-week-bands">'+bandsFor(current)+'</div>':'')
+      +'</div>';
+  }
+  rows+=completed.map(completedRow).join('');
+  return '<section class="analysis-card"><h2 class="analysis-section-title">Compare your weeks</h2>'
+    +'<p class="analysis-section-copy">This week so far is shown first and remains incomplete until Sunday ends. Completed Monday–Sunday weeks follow from most recent to oldest.</p>'
     +'<div class="analysis-week-list">'+rows+'</div></section>';
 }
 
@@ -610,6 +630,7 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
       +insightHtml
     +'</section>'
     +weekToDateEvidenceHtml(weekToDate,lastOfficial)
+    +weeklyStateHistoryHtml(weeklyStates,weekToDate)
     +'<section class="analysis-card">'
       +'<h2 class="analysis-section-title">Why FOX2 says this</h2>'
       +'<p class="analysis-section-copy">FOX2 compares your recent fat use with your own complete history.</p>'
@@ -636,6 +657,5 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
       +'<p class="analysis-section-copy">Each block is one classifiable day, from earliest to latest.</p>'
       +'<div class="analysis-pattern-strip" role="img" aria-label="Daily pattern history from earliest to latest">'+strip+'</div>'
       +'<div class="analysis-legend">'+legend+'</div></section>'
-    +weeklyStateHistoryHtml(weeklyStates)
     +'<div class="analysis-footnote">Based on '+all.length+' of '+history.completedWithScore+' completed days. A clear increase requires a rise at least two signal levels above the recent personal baseline and a return toward that baseline within 72 hours. Days without enough readings across the day are left out of daily classification. Tag comparisons describe associations, not causes. FOX2 does not diagnose stalled metabolism, muscle loss, or under-fueling.</div>';
 }
