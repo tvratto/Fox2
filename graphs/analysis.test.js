@@ -10,6 +10,20 @@ const context={
 vm.createContext(context);
 vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
 
+(function anchorsAnalysisToLastMeasurementInsteadOfWallClock(){
+  const history=context.buildHistoricalAnalysis([
+    {reading_ts:'2025-04-10T08:00:00Z',ppm:2},
+    {reading_ts:'2025-04-10T14:00:00Z',ppm:3},
+    {reading_ts:'2025-04-10T20:00:00Z',ppm:2},
+    {reading_ts:'2025-04-11T09:00:00Z',ppm:3}
+  ],[
+    {day_date:'2025-04-09',auc_score:60},
+    {day_date:'2025-04-10',auc_score:70}
+  ]);
+  assert.equal(history.activeDate,'2025-04-11');
+  assert.ok(history.days.every(day=>day.date<'2025-04-11'));
+})();
+
 (function recommendsARepeatedTaggedResponse(){
   const dates=['2026-01-05','2026-01-06','2026-01-07','2026-01-08','2026-01-09','2026-01-10','2026-01-11'];
   const history={

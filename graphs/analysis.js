@@ -58,6 +58,19 @@ function findResponseEpisodes(points){
   return episodes;
 }
 
+function latestAvailableMeasurementDate(points){
+  var latest='';
+  (points||[]).forEach(function(point){
+    if(point.date&&point.date>latest) latest=point.date;
+  });
+  if(typeof DAYS!=='undefined'&&Array.isArray(DAYS)){
+    DAYS.forEach(function(day){
+      if(day&&day.isoDate&&Array.isArray(day.pts)&&day.pts.length&&day.isoDate>latest) latest=day.isoDate;
+    });
+  }
+  return latest||null;
+}
+
 function buildHistoricalAnalysis(readingRows,scoreRows){
   var readingsByDay={};
   var allPoints=[];
@@ -89,10 +102,13 @@ function buildHistoricalAnalysis(readingRows,scoreRows){
     scoreByDay[date]=Number(row.auc_score);
   });
 
-  // Only the browser's actual current calendar day is incomplete. A restored
-  // device payload may end yesterday; that final saved day should still count.
-  var now=new Date();
-  var activeDate=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  // The analysis clock stops at the last available measurement. Opening an
+  // older device payload later must not create empty days or advance its week.
+  var activeDate=latestAvailableMeasurementDate(allPoints);
+  if(!activeDate){
+    var scoreDates=Object.keys(scoreByDay).sort();
+    activeDate=scoreDates.length?scoreDates[scoreDates.length-1]:null;
+  }
   var completedWithScore=0;
   var classified=[];
   Object.keys(readingsByDay).sort().forEach(function(date){
@@ -155,13 +171,18 @@ function scoreWindowSummary(scoreDays,startDate,endDate){
 
 function liveTodaySnapshot(activeDate){
   if(typeof DAYS==='undefined'||typeof TODAY_IDX==='undefined') return null;
-  var day=DAYS[TODAY_IDX];
+  var day=null;
+  for(var i=DAYS.length-1;i>=0;i--){
+    if(DAYS[i]&&DAYS[i].isoDate===activeDate&&Array.isArray(DAYS[i].pts)&&DAYS[i].pts.length){day=DAYS[i];break;}
+  }
   if(!day||day.isoDate!==activeDate||!isFinite(Number(day.score))||Number(day.score)<=0) return null;
   var points=(Array.isArray(day.pts)?day.pts:[]).map(function(point){
     return {minute:Number(point[0]),value:Number(point[1])};
   }).filter(function(point){return isFinite(point.minute)&&isFinite(point.value);})
     .sort(function(a,b){return a.minute-b.minute;});
-  return {date:activeDate,score:Number(day.score),partial:true,
+  var now=new Date();
+  var calendarToday=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  return {date:activeDate,score:Number(day.score),partial:true,isCalendarToday:activeDate===calendarToday,
     cutoffMinute:points.length?points[points.length-1].minute:null,points:points};
 }
 
@@ -182,10 +203,15 @@ function partialAucAtMinute(points,cutoffMinute){
 
 function todayComparison(today,historyPoints,week){
   if(!today) return null;
+  var isCalendarToday=today.isCalendarToday!==false;
+  var subject=isCalendarToday?'Today':'Your latest measured day';
+  var tense=isCalendarToday?'is':'was';
+  var priorDayName=isCalendarToday?'yesterday at this time':'the previous day at this time';
   var result={todayScore:Math.round(Number(today.score)*10)/10,cutoffMinute:today.cutoffMinute,
     yesterdayEstimate:null,previousWeekEstimate:null,previousWeekDays:0,
-    title:'Today’s Daily Fuel Score is still building.',
-    summary:'Your score is '+Math.round(Number(today.score)*10)/10+' so far. Today’s score will keep accumulating as the day continues.'};
+    date:today.date,isCalendarToday:isCalendarToday,
+    title:isCalendarToday?'Today’s Daily Fuel Score is still building.':'Your latest day’s Daily Fuel Score was still building at the last measurement.',
+    summary:isCalendarToday?'Your score is '+Math.round(Number(today.score)*10)/10+' so far.':'The score was '+Math.round(Number(today.score)*10)/10+' at the last measurement.'};
   if(!isFinite(Number(today.cutoffMinute))) return result;
   var byDate={};
   (historyPoints||[]).forEach(function(point){
@@ -209,31 +235,35 @@ function todayComparison(today,historyPoints,week){
     }
   }
   var reference=result.yesterdayEstimate!==null?result.yesterdayEstimate:result.previousWeekEstimate;
-  var referenceName=result.yesterdayEstimate!==null?'yesterday at this time':'your same-time average last week';
+  var referenceName=result.yesterdayEstimate!==null?priorDayName:'your same-time average the previous week';
   if(reference!==null){
     var delta=result.todayScore-reference;
-    if(delta>=5) result.title='Today is running ahead of '+referenceName+'.';
-    else if(delta<=-5) result.title='Today is running behind '+referenceName+'—but the day is still in progress.';
-    else result.title='Today is tracking close to '+referenceName+'.';
+    if(delta>=5) result.title=subject+' '+tense+' running ahead of '+referenceName+'.';
+    else if(delta<=-5) result.title=subject+' '+tense+' running behind '+referenceName+(isCalendarToday?'—but the day is still in progress.':' when you last measured.');
+    else result.title=subject+' '+tense+' tracking close to '+referenceName+'.';
   }
   var comparisons=[];
-  if(result.yesterdayEstimate!==null) comparisons.push('about '+result.yesterdayEstimate+' at this time yesterday');
-  if(result.previousWeekEstimate!==null) comparisons.push('a same-time average of '+result.previousWeekEstimate+' across '+result.previousWeekDays+' comparable '+(result.previousWeekDays===1?'day':'days')+' last week');
-  result.summary='Your score is '+result.todayScore+' so far'+(comparisons.length?', compared with '+comparisons.join(' and '):'')+'. Today’s score will keep accumulating as the day continues.';
+  if(result.yesterdayEstimate!==null) comparisons.push('about '+result.yesterdayEstimate+' at the same time on the previous day');
+  if(result.previousWeekEstimate!==null) comparisons.push('a same-time average of '+result.previousWeekEstimate+' across '+result.previousWeekDays+' comparable '+(result.previousWeekDays===1?'day':'days')+' the previous week');
+  result.summary=(isCalendarToday?'Your score is '+result.todayScore+' so far':'The score was '+result.todayScore+' at the last measurement')+(comparisons.length?', compared with '+comparisons.join(' and '):'')+'.';
   return result;
 }
 
 function todaySoFarHtml(comparison){
   if(!comparison) return '';
   function valueOrDash(value){return value===null?'—':value;}
+  var eyebrow=comparison.isCalendarToday?'Today so far · incomplete':'Latest measured day · '+comparison.date;
+  var latestLabel=comparison.isCalendarToday?'Today so far':'Latest day at last measurement';
+  var priorLabel=comparison.isCalendarToday?'Yesterday at this time':'Previous day at the same time';
+  var weekLabel=comparison.isCalendarToday?'Same time last week':'Same time the previous week';
   return '<section class="analysis-card analysis-today">'
-    +'<div class="analysis-eyebrow">Today so far · incomplete</div>'
+    +'<div class="analysis-eyebrow">'+eyebrow+'</div>'
     +'<h2 class="analysis-section-title">'+comparison.title+'</h2>'
     +'<p class="analysis-section-copy">'+comparison.summary+'</p>'
     +'<div class="analysis-kpis">'
-      +'<div class="analysis-kpi"><div class="analysis-kpi-label">Today so far</div><div class="analysis-kpi-value">'+comparison.todayScore+'</div></div>'
-      +'<div class="analysis-kpi"><div class="analysis-kpi-label">Yesterday at this time</div><div class="analysis-kpi-value">'+valueOrDash(comparison.yesterdayEstimate)+'</div></div>'
-      +'<div class="analysis-kpi"><div class="analysis-kpi-label">Same time last week</div><div class="analysis-kpi-value">'+valueOrDash(comparison.previousWeekEstimate)+'</div></div>'
+      +'<div class="analysis-kpi"><div class="analysis-kpi-label">'+latestLabel+'</div><div class="analysis-kpi-value">'+comparison.todayScore+'</div></div>'
+      +'<div class="analysis-kpi"><div class="analysis-kpi-label">'+priorLabel+'</div><div class="analysis-kpi-value">'+valueOrDash(comparison.yesterdayEstimate)+'</div></div>'
+      +'<div class="analysis-kpi"><div class="analysis-kpi-label">'+weekLabel+'</div><div class="analysis-kpi-value">'+valueOrDash(comparison.previousWeekEstimate)+'</div></div>'
     +'</div>'
     +'<p class="analysis-note">Same-time comparisons are estimates from the measurements available by this point in each day. They are separate from the completed-score weekly analysis below.</p>'
   +'</section>';
@@ -414,7 +444,7 @@ function recentScoreSummaryHtml(days,week,previousCalendarWeek,today){
     }
     var score=Number(slot.day.score);
     if(slot.day.partial){
-      return '<rect x="'+x.toFixed(1)+'" y="'+y(score).toFixed(1)+'" width="'+barWidth.toFixed(1)+'" height="'+Math.max(2,top+ph-y(score)).toFixed(1)+'" rx="3" fill="rgba(255,210,60,.18)" stroke="#FFD23C" stroke-width="1.5" stroke-dasharray="3 2"><title>'+slot.date+': '+score+' so far (incomplete)</title></rect>';
+      return '<rect x="'+x.toFixed(1)+'" y="'+y(score).toFixed(1)+'" width="'+barWidth.toFixed(1)+'" height="'+Math.max(2,top+ph-y(score)).toFixed(1)+'" rx="3" fill="rgba(255,210,60,.18)" stroke="#FFD23C" stroke-width="1.5" stroke-dasharray="3 2"><title>'+slot.date+': '+score+(slot.day.isCalendarToday===false?' at last measurement':' so far')+' (incomplete)</title></rect>';
     }
     var color=score<=60?'#22D3EE':score<=120?'#4ADE80':score<=180?'#C084FC':'#F472B6';
     return '<rect x="'+x.toFixed(1)+'" y="'+y(score).toFixed(1)+'" width="'+barWidth.toFixed(1)+'" height="'+Math.max(2,top+ph-y(score)).toFixed(1)+'" rx="3" fill="'+color+'"><title>'+slot.date+': '+score+'</title></rect>';
@@ -422,8 +452,9 @@ function recentScoreSummaryHtml(days,week,previousCalendarWeek,today){
   var average=previousCalendarWeek&&previousCalendarWeek.classifiableDays?previousCalendarWeek.metrics.meanScore:null;
   var averageLine=average===null?'':'<line x1="'+left+'" y1="'+y(average).toFixed(1)+'" x2="'+(left+pw)+'" y2="'+y(average).toFixed(1)+'" stroke="rgba(255,210,60,.72)" stroke-width="1.4" stroke-dasharray="5 4"/><text x="'+(left+pw-2)+'" y="'+(y(average)-5).toFixed(1)+'" text-anchor="end" font-size="9" fill="rgba(255,210,60,.84)">last week avg '+average+'</text>';
   var currentShade=currentIndex<0?'':'<rect x="'+(left+currentIndex*step).toFixed(1)+'" y="'+top+'" width="'+((slots.length-currentIndex)*step).toFixed(1)+'" height="'+ph+'" fill="rgba(255,210,60,.035)"/>';
+  var partialDescription=today&&today.isCalendarToday===false?'the latest measured day at the time of its last measurement':'today so far';
   return '<section class="analysis-card"><h2 class="analysis-section-title">Your recent scores at a glance</h2>'
-    +'<p class="analysis-section-copy">Each solid bar is one completed Daily Fuel Score. The outlined gold bar is today so far. A gap means no Daily Fuel Score was available. The dashed line is the average across all of last week’s completed scores.</p>'
+    +'<p class="analysis-section-copy">Each solid bar is one completed Daily Fuel Score. The outlined gold bar is '+partialDescription+'. A gap means no Daily Fuel Score was available. The dashed line is the average across all of the previous week’s completed scores.</p>'
     +'<svg class="analysis-chart" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="Daily Fuel Scores for the latest 14 calendar days, including gaps">'
       +'<rect x="'+left+'" y="'+y(60)+'" width="'+pw+'" height="'+(y(0)-y(60))+'" fill="rgba(34,211,238,.055)"/>'
       +'<rect x="'+left+'" y="'+y(120)+'" width="'+pw+'" height="'+(y(60)-y(120))+'" fill="rgba(74,222,128,.06)"/>'
