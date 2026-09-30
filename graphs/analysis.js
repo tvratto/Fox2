@@ -327,9 +327,49 @@ function weeklyStateHistoryHtml(states){
       +'<div class="analysis-week-bands">'+state.metrics.bandDays.low+' low · '+state.metrics.bandDays.moderate+' moderate · '+state.metrics.bandDays.higher+' higher · '+state.metrics.bandDays.strong+' strong</div>'
       +'</div>';
   }).join('');
-  return '<section class="analysis-card"><h2 class="analysis-section-title">Your seven-day states</h2>'
-    +'<p class="analysis-section-copy">Each period combines the Daily Fuel Score with response patterns found in the individual measurements. The newest period is highlighted.</p>'
+  return '<section class="analysis-card"><h2 class="analysis-section-title">Your completed weeks</h2>'
+    +'<p class="analysis-section-copy">Each Monday–Sunday week combines the Daily Fuel Score with response patterns found in the individual measurements. Completed weeks do not change; the newest is highlighted.</p>'
     +'<div class="analysis-week-list">'+rows+'</div></section>';
+}
+
+function weekToDateCopy(week,lastOfficial){
+  if(!week||!week.current||!week.current.classifiableDays){
+    return {title:'This week is just getting started.',summary:'There is not enough information yet to describe this week’s fat-use pattern.',question:'How is this week going?',answer:'FOX2 will begin comparing this week once there are classifiable days to work with.',tone:'is-change',icon:'→'};
+  }
+  var count=week.current.classifiableDays;
+  var priorCount=week.previous&&week.previous.classifiableDays||0;
+  var comparable=priorCount?' compared with the same part of last week':'';
+  var copy={
+    early:{title:'This week is just getting started.',summary:'One classifiable day is not enough to call a direction yet.',answer:'It is too early to identify a weekly direction. Keep measuring and FOX2 will update as the week develops.',tone:'is-change',icon:'→'},
+    establishing:{title:'This week is establishing a new pattern.',summary:'There is enough information to describe the week, but no comparable start from last week.',answer:'This week is beginning to take shape. FOX2 will use it as a reference for future Monday–Sunday comparisons.',tone:'is-change',icon:'→'},
+    building:{title:'Your fat-use pattern is building this week.',summary:'Your signal is stronger or more responsive than it was at the same point last week.',answer:'Something in your recent routine appears to be working. This week shows more fat use or more movement'+comparable+'. Keep building on it.',tone:'is-change',icon:'↑'},
+    maintaining:{title:'You are carrying your recent pattern forward.',summary:'This week is tracking close to the same point last week.',answer:'Your fat-use pattern is holding close to last week’s start. Continuing the choices that produced it may help make the pattern more consistent.',tone:'',icon:'✓'},
+    fading:{title:'Your fat-use pattern is quieter this week.',summary:'The signal is lower or less responsive than it was at the same point last week.',answer:'This week has started more quietly than last week, but there is still time for the pattern to change.',tone:'is-watch',icon:'↓'},
+    recovering:{title:'Your fat-use pattern is recovering.',summary:'The week started quietly, but your latest days are moving back toward a stronger pattern.',answer:'Your last two classifiable days are moving back toward your stronger pattern. Something in your recent routine may be helping.',tone:'is-change',icon:'↑'},
+    still_quiet:{title:'Your fat-use pattern is still quiet.',summary:'The signal remains low and steady so far this week.',answer:'FOX2 is not seeing a meaningful increase in fat use yet. There is still time for this week’s pattern to change.',tone:'is-watch',icon:'!'},
+    possibly_overextended:{title:'Your fat-use signal has stayed unusually high and quiet.',summary:'Higher readings without much movement can be a reason to check whether you are adequately fueled.',answer:'Your signal has stayed unusually high and quiet this week. Make sure you are adequately fueled, including enough protein—especially if this pattern continues.',tone:'is-watch',icon:'!'}
+  }[week.trajectory]||null;
+  if(!copy) copy={title:'This week is taking shape.',summary:'FOX2 is comparing it with the same part of last week.',answer:'Your current pattern is still developing.',tone:'is-change',icon:'→'};
+  copy.question='How is this week going?';
+  copy.detail=count+' classifiable day'+(count===1?'':'s')+' this week'+(priorCount?' compared with '+priorCount+' from the same weekdays last week':'')+'.';
+  copy.lastOfficial=lastOfficial||null;
+  return copy;
+}
+
+function weekToDateEvidenceHtml(week,lastOfficial){
+  if(!week||!week.current||!week.current.classifiableDays) return '';
+  var current=week.current;
+  var previous=week.previous;
+  var official=lastOfficial?lastOfficial.stateLabel+' · median '+lastOfficial.metrics.medianScore:'Not enough data';
+  var prior=previous&&previous.classifiableDays?previous.stateLabel+' · median '+previous.metrics.medianScore:'No comparable start';
+  return '<section class="analysis-card"><h2 class="analysis-section-title">This week so far</h2>'
+    +'<p class="analysis-section-copy">A live view through '+week.throughDate+'. It compares only the same elapsed weekdays and remains provisional until Sunday ends.</p>'
+    +'<div class="analysis-kpis">'
+      +'<div class="analysis-kpi"><div class="analysis-kpi-label">Current pattern</div><div class="analysis-kpi-value">'+current.stateLabel+'</div></div>'
+      +'<div class="analysis-kpi"><div class="analysis-kpi-label">Daily median</div><div class="analysis-kpi-value">'+current.metrics.medianScore+'</div></div>'
+      +'<div class="analysis-kpi"><div class="analysis-kpi-label">Same days last week</div><div class="analysis-kpi-value">'+prior+'</div></div>'
+      +'<div class="analysis-kpi"><div class="analysis-kpi-label">Last completed week</div><div class="analysis-kpi-value">'+official+'</div></div>'
+    +'</div></section>';
 }
 
 function renderHistoricalAnalysis(readingRows,scoreRows){
@@ -344,14 +384,19 @@ function renderHistoricalAnalysis(readingRows,scoreRows){
   }
 
   var weeklyStates=[];
+  var weekToDate=null;
   if(typeof Fox2StateEngine!=='undefined'){
-    weeklyStates=Fox2StateEngine.buildWeeklyStates(all,{
-      endDate:addIsoDays(history.activeDate,-1),
+    weeklyStates=Fox2StateEngine.buildCalendarWeekStates(all,{
+      referenceDate:history.activeDate,
       minClassifiableDays:4
     });
+    weekToDate=Fox2StateEngine.buildWeekToDate(all,{referenceDate:history.activeDate});
   }
   // Exposed read-only for development and validation in the browser console.
   window._fox2WeeklyStates=weeklyStates;
+  window._fox2WeekToDate=weekToDate;
+  var lastOfficial=typeof Fox2StateEngine!=='undefined'?Fox2StateEngine.currentState(weeklyStates):null;
+  var weekCopy=weekToDateCopy(weekToDate,lastOfficial);
 
   var current=all.slice(-14);
   var measurementPoints=history.points.filter(function(p){return p.date!==history.activeDate;});
@@ -411,6 +456,7 @@ function renderHistoricalAnalysis(readingRows,scoreRows){
   function addInsight(question,answer,tone,icon){
     insights.push({question:question,answer:answer,tone:tone||'',icon:icon||'→'});
   }
+  addInsight(weekCopy.question,weekCopy.answer,weekCopy.tone,weekCopy.icon);
   if(stallPattern){
     addInsight('Is my pattern stuck?',
       'It appears to be. Your recent pattern is both low and flat, so FOX2 is not seeing a meaningful increase in fat use yet.',
@@ -477,12 +523,13 @@ function renderHistoricalAnalysis(readingRows,scoreRows){
   shell.innerHTML=''
     +'<section class="analysis-card analysis-hero">'
       +'<div class="analysis-eyebrow">Your questions, answered</div>'
-      +'<h1 class="analysis-title">'+title+'</h1>'
-      +'<p class="analysis-summary">'+summary+'</p>'
+      +'<h1 class="analysis-title">'+weekCopy.title+'</h1>'
+      +'<p class="analysis-summary">'+weekCopy.summary+'</p>'
     +'</section>'
     +'<section class="analysis-conclusion-list" aria-label="Your conclusions">'
       +insightHtml
     +'</section>'
+    +weekToDateEvidenceHtml(weekToDate,lastOfficial)
     +'<section class="analysis-card">'
       +'<h2 class="analysis-section-title">Why FOX2 says this</h2>'
       +'<p class="analysis-section-copy">The recent pattern is read against every classifiable day in your history.</p>'

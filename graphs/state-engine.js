@@ -228,6 +228,93 @@
     return addTransitions(windows);
   }
 
+  function mondayFor(isoDate){
+    var d=parseIso(isoDate);
+    var day=d.getUTCDay();
+    return addDays(isoDate,-(day===0?6:day-1));
+  }
+
+  function buildCalendarWeekStates(days,options){
+    options=options||{};
+    var referenceDate=options.referenceDate||iso(new Date());
+    var currentMonday=mondayFor(referenceDate);
+    return buildWeeklyStates(days,{
+      endDate:addDays(currentMonday,-1),
+      minClassifiableDays:options.minClassifiableDays||4
+    });
+  }
+
+  function summarizePartial(startDate,endDate,days){
+    var state=stateForWindow(startDate,endDate,days,1);
+    if(state.classifiableDays){
+      state.coverage='provisional';
+      state.stateId=(state.level+'_'+state.response).toUpperCase();
+      state.stateLabel=titleCase(state.level)+' + '+titleCase(state.response);
+      if((state.level==='higher'||state.level==='strong')&&state.response==='quiet') state.safetyFlag='watch_high_steady';
+    }
+    return state;
+  }
+
+  function buildWeekToDate(days,options){
+    options=options||{};
+    var valid=(days||[]).filter(function(day){
+      return day&&/^\d{4}-\d{2}-\d{2}$/.test(day.date)&&isFinite(Number(day.score));
+    }).slice().sort(function(a,b){return a.date.localeCompare(b.date);});
+    var referenceDate=options.referenceDate||iso(new Date());
+    var startDate=mondayFor(referenceDate);
+    var throughDate=addDays(referenceDate,-1);
+    var elapsedDays=Math.max(0,Math.round((parseIso(referenceDate)-parseIso(startDate))/DAY_MS));
+    var priorStart=addDays(startDate,-7);
+    var priorEnd=elapsedDays?addDays(priorStart,elapsedDays-1):addDays(priorStart,-1);
+    var current=summarizePartial(startDate,throughDate,valid);
+    var previous=summarizePartial(priorStart,priorEnd,valid);
+    var result={
+      startDate:startDate,throughDate:throughDate,elapsedDays:elapsedDays,
+      current:current,previous:previous,trajectory:'no_data',comparison:null
+    };
+    if(!current.classifiableDays) return result;
+    if(current.classifiableDays===1){result.trajectory='early';return result;}
+    if(current.safetyFlag==='watch_high_steady') result.trajectory='possibly_overextended';
+
+    var currentDays=current.days.slice().sort(function(a,b){return a.date.localeCompare(b.date);});
+    if(currentDays.length>=3){
+      var latest=currentDays.slice(-2);
+      var earlier=currentDays.slice(0,-2);
+      var latestScore=median(latest.map(function(d){return Number(d.score);}));
+      var earlierScore=median(earlier.map(function(d){return Number(d.score);}));
+      var latestResponse=latest.filter(function(d){return d.movement==='responsive';}).length/latest.length;
+      var earlierResponse=earlier.filter(function(d){return d.movement==='responsive';}).length/earlier.length;
+      if(latestScore-earlierScore>=10||latestResponse-earlierResponse>=.34){
+        result.trajectory='recovering';
+      }
+    }
+
+    if(previous.classifiableDays){
+      var scoreDelta=round(current.metrics.medianScore-previous.metrics.medianScore,1);
+      var responseDelta=round(current.metrics.responseRate-previous.metrics.responseRate,3);
+      var above60Delta=round(current.metrics.above60Rate-previous.metrics.above60Rate,3);
+      var above120Delta=round(current.metrics.above120Rate-previous.metrics.above120Rate,3);
+      var above180Delta=round(current.metrics.above180Rate-previous.metrics.above180Rate,3);
+      result.comparison={
+        scoreDelta:scoreDelta,responseDelta:responseDelta,
+        above60Delta:above60Delta,above120Delta:above120Delta,above180Delta:above180Delta,
+        scoreDirection:direction(scoreDelta,10),responseDirection:direction(responseDelta,.20),
+        above60Direction:direction(above60Delta,.20),above120Direction:direction(above120Delta,.20),
+        above180Direction:direction(above180Delta,.20)
+      };
+      if(result.trajectory!=='recovering'&&result.trajectory!=='possibly_overextended'){
+        var positive=[scoreDelta>=10,responseDelta>=.20,above60Delta>=.20,above120Delta>=.20,above180Delta>=.20].filter(Boolean).length;
+        var negative=[scoreDelta<=-10,responseDelta<=-.20,above60Delta<=-.20,above120Delta<=-.20,above180Delta<=-.20].filter(Boolean).length;
+        if(positive>negative) result.trajectory='building';
+        else if(negative>positive) result.trajectory='fading';
+        else result.trajectory=current.level==='low'&&current.response==='quiet'?'still_quiet':'maintaining';
+      }
+    }else if(result.trajectory==='no_data'){
+      result.trajectory=current.level==='low'&&current.response==='quiet'?'still_quiet':'establishing';
+    }
+    return result;
+  }
+
   function currentState(states){
     for(var i=(states||[]).length-1;i>=0;i--){
       if(states[i].coverage==='sufficient') return states[i];
@@ -236,8 +323,10 @@
   }
 
   return {
-    version:'0.1.0',
+    version:'0.2.0',
     buildWeeklyStates:buildWeeklyStates,
+    buildCalendarWeekStates:buildCalendarWeekStates,
+    buildWeekToDate:buildWeekToDate,
     currentState:currentState,
     levelForScore:levelForScore,
     responseBand:responseBand,

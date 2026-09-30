@@ -66,4 +66,37 @@ function days(start,scores,responsive){
   assert.equal(current.stateStreak,1);
 })();
 
+(function usesCompletedMondayToSundayWeeks(){
+  const sample=days('2026-01-05',[70,72,74,76,78,80,82,140,142],[]);
+  const states=engine.buildCalendarWeekStates(sample,{referenceDate:'2026-01-14'});
+  const current=engine.currentState(states);
+  assert.equal(current.startDate,'2026-01-05');
+  assert.equal(current.endDate,'2026-01-11');
+  assert.equal(current.classifiableDays,7);
+})();
+
+(function comparesWeekToDateWithSameElapsedWeekdays(){
+  const sample=days('2026-01-05',[40,45,50,55,60,65,70,80,95],[]);
+  const wtd=engine.buildWeekToDate(sample,{referenceDate:'2026-01-14'});
+  assert.equal(wtd.startDate,'2026-01-12');
+  assert.equal(wtd.throughDate,'2026-01-13');
+  assert.equal(wtd.previous.startDate,'2026-01-05');
+  assert.equal(wtd.previous.endDate,'2026-01-06');
+  assert.equal(wtd.current.classifiableDays,2);
+  assert.equal(wtd.previous.classifiableDays,2);
+  assert.equal(wtd.trajectory,'building');
+})();
+
+(function detectsWithinWeekRecovery(){
+  const sample=days('2026-01-12',[40,42,72,85],[3]);
+  const wtd=engine.buildWeekToDate(sample,{referenceDate:'2026-01-16'});
+  assert.equal(wtd.trajectory,'recovering');
+})();
+
+(function flagsHighQuietWeekToDate(){
+  const sample=days('2026-01-12',[190,195,200],[]);
+  const wtd=engine.buildWeekToDate(sample,{referenceDate:'2026-01-15'});
+  assert.equal(wtd.trajectory,'possibly_overextended');
+})();
+
 console.log('state-engine tests passed');
