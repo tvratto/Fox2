@@ -107,18 +107,36 @@ html, body {
 .analysis-legend-item { display: inline-flex; align-items: center; gap: 6px; color: rgba(255,255,255,.52); font-size: 12px; }
 .analysis-legend-dot { width: 8px; height: 8px; border-radius: 3px; }
 .analysis-footnote { color: rgba(255,255,255,.34); font-size: 12px; line-height: 1.4; }
+.analysis-week-list { display: flex; flex-direction: column; gap: 8px; }
+.analysis-week {
+  display: grid; grid-template-columns: 1fr auto; gap: 5px 12px; padding: 11px 12px;
+  border-radius: 14px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.065);
+}
+.analysis-week.is-current { border-color: rgba(255,210,60,.34); background: rgba(255,210,60,.055); }
+.analysis-week-state { color: #fff; font-size: 14px; font-weight: 850; }
+.analysis-week-score { color: var(--gold); font-size: 14px; font-weight: 850; }
+.analysis-week-dates, .analysis-week-detail { color: rgba(255,255,255,.42); font-size: 11px; line-height: 1.35; }
+.analysis-week-detail { text-align: right; }
+.analysis-week-bands { grid-column: 1 / -1; color: rgba(255,255,255,.52); font-size: 11px; line-height: 1.35; }
+.analysis-range-list { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+.analysis-range-row { display: grid; grid-template-columns: 78px 1fr 42px; gap: 9px; align-items: center; }
+.analysis-range-label, .analysis-range-count { font-size: 12px; font-weight: 800; }
+.analysis-range-label { color: rgba(255,255,255,.6); }
+.analysis-range-count { color: #fff; text-align: right; }
+.analysis-range-track { height: 8px; overflow: hidden; border-radius: 99px; background: rgba(255,255,255,.07); }
+.analysis-range-fill { height: 100%; border-radius: inherit; }
 .analysis-empty { padding: 34px 20px; text-align: center; color: rgba(255,255,255,.52); font-size: 15px; line-height: 1.5; }
 @media(max-width:360px){ .analysis-kpis { grid-template-columns: 1fr; } }
 .bottom-bar {
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 60;
   display: flex; align-items: center; justify-content: center;
-  gap: 10px; padding: 10px 20px;
+  gap: 6px; padding: 10px;
   padding-bottom: calc(10px + env(safe-area-inset-bottom));
   background: #000;
 }
 .bar-btn {
   display: flex; align-items: center; gap: 6px;
-  padding: 8px 18px; border-radius: 20px;
+  justify-content: center; padding: 8px 6px; border-radius: 20px;
   border: 1.5px solid rgba(255,255,255,0.12);
   background: rgba(255,255,255,0.05);
   color: rgba(255,255,255,0.7);
@@ -159,15 +177,18 @@ html, body {
   font-size: 16px; line-height: 1;
   padding: 0 0 0 4px;
 }
-#info-modal-overlay {
+#info-modal-overlay,
+#export-modal-overlay {
   display: none;
   position: fixed; inset: 0; z-index: 200;
   background: rgba(0,0,0,0.7);
   align-items: flex-end; justify-content: center;
   padding-bottom: calc(env(safe-area-inset-bottom) + 80px);
 }
-#info-modal-overlay.open { display: flex; }
-#info-modal {
+#info-modal-overlay.open,
+#export-modal-overlay.open { display: flex; }
+#info-modal,
+#export-modal {
   background: #111;
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 20px;
@@ -179,6 +200,15 @@ html, body {
   font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.32);
   letter-spacing: .12em; text-transform: uppercase;
 }
+.export-modal-title { color: #fff; font-size: 18px; font-weight: 850; }
+.export-modal-copy { color: rgba(255,255,255,.48); font-size: 13px; line-height: 1.45; margin-bottom: 3px; }
+.export-choice {
+  width: 100%; padding: 12px 13px; border-radius: 13px;
+  border: 1px solid rgba(255,255,255,.10); background: rgba(255,255,255,.06);
+  color: #fff; text-align: left; font: 750 14px -apple-system,sans-serif; cursor: pointer;
+}
+.export-choice span { display: block; margin-top: 3px; color: rgba(255,255,255,.38); font-size: 11px; font-weight: 500; }
+.export-choice:active { background: rgba(255,255,255,.11); }
 .info-row {
   display: flex; justify-content: space-between; align-items: baseline;
   border-bottom: 1px solid rgba(255,255,255,0.05);
@@ -303,7 +333,8 @@ html, body {
   pointer-events:none;
 }
 #bottom-info { position:relative; }
-#info-modal-close {
+#info-modal-close,
+.export-modal-close {
   margin-top: 4px; width: 100%; padding: 9px;
   border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
   background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.5);
@@ -1818,6 +1849,12 @@ html, body {
     </svg>
     Share
   </button>
+  <button class="bar-btn" id="bottom-export" onclick="openExportModal()">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+      <path d="M8 1v9M4.5 7L8 10.5 11.5 7M3 14h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    Export
+  </button>
   <button class="bar-btn" id="bottom-info" onclick="openInfoModal()">
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
       <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.8"/>
@@ -1835,6 +1872,16 @@ html, body {
     </svg>
     Guide
   </a>
+</div>
+
+<div id="export-modal-overlay" onclick="if(event.target===this)closeExportModal()">
+  <div id="export-modal" role="dialog" aria-modal="true" aria-labelledby="export-modal-title">
+    <div class="export-modal-title" id="export-modal-title">Export your FOX2 data</div>
+    <div class="export-modal-copy">Choose the level of detail you need.</div>
+    <button class="export-choice" onclick="downloadFox2MeasurementsCsv()">Measurements CSV<span>Every breath measurement, with its matching Daily Fuel Score.</span></button>
+    <button class="export-choice" onclick="downloadFox2DailyScoresCsv()">Daily scores CSV<span>One row per completed day.</span></button>
+    <button class="export-modal-close" onclick="closeExportModal()">Close</button>
+  </div>
 </div>
 
 <div id="info-modal-overlay" onclick="if(event.target===this)closeInfoModal()">
@@ -2201,10 +2248,10 @@ var _isNewerPayload    = false;
           + '&select=leaderboard_opt_in,leaderboard_hash,last_d_param,last_ws_param,last_measurement_at&limit=1', { method:'GET', headers:readHeaders })
       .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; }),
     fetch(SUPABASE_URL + '/rest/v1/readings?device_id=eq.' + encodeURIComponent(deviceId)
-          + '&select=reading_ts,ppm&order=reading_ts.asc&limit=10000', { method:'GET', headers:readHeaders })
+          + '&select=reading_ts,ppm,patient_id,clinic_id,target_auc,payload_ver&order=reading_ts.asc&limit=10000', { method:'GET', headers:readHeaders })
       .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; }),
     fetch(SUPABASE_URL + '/rest/v1/daily_scores?device_id=eq.' + encodeURIComponent(deviceId)
-          + '&select=day_date,auc_score&order=day_date.asc&limit=10000', { method:'GET', headers:readHeaders })
+          + '&select=day_date,auc_score,patient_id,clinic_id,target_auc,payload_ver&order=day_date.asc&limit=10000', { method:'GET', headers:readHeaders })
       .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; })
   ]).then(function(results) {
     var tagRows    = results[0];
@@ -8116,6 +8163,8 @@ function initDayGraphPopup(){
   </div>
 </div>
 
+<script src="state-engine.js"></script>
+<script src="analysis.js"></script>
 
 </body>
 </html>
