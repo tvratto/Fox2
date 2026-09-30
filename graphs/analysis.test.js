@@ -83,7 +83,9 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   const wtd=engine.buildWeekToDate(sample,{referenceDate:'2026-01-13'});
   const copy=context.weekToDateCopy(wtd,null);
   assert.equal(copy.question,'Am I still making progress?');
-  assert.ok(copy.summary.includes('Yesterday'));
+  assert.ok(copy.summary.includes('60'));
+  assert.ok(copy.summary.includes('90'));
+  assert.ok(copy.summary.includes('something useful to build on'));
   assert.ok(!/quiet|responsive|pattern/i.test(copy.title+' '+copy.summary+' '+copy.answer));
 })();
 
@@ -109,6 +111,23 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(html.indexOf('09-28 – 09-29')<html.indexOf('09-21 – 09-27'));
   assert.ok(html.indexOf('09-21 – 09-27')<html.indexOf('09-14 – 09-20'));
   assert.ok(!html.includes('1 days'));
+})();
+
+(function leadsWithComparisonThenDataThenEncouragement(){
+  const sample=[
+    {date:'2026-09-21',score:94,movement:'responsive',range:4,responseAmplitude:4},
+    {date:'2026-09-22',score:126,movement:'steady',range:2,responseAmplitude:0},
+    {date:'2026-09-28',score:63,movement:'steady',range:0,responseAmplitude:0},
+    {date:'2026-09-29',score:66,movement:'steady',range:3,responseAmplitude:0}
+  ];
+  const week=engine.buildWeekToDate(sample,{referenceDate:'2026-09-30'});
+  const copy=context.weekToDateCopy(week,null);
+  assert.equal(week.trajectory,'fading');
+  assert.equal(copy.title,'You’re behind last week—but your fat-use signal is still moving.');
+  assert.ok(copy.summary.includes('64.5'));
+  assert.ok(copy.summary.includes('110'));
+  assert.ok(copy.summary.includes('something useful to build on'));
+  assert.ok(!copy.title.includes('something encouraging here'));
 })();
 
 console.log('analysis tests passed');

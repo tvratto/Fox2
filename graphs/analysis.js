@@ -377,7 +377,13 @@ function weekToDateCopy(week,lastOfficial){
     possibly_overextended:{title:'Your fat-use signal is staying unusually elevated.',summary:'More is not necessarily better when the signal remains high without regularly coming back down.',question:'Could I be pushing too hard?',answer:'Possibly. Rather than trying to push the number higher, make sure you are adequately fueled and getting enough protein.',tone:'is-watch',icon:'!'}
   }[week.trajectory]||null;
   if(!copy) copy={title:'Your results give you something to build on.',summary:'Try one small change and watch what happens next.',question:'What should I try next?',answer:'Tag one choice and FOX2 will look for how your body responds.',tone:'is-change',icon:'→'};
-  if(count===1&&priorCount){
+  if(week.trajectory==='fading'&&priorCount){
+    var currentScore=week.current.metrics.medianScore;
+    var previousScore=week.previous.metrics.medianScore;
+    copy.title=hasMovement?'You’re behind last week—but your fat-use signal is still moving.':'You’re behind last week, but this gives you a clear next step.';
+    copy.summary='Your typical Daily Fuel Score is '+currentScore+' so far, compared with '+previousScore+' at this point last week. '
+      +(hasMovement?'Your readings still reached higher levels during the day, so there is something useful to build on.':'Try one small change and see whether you can move the signal higher before the week ends.');
+  }else if(count===1&&priorCount){
     var direction=week.trajectory==='building'?'more':week.trajectory==='fading'?'less':'about the same amount of';
     copy.summary='Yesterday, your body appeared to use '+direction+' fat for energy than on the same weekday last week.'+(hasMovement?' Your measurements also changed during the day.':'');
   }
