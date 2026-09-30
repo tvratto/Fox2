@@ -188,17 +188,44 @@ function liveTodaySnapshot(activeDate){
 
 function partialAucAtMinute(points,cutoffMinute){
   if(!isFinite(Number(cutoffMinute))) return null;
-  var usable=(points||[]).filter(function(point){
-    return isFinite(Number(point.minute))&&isFinite(Number(point.value))&&Number(point.minute)<=Number(cutoffMinute);
+  var cutoff=Number(cutoffMinute);
+  var ordered=(points||[]).filter(function(point){
+    return isFinite(Number(point.minute))&&isFinite(Number(point.value))&&Number(point.minute)>=0;
   }).map(function(point){return {minute:Number(point.minute),value:Number(point.value)};})
     .sort(function(a,b){return a.minute-b.minute;});
-  if(!usable.length) return null;
-  // FOX2's daily accumulation begins at the start-of-day origin (0, 0).
-  // That makes one morning measurement enough for a valid same-time value.
-  var auc=.5*usable[0].value*(usable[0].minute/60);
-  for(var i=1;i<usable.length;i++){
-    var elapsed=(usable[i].minute-usable[i-1].minute)/60;
-    if(elapsed>0) auc+=.5*(usable[i-1].value+usable[i].value)*elapsed;
+  if(!ordered.length||cutoff<0||cutoff>ordered[ordered.length-1].minute) return null;
+
+  // Remove duplicate timestamps, keeping the last value at each minute.
+  var measured=[];
+  ordered.forEach(function(point){
+    if(measured.length&&measured[measured.length-1].minute===point.minute) measured[measured.length-1]=point;
+    else measured.push(point);
+  });
+
+  // FOX2's line begins at the start-of-day origin. Insert the comparison
+  // time as a new point on the measured line, then integrate through it.
+  var path=[{minute:0,value:0}];
+  for(var i=0;i<measured.length;i++){
+    var point=measured[i];
+    if(point.minute<cutoff){
+      if(point.minute===0) path[0]=point;
+      else path.push(point);
+      continue;
+    }
+    if(point.minute===cutoff){
+      if(cutoff===0) path[0]=point;
+      else path.push(point);
+    }else{
+      var before=path[path.length-1];
+      var ratio=(cutoff-before.minute)/(point.minute-before.minute);
+      path.push({minute:cutoff,value:before.value+(point.value-before.value)*ratio});
+    }
+    break;
+  }
+  var auc=0;
+  for(var j=1;j<path.length;j++){
+    var elapsed=(path[j].minute-path[j-1].minute)/60;
+    if(elapsed>0) auc+=.5*(path[j-1].value+path[j].value)*elapsed;
   }
   return Math.round(auc*10)/10;
 }
@@ -267,7 +294,7 @@ function todaySoFarHtml(comparison){
       +'<div class="analysis-kpi"><div class="analysis-kpi-label">'+priorLabel+'</div><div class="analysis-kpi-value">'+valueOrDash(comparison.yesterdayEstimate)+'</div></div>'
       +'<div class="analysis-kpi"><div class="analysis-kpi-label">'+weekLabel+'</div><div class="analysis-kpi-value">'+valueOrDash(comparison.previousWeekEstimate)+'</div></div>'
     +'</div>'
-    +'<p class="analysis-note">Same-time comparisons are estimates from the measurements available by this point in each day. They are separate from the completed-score weekly analysis below.</p>'
+    +'<p class="analysis-note">Same-time comparisons place that time on the line between the surrounding measurements, then calculate the score through that point. They are separate from the completed-score weekly analysis below.</p>'
   +'</section>';
 }
 

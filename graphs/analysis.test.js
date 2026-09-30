@@ -202,7 +202,9 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
     {minute:180,value:8}
   ];
   assert.equal(context.partialAucAtMinute(points,120),6);
-  assert.equal(context.partialAucAtMinute([{minute:430,value:4}],434),14.3);
+  assert.equal(context.partialAucAtMinute([{minute:430,value:4},{minute:1115,value:4}],434),14.6);
+  assert.equal(context.partialAucAtMinute([{minute:430,value:4}],434),null);
+  assert.equal(context.partialAucAtMinute([{minute:480,value:4}],240),4);
 })();
 
 (function comparesTodayOnlyWithSameTimeHistory(){
