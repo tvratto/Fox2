@@ -281,6 +281,53 @@ function scoreTrendSvg(days){
     +'</svg>';
 }
 
+function recentScoreSummaryHtml(days,week,previousCalendarWeek){
+  if(!week||!week.throughDate) return '';
+  var endDate=week.throughDate;
+  var startDate=addIsoDays(endDate,-13);
+  var byDate={};
+  (days||[]).forEach(function(day){byDate[day.date]=day;});
+  var slots=[];
+  for(var i=0;i<14;i++){
+    var date=addIsoDays(startDate,i);
+    slots.push({date:date,day:byDate[date]||null});
+  }
+  var values=slots.filter(function(slot){return slot.day;}).map(function(slot){return Number(slot.day.score);});
+  if(!values.length) return '';
+  var w=360,h=168,left=32,right=8,top=12,bottom=28;
+  var pw=w-left-right,ph=h-top-bottom;
+  var maxScore=Math.max.apply(null,values.concat([120]));
+  var maxY=Math.ceil(maxScore/30)*30;
+  var y=function(value){return top+ph-(Math.min(value,maxY)/maxY)*ph;};
+  var step=pw/slots.length;
+  var barWidth=Math.max(5,step-5);
+  var currentIndex=slots.findIndex(function(slot){return slot.date>=week.startDate;});
+  var bars=slots.map(function(slot,index){
+    var x=left+index*step+(step-barWidth)/2;
+    if(!slot.day){
+      return '<circle cx="'+(x+barWidth/2).toFixed(1)+'" cy="'+(top+ph+1)+'" r="1.8" fill="rgba(255,255,255,.16)"><title>'+slot.date+': no classifiable score</title></circle>';
+    }
+    var score=Number(slot.day.score);
+    var color=slot.date===endDate?'#FFD23C':score<=60?'#22D3EE':score<=120?'#4ADE80':score<=180?'#C084FC':'#F472B6';
+    return '<rect x="'+x.toFixed(1)+'" y="'+y(score).toFixed(1)+'" width="'+barWidth.toFixed(1)+'" height="'+Math.max(2,top+ph-y(score)).toFixed(1)+'" rx="3" fill="'+color+'"><title>'+slot.date+': '+score+'</title></rect>';
+  }).join('');
+  var average=previousCalendarWeek&&previousCalendarWeek.classifiableDays?previousCalendarWeek.metrics.meanScore:null;
+  var averageLine=average===null?'':'<line x1="'+left+'" y1="'+y(average).toFixed(1)+'" x2="'+(left+pw)+'" y2="'+y(average).toFixed(1)+'" stroke="rgba(255,210,60,.72)" stroke-width="1.4" stroke-dasharray="5 4"/><text x="'+(left+pw-2)+'" y="'+(y(average)-5).toFixed(1)+'" text-anchor="end" font-size="9" fill="rgba(255,210,60,.84)">last week avg '+average+'</text>';
+  var currentShade=currentIndex<0?'':'<rect x="'+(left+currentIndex*step).toFixed(1)+'" y="'+top+'" width="'+((slots.length-currentIndex)*step).toFixed(1)+'" height="'+ph+'" fill="rgba(255,210,60,.035)"/>';
+  return '<section class="analysis-card"><h2 class="analysis-section-title">Your recent scores at a glance</h2>'
+    +'<p class="analysis-section-copy">Each bar is one Daily Fuel Score. A gap means there was no classifiable day. Gold marks the latest day; the dashed line is the average across last week’s days with enough data.</p>'
+    +'<svg class="analysis-chart" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="Daily Fuel Scores for the latest 14 calendar days, including gaps">'
+      +'<rect x="'+left+'" y="'+y(60)+'" width="'+pw+'" height="'+(y(0)-y(60))+'" fill="rgba(34,211,238,.055)"/>'
+      +'<rect x="'+left+'" y="'+y(120)+'" width="'+pw+'" height="'+(y(60)-y(120))+'" fill="rgba(74,222,128,.06)"/>'
+      +'<rect x="'+left+'" y="'+top+'" width="'+pw+'" height="'+(y(120)-top)+'" fill="rgba(168,85,247,.06)"/>'
+      +currentShade
+      +'<line x1="'+left+'" y1="'+y(60)+'" x2="'+(left+pw)+'" y2="'+y(60)+'" stroke="rgba(255,255,255,.1)"/><line x1="'+left+'" y1="'+y(120)+'" x2="'+(left+pw)+'" y2="'+y(120)+'" stroke="rgba(255,255,255,.1)"/>'
+      +'<text x="'+(left-6)+'" y="'+(y(60)+3)+'" text-anchor="end" font-size="9" fill="rgba(255,255,255,.35)">60</text><text x="'+(left-6)+'" y="'+(y(120)+3)+'" text-anchor="end" font-size="9" fill="rgba(255,255,255,.35)">120</text>'
+      +averageLine+bars
+      +'<text x="'+left+'" y="'+(h-7)+'" font-size="9" fill="rgba(255,255,255,.38)">'+startDate.slice(5)+'</text><text x="'+(left+pw)+'" y="'+(h-7)+'" text-anchor="end" font-size="9" fill="rgba(255,255,255,.38)">'+endDate.slice(5)+'</text>'
+    +'</svg></section>';
+}
+
 function renderAnalysisBar(label,days){
   var rate=analysisRate(days);
   return '<div><div class="analysis-bar-head"><span>'+label+'</span><strong>'+analysisPct(rate)+'</strong></div>'
@@ -359,7 +406,7 @@ function weeklyStateHistoryHtml(states,week){
 
 function weekToDateCopy(week,lastOfficial,allDays,previousCalendarWeek){
   if(!week||!week.current||!week.current.classifiableDays){
-    return {title:'Start with one small experiment.',summary:'Tag one choice and FOX2 will look for what happens to your fat use afterward.',question:'What should I try next?',answer:'Make one small change, tag it, and see what your body does. Repeating that process helps FOX2 learn what may work for you.',tone:'is-change',icon:'→'};
+    return {title:'Start with one repeatable experiment.',summary:'Choose one change and tag it each time you try it so FOX2 can build a useful comparison.',question:'What should I test next?',answer:'Choose one change you can repeat and tag each attempt. Once enough examples build up, FOX2 can show whether your body tends to respond in a similar way.',tone:'is-change',icon:'→'};
   }
   var count=week.current.classifiableDays;
   var priorCount=week.previous&&week.previous.classifiableDays||0;
@@ -367,13 +414,13 @@ function weekToDateCopy(week,lastOfficial,allDays,previousCalendarWeek){
   var hasMovement=movementDays>0;
   var dayWord=count===1?'day':'days';
   var copy={
-    early:{title:hasMovement?'Your body is already showing some movement.':'Your first result gives you a useful starting point.',summary:hasMovement?'Your measurements changed across the day, even though there is not enough history yet to judge the week.':'One day does not determine the week, but it gives you something concrete to build from.',question:'Are my efforts starting to work?',answer:hasMovement?'Possibly. Your fat use moved during the day. Try repeating one choice that may have contributed and see whether the increase happens again or lasts longer.':'It is too early to know. Try one small change, tag it, and see whether your fat use moves.',tone:'is-change',icon:'→'},
-    establishing:{title:hasMovement?'Your body is beginning to respond.':'You now have a starting point to improve from.',summary:hasMovement?'Your measurements reached higher fat use during parts of the day, but the effect is not sustained yet.':'FOX2 has enough information to begin learning what changes your fat use.',question:'Are my efforts starting to work?',answer:hasMovement?'There are encouraging signs. Repeat one choice from a day when your readings increased and see whether the effect lasts longer.':'Try one small change and tag it. FOX2 will look for whether your readings begin to rise.',tone:'is-change',icon:'↑'},
+    early:{title:hasMovement?'Your body is already showing some movement.':'Your first result gives you a useful starting point.',summary:hasMovement?'Your measurements changed across the day, even though there is not enough history yet to judge the week.':'One day does not determine the week, but it gives you something concrete to build from.',question:'Are my efforts starting to work?',answer:hasMovement?'Possibly. Your fat use moved during the day. Try repeating one choice that may have contributed and tag each attempt to see whether the increase happens again or lasts longer.':'It is too early to know. Choose one repeatable change and tag each attempt while FOX2 builds enough examples to compare.',tone:'is-change',icon:'→'},
+    establishing:{title:hasMovement?'Your body is beginning to respond.':'You now have a starting point to improve from.',summary:hasMovement?'Your measurements reached higher fat use during parts of the day, but the effect is not sustained yet.':'FOX2 has enough information to begin learning what changes your fat use.',question:'Are my efforts starting to work?',answer:hasMovement?'There are encouraging signs. Repeat one choice from a day when your readings increased, tag each attempt, and see whether the effect lasts longer.':'Choose one change you can repeat and tag each attempt. FOX2 will compare the results as enough examples build up.',tone:'is-change',icon:'↑'},
     building:{title:hasMovement?'Yes—your body is responding.':'You are using more fat for energy this week.',summary:hasMovement?'Your fat use is higher than at the same point last week, and your measurements are moving during the day.':'Your daily fat-use totals are higher than they were at the same point last week.',question:'Are my efforts starting to work?',answer:hasMovement?'Yes. Something in your recent routine appears to be helping. Keep one helpful change going and see whether these periods of increased fat use happen more often or last longer.':'Yes. Try repeating one choice from these stronger '+dayWord+' and see whether the improvement continues.',tone:'is-change',icon:'↑'},
     maintaining:{title:hasMovement?'Your body is continuing to respond.':'Your fat use is holding steady.',summary:hasMovement?'Your readings continue to move into higher fat use during parts of the day.':'Your results are close to the same point last week.',question:'Are my efforts still working?',answer:hasMovement?'Yes, your body is still moving into greater fat use. Keep repeating what has been working and look for those periods to become more frequent or last longer.':'Your results are holding. Try one small, repeatable change and see whether it moves your daily total higher.',tone:'',icon:'✓'},
     fading:{title:hasMovement?'There is still something encouraging here.':'This week gives you something clear to work on.',summary:hasMovement?'Your daily total is lower than the same point last week, but your measurements still moved into greater fat use during the day.':'Your body has tapped into less fat for energy than it had at the same point last week.',question:hasMovement?'Am I still making progress?':'Have I lost momentum?',answer:hasMovement?'Your body is still responding, so you are not simply stuck at one level. Try repeating one choice from your stronger days and see whether the increases last longer.':'Your recent result is lower, but that does not erase your earlier progress. Try returning to one choice from a stronger day and see whether your fat use begins to rise again.',tone:'is-change',icon:'→'},
     recovering:{title:'Your efforts may be starting to work again.',summary:'The week began lower, but your latest days are moving back toward greater fat use.',question:'Am I getting back on track?',answer:'Yes, there are encouraging signs. Keep one recent helpful change going and see whether the improvement continues.',tone:'is-change',icon:'↑'},
-    still_quiet:{title:'There is room to increase your fat use.',summary:'FOX2 is not seeing a clear increase yet, but this gives you a starting point for a simple experiment.',question:'What can I improve?',answer:'Try making one small change and tag it. FOX2 will look for whether your readings rise afterward or your next daily score improves.',tone:'is-change',icon:'→'},
+    still_quiet:{title:'There is room to increase your fat use.',summary:'FOX2 is not seeing a clear increase yet, but this gives you a starting point for a simple experiment.',question:'What can I improve?',answer:'Choose one change you can repeat and tag each attempt. Once enough examples build up, FOX2 can compare whether your readings tend to rise afterward or your next daily score improves.',tone:'is-change',icon:'→'},
     possibly_overextended:{title:'Your fat-use signal is staying unusually elevated.',summary:'More is not necessarily better when the signal remains high without regularly coming back down.',question:'Could I be pushing too hard?',answer:'Possibly. Rather than trying to push the number higher, make sure you are adequately fueled and getting enough protein.',tone:'is-watch',icon:'!'}
   }[week.trajectory]||null;
   if(!copy) copy={title:'Your results give you something to build on.',summary:'Try one small change and watch what happens next.',question:'What should I try next?',answer:'Tag one choice and FOX2 will look for how your body responds.',tone:'is-change',icon:'→'};
@@ -529,9 +576,9 @@ function buildTagInsights(tagRows,history){
   }
   if(!selected.length){
     if(!tagCount){
-      return [{question:'What should I try next?',answer:'Make one small change and tag it. FOX2 will look at what happens later that day and whether the effect carries into tomorrow.',tone:'is-change',icon:'+'}];
+      return [{question:'What should I test next?',answer:'Choose one change you can repeat and tag it each time you try it. As repeated examples build up, FOX2 can compare what tends to happen later that day and on the following day.',tone:'is-change',icon:'+'}];
     }
-    return [{question:'What appears to be helping?',answer:'You are building useful history, but no single tagged choice has repeated a clear effect yet. Keep testing one change at a time so FOX2 can separate a real response from a one-time result.',tone:'is-change',icon:'→'}];
+    return [{question:'What appears to be helping?',answer:'You are building useful history, but no tagged choice has repeated often enough to show a clear effect yet. Keep repeating one change and tagging it each time so FOX2 can separate a reliable response from a one-time result.',tone:'is-change',icon:'→'}];
   }
   return selected.slice(0,2).map(function(best){
     var label=best.stat.icon+' '+best.stat.name;
@@ -618,7 +665,7 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   });
   if(stallPattern){
     addInsight('Am I stalled?',
-      'Your recent fat use has stayed low without a clear increase. That is a starting point, not a failure. Try one small change and tag it so FOX2 can look for an effect.',
+      'Your recent fat use has stayed low without a clear increase. That is a starting point, not a failure. Choose one change you can repeat and tag each attempt so FOX2 can build a useful comparison.',
       'is-change','→');
   }else if(underfuelPattern){
     addInsight('Could I be pushing too hard?',
@@ -631,7 +678,7 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
         'is-change','↑');
     }else if(higherUseDays===0){
       addInsight('What can I improve?',
-        'FOX2 is not seeing a clear increase yet. Try one small change and tag it so you can see whether your body responds.',
+        'FOX2 is not seeing a clear increase yet. Choose one change you can repeat and tag each attempt while FOX2 builds enough examples to compare.',
         'is-change','→');
     }else if(higherUseDays<Math.ceil(current.length/2)){
       addInsight('Am I using more fat for energy?',
@@ -667,6 +714,7 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
     +'<section class="analysis-conclusion-list" aria-label="Your conclusions">'
       +insightHtml
     +'</section>'
+    +recentScoreSummaryHtml(all,weekToDate,previousCalendarWeek)
     +weekToDateEvidenceHtml(weekToDate,lastOfficial,all,previousCalendarWeek)
     +weeklyStateHistoryHtml(weeklyStates,weekToDate)
     +'<section class="analysis-card">'

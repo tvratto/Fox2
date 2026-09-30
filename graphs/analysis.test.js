@@ -54,8 +54,9 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
 (function promptsForAnExperimentWithoutTags(){
   const insights=context.buildTagInsights([], {days:[],points:[]});
   assert.equal(insights.length,1);
-  assert.equal(insights[0].question,'What should I try next?');
-  assert.ok(insights[0].answer.includes('tag it'));
+  assert.equal(insights[0].question,'What should I test next?');
+  assert.ok(insights[0].answer.includes('tag it each time'));
+  assert.ok(insights[0].answer.includes('repeated examples'));
 })();
 
 (function preservesAlreadyCorrectScoresAtTheDateFixBoundary(){
@@ -154,6 +155,23 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(copy.summary.includes('110'));
   assert.ok(copy.summary.includes('something useful to build on'));
   assert.ok(!copy.title.includes('something encouraging here'));
+})();
+
+(function summarizesRecentScoresWithCalendarGaps(){
+  const days=[
+    {date:'2026-09-21',score:77},
+    {date:'2026-09-22',score:107},
+    {date:'2026-09-27',score:72},
+    {date:'2026-09-29',score:94}
+  ];
+  const week={startDate:'2026-09-28',throughDate:'2026-09-29'};
+  const previousWeek={classifiableDays:3,metrics:{meanScore:85.3}};
+  const html=context.recentScoreSummaryHtml(days,week,previousWeek);
+  assert.ok(html.includes('Your recent scores at a glance'));
+  assert.ok(html.includes('latest 14 calendar days, including gaps'));
+  assert.ok(html.includes('last week avg 85.3'));
+  assert.ok(html.includes('2026-09-29: 94'));
+  assert.ok(html.includes('no classifiable score'));
 })();
 
 console.log('analysis tests passed');
