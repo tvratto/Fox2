@@ -73,6 +73,21 @@ html, body {
 .analysis-eyebrow { color: var(--gold); font-size: 12px; line-height: 1; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; }
 .analysis-title { margin: 10px 0 9px; font-size: clamp(27px,7vw,34px); line-height: 1.02; letter-spacing: -.045em; font-weight: 900; }
 .analysis-summary { margin: 0; color: rgba(255,255,255,.68); font-size: 15px; line-height: 1.48; }
+.analysis-conclusion-list { display: flex; flex-direction: column; gap: 9px; }
+.analysis-conclusion {
+  display: grid; grid-template-columns: 28px 1fr; gap: 11px; align-items: start;
+  padding: 14px; border-radius: 18px; background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.075);
+}
+.analysis-conclusion-icon {
+  width: 28px; height: 28px; display: grid; place-items: center;
+  border-radius: 50%; font-size: 15px; font-weight: 900;
+  background: rgba(74,222,128,.14); color: #6EE787;
+}
+.analysis-conclusion.is-watch .analysis-conclusion-icon { background: rgba(255,210,60,.14); color: var(--gold); }
+.analysis-conclusion.is-change .analysis-conclusion-icon { background: rgba(34,211,238,.14); color: #22D3EE; }
+.analysis-conclusion h2 { margin: 0 0 4px; font-size: 16px; line-height: 1.2; font-weight: 850; }
+.analysis-conclusion p { margin: 0; color: rgba(255,255,255,.58); font-size: 14px; line-height: 1.42; }
 .analysis-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 16px; }
 .analysis-kpi { padding: 12px; border-radius: 16px; background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.07); }
 .analysis-kpi-label { color: rgba(255,255,255,.4); font-size: 12px; line-height: 1.2; font-weight: 800; }
@@ -91,7 +106,6 @@ html, body {
 .analysis-legend { display: flex; flex-wrap: wrap; gap: 7px 12px; margin-top: 11px; }
 .analysis-legend-item { display: inline-flex; align-items: center; gap: 6px; color: rgba(255,255,255,.52); font-size: 12px; }
 .analysis-legend-dot { width: 8px; height: 8px; border-radius: 3px; }
-.analysis-callout { padding: 15px 16px; border-left: 3px solid var(--gold); color: rgba(255,255,255,.72); font-size: 15px; line-height: 1.45; }
 .analysis-footnote { color: rgba(255,255,255,.34); font-size: 12px; line-height: 1.4; }
 .analysis-empty { padding: 34px 20px; text-align: center; color: rgba(255,255,255,.52); font-size: 15px; line-height: 1.5; }
 @media(max-width:360px){ .analysis-kpis { grid-template-columns: 1fr; } }
@@ -5802,23 +5816,61 @@ function renderHistoricalAnalysis(readingRows,scoreRows){
   var movement=analysisMovementLabel(currentRate);
   var delta=recentRate-baselineRate;
   var momentum=delta>=.20?'Increasing':delta<=-.20?'Decreasing':'Holding steady';
-  var levelName=dominant.level.charAt(0).toUpperCase()+dominant.level.slice(1);
-  var title,callout;
-  if(dominant.level==='low' && movement==='Steady'){
-    title='Your recent pattern may be stalled.';
-    callout='Your current history is matching the Low + Steady pattern. That is a reason to look more closely at whether your routine is producing the response you want.';
-  }else if(dominant.level==='high' && movement==='Steady'){
-    title='Your signal is high—but staying in one gear.';
-    callout='A repeated High + Steady pattern can be a reason to check whether intake, especially protein, is adequate. The pattern alone cannot identify muscle loss or a slowed metabolism.';
+  var levelName={low:'Low',medium:'Moderate',high:'High'}[dominant.level];
+  var fatLossDays=current.filter(function(d){return d.score>120;}).length;
+  var stallPattern=dominant.level==='low' && movement==='Steady';
+  var underfuelPattern=dominant.level==='high' && movement==='Steady';
+  var title,summary;
+  if(stallPattern){
+    title='Your metabolism looks stuck right now.';
+    summary='Your readings have stayed low with very little movement. The next sign of progress will be seeing your signal begin to rise and fall again.';
+  }else if(underfuelPattern){
+    title='Your fat-use signal is high, but it may be staying there too long.';
+    summary='Strong fat use can support fat loss, but your body also needs to switch fuels. A consistently high, flat pattern is worth watching.';
+  }else if(momentum==='Increasing' && recentRate>=.65){
+    title='Something in your recent routine appears to be working.';
+    summary=fatLossDays===0
+      ? 'Your readings are moving more than they were before. You are not reaching the fat-loss range yet, but this is an encouraging early change.'
+      : 'Your readings are moving more than they were before, and you are beginning to reach the fat-loss range. Keep building on it.';
+  }else if(movement==='Responsive'){
+    title='Your metabolism looks responsive.';
+    summary='Your readings are moving between lower and higher fuel states instead of remaining in one narrow range.';
   }else{
-    title='Your fuel use has settled in the '+(dominant.level==='medium'?'middle':dominant.level)+' range.';
-    callout='Your recent history does not match either the Low + Steady stall pattern or the High + Steady under-fueling pattern.';
+    title='Your fuel use has been holding fairly steady.';
+    summary='Your recent Daily Fuel Scores are mostly in the '+dominant.level+' range, without a clear change in responsiveness yet.';
   }
 
   var comparison=baseline.length
     ? Math.round(recentRate*recent.length)+' of '+recent.length+' recent days were responsive, compared with '+Math.round(baselineRate*baseline.length)+' of the preceding '+baseline.length+'.'
     : Math.round(recentRate*recent.length)+' of '+recent.length+' recent days were responsive.';
-  var summary=dominant.count+' of your last '+current.length+' classifiable days were '+levelName.toLowerCase()+'. '+comparison;
+  var responseTitle=momentum==='Increasing'?'You’re becoming more responsive.'
+    : momentum==='Decreasing'?'Your responsiveness has slipped recently.'
+    : movement==='Responsive'?'Your metabolism is responding.':'Your responsiveness is holding steady.';
+  var responseText=comparison;
+  var fatLossTitle,fatLossText,nextTitle,nextText;
+  if(fatLossDays===0){
+    fatLossTitle='Fat loss may still be stalled.';
+    fatLossText='None of your last '+current.length+' classifiable days reached a Daily Fuel Score above 120. Your pattern is improving, but it is not yet showing sustained fat-loss-level activity.';
+  }else if(fatLossDays<Math.ceil(current.length/2)){
+    fatLossTitle='You’re reaching the fat-loss range sometimes.';
+    fatLossText=fatLossDays+' of your last '+current.length+' classifiable days reached a Daily Fuel Score above 120. The next step is making those days more frequent.';
+  }else{
+    fatLossTitle='You’re reaching the fat-loss range consistently.';
+    fatLossText=fatLossDays+' of your last '+current.length+' classifiable days reached a Daily Fuel Score above 120.';
+  }
+  if(stallPattern){
+    nextTitle='Look for the first signs of movement.';
+    nextText='An encouraging next step would be readings rising above this flat range and returning to the same level or lower.';
+  }else if(underfuelPattern){
+    nextTitle='Make sure you are adequately fueled.';
+    nextText='If this high, flat pattern continues—especially on a GLP-1—consider whether you are eating enough and getting adequate protein.';
+  }else if(fatLossDays===0){
+    nextTitle='Keep building on this.';
+    nextText='The next sign of progress will be these higher responses becoming frequent enough to push your Daily Fuel Score above 120.';
+  }else{
+    nextTitle='Keep the pattern going.';
+    nextText='Look for continued movement between fuel states while days above 120 become more consistent.';
+  }
   var patternColors={
     'low-steady':'#155E75','low-responsive':'#22D3EE',
     'medium-steady':'#166534','medium-responsive':'#4ADE80',
@@ -5833,30 +5885,38 @@ function renderHistoricalAnalysis(readingRows,scoreRows){
 
   shell.innerHTML=''
     +'<section class="analysis-card analysis-hero">'
-      +'<div class="analysis-eyebrow">Complete-history analysis</div>'
+      +'<div class="analysis-eyebrow">What FOX2 sees now</div>'
       +'<h1 class="analysis-title">'+title+'</h1>'
       +'<p class="analysis-summary">'+summary+'</p>'
+    +'</section>'
+    +'<section class="analysis-conclusion-list" aria-label="Your conclusions">'
+      +'<article class="analysis-conclusion is-change"><div class="analysis-conclusion-icon">'+(momentum==='Increasing'?'↑':momentum==='Decreasing'?'↓':'→')+'</div><div><h2>'+responseTitle+'</h2><p>'+responseText+'</p></div></article>'
+      +'<article class="analysis-conclusion '+(fatLossDays===0?'is-watch':'')+'"><div class="analysis-conclusion-icon">'+(fatLossDays===0?'!':'✓')+'</div><div><h2>'+fatLossTitle+'</h2><p>'+fatLossText+'</p></div></article>'
+      +'<article class="analysis-conclusion"><div class="analysis-conclusion-icon">→</div><div><h2>'+nextTitle+'</h2><p>'+nextText+'</p></div></article>'
+    +'</section>'
+    +'<section class="analysis-card">'
+      +'<h2 class="analysis-section-title">Why FOX2 says this</h2>'
+      +'<p class="analysis-section-copy">The recent pattern is read against every classifiable day in your history.</p>'
       +'<div class="analysis-kpis">'
-        +'<div class="analysis-kpi"><div class="analysis-kpi-label">Current level</div><div class="analysis-kpi-value">'+levelName+'</div></div>'
-        +'<div class="analysis-kpi"><div class="analysis-kpi-label">'+current.length+'-day response</div><div class="analysis-kpi-value">'+movement+'</div></div>'
-        +'<div class="analysis-kpi"><div class="analysis-kpi-label">Recent momentum</div><div class="analysis-kpi-value">'+momentum+'</div></div>'
-        +'<div class="analysis-kpi"><div class="analysis-kpi-label">History analyzed</div><div class="analysis-kpi-value">'+all.length+' days</div></div>'
+        +'<div class="analysis-kpi"><div class="analysis-kpi-label">Fuel-use level</div><div class="analysis-kpi-value">'+levelName+'</div></div>'
+        +'<div class="analysis-kpi"><div class="analysis-kpi-label">Responsiveness</div><div class="analysis-kpi-value">'+movement+'</div></div>'
+        +'<div class="analysis-kpi"><div class="analysis-kpi-label">Recent direction</div><div class="analysis-kpi-value">'+momentum+'</div></div>'
+        +'<div class="analysis-kpi"><div class="analysis-kpi-label">Days above 120</div><div class="analysis-kpi-value">'+fatLossDays+' of '+current.length+'</div></div>'
       +'</div>'
     +'</section>'
-    +'<section class="analysis-card"><h2 class="analysis-section-title">Daily Fuel Score over time</h2>'
-      +'<p class="analysis-section-copy">Every classifiable day from the beginning. The highlighted area is your latest 14-day pattern.</p>'
-      +scoreTrendSvg(all)+'</section>'
-    +'<section class="analysis-card"><h2 class="analysis-section-title">Responsiveness is changing</h2>'
+    +'<section class="analysis-card"><h2 class="analysis-section-title">The recent change</h2>'
       +'<p class="analysis-section-copy">The share of days with meaningful movement between lower and higher fuel states.</p>'
       +'<div class="analysis-bars">'+renderAnalysisBar('Latest '+recent.length+' days',recent)
         +renderAnalysisBar('Previous '+baseline.length+' days',baseline)
         +renderAnalysisBar('Complete history',all)+'</div></section>'
+    +'<section class="analysis-card"><h2 class="analysis-section-title">Daily Fuel Score over time</h2>'
+      +'<p class="analysis-section-copy">Every classifiable day from the beginning. The highlighted area is your latest 14-day pattern.</p>'
+      +scoreTrendSvg(all)+'</section>'
     +'<section class="analysis-card"><h2 class="analysis-section-title">Your pattern history</h2>'
       +'<p class="analysis-section-copy">Each block is one classifiable day, from earliest to latest.</p>'
       +'<div class="analysis-pattern-strip" role="img" aria-label="Daily pattern history from earliest to latest">'+strip+'</div>'
       +'<div class="analysis-legend">'+legend+'</div></section>'
-    +'<section class="analysis-card analysis-callout">'+callout+'</section>'
-    +'<div class="analysis-footnote">Based on '+all.length+' of '+history.completedWithScore+' completed days. Days without enough readings across the day are left out of movement analysis.</div>';
+    +'<div class="analysis-footnote">Based on '+all.length+' of '+history.completedWithScore+' completed days. Days without enough readings across the day are left out of movement analysis. FOX2 describes patterns; it does not diagnose stalled metabolism, muscle loss, or under-fueling.</div>';
 }
 
 function fmt(v){return Math.round(v).toLocaleString();}
