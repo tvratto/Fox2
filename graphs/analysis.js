@@ -119,14 +119,17 @@ function fox2CsvCell(value){
 }
 
 function fox2CorrectedScores(scoreRows){
-  return (scoreRows||[]).filter(function(row){
+  var corrected=(scoreRows||[]).filter(function(row){
     return row.day_date&&isFinite(Number(row.auc_score));
   }).map(function(row){
     var copy={};
     Object.keys(row).forEach(function(key){copy[key]=row[key];});
     copy.day_date=String(row.day_date)<SCORE_DATE_FIX_CUTOFF?addIsoDays(String(row.day_date),1):String(row.day_date);
     return copy;
-  }).sort(function(a,b){return a.day_date.localeCompare(b.day_date);});
+  });
+  var byDay={};
+  corrected.forEach(function(row){byDay[row.day_date]=row;});
+  return Object.keys(byDay).sort().map(function(day){return byDay[day];});
 }
 
 function fox2DownloadCsv(filename,rows){

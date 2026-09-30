@@ -1918,6 +1918,7 @@ html, body {
   <p style="margin-top:8px;font-size:12px">Scan the QR code on your FOX2 device to view your results.</p>
 </div>
 
+<script src="data-fetch.js"></script>
 <script>
 
 // ─── Parse URL params ─────────────────────────────────────────────
@@ -2247,12 +2248,14 @@ var _isNewerPayload    = false;
     fetch(SUPABASE_URL + '/rest/v1/devices?device_id=eq.' + encodeURIComponent(deviceId)
           + '&select=leaderboard_opt_in,leaderboard_hash,last_d_param,last_ws_param,last_measurement_at&limit=1', { method:'GET', headers:readHeaders })
       .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; }),
-    fetch(SUPABASE_URL + '/rest/v1/readings?device_id=eq.' + encodeURIComponent(deviceId)
-          + '&select=reading_ts,ppm,patient_id,clinic_id,target_auc,payload_ver&order=reading_ts.asc&limit=10000', { method:'GET', headers:readHeaders })
-      .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; }),
-    fetch(SUPABASE_URL + '/rest/v1/daily_scores?device_id=eq.' + encodeURIComponent(deviceId)
-          + '&select=day_date,auc_score,patient_id,clinic_id,target_auc,payload_ver&order=day_date.asc&limit=10000', { method:'GET', headers:readHeaders })
-      .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; })
+    Fox2DataFetch.fetchAllRows(SUPABASE_URL,
+      '/rest/v1/readings?device_id=eq.' + encodeURIComponent(deviceId)
+        + '&select=reading_ts,ppm,patient_id,clinic_id,target_auc,payload_ver&order=reading_ts.asc',
+      readHeaders).catch(function(){ return []; }),
+    Fox2DataFetch.fetchAllRows(SUPABASE_URL,
+      '/rest/v1/daily_scores?device_id=eq.' + encodeURIComponent(deviceId)
+        + '&select=day_date,auc_score,patient_id,clinic_id,target_auc,payload_ver&order=day_date.asc',
+      readHeaders).catch(function(){ return []; })
   ]).then(function(results) {
     var tagRows    = results[0];
     var deviceRows = results[1];
@@ -7389,13 +7392,13 @@ function fetchLeaderboard(){
 
   Promise.all([
     // All opted-in devices — name, zone colours, last sync
-    fetch(_sbUrl+'/rest/v1/devices?leaderboard_opt_in=eq.LB-1'+
-          '&select=device_id,patient_id,pct_glucose,pct_mixed,pct_fat,last_scan_at,last_measurement_at,last_d_param,last_ws_param,firmware_ver',
-      {method:'GET',headers:_sbHeaders}).then(function(r){return r.ok?r.json():[];}),
+    Fox2DataFetch.fetchAllRows(_sbUrl,'/rest/v1/devices?leaderboard_opt_in=eq.LB-1'+
+          '&select=device_id,patient_id,pct_glucose,pct_mixed,pct_fat,last_scan_at,last_measurement_at,last_d_param,last_ws_param,firmware_ver'+
+          '&order=device_id.asc',_sbHeaders).catch(function(){return [];}),
     // All scores — used for current (latest entry) and all-time best
-    fetch(_sbUrl+'/rest/v1/daily_scores'+
-          '?select=device_id,day_date,auc_score',
-      {method:'GET',headers:_sbHeaders}).then(function(r){return r.ok?r.json():[];})
+    Fox2DataFetch.fetchAllRows(_sbUrl,'/rest/v1/daily_scores'+
+          '?select=device_id,day_date,auc_score&order=device_id.asc,day_date.asc',
+      _sbHeaders).catch(function(){return [];})
   ]).then(function(results){
     var devList    = results[0] || [];
     var allScores  = results[1] || [];
