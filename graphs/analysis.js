@@ -345,7 +345,7 @@ function weeklyStateHistoryHtml(states,week){
       :comparison.scoreDirection==='stable'?'similar to the same point last week':'comparison still developing';
     rows='<div class="analysis-week is-current">'
       +'<div class="analysis-week-state">'+(hasCurrent?labels[current.level]:'No classifiable days yet')+' <span class="analysis-week-badge">Incomplete</span></div>'
-      +'<div class="analysis-week-score"><span>Typical score</span>'+(hasCurrent?current.metrics.medianScore:'—')+'</div>'
+      +'<div class="analysis-week-score"><span>'+(current.classifiableDays===1?'Daily score':'Typical score')+'</span>'+(hasCurrent?current.metrics.medianScore:'—')+'</div>'
       +'<div class="analysis-week-dates">'+current.startDate.slice(5)+' – '+week.throughDate.slice(5)+' · '+dayCountLabel(current.classifiableDays)+' so far</div>'
       +'<div class="analysis-week-detail">'+(hasCurrent?dayCountLabel(current.metrics.responsiveDays)+' with increases · '+currentChange:'Add measurements to begin this week’s comparison')+'</div>'
       +(hasCurrent?'<div class="analysis-week-bands">'+bandsFor(current)+'</div>':'')
@@ -357,7 +357,7 @@ function weeklyStateHistoryHtml(states,week){
     +'<div class="analysis-week-list">'+rows+'</div></section>';
 }
 
-function weekToDateCopy(week,lastOfficial){
+function weekToDateCopy(week,lastOfficial,allDays,previousCalendarWeek){
   if(!week||!week.current||!week.current.classifiableDays){
     return {title:'Start with one small experiment.',summary:'Tag one choice and FOX2 will look for what happens to your fat use afterward.',question:'What should I try next?',answer:'Make one small change, tag it, and see what your body does. Repeating that process helps FOX2 learn what may work for you.',tone:'is-change',icon:'→'};
   }
@@ -377,26 +377,57 @@ function weekToDateCopy(week,lastOfficial){
     possibly_overextended:{title:'Your fat-use signal is staying unusually elevated.',summary:'More is not necessarily better when the signal remains high without regularly coming back down.',question:'Could I be pushing too hard?',answer:'Possibly. Rather than trying to push the number higher, make sure you are adequately fueled and getting enough protein.',tone:'is-watch',icon:'!'}
   }[week.trajectory]||null;
   if(!copy) copy={title:'Your results give you something to build on.',summary:'Try one small change and watch what happens next.',question:'What should I try next?',answer:'Tag one choice and FOX2 will look for how your body responds.',tone:'is-change',icon:'→'};
-  if(week.trajectory==='fading'&&priorCount){
+  if(count===1){
+    var onlyDay=week.current.days[0];
+    var isYesterday=onlyDay.date===week.throughDate;
+    var dayLabel=isYesterday?'Yesterday':'Your latest classifiable day';
+    var previousDate=addIsoDays(onlyDay.date,-1);
+    var previousDay=(allDays||[]).filter(function(day){return day.date===previousDate;})[0]||null;
+    var fullWeek=previousCalendarWeek&&previousCalendarWeek.classifiableDays?previousCalendarWeek:null;
+    var fullWeekAverage=fullWeek?fullWeek.metrics.meanScore:null;
+    var weeklyDelta=fullWeek?onlyDay.score-fullWeekAverage:null;
+    copy.title=!fullWeek?dayLabel+' gives you a useful starting point.'
+      :weeklyDelta>=10?dayLabel+' was stronger than last week’s average.'
+      :weeklyDelta<=-10?dayLabel+' was below last week’s average—but one day does not define the week.'
+      :dayLabel+' was right in line with last week.';
+    copy.summary=dayLabel+'’s Daily Fuel Score was '+onlyDay.score+'. '
+      +(previousDay?'The day before was '+previousDay.score+'. ':'There was no classifiable score for the day before. ')
+      +(fullWeek?'Last week averaged '+fullWeekAverage+' across '+fullWeek.classifiableDays+' day'+(fullWeek.classifiableDays===1?'':'s')+' with enough data. ':'')
+      +(weeklyDelta===null?'Keep measuring so FOX2 can begin showing what changes.':weeklyDelta>=10?'That is an encouraging result to try to repeat.':weeklyDelta<=-10?'There is still time to influence how this week develops.':'That is a steady result to build on as this week develops.');
+    copy.question='What should I watch next?';
+    copy.answer='One day cannot tell you how the whole week is going. Watch whether your next Daily Fuel Score moves higher, lower, or stays near this level—and tag what you changed so FOX2 can help connect the result to your choices.';
+  }else if(week.trajectory==='fading'&&priorCount){
     var currentScore=week.current.metrics.medianScore;
     var previousScore=week.previous.metrics.medianScore;
     copy.title=hasMovement?'You’re behind last week—but your fat-use signal is still moving.':'You’re behind last week, but this gives you a clear next step.';
     copy.summary='Your typical Daily Fuel Score is '+currentScore+' so far, compared with '+previousScore+' at this point last week. '
       +(hasMovement?'Your readings still reached higher levels during the day, so there is something useful to build on.':'Try one small change and see whether you can move the signal higher before the week ends.');
-  }else if(count===1&&priorCount){
-    var direction=week.trajectory==='building'?'more':week.trajectory==='fading'?'less':'about the same amount of';
-    copy.summary='Yesterday, your body appeared to use '+direction+' fat for energy than on the same weekday last week.'+(hasMovement?' Your measurements also changed during the day.':'');
   }
   copy.detail=count+' classifiable day'+(count===1?'':'s')+' this week'+(priorCount?' compared with '+priorCount+' from the same weekdays last week':'')+'.';
   copy.lastOfficial=lastOfficial||null;
   return copy;
 }
 
-function weekToDateEvidenceHtml(week,lastOfficial){
+function weekToDateEvidenceHtml(week,lastOfficial,allDays,previousCalendarWeek){
   if(!week||!week.current||!week.current.classifiableDays) return '';
   var current=week.current;
   var previous=week.previous;
-  var levelLabels={low:'Lower',moderate:'Balanced',higher:'Higher',strong:'Strong',unknown:'Not enough data'};
+  var levelLabels={low:'Lower',medium:'Balanced',moderate:'Balanced',high:'Higher',higher:'Higher',strong:'Strong',unknown:'Not enough data'};
+  if(current.classifiableDays===1){
+    var onlyDay=current.days[0];
+    var previousDate=addIsoDays(onlyDay.date,-1);
+    var previousDay=(allDays||[]).filter(function(day){return day.date===previousDate;})[0]||null;
+    var fullWeek=previousCalendarWeek&&previousCalendarWeek.classifiableDays?previousCalendarWeek:null;
+    var onlyDayLevel=levelLabels[onlyDay.level]||levelLabels[Fox2StateEngine.levelForScore(Number(onlyDay.score))]||'Not enough data';
+    return '<section class="analysis-card"><h2 class="analysis-section-title">Yesterday in context</h2>'
+      +'<p class="analysis-section-copy">One day is shown as a daily result, not as a typical weekly score. Missing days are not included.</p>'
+      +'<div class="analysis-kpis">'
+        +'<div class="analysis-kpi"><div class="analysis-kpi-label">Fat use yesterday</div><div class="analysis-kpi-value">'+onlyDayLevel+'</div></div>'
+        +'<div class="analysis-kpi"><div class="analysis-kpi-label">Yesterday’s score</div><div class="analysis-kpi-value">'+onlyDay.score+'</div></div>'
+        +'<div class="analysis-kpi"><div class="analysis-kpi-label">Day before</div><div class="analysis-kpi-value">'+(previousDay?previousDay.score:'No comparable day')+'</div></div>'
+        +'<div class="analysis-kpi"><div class="analysis-kpi-label">Previous week average</div><div class="analysis-kpi-value">'+(fullWeek?fullWeek.metrics.meanScore+' · '+fullWeek.classifiableDays+' days':'Not enough data')+'</div></div>'
+      +'</div></section>';
+  }
   var official=lastOfficial?levelLabels[lastOfficial.level]+' · score '+lastOfficial.metrics.medianScore:'Not enough data';
   var prior=previous&&previous.classifiableDays?'Score '+previous.metrics.medianScore:'No comparable start';
   return '<section class="analysis-card"><h2 class="analysis-section-title">This week so far</h2>'
@@ -548,7 +579,8 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   window._fox2WeeklyStates=weeklyStates;
   window._fox2WeekToDate=weekToDate;
   var lastOfficial=typeof Fox2StateEngine!=='undefined'?Fox2StateEngine.currentState(weeklyStates):null;
-  var weekCopy=weekToDateCopy(weekToDate,lastOfficial);
+  var previousCalendarWeek=weeklyStates.length?weeklyStates[weeklyStates.length-1]:null;
+  var weekCopy=weekToDateCopy(weekToDate,lastOfficial,all,previousCalendarWeek);
   var tagInsights=buildTagInsights(tagRows||[],history);
   window._fox2TagInsights=tagInsights;
   window._fox2TagInsight=tagInsights[0];
@@ -635,7 +667,7 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
     +'<section class="analysis-conclusion-list" aria-label="Your conclusions">'
       +insightHtml
     +'</section>'
-    +weekToDateEvidenceHtml(weekToDate,lastOfficial)
+    +weekToDateEvidenceHtml(weekToDate,lastOfficial,all,previousCalendarWeek)
     +weeklyStateHistoryHtml(weeklyStates,weekToDate)
     +'<section class="analysis-card">'
       +'<h2 class="analysis-section-title">Why FOX2 says this</h2>'

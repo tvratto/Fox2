@@ -81,12 +81,38 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
     {date:'2026-01-12',score:60,movement:'responsive',range:3,responseAmplitude:3}
   ];
   const wtd=engine.buildWeekToDate(sample,{referenceDate:'2026-01-13'});
-  const copy=context.weekToDateCopy(wtd,null);
-  assert.equal(copy.question,'Am I still making progress?');
+  const priorWeek={classifiableDays:1,metrics:{meanScore:90}};
+  const copy=context.weekToDateCopy(wtd,null,sample,priorWeek);
+  assert.equal(copy.question,'What should I watch next?');
   assert.ok(copy.summary.includes('60'));
   assert.ok(copy.summary.includes('90'));
-  assert.ok(copy.summary.includes('something useful to build on'));
+  assert.ok(copy.summary.includes('one day does not define the week')||copy.title.includes('one day does not define the week'));
   assert.ok(!/quiet|responsive|pattern/i.test(copy.title+' '+copy.summary+' '+copy.answer));
+})();
+
+(function comparesOneDayWithTheDayBeforeAndPreviousWeekAverage(){
+  const allDays=[
+    {date:'2026-09-21',score:77,movement:'steady',range:1},
+    {date:'2026-09-22',score:107,movement:'responsive',range:4},
+    {date:'2026-09-23',score:118,movement:'steady',range:1},
+    {date:'2026-09-24',score:91,movement:'steady',range:1},
+    {date:'2026-09-25',score:105,movement:'steady',range:1},
+    {date:'2026-09-27',score:72,movement:'steady',range:1},
+    {date:'2026-09-29',score:94,movement:'steady',range:1}
+  ];
+  const week=engine.buildWeekToDate(allDays,{referenceDate:'2026-09-30'});
+  const previousWeek={classifiableDays:6,metrics:{meanScore:95}};
+  const copy=context.weekToDateCopy(week,null,allDays,previousWeek);
+  const evidence=context.weekToDateEvidenceHtml(week,null,allDays,previousWeek);
+  assert.equal(copy.title,'Yesterday was right in line with last week.');
+  assert.ok(copy.summary.includes('Daily Fuel Score was 94'));
+  assert.ok(copy.summary.includes('no classifiable score for the day before'));
+  assert.ok(copy.summary.includes('averaged 95 across 6 days'));
+  assert.ok(evidence.includes('Yesterday’s score'));
+  assert.ok(evidence.includes('Fat use yesterday</div><div class="analysis-kpi-value">Balanced'));
+  assert.ok(evidence.includes('No comparable day'));
+  assert.ok(evidence.includes('95 · 6 days'));
+  assert.ok(!evidence.includes('Typical daily score'));
 })();
 
 (function ordersCurrentAndCompletedWeeksForComparison(){
@@ -121,7 +147,7 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
     {date:'2026-09-29',score:66,movement:'steady',range:3,responseAmplitude:0}
   ];
   const week=engine.buildWeekToDate(sample,{referenceDate:'2026-09-30'});
-  const copy=context.weekToDateCopy(week,null);
+  const copy=context.weekToDateCopy(week,null,sample,null);
   assert.equal(week.trajectory,'fading');
   assert.equal(copy.title,'You’re behind last week—but your fat-use signal is still moving.');
   assert.ok(copy.summary.includes('64.5'));
