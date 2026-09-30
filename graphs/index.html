@@ -1918,7 +1918,7 @@ html, body {
   <p style="margin-top:8px;font-size:12px">Scan the QR code on your FOX2 device to view your results.</p>
 </div>
 
-<script src="data-fetch.js?v=20260930-3"></script>
+<script src="data-fetch.js?v=20260930-4"></script>
 <script>
 
 // ─── Parse URL params ─────────────────────────────────────────────
@@ -7649,7 +7649,7 @@ function initWithSupabase(sbUrl,sbHeaders,deviceId,preRead){
     _lbOptIn      = preRead.deviceRow.leaderboard_opt_in || '';
     _lbStoredHash = preRead.deviceRow.leaderboard_hash   || '';
   }
-  renderHistoricalAnalysis(preRead.historyReadings||[],preRead.historyScores||[]);
+  renderHistoricalAnalysis(preRead.historyReadings||[],preRead.historyScores||[],tagRows);
   _doInit();
 }
 
@@ -8168,8 +8168,8 @@ function initDayGraphPopup(){
   </div>
 </div>
 
-<script src="state-engine.js?v=20260930-3"></script>
-<script src="analysis.js?v=20260930-3"></script>
+<script src="state-engine.js?v=20260930-4"></script>
+<script src="analysis.js?v=20260930-4"></script>
 
 </body>
 </html>

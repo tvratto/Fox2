@@ -315,18 +315,20 @@ function weeklyStateHistoryHtml(states){
   var usable=states.filter(function(state){return state.coverage==='sufficient';});
   if(!usable.length) return '';
   var recent=usable.slice(-6);
-  var labels={low:'Low',moderate:'Moderate',higher:'Higher',strong:'Strong',quiet:'Quiet',intermittent:'Intermittent',active:'Active'};
+  var labels={low:'Lower fat use',moderate:'Balanced fat use',higher:'Higher fat use',strong:'Strong fat use',quiet:'few clear increases',intermittent:'some clear increases',active:'frequent increases'};
   var rows=recent.map(function(state,index){
     var current=index===recent.length-1;
-    var changes=state.transition&&state.transition.changes||[];
-    var changeLabel=changes.length
-      ? changes.map(function(change){return change.replace(/_/g,' ');}).join(' · ')
-      : (state.transition&&state.transition.kind==='same_state'?'same state':'baseline period');
+    var transition=state.transition||{};
+    var changeLabel=transition.scoreDirection==='rising'?'more fat use than the prior week'
+      :transition.scoreDirection==='falling'?'less fat use than the prior week'
+      :transition.responseDirection==='rising'?'more days with clear increases'
+      :transition.responseDirection==='falling'?'fewer days with clear increases'
+      :transition.kind==='same_state'?'similar to the prior week':'starting reference';
     return '<div class="analysis-week'+(current?' is-current':'')+'">'
-      +'<div class="analysis-week-state">'+labels[state.level]+' + '+labels[state.response]+'</div>'
+      +'<div class="analysis-week-state">'+labels[state.level]+'</div>'
       +'<div class="analysis-week-score">'+state.metrics.medianScore+'</div>'
       +'<div class="analysis-week-dates">'+state.startDate.slice(5)+' – '+state.endDate.slice(5)+' · '+state.classifiableDays+' days</div>'
-      +'<div class="analysis-week-detail">'+state.metrics.responsiveDays+' responsive · '+changeLabel+'</div>'
+      +'<div class="analysis-week-detail">'+state.metrics.responsiveDays+' days with increases · '+changeLabel+'</div>'
       +'<div class="analysis-week-bands">'+state.metrics.bandDays.low+' low · '+state.metrics.bandDays.moderate+' moderate · '+state.metrics.bandDays.higher+' higher · '+state.metrics.bandDays.strong+' strong</div>'
       +'</div>';
   }).join('');
@@ -337,33 +339,28 @@ function weeklyStateHistoryHtml(states){
 
 function weekToDateCopy(week,lastOfficial){
   if(!week||!week.current||!week.current.classifiableDays){
-    return {title:'This week is just getting started.',summary:'There is not enough information yet to describe this week’s fat-use pattern.',question:'How is this week going?',answer:'FOX2 will begin comparing this week once there are classifiable days to work with.',tone:'is-change',icon:'→'};
+    return {title:'Start with one small experiment.',summary:'Tag one choice and FOX2 will look for what happens to your fat use afterward.',question:'What should I try next?',answer:'Make one small change, tag it, and see what your body does. Repeating that process helps FOX2 learn what may work for you.',tone:'is-change',icon:'→'};
   }
   var count=week.current.classifiableDays;
   var priorCount=week.previous&&week.previous.classifiableDays||0;
-  var comparable=priorCount?' compared with the same part of last week':'';
+  var movementDays=week.current.days.filter(function(day){return day.movement==='responsive'||Number(day.range)>=2;}).length;
+  var hasMovement=movementDays>0;
+  var dayWord=count===1?'day':'days';
   var copy={
-    early:{title:'This week is just getting started.',summary:'One classifiable day is not enough to call a direction yet.',answer:'It is too early to identify a weekly direction. Keep measuring and FOX2 will update as the week develops.',tone:'is-change',icon:'→'},
-    establishing:{title:'This week is establishing a new pattern.',summary:'There is enough information to describe the week, but no comparable start from last week.',answer:'This week is beginning to take shape. FOX2 will use it as a reference for future Monday–Sunday comparisons.',tone:'is-change',icon:'→'},
-    building:{title:'Your fat-use pattern is building this week.',summary:'Your signal is stronger or more responsive than it was at the same point last week.',answer:'Something in your recent routine appears to be working. This week shows more fat use or more movement'+comparable+'. Keep building on it.',tone:'is-change',icon:'↑'},
-    maintaining:{title:'You are carrying your recent pattern forward.',summary:'This week is tracking close to the same point last week.',answer:'Your fat-use pattern is holding close to last week’s start. Continuing the choices that produced it may help make the pattern more consistent.',tone:'',icon:'✓'},
-    fading:{title:'Your fat-use pattern is quieter this week.',summary:'The signal is lower or less responsive than it was at the same point last week.',answer:'This week has started more quietly than last week, but there is still time for the pattern to change.',tone:'is-watch',icon:'↓'},
-    recovering:{title:'Your fat-use pattern is recovering.',summary:'The week started quietly, but your latest days are moving back toward a stronger pattern.',answer:'Your last two classifiable days are moving back toward your stronger pattern. Something in your recent routine may be helping.',tone:'is-change',icon:'↑'},
-    still_quiet:{title:'Your fat-use pattern is still quiet.',summary:'The signal remains low and steady so far this week.',answer:'FOX2 is not seeing a meaningful increase in fat use yet. There is still time for this week’s pattern to change.',tone:'is-watch',icon:'!'},
-    possibly_overextended:{title:'Your fat-use signal has stayed unusually high and quiet.',summary:'Higher readings without much movement can be a reason to check whether you are adequately fueled.',answer:'Your signal has stayed unusually high and quiet this week. Make sure you are adequately fueled, including enough protein—especially if this pattern continues.',tone:'is-watch',icon:'!'}
+    early:{title:hasMovement?'Your body is already showing some movement.':'Your first result gives you a useful starting point.',summary:hasMovement?'Your measurements changed across the day, even though there is not enough history yet to judge the week.':'One day does not determine the week, but it gives you something concrete to build from.',question:'Are my efforts starting to work?',answer:hasMovement?'Possibly. Your fat use moved during the day. Try repeating one choice that may have contributed and see whether the increase happens again or lasts longer.':'It is too early to know. Try one small change, tag it, and see whether your fat use moves.',tone:'is-change',icon:'→'},
+    establishing:{title:hasMovement?'Your body is beginning to respond.':'You now have a starting point to improve from.',summary:hasMovement?'Your measurements reached higher fat use during parts of the day, but the effect is not sustained yet.':'FOX2 has enough information to begin learning what changes your fat use.',question:'Are my efforts starting to work?',answer:hasMovement?'There are encouraging signs. Repeat one choice from a day when your readings increased and see whether the effect lasts longer.':'Try one small change and tag it. FOX2 will look for whether your readings begin to rise.',tone:'is-change',icon:'↑'},
+    building:{title:hasMovement?'Yes—your body is responding.':'You are using more fat for energy this week.',summary:hasMovement?'Your fat use is higher than at the same point last week, and your measurements are moving during the day.':'Your daily fat-use totals are higher than they were at the same point last week.',question:'Are my efforts starting to work?',answer:hasMovement?'Yes. Something in your recent routine appears to be helping. Keep one helpful change going and see whether these periods of increased fat use happen more often or last longer.':'Yes. Try repeating one choice from these stronger '+dayWord+' and see whether the improvement continues.',tone:'is-change',icon:'↑'},
+    maintaining:{title:hasMovement?'Your body is continuing to respond.':'Your fat use is holding steady.',summary:hasMovement?'Your readings continue to move into higher fat use during parts of the day.':'Your results are close to the same point last week.',question:'Are my efforts still working?',answer:hasMovement?'Yes, your body is still moving into greater fat use. Keep repeating what has been working and look for those periods to become more frequent or last longer.':'Your results are holding. Try one small, repeatable change and see whether it moves your daily total higher.',tone:'',icon:'✓'},
+    fading:{title:hasMovement?'There is still something encouraging here.':'This week gives you something clear to work on.',summary:hasMovement?'Your daily total is lower than the same point last week, but your measurements still moved into greater fat use during the day.':'Your body has tapped into less fat for energy than it had at the same point last week.',question:hasMovement?'Am I still making progress?':'Have I lost momentum?',answer:hasMovement?'Your body is still responding, so you are not simply stuck at one level. Try repeating one choice from your stronger days and see whether the increases last longer.':'Your recent result is lower, but that does not erase your earlier progress. Try returning to one choice from a stronger day and see whether your fat use begins to rise again.',tone:'is-change',icon:'→'},
+    recovering:{title:'Your efforts may be starting to work again.',summary:'The week began lower, but your latest days are moving back toward greater fat use.',question:'Am I getting back on track?',answer:'Yes, there are encouraging signs. Keep one recent helpful change going and see whether the improvement continues.',tone:'is-change',icon:'↑'},
+    still_quiet:{title:'There is room to increase your fat use.',summary:'FOX2 is not seeing a clear increase yet, but this gives you a starting point for a simple experiment.',question:'What can I improve?',answer:'Try making one small change and tag it. FOX2 will look for whether your readings rise afterward or your next daily score improves.',tone:'is-change',icon:'→'},
+    possibly_overextended:{title:'Your fat-use signal is staying unusually elevated.',summary:'More is not necessarily better when the signal remains high without regularly coming back down.',question:'Could I be pushing too hard?',answer:'Possibly. Rather than trying to push the number higher, make sure you are adequately fueled and getting enough protein.',tone:'is-watch',icon:'!'}
   }[week.trajectory]||null;
-  if(!copy) copy={title:'This week is taking shape.',summary:'FOX2 is comparing it with the same part of last week.',answer:'Your current pattern is still developing.',tone:'is-change',icon:'→'};
-  if(count===1){
-    var firstDayCopy={
-      building:{title:'Your week opened with a stronger fat-use signal.',summary:'Your first classifiable day was stronger or more responsive than the same weekday last week.',answer:'Your first classifiable day is an encouraging start compared with the same weekday last week. More days will show whether that improvement continues.',tone:'is-change',icon:'↑'},
-      fading:{title:'Your week opened more quietly.',summary:'Your first classifiable day was lower or less responsive than the same weekday last week.',answer:'Your first classifiable day was quieter than the same weekday last week. It is an early signal, and there is plenty of time for the week to change.',tone:'is-watch',icon:'↓'},
-      maintaining:{title:'Your first day is close to last week’s start.',summary:'The opening fat-use signal is similar to the same weekday last week.',answer:'Your week has started close to last week’s pattern. More days will show whether it holds or begins to move.',tone:'',icon:'→'},
-      still_quiet:{title:'Your week opened with a quiet fat-use signal.',summary:'The first classifiable day was low and steady.',answer:'Your first day was low and steady. That is useful as a starting point, but it is too early to describe the whole week.',tone:'is-watch',icon:'→'},
-      early:{title:'Your first day gives us a starting point.',summary:'FOX2 can describe the opening signal even though the weekly direction is not established yet.',answer:'Your first classifiable day establishes this week’s starting point. The next few days will show whether the signal builds, holds, or becomes quieter.',tone:'is-change',icon:'→'}
-    }[week.trajectory];
-    if(firstDayCopy) copy=firstDayCopy;
+  if(!copy) copy={title:'Your results give you something to build on.',summary:'Try one small change and watch what happens next.',question:'What should I try next?',answer:'Tag one choice and FOX2 will look for how your body responds.',tone:'is-change',icon:'→'};
+  if(count===1&&priorCount){
+    var direction=week.trajectory==='building'?'more':week.trajectory==='fading'?'less':'about the same amount of';
+    copy.summary='Yesterday, your body appeared to use '+direction+' fat for energy than on the same weekday last week.'+(hasMovement?' Your measurements also changed during the day.':'');
   }
-  copy.question='How is this week going?';
   copy.detail=count+' classifiable day'+(count===1?'':'s')+' this week'+(priorCount?' compared with '+priorCount+' from the same weekdays last week':'')+'.';
   copy.lastOfficial=lastOfficial||null;
   return copy;
@@ -373,19 +370,109 @@ function weekToDateEvidenceHtml(week,lastOfficial){
   if(!week||!week.current||!week.current.classifiableDays) return '';
   var current=week.current;
   var previous=week.previous;
-  var official=lastOfficial?lastOfficial.stateLabel+' · median '+lastOfficial.metrics.medianScore:'Not enough data';
-  var prior=previous&&previous.classifiableDays?previous.stateLabel+' · median '+previous.metrics.medianScore:'No comparable start';
+  var levelLabels={low:'Lower',moderate:'Balanced',higher:'Higher',strong:'Strong',unknown:'Not enough data'};
+  var official=lastOfficial?levelLabels[lastOfficial.level]+' · score '+lastOfficial.metrics.medianScore:'Not enough data';
+  var prior=previous&&previous.classifiableDays?'Score '+previous.metrics.medianScore:'No comparable start';
   return '<section class="analysis-card"><h2 class="analysis-section-title">This week so far</h2>'
     +'<p class="analysis-section-copy">A live view through '+week.throughDate+'. It compares only the same elapsed weekdays and remains provisional until Sunday ends.</p>'
     +'<div class="analysis-kpis">'
-      +'<div class="analysis-kpi"><div class="analysis-kpi-label">Current pattern</div><div class="analysis-kpi-value">'+current.stateLabel+'</div></div>'
-      +'<div class="analysis-kpi"><div class="analysis-kpi-label">Daily median</div><div class="analysis-kpi-value">'+current.metrics.medianScore+'</div></div>'
+      +'<div class="analysis-kpi"><div class="analysis-kpi-label">Fat use so far</div><div class="analysis-kpi-value">'+levelLabels[current.level]+'</div></div>'
+      +'<div class="analysis-kpi"><div class="analysis-kpi-label">Typical daily score</div><div class="analysis-kpi-value">'+current.metrics.medianScore+'</div></div>'
       +'<div class="analysis-kpi"><div class="analysis-kpi-label">Same days last week</div><div class="analysis-kpi-value">'+prior+'</div></div>'
       +'<div class="analysis-kpi"><div class="analysis-kpi-label">Last completed week</div><div class="analysis-kpi-value">'+official+'</div></div>'
     +'</div></section>';
 }
 
-function renderHistoricalAnalysis(readingRows,scoreRows){
+function buildTagInsight(tagRows,history){
+  var excludedPositive={Note:true,Meal:true,Snack:true,'High carb':true,Alcohol:true,'Poor sleep':true,Stress:true};
+  var dayByDate={};
+  history.days.forEach(function(day){dayByDate[day.date]=day;});
+  var pointsByDate={};
+  history.points.forEach(function(point){
+    if(!pointsByDate[point.date]) pointsByDate[point.date]=[];
+    pointsByDate[point.date].push(point);
+  });
+  Object.keys(pointsByDate).forEach(function(date){pointsByDate[date].sort(function(a,b){return a.minute-b.minute;});});
+  var stats={};
+  function statFor(icon,name){
+    var key=icon||name;
+    if(!stats[key]) stats[key]={icon:icon||'•',name:name||'Tagged choice',dates:{},events:[],eligible:0,rises:0,deltas:[]};
+    return stats[key];
+  }
+  (tagRows||[]).forEach(function(row){
+    var date=String(row.day_date||'');
+    var seen={};
+    var events=Array.isArray(row.events)?row.events:[];
+    events.forEach(function(event){
+      var name=event.name||event.icon||'Tagged choice';
+      if(name==='Note'||event.icon==='✏️') return;
+      var stat=statFor(event.icon,name);
+      stat.dates[date]=true;
+      seen[event.icon]=true;
+      if(isFinite(Number(event.minute))) stat.events.push({date:date,minute:Number(event.minute)});
+    });
+    (Array.isArray(row.tray_tags)?row.tray_tags:[]).forEach(function(icon){
+      if(icon==='✏️'||seen[icon]) return;
+      var names={'🍎':'Snack','🍽️':'Meal','🥩':'Protein','💧':'Hydration','🍳':'Low carb','🍕':'High carb','🍷':'Alcohol','🚶':'Walk','🏃':'Run','🏋️':'Workout','⏱️':'Fasting','😴':'Poor sleep','🧠':'Stress','💉':'GLP-1'};
+      statFor(icon,names[icon]||'Tagged choice').dates[date]=true;
+    });
+  });
+
+  var allDates=Object.keys(dayByDate);
+  var candidates=[];
+  Object.keys(stats).forEach(function(key){
+    var stat=stats[key];
+    stat.events.forEach(function(event){
+      var points=pointsByDate[event.date]||[];
+      var before=points.filter(function(point){return point.minute<=event.minute&&event.minute-point.minute<=360;}).slice(-1)[0];
+      var after=points.filter(function(point){return point.minute>event.minute&&point.minute<=event.minute+480;});
+      if(!before||!after.length) return;
+      var peak=Math.max.apply(null,after.map(function(point){return point.value;}));
+      var delta=peak-before.value;
+      stat.eligible++;
+      stat.deltas.push(delta);
+      if(delta>=1.5) stat.rises++;
+    });
+    var taggedDates=Object.keys(stat.dates).filter(function(date){return dayByDate[date];});
+    var taggedScores=taggedDates.map(function(date){return Number(dayByDate[date].score);});
+    var untaggedScores=allDates.filter(function(date){return !stat.dates[date];}).map(function(date){return Number(dayByDate[date].score);});
+    var sameDelta=taggedScores.length>=3&&untaggedScores.length>=5?analysisMedian(taggedScores)-analysisMedian(untaggedScores):null;
+    var following={};
+    taggedDates.forEach(function(date){following[addIsoDays(date,1)]=true;});
+    var nextScores=allDates.filter(function(date){return following[date];}).map(function(date){return Number(dayByDate[date].score);});
+    var otherNextScores=allDates.filter(function(date){return !following[date];}).map(function(date){return Number(dayByDate[date].score);});
+    var nextDelta=nextScores.length>=3&&otherNextScores.length>=5?analysisMedian(nextScores)-analysisMedian(otherNextScores):null;
+    var rate=stat.eligible?stat.rises/stat.eligible:0;
+    if(!excludedPositive[stat.name]&&stat.eligible>=3&&rate>=.60){
+      candidates.push({kind:'immediate',rank:100+rate*20,stat:stat,rate:rate});
+    }
+    if(!excludedPositive[stat.name]&&taggedScores.length>=5&&sameDelta!==null&&sameDelta>=5){
+      candidates.push({kind:'same_day',rank:70+Math.min(sameDelta,40),stat:stat,delta:sameDelta,count:taggedScores.length});
+    }
+    if(!excludedPositive[stat.name]&&nextDelta!==null&&nextDelta>=10){
+      candidates.push({kind:'next_day',rank:60+Math.min(nextDelta,40),stat:stat,delta:nextDelta,count:nextScores.length});
+    }
+  });
+  candidates.sort(function(a,b){return b.rank-a.rank;});
+  var best=candidates[0];
+  var tagCount=Object.keys(stats).length;
+  if(!best){
+    if(!tagCount){
+      return {question:'What should I try next?',answer:'Make one small change and tag it. FOX2 will look at what happens later that day and whether the effect carries into tomorrow.',tone:'is-change',icon:'+'};
+    }
+    return {question:'What appears to be helping?',answer:'You are building useful history, but no single tagged choice has repeated a clear effect yet. Keep testing one change at a time so FOX2 can separate a real response from a one-time result.',tone:'is-change',icon:'→'};
+  }
+  var label=best.stat.icon+' '+best.stat.name;
+  if(best.kind==='immediate'){
+    return {question:'What appears to be helping?',answer:label+' has been followed by an increase in your fat-use signal on '+best.stat.rises+' of '+best.stat.eligible+' measurable occasions. Try it again and see whether your body responds similarly.',tone:'is-change',icon:best.stat.icon,evidence:best};
+  }
+  if(best.kind==='same_day'){
+    return {question:'What appears to be helping?',answer:'Across '+best.count+' days when you tagged '+label+', your Daily Fuel Score has tended to be about '+Math.round(best.delta)+' points higher. That does not prove cause, but it is worth repeating as a one-change experiment.',tone:'is-change',icon:best.stat.icon,evidence:best};
+  }
+  return {question:'What may help tomorrow?',answer:'The day after you tagged '+label+', your Daily Fuel Score has typically been about '+Math.round(best.delta)+' points higher. Try it again and see whether the next-day effect repeats.',tone:'is-change',icon:best.stat.icon,evidence:best};
+}
+
+function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   var shell=document.getElementById('analysis-shell');
   if(!shell) return;
   var history=buildHistoricalAnalysis(readingRows,scoreRows);
@@ -410,6 +497,8 @@ function renderHistoricalAnalysis(readingRows,scoreRows){
   window._fox2WeekToDate=weekToDate;
   var lastOfficial=typeof Fox2StateEngine!=='undefined'?Fox2StateEngine.currentState(weeklyStates):null;
   var weekCopy=weekToDateCopy(weekToDate,lastOfficial);
+  var tagInsight=buildTagInsight(tagRows||[],history);
+  window._fox2TagInsight=tagInsight;
 
   var current=all.slice(-14);
   var measurementPoints=history.points.filter(function(p){return p.date!==history.activeDate;});
@@ -432,37 +521,6 @@ function renderHistoricalAnalysis(readingRows,scoreRows){
   var currentResponseDays=current.filter(function(d){return d.movement==='responsive';}).length;
   var stallPattern=dominant.level==='low' && movement==='Steady';
   var underfuelPattern=dominant.level==='high' && movement==='Steady';
-  var title,summary;
-  if(underfuelPattern){
-    title='You may be staying in fat use too continuously.';
-    summary='Your fat-use signal is high, but it is not moving very much. That can be a reason to check whether you are eating enough.';
-  }else if(higherUseDays===0 && currentResponseDays>0){
-    title='Your body is tapping into fat for energy, but the effect is not yet sustained.';
-    summary='Your measurements show brief increases in fat use, while your daily totals remain in the Moderate Fat-Use range.';
-  }else if(higherUseDays===0){
-    title='Your fat-use signal remains low and the effect is not yet sustained.';
-    summary='Your recent scores have remained below the Higher Fat-Use range, with little movement in the signal.';
-  }else if(higherUseDays<Math.ceil(current.length/2)){
-    title='Your body is tapping into fat for energy more often, but the effect is not yet consistent.';
-    summary='Some recent days reached the Higher Fat-Use range. The next step is making that pattern happen more often.';
-  }else{
-    title='Your higher fat-use pattern is becoming sustained.';
-    summary='You are reaching the Higher Fat-Use range regularly while the signal continues to rise and return.';
-  }
-
-  var comparison=baseline.length
-    ? Math.round(recentRate*recent.length)+' of '+recent.length+' recent days showed a rise and return, compared with '+Math.round(baselineRate*baseline.length)+' of the preceding '+baseline.length+'.'
-    : Math.round(recentRate*recent.length)+' of '+recent.length+' recent days showed a rise and return.';
-  var usingFatText;
-  if(higherUseDays===0){
-    usingFatText=currentResponseDays>0
-      ? 'At times, yes. '+above60Days+' of your last '+current.length+' daily totals moved above the Low range, and your measurements contain '+currentResponseDays+' confirmed rises and returns. None of those daily totals exceeded 120.'
-      : 'FOX2 is not seeing a strong or sustained fat-use signal in your recent measurements.';
-  }else if(higherUseDays<Math.ceil(current.length/2)){
-    usingFatText='Yes, at times. '+higherUseDays+' of your last '+current.length+' classifiable days reached a Daily Fuel Score above 120.';
-  }else{
-    usingFatText='Yes. Your fat-use signal has been both stronger and more sustained, with '+higherUseDays+' of your last '+current.length+' daily totals above 120.';
-  }
 
   // Select questions from the evidence instead of showing a fixed checklist.
   var insights=[];
@@ -470,52 +528,32 @@ function renderHistoricalAnalysis(readingRows,scoreRows){
     insights.push({question:question,answer:answer,tone:tone||'',icon:icon||'→'});
   }
   addInsight(weekCopy.question,weekCopy.answer,weekCopy.tone,weekCopy.icon);
+  addInsight(tagInsight.question,tagInsight.answer,tagInsight.tone,tagInsight.icon);
   if(stallPattern){
-    addInsight('Is my pattern stuck?',
-      'It appears to be. Your recent pattern is both low and flat, so FOX2 is not seeing a meaningful increase in fat use yet.',
-      'is-watch','!');
-    addInsight('Is my body using fat for energy?',usingFatText,'is-watch','!');
-    addInsight('What should I look for next?',
-      'The first encouraging change would be readings rising above this flat range and returning to the same level or lower.',
-      'is-change','↑');
-  }else if(underfuelPattern){
-    addInsight('Am I staying in fat use too continuously?',
-      'Possibly. Your recent signal is predominantly High + Steady instead of rising and returning.',
-      'is-watch','!');
-    addInsight('Could I be eating too little?',
-      'This pattern can raise that question. If it continues—especially on a GLP-1—consider whether you are eating enough and getting adequate protein.',
-      'is-watch','!');
-    addInsight('What should I watch next?',
-      'Look for the signal to continue reaching higher levels while also returning toward a lower baseline.',
+    addInsight('Am I stalled?',
+      'Your recent fat use has stayed low without a clear increase. That is a starting point, not a failure. Try one small change and tag it so FOX2 can look for an effect.',
       'is-change','→');
+  }else if(underfuelPattern){
+    addInsight('Could I be pushing too hard?',
+      'Possibly. Your fat-use signal has stayed unusually elevated without regularly coming back down. More is not necessarily better—make sure you are adequately fueled and getting enough protein.',
+      'is-watch','!');
   }else{
-    if(momentum==='Increasing'){
-      addInsight('Is something I’m doing working?',
-        'Something in your recent routine appears to be helping. '+comparison+' Keep building on it.',
+    if(higherUseDays===0&&currentResponseDays>0){
+      addInsight('Am I making progress?',
+        'Yes—your body is moving into greater fat use during parts of the day. The effect is not sustained yet, but a little more consistency may help those periods happen more often or last longer.',
         'is-change','↑');
-    }else if(momentum==='Decreasing'){
-      addInsight('Has my pattern changed?',
-        'Yes. The rise-and-return pattern is appearing less often than before. '+comparison,
-        'is-watch','↓');
-    }
-    addInsight('Is my body using fat for energy?',usingFatText,higherUseDays===0?'is-watch':'',higherUseDays===0?'!':'✓');
-    if(higherUseDays===0){
-      addInsight('Is the effect sustained?',
-        'Not yet. Your signal still rises and returns, but none of your last '+current.length+' daily totals exceeded 120.',
-        'is-watch','!');
+    }else if(higherUseDays===0){
+      addInsight('What can I improve?',
+        'FOX2 is not seeing a clear increase yet. Try one small change and tag it so you can see whether your body responds.',
+        'is-change','→');
     }else if(higherUseDays<Math.ceil(current.length/2)){
-      addInsight('Is the effect sustained?',
-        'Only intermittently. '+higherUseDays+' of your last '+current.length+' classifiable days reached the Higher Fat-Use range.',
+      addInsight('Am I using more fat for energy?',
+        'Yes, at times. '+higherUseDays+' of your last '+current.length+' classifiable days reached the Higher Fat-Use range. Repeat what worked on those days and see whether it happens more often.',
         'is-change','→');
     }else{
-      addInsight('Is the effect sustained?',
-        'Yes. '+higherUseDays+' of your last '+current.length+' classifiable days reached the Higher Fat-Use range.',
+      addInsight('Am I sustaining greater fat use?',
+        'Yes. '+higherUseDays+' of your last '+current.length+' classifiable days reached the Higher Fat-Use range. Keep doing what has been working.',
         '','✓');
-    }
-    if(momentum==='Holding steady'){
-      addInsight('Is the pattern changing?',
-        'Not clearly right now. '+comparison,
-        'is-change','→');
     }
   }
   var insightHtml=insights.slice(0,3).map(function(insight){
@@ -545,30 +583,30 @@ function renderHistoricalAnalysis(readingRows,scoreRows){
     +weekToDateEvidenceHtml(weekToDate,lastOfficial)
     +'<section class="analysis-card">'
       +'<h2 class="analysis-section-title">Why FOX2 says this</h2>'
-      +'<p class="analysis-section-copy">The recent pattern is read against every classifiable day in your history.</p>'
+      +'<p class="analysis-section-copy">FOX2 compares your recent fat use with your own complete history.</p>'
       +'<div class="analysis-kpis">'
-        +'<div class="analysis-kpi"><div class="analysis-kpi-label">Fuel-use level</div><div class="analysis-kpi-value">'+levelName+'</div></div>'
-        +'<div class="analysis-kpi"><div class="analysis-kpi-label">Responsiveness</div><div class="analysis-kpi-value">'+movement+'</div></div>'
-        +'<div class="analysis-kpi"><div class="analysis-kpi-label">Recent direction</div><div class="analysis-kpi-value">'+momentum+'</div></div>'
+        +'<div class="analysis-kpi"><div class="analysis-kpi-label">Recent fat use</div><div class="analysis-kpi-value">'+levelName+'</div></div>'
+        +'<div class="analysis-kpi"><div class="analysis-kpi-label">Days with clear increases</div><div class="analysis-kpi-value">'+currentResponseDays+' of '+current.length+'</div></div>'
+        +'<div class="analysis-kpi"><div class="analysis-kpi-label">Compared with before</div><div class="analysis-kpi-value">'+(momentum==='Increasing'?'Improving':momentum==='Decreasing'?'Lower':'Holding steady')+'</div></div>'
         +'<div class="analysis-kpi"><div class="analysis-kpi-label">'+(above180Days?'Days above 180':higherUseDays?'Days above 120':'Days above 60')+'</div><div class="analysis-kpi-value">'+(above180Days||higherUseDays||above60Days)+' of '+current.length+'</div></div>'
       +'</div>'
       +'<div class="analysis-range-list">'+scoreRangeDistributionHtml(current)+'</div>'
     +'</section>'
-    +'<section class="analysis-card"><h2 class="analysis-section-title">The recent change</h2>'
-      +'<p class="analysis-section-copy">The share of days containing a confirmed rise above personal baseline followed by a return toward it.</p>'
+    +'<section class="analysis-card"><h2 class="analysis-section-title">Is your body responding more often?</h2>'
+      +'<p class="analysis-section-copy">These are days when your measurements rose clearly above your usual level and later returned toward it.</p>'
       +'<div class="analysis-bars">'+renderAnalysisBar('Latest '+recent.length+' days',recent)
         +renderAnalysisBar('Previous '+baseline.length+' days',baseline)
         +renderAnalysisBar('Complete history',all)+'</div></section>'
-    +'<section class="analysis-card"><h2 class="analysis-section-title">Your measurement response cycles</h2>'
-      +'<p class="analysis-section-copy">Individual breath measurements from the beginning. Gold marks a higher excursion; blue marks its return toward your recent personal baseline.</p>'
+    +'<section class="analysis-card"><h2 class="analysis-section-title">When your fat use increased</h2>'
+      +'<p class="analysis-section-copy">Gold marks a clear increase above your usual level; blue marks the return. These changes can be an early sign that your choices are having an effect.</p>'
       +measurementResponseSvg(measurementPoints,completedEpisodes)+'</section>'
     +'<section class="analysis-card"><h2 class="analysis-section-title">Daily Fuel Score over time</h2>'
       +'<p class="analysis-section-copy">Every classifiable day from the beginning. The highlighted area is your latest 14-day pattern.</p>'
       +scoreTrendSvg(all)+'</section>'
-    +'<section class="analysis-card"><h2 class="analysis-section-title">Your pattern history</h2>'
+    +'<section class="analysis-card"><h2 class="analysis-section-title">How your fat use has changed</h2>'
       +'<p class="analysis-section-copy">Each block is one classifiable day, from earliest to latest.</p>'
       +'<div class="analysis-pattern-strip" role="img" aria-label="Daily pattern history from earliest to latest">'+strip+'</div>'
       +'<div class="analysis-legend">'+legend+'</div></section>'
     +weeklyStateHistoryHtml(weeklyStates)
-    +'<div class="analysis-footnote">Based on '+all.length+' of '+history.completedWithScore+' completed days. A response requires a rise at least two signal levels above the recent personal baseline and a return toward that baseline within 72 hours. Days without enough readings across the day are left out of daily classification. FOX2 describes patterns; it does not diagnose stalled metabolism, muscle loss, or under-fueling.</div>';
+    +'<div class="analysis-footnote">Based on '+all.length+' of '+history.completedWithScore+' completed days. A clear increase requires a rise at least two signal levels above the recent personal baseline and a return toward that baseline within 72 hours. Days without enough readings across the day are left out of daily classification. Tag comparisons describe associations, not causes. FOX2 does not diagnose stalled metabolism, muscle loss, or under-fueling.</div>';
 }
