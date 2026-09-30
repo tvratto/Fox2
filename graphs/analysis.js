@@ -135,6 +135,24 @@ function fox2CorrectedScores(scoreRows){
   return Object.keys(byDay).sort().map(function(day){return byDay[day];});
 }
 
+function dailyScoreSeries(scoreRows,activeDate){
+  return fox2CorrectedScores(scoreRows).filter(function(row){
+    return !activeDate||row.day_date<activeDate;
+  }).map(function(row){return {date:row.day_date,score:Number(row.auc_score)};});
+}
+
+function scoreWindowSummary(scoreDays,startDate,endDate){
+  var days=(scoreDays||[]).filter(function(day){return day.date>=startDate&&day.date<=endDate;});
+  var scores=days.map(function(day){return Number(day.score);});
+  return {
+    startDate:startDate,endDate:endDate,classifiableDays:days.length,days:days,
+    metrics:{
+      meanScore:scores.length?Math.round(scores.reduce(function(sum,score){return sum+score;},0)/scores.length*10)/10:null,
+      medianScore:scores.length?Math.round(analysisMedian(scores)*10)/10:null
+    }
+  };
+}
+
 function fox2DownloadCsv(filename,rows){
   var blob=new Blob(['\ufeff'+rows.join('\r\n')+'\r\n'],{type:'text/csv;charset=utf-8'});
   var url=URL.createObjectURL(blob);
@@ -305,7 +323,7 @@ function recentScoreSummaryHtml(days,week,previousCalendarWeek){
   var bars=slots.map(function(slot,index){
     var x=left+index*step+(step-barWidth)/2;
     if(!slot.day){
-      return '<circle cx="'+(x+barWidth/2).toFixed(1)+'" cy="'+(top+ph+1)+'" r="1.8" fill="rgba(255,255,255,.16)"><title>'+slot.date+': no classifiable score</title></circle>';
+      return '<circle cx="'+(x+barWidth/2).toFixed(1)+'" cy="'+(top+ph+1)+'" r="1.8" fill="rgba(255,255,255,.16)"><title>'+slot.date+': no saved Daily Fuel Score</title></circle>';
     }
     var score=Number(slot.day.score);
     var color=slot.date===endDate?'#FFD23C':score<=60?'#22D3EE':score<=120?'#4ADE80':score<=180?'#C084FC':'#F472B6';
@@ -315,7 +333,7 @@ function recentScoreSummaryHtml(days,week,previousCalendarWeek){
   var averageLine=average===null?'':'<line x1="'+left+'" y1="'+y(average).toFixed(1)+'" x2="'+(left+pw)+'" y2="'+y(average).toFixed(1)+'" stroke="rgba(255,210,60,.72)" stroke-width="1.4" stroke-dasharray="5 4"/><text x="'+(left+pw-2)+'" y="'+(y(average)-5).toFixed(1)+'" text-anchor="end" font-size="9" fill="rgba(255,210,60,.84)">last week avg '+average+'</text>';
   var currentShade=currentIndex<0?'':'<rect x="'+(left+currentIndex*step).toFixed(1)+'" y="'+top+'" width="'+((slots.length-currentIndex)*step).toFixed(1)+'" height="'+ph+'" fill="rgba(255,210,60,.035)"/>';
   return '<section class="analysis-card"><h2 class="analysis-section-title">Your recent scores at a glance</h2>'
-    +'<p class="analysis-section-copy">Each bar is one Daily Fuel Score. A gap means there was no classifiable day. Gold marks the latest day; the dashed line is the average across last week’s days with enough data.</p>'
+    +'<p class="analysis-section-copy">Each bar is one saved Daily Fuel Score. A gap means no Daily Fuel Score was available. Gold marks the latest day; the dashed line is the average across all of last week’s saved scores.</p>'
     +'<svg class="analysis-chart" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="Daily Fuel Scores for the latest 14 calendar days, including gaps">'
       +'<rect x="'+left+'" y="'+y(60)+'" width="'+pw+'" height="'+(y(0)-y(60))+'" fill="rgba(34,211,238,.055)"/>'
       +'<rect x="'+left+'" y="'+y(120)+'" width="'+pw+'" height="'+(y(60)-y(120))+'" fill="rgba(74,222,128,.06)"/>'
@@ -358,7 +376,7 @@ function scoreRangeDistributionHtml(days){
   }).join('');
 }
 
-function weeklyStateHistoryHtml(states,week){
+function weeklyStateHistoryHtml(states,week,scoreDays){
   var completed=states.filter(function(state){return state.classifiableDays>0;}).slice().reverse();
   var current=week&&week.current?week.current:null;
   if(!completed.length&&(!current||!current.classifiableDays)) return '';
@@ -369,6 +387,7 @@ function weeklyStateHistoryHtml(states,week){
   }
   function dayCountLabel(count){return count+' '+(count===1?'day':'days');}
   function completedRow(state){
+    var scoreSummary=scoreWindowSummary(scoreDays,state.startDate,state.endDate);
     var transition=state.transition||{};
     var changeLabel=transition.scoreDirection==='rising'?'more fat use than the prior week'
       :transition.scoreDirection==='falling'?'less fat use than the prior week'
@@ -377,24 +396,25 @@ function weeklyStateHistoryHtml(states,week){
       :transition.kind==='same_state'?'similar to the prior week':'starting reference';
     return '<div class="analysis-week">'
       +'<div class="analysis-week-state">'+labels[state.level]+' <span class="analysis-week-badge is-complete">Completed</span></div>'
-      +'<div class="analysis-week-score"><span>Typical score</span>'+state.metrics.medianScore+'</div>'
-      +'<div class="analysis-week-dates">'+state.startDate.slice(5)+' – '+state.endDate.slice(5)+' · '+dayCountLabel(state.classifiableDays)+'</div>'
-      +'<div class="analysis-week-detail">'+dayCountLabel(state.metrics.responsiveDays)+' with increases · '+changeLabel+'</div>'
+      +'<div class="analysis-week-score"><span>Average score</span>'+(scoreSummary.classifiableDays?scoreSummary.metrics.meanScore:'—')+'</div>'
+      +'<div class="analysis-week-dates">'+state.startDate.slice(5)+' – '+state.endDate.slice(5)+' · '+dayCountLabel(scoreSummary.classifiableDays)+' with scores</div>'
+      +'<div class="analysis-week-detail">'+dayCountLabel(state.metrics.responsiveDays)+' with increases from '+dayCountLabel(state.classifiableDays)+' usable for responsiveness · '+changeLabel+'</div>'
       +'<div class="analysis-week-bands">'+bandsFor(state)+'</div>'
       +'</div>';
   }
   var rows='';
   if(current){
     var hasCurrent=current.classifiableDays>0;
+    var currentScoreSummary=scoreWindowSummary(scoreDays,current.startDate,week.throughDate);
     var comparison=week.comparison||{};
     var currentChange=comparison.scoreDirection==='rising'?'higher than the same point last week'
       :comparison.scoreDirection==='falling'?'lower than the same point last week'
       :comparison.scoreDirection==='stable'?'similar to the same point last week':'comparison still developing';
     rows='<div class="analysis-week is-current">'
       +'<div class="analysis-week-state">'+(hasCurrent?labels[current.level]:'No classifiable days yet')+' <span class="analysis-week-badge">Incomplete</span></div>'
-      +'<div class="analysis-week-score"><span>'+(current.classifiableDays===1?'Daily score':'Typical score')+'</span>'+(hasCurrent?current.metrics.medianScore:'—')+'</div>'
-      +'<div class="analysis-week-dates">'+current.startDate.slice(5)+' – '+week.throughDate.slice(5)+' · '+dayCountLabel(current.classifiableDays)+' so far</div>'
-      +'<div class="analysis-week-detail">'+(hasCurrent?dayCountLabel(current.metrics.responsiveDays)+' with increases · '+currentChange:'Add measurements to begin this week’s comparison')+'</div>'
+      +'<div class="analysis-week-score"><span>'+(currentScoreSummary.classifiableDays===1?'Daily score':'Average score')+'</span>'+(currentScoreSummary.classifiableDays?currentScoreSummary.metrics.meanScore:'—')+'</div>'
+      +'<div class="analysis-week-dates">'+current.startDate.slice(5)+' – '+week.throughDate.slice(5)+' · '+dayCountLabel(currentScoreSummary.classifiableDays)+' with scores so far</div>'
+      +'<div class="analysis-week-detail">'+(hasCurrent?dayCountLabel(current.metrics.responsiveDays)+' with increases from '+dayCountLabel(current.classifiableDays)+' usable for responsiveness · '+currentChange:'Add measurements to begin this week’s comparison')+'</div>'
       +(hasCurrent?'<div class="analysis-week-bands">'+bandsFor(current)+'</div>':'')
       +'</div>';
   }
@@ -439,7 +459,7 @@ function weekToDateCopy(week,lastOfficial,allDays,previousCalendarWeek){
       :dayLabel+' was right in line with last week.';
     copy.summary=dayLabel+'’s Daily Fuel Score was '+onlyDay.score+'. '
       +(previousDay?'The day before was '+previousDay.score+'. ':'There was no classifiable score for the day before. ')
-      +(fullWeek?'Last week averaged '+fullWeekAverage+' across '+fullWeek.classifiableDays+' day'+(fullWeek.classifiableDays===1?'':'s')+' with enough data. ':'')
+      +(fullWeek?'Last week averaged '+fullWeekAverage+' across '+fullWeek.classifiableDays+' day'+(fullWeek.classifiableDays===1?'':'s')+' with saved scores. ':'')
       +(weeklyDelta===null?'Keep measuring so FOX2 can begin showing what changes.':weeklyDelta>=10?'That is an encouraging result to try to repeat.':weeklyDelta<=-10?'There is still time to influence how this week develops.':'That is a steady result to build on as this week develops.');
     copy.question='What should I watch next?';
     copy.answer='One day cannot tell you how the whole week is going. Watch whether your next Daily Fuel Score moves higher, lower, or stays near this level—and tag what you changed so FOX2 can help connect the result to your choices.';
@@ -455,7 +475,7 @@ function weekToDateCopy(week,lastOfficial,allDays,previousCalendarWeek){
   return copy;
 }
 
-function weekToDateEvidenceHtml(week,lastOfficial,allDays,previousCalendarWeek){
+function weekToDateEvidenceHtml(week,lastOfficial,allDays,previousCalendarWeek,currentScoreWeek){
   if(!week||!week.current||!week.current.classifiableDays) return '';
   var current=week.current;
   var previous=week.previous;
@@ -476,14 +496,14 @@ function weekToDateEvidenceHtml(week,lastOfficial,allDays,previousCalendarWeek){
       +'</div></section>';
   }
   var official=lastOfficial?levelLabels[lastOfficial.level]+' · score '+lastOfficial.metrics.medianScore:'Not enough data';
-  var prior=previous&&previous.classifiableDays?'Score '+previous.metrics.medianScore:'No comparable start';
+  var scoreWeek=currentScoreWeek&&currentScoreWeek.classifiableDays?currentScoreWeek:null;
   return '<section class="analysis-card"><h2 class="analysis-section-title">This week so far</h2>'
-    +'<p class="analysis-section-copy">A live view through '+week.throughDate+'. It compares only the same elapsed weekdays and remains provisional until Sunday ends.</p>'
+    +'<p class="analysis-section-copy">Daily-score averages use every day with a saved score. Responsiveness is assessed separately only on days with enough measurements across the day.</p>'
     +'<div class="analysis-kpis">'
       +'<div class="analysis-kpi"><div class="analysis-kpi-label">Fat use so far</div><div class="analysis-kpi-value">'+levelLabels[current.level]+'</div></div>'
-      +'<div class="analysis-kpi"><div class="analysis-kpi-label">Typical daily score</div><div class="analysis-kpi-value">'+current.metrics.medianScore+'</div></div>'
-      +'<div class="analysis-kpi"><div class="analysis-kpi-label">Same days last week</div><div class="analysis-kpi-value">'+prior+'</div></div>'
-      +'<div class="analysis-kpi"><div class="analysis-kpi-label">Last completed week</div><div class="analysis-kpi-value">'+official+'</div></div>'
+      +'<div class="analysis-kpi"><div class="analysis-kpi-label">Average daily score</div><div class="analysis-kpi-value">'+(scoreWeek?scoreWeek.metrics.meanScore:'Not enough data')+'</div></div>'
+      +'<div class="analysis-kpi"><div class="analysis-kpi-label">Previous week average</div><div class="analysis-kpi-value">'+(previousCalendarWeek&&previousCalendarWeek.classifiableDays?previousCalendarWeek.metrics.meanScore:'Not enough data')+'</div></div>'
+      +'<div class="analysis-kpi"><div class="analysis-kpi-label">Usable for responsiveness</div><div class="analysis-kpi-value">'+current.classifiableDays+' of '+(scoreWeek?scoreWeek.classifiableDays:0)+' score days</div></div>'
     +'</div></section>';
 }
 
@@ -608,6 +628,7 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   var history=buildHistoricalAnalysis(readingRows,scoreRows);
   window._fox2ExportData={readings:(readingRows||[]).slice(),scores:(scoreRows||[]).slice()};
   var all=history.days;
+  var scoreDays=dailyScoreSeries(scoreRows,history.activeDate);
   if(all.length<5){
     shell.innerHTML='<section class="analysis-card analysis-empty">More completed days are needed before FOX2 can build a historical analysis.</section>';
     return;
@@ -626,8 +647,9 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   window._fox2WeeklyStates=weeklyStates;
   window._fox2WeekToDate=weekToDate;
   var lastOfficial=typeof Fox2StateEngine!=='undefined'?Fox2StateEngine.currentState(weeklyStates):null;
-  var previousCalendarWeek=weeklyStates.length?weeklyStates[weeklyStates.length-1]:null;
-  var weekCopy=weekToDateCopy(weekToDate,lastOfficial,all,previousCalendarWeek);
+  var previousCalendarWeek=weekToDate?scoreWindowSummary(scoreDays,addIsoDays(weekToDate.startDate,-7),addIsoDays(weekToDate.startDate,-1)):null;
+  var currentScoreWeek=weekToDate?scoreWindowSummary(scoreDays,weekToDate.startDate,weekToDate.throughDate):null;
+  var weekCopy=weekToDateCopy(weekToDate,lastOfficial,scoreDays,previousCalendarWeek);
   var tagInsights=buildTagInsights(tagRows||[],history);
   window._fox2TagInsights=tagInsights;
   window._fox2TagInsight=tagInsights[0];
@@ -714,9 +736,9 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
     +'<section class="analysis-conclusion-list" aria-label="Your conclusions">'
       +insightHtml
     +'</section>'
-    +recentScoreSummaryHtml(all,weekToDate,previousCalendarWeek)
-    +weekToDateEvidenceHtml(weekToDate,lastOfficial,all,previousCalendarWeek)
-    +weeklyStateHistoryHtml(weeklyStates,weekToDate)
+    +recentScoreSummaryHtml(scoreDays,weekToDate,previousCalendarWeek)
+    +weekToDateEvidenceHtml(weekToDate,lastOfficial,scoreDays,previousCalendarWeek,currentScoreWeek)
+    +weeklyStateHistoryHtml(weeklyStates,weekToDate,scoreDays)
     +'<section class="analysis-card">'
       +'<h2 class="analysis-section-title">Why FOX2 says this</h2>'
       +'<p class="analysis-section-copy">FOX2 compares your recent fat use with your own complete history.</p>'

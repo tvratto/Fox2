@@ -108,7 +108,7 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.equal(copy.title,'Yesterday was right in line with last week.');
   assert.ok(copy.summary.includes('Daily Fuel Score was 94'));
   assert.ok(copy.summary.includes('no classifiable score for the day before'));
-  assert.ok(copy.summary.includes('averaged 95 across 6 days'));
+  assert.ok(copy.summary.includes('averaged 95 across 6 days with saved scores'));
   assert.ok(evidence.includes('Yesterday’s score'));
   assert.ok(evidence.includes('Fat use yesterday</div><div class="analysis-kpi-value">Balanced'));
   assert.ok(evidence.includes('No comparable day'));
@@ -125,13 +125,19 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
     };
   }
   const current=state('2026-09-28','2026-09-29',64.5,'provisional');
-  const html=context.weeklyStateHistoryHtml([
+  const states=[
     state('2026-09-14','2026-09-20',80,'limited'),
     state('2026-09-21','2026-09-27',110,'sufficient')
-  ],{
+  ];
+  const scoreDays=[
+    {date:'2026-09-14',score:80},{date:'2026-09-15',score:80},
+    {date:'2026-09-21',score:110},{date:'2026-09-22',score:110},
+    {date:'2026-09-28',score:63},{date:'2026-09-29',score:66}
+  ];
+  const html=context.weeklyStateHistoryHtml(states,{
     current,throughDate:'2026-09-29',
     comparison:{scoreDirection:'falling'}
-  });
+  },scoreDays);
   assert.ok(html.includes('Compare your weeks'));
   assert.ok(html.includes('Incomplete'));
   assert.ok(html.includes('64.5'));
@@ -171,7 +177,7 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(html.includes('latest 14 calendar days, including gaps'));
   assert.ok(html.includes('last week avg 85.3'));
   assert.ok(html.includes('2026-09-29: 94'));
-  assert.ok(html.includes('no classifiable score'));
+  assert.ok(html.includes('no saved Daily Fuel Score'));
 })();
 
 console.log('analysis tests passed');
