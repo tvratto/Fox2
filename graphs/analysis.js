@@ -89,7 +89,10 @@ function buildHistoricalAnalysis(readingRows,scoreRows){
     scoreByDay[date]=Number(row.auc_score);
   });
 
-  var activeDate=(DAYS[TODAY_IDX]&&DAYS[TODAY_IDX].isoDate)||'';
+  // Only the browser's actual current calendar day is incomplete. A restored
+  // device payload may end yesterday; that final saved day should still count.
+  var now=new Date();
+  var activeDate=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
   var completedWithScore=0;
   var classified=[];
   Object.keys(readingsByDay).sort().forEach(function(date){
