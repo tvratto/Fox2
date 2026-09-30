@@ -202,6 +202,7 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
     {minute:180,value:8}
   ];
   assert.equal(context.partialAucAtMinute(points,120),6);
+  assert.equal(context.partialAucAtMinute([{minute:430,value:4}],434),14.3);
 })();
 
 (function comparesTodayOnlyWithSameTimeHistory(){

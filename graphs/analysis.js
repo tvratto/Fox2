@@ -192,8 +192,10 @@ function partialAucAtMinute(points,cutoffMinute){
     return isFinite(Number(point.minute))&&isFinite(Number(point.value))&&Number(point.minute)<=Number(cutoffMinute);
   }).map(function(point){return {minute:Number(point.minute),value:Number(point.value)};})
     .sort(function(a,b){return a.minute-b.minute;});
-  if(usable.length<2) return null;
-  var auc=0;
+  if(!usable.length) return null;
+  // FOX2's daily accumulation begins at the start-of-day origin (0, 0).
+  // That makes one morning measurement enough for a valid same-time value.
+  var auc=.5*usable[0].value*(usable[0].minute/60);
   for(var i=1;i<usable.length;i++){
     var elapsed=(usable[i].minute-usable[i-1].minute)/60;
     if(elapsed>0) auc+=.5*(usable[i-1].value+usable[i].value)*elapsed;
