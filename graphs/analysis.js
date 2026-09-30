@@ -5,7 +5,7 @@
 // ── Complete-history analysis tab ────────────────────────────────────────
 // Daily scores written before this web fix were saved one calendar day early.
 // Keep this compatibility correction read-only; new rows are stored correctly.
-var SCORE_DATE_FIX_CUTOFF='2026-09-29';
+var SCORE_DATE_FIX_CUTOFF='2026-09-28';
 
 function addIsoDays(iso,amount){
   var d=new Date(iso+'T00:00:00Z');

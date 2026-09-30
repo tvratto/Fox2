@@ -58,6 +58,23 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(insights[0].answer.includes('tag it'));
 })();
 
+(function preservesAlreadyCorrectScoresAtTheDateFixBoundary(){
+  const corrected=context.fox2CorrectedScores([
+    {day_date:'2026-09-27',auc_score:28},
+    {day_date:'2026-09-28',auc_score:63},
+    {day_date:'2026-09-29',auc_score:66}
+  ]);
+  assert.deepEqual(
+    corrected.map(row=>({date:row.day_date,score:row.auc_score})),
+    [{date:'2026-09-28',score:63},{date:'2026-09-29',score:66}]
+  );
+  const week=engine.buildWeekToDate(
+    corrected.map(row=>({date:row.day_date,score:row.auc_score,movement:'steady'})),
+    {referenceDate:'2026-09-30'}
+  );
+  assert.equal(week.current.metrics.medianScore,64.5);
+})();
+
 (function avoidsInternalLanguageInFirstDayCopy(){
   const sample=[
     {date:'2026-01-05',score:90,movement:'responsive',range:4,responseAmplitude:3},
