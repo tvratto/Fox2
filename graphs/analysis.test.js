@@ -248,6 +248,11 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(withinDay.includes('Fat-use measurements across 2026-09-29'));
   assert.ok(withinDay.includes('8:00am'));
   assert.ok(withinDay.includes('7:00pm'));
+  assert.ok(withinDay.includes('Starting level'));
+  assert.ok(withinDay.includes('Higher fat use'));
+  assert.ok(withinDay.includes('Came back down'));
+  assert.ok(withinDay.includes('analysis-moment-orb'));
+  assert.ok(!withinDay.includes('<polyline'));
 
   const daily=context.dailyScoreEvidenceSvg([
     {date:'2026-09-28',score:70},{date:'2026-09-29',score:93}

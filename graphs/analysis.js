@@ -262,21 +262,55 @@ function dailyScoreEvidenceSvg(days,label){
 }
 
 function withinDayEvidenceSvg(days,points){
-  var candidates=(days||[]).filter(function(day){return day.movement==='responsive'||Number(day.range)>=2;});
-  var chosen=candidates.length?candidates[candidates.length-1]:null;
-  if(!chosen) return '';
-  var sameDay=(points||[]).filter(function(point){return point.date===chosen.date;}).sort(function(a,b){return a.minute-b.minute;});
-  if(sameDay.length<2) return '';
+  var responsive=(days||[]).filter(function(day){return day.movement==='responsive';});
+  var candidates=(days||[]).filter(function(day){return Number(day.range)>=2;});
+  var pool=responsive.concat(candidates.filter(function(day){return day.movement!=='responsive';})).sort(function(a,b){return b.date.localeCompare(a.date);});
+  var chosen=null,sameDay=null;
+  for(var candidateIndex=0;candidateIndex<pool.length;candidateIndex++){
+    var candidatePoints=(points||[]).filter(function(point){return point.date===pool[candidateIndex].date;}).sort(function(a,b){return a.minute-b.minute;});
+    if(candidatePoints.length<2) continue;
+    var candidatePeak=Math.max.apply(null,candidatePoints.map(function(point){return Number(point.value);}));
+    if(candidatePeak>=Number(candidatePoints[0].value)+.5){
+      chosen=pool[candidateIndex];
+      sameDay=candidatePoints;
+      break;
+    }
+  }
+  if(!chosen||!sameDay) return '';
   function timeLabel(minute){
     var hour=Math.floor(minute/60),minutes=Math.round(minute%60);
     var suffix=hour>=12?'pm':'am';
     var shown=hour%12||12;
     return shown+':'+String(minutes).padStart(2,'0')+suffix;
   }
-  var items=sameDay.map(function(point){
-    return {x:point.minute,value:point.value,title:timeLabel(point.minute)+': level '+point.value};
-  });
-  return compactEvidenceLine(items,'Fat-use measurements across '+chosen.date,timeLabel(sameDay[0].minute),timeLabel(sameDay[sameDay.length-1].minute));
+  var start=sameDay[0];
+  var peak=sameDay.reduce(function(best,point){return point.value>best.value?point:best;},sameDay[0]);
+  var later=sameDay[sameDay.length-1];
+  var moments=[{point:start,label:'Starting level',kind:'is-start'}];
+  if(peak!==start&&peak!==later) moments.push({point:peak,label:'Higher fat use',kind:'is-peak'});
+  if(peak===later&&sameDay.length>=3){
+    var middle=sameDay[Math.floor((sameDay.length-1)/2)];
+    if(middle!==start&&middle!==peak){
+      moments.push({point:middle,label:middle.value>start.value?'Moving higher':'Later reading',kind:'is-later'});
+    }
+  }
+  if(later!==start){
+    moments.push({
+      point:later,
+      label:later===peak?'Higher fat use':later.value<=peak.value-.5?'Came back down':'Later reading',
+      kind:later===peak?'is-peak':'is-later'
+    });
+  }
+  var values=moments.map(function(moment){return Number(moment.point.value);});
+  var low=Math.min.apply(null,values),high=Math.max.apply(null,values);
+  var momentHtml=moments.map(function(moment,index){
+    var normalized=high===low ? .5 : (Number(moment.point.value)-low)/(high-low);
+    var size=Math.round(48+normalized*12);
+    var arrow=index?'<div class="analysis-moment-arrow" aria-hidden="true">→</div>':'';
+    return arrow+'<div class="analysis-moment '+moment.kind+'"><div class="analysis-moment-orb" style="--moment-size:'+size+'px">'+Math.round(Number(moment.point.value)*10)/10+'</div><div class="analysis-moment-title">'+moment.label+'</div><div class="analysis-moment-time">'+timeLabel(moment.point.minute)+'</div></div>';
+  }).join('');
+  var aria='Fat-use measurements across '+chosen.date+': started at '+start.value+', reached '+peak.value+', and later measured '+later.value;
+  return '<div class="analysis-insight-visual analysis-moment-story" role="img" aria-label="'+analysisEscape(aria)+'">'+momentHtml+'</div>';
 }
 
 function tagEvidenceHtml(insight){
