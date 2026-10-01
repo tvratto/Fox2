@@ -176,126 +176,9 @@ function liveTodaySnapshot(activeDate){
     if(DAYS[i]&&DAYS[i].isoDate===activeDate&&Array.isArray(DAYS[i].pts)&&DAYS[i].pts.length){day=DAYS[i];break;}
   }
   if(!day||day.isoDate!==activeDate||!isFinite(Number(day.score))||Number(day.score)<=0) return null;
-  var points=(Array.isArray(day.pts)?day.pts:[]).map(function(point){
-    return {minute:Number(point[0]),value:Number(point[1])};
-  }).filter(function(point){return isFinite(point.minute)&&isFinite(point.value);})
-    .sort(function(a,b){return a.minute-b.minute;});
   var now=new Date();
   var calendarToday=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
-  return {date:activeDate,score:Number(day.score),partial:true,isCalendarToday:activeDate===calendarToday,
-    cutoffMinute:points.length?points[points.length-1].minute:null,points:points};
-}
-
-function partialAucAtMinute(points,cutoffMinute){
-  if(!isFinite(Number(cutoffMinute))) return null;
-  var cutoff=Number(cutoffMinute);
-  var ordered=(points||[]).filter(function(point){
-    return isFinite(Number(point.minute))&&isFinite(Number(point.value))&&Number(point.minute)>=0;
-  }).map(function(point){return {minute:Number(point.minute),value:Number(point.value)};})
-    .sort(function(a,b){return a.minute-b.minute;});
-  if(!ordered.length||cutoff<0||cutoff>ordered[ordered.length-1].minute) return null;
-
-  // Remove duplicate timestamps, keeping the last value at each minute.
-  var measured=[];
-  ordered.forEach(function(point){
-    if(measured.length&&measured[measured.length-1].minute===point.minute) measured[measured.length-1]=point;
-    else measured.push(point);
-  });
-
-  // FOX2's line begins at the start-of-day origin. Insert the comparison
-  // time as a new point on the measured line, then integrate through it.
-  var path=[{minute:0,value:0}];
-  for(var i=0;i<measured.length;i++){
-    var point=measured[i];
-    if(point.minute<cutoff){
-      if(point.minute===0) path[0]=point;
-      else path.push(point);
-      continue;
-    }
-    if(point.minute===cutoff){
-      if(cutoff===0) path[0]=point;
-      else path.push(point);
-    }else{
-      var before=path[path.length-1];
-      var ratio=(cutoff-before.minute)/(point.minute-before.minute);
-      path.push({minute:cutoff,value:before.value+(point.value-before.value)*ratio});
-    }
-    break;
-  }
-  var auc=0;
-  for(var j=1;j<path.length;j++){
-    var elapsed=(path[j].minute-path[j-1].minute)/60;
-    if(elapsed>0) auc+=.5*(path[j-1].value+path[j].value)*elapsed;
-  }
-  return Math.round(auc*10)/10;
-}
-
-function todayComparison(today,historyPoints,week){
-  if(!today) return null;
-  var isCalendarToday=today.isCalendarToday!==false;
-  var subject=isCalendarToday?'Today':'Your latest measured day';
-  var tense=isCalendarToday?'is':'was';
-  var priorDayName=isCalendarToday?'yesterday at this time':'the previous day at this time';
-  var result={todayScore:Math.round(Number(today.score)*10)/10,cutoffMinute:today.cutoffMinute,
-    yesterdayEstimate:null,previousWeekEstimate:null,previousWeekDays:0,
-    date:today.date,isCalendarToday:isCalendarToday,
-    title:isCalendarToday?'Today’s Daily Fuel Score is still building.':'Your latest day’s Daily Fuel Score was still building at the last measurement.',
-    summary:isCalendarToday?'Your score is '+Math.round(Number(today.score)*10)/10+' so far.':'The score was '+Math.round(Number(today.score)*10)/10+' at the last measurement.'};
-  if(!isFinite(Number(today.cutoffMinute))) return result;
-  var byDate={};
-  (historyPoints||[]).forEach(function(point){
-    if(!byDate[point.date]) byDate[point.date]=[];
-    byDate[point.date].push(point);
-  });
-  var yesterday=addIsoDays(today.date,-1);
-  result.yesterdayEstimate=partialAucAtMinute(byDate[yesterday]||[],today.cutoffMinute);
-  if(week&&week.startDate){
-    var previousStart=addIsoDays(week.startDate,-7);
-    var previousEnd=addIsoDays(week.startDate,-1);
-    var estimates=[];
-    Object.keys(byDate).forEach(function(date){
-      if(date<previousStart||date>previousEnd) return;
-      var estimate=partialAucAtMinute(byDate[date],today.cutoffMinute);
-      if(estimate!==null) estimates.push(estimate);
-    });
-    if(estimates.length){
-      result.previousWeekDays=estimates.length;
-      result.previousWeekEstimate=Math.round(estimates.reduce(function(sum,value){return sum+value;},0)/estimates.length*10)/10;
-    }
-  }
-  var reference=result.yesterdayEstimate!==null?result.yesterdayEstimate:result.previousWeekEstimate;
-  var referenceName=result.yesterdayEstimate!==null?priorDayName:'your same-time average the previous week';
-  if(reference!==null){
-    var delta=result.todayScore-reference;
-    if(delta>=5) result.title=subject+' '+tense+' running ahead of '+referenceName+'.';
-    else if(delta<=-5) result.title=subject+' '+tense+' running behind '+referenceName+(isCalendarToday?'—but the day is still in progress.':' when you last measured.');
-    else result.title=subject+' '+tense+' tracking close to '+referenceName+'.';
-  }
-  var comparisons=[];
-  if(result.yesterdayEstimate!==null) comparisons.push('about '+result.yesterdayEstimate+' at the same time on the previous day');
-  if(result.previousWeekEstimate!==null) comparisons.push('a same-time average of '+result.previousWeekEstimate+' across '+result.previousWeekDays+' comparable '+(result.previousWeekDays===1?'day':'days')+' the previous week');
-  result.summary=(isCalendarToday?'Your score is '+result.todayScore+' so far':'The score was '+result.todayScore+' at the last measurement')+(comparisons.length?', compared with '+comparisons.join(' and '):'')+'.';
-  return result;
-}
-
-function todaySoFarHtml(comparison){
-  if(!comparison) return '';
-  function valueOrDash(value){return value===null?'—':value;}
-  var eyebrow=comparison.isCalendarToday?'Today so far · incomplete':'Latest measured day · '+comparison.date;
-  var latestLabel=comparison.isCalendarToday?'Today so far':'Latest day at last measurement';
-  var priorLabel=comparison.isCalendarToday?'Yesterday at this time':'Previous day at the same time';
-  var weekLabel=comparison.isCalendarToday?'Same time last week':'Same time the previous week';
-  return '<section class="analysis-card analysis-today">'
-    +'<div class="analysis-eyebrow">'+eyebrow+'</div>'
-    +'<h2 class="analysis-section-title">'+comparison.title+'</h2>'
-    +'<p class="analysis-section-copy">'+comparison.summary+'</p>'
-    +'<div class="analysis-kpis">'
-      +'<div class="analysis-kpi"><div class="analysis-kpi-label">'+latestLabel+'</div><div class="analysis-kpi-value">'+comparison.todayScore+'</div></div>'
-      +'<div class="analysis-kpi"><div class="analysis-kpi-label">'+priorLabel+'</div><div class="analysis-kpi-value">'+valueOrDash(comparison.yesterdayEstimate)+'</div></div>'
-      +'<div class="analysis-kpi"><div class="analysis-kpi-label">'+weekLabel+'</div><div class="analysis-kpi-value">'+valueOrDash(comparison.previousWeekEstimate)+'</div></div>'
-    +'</div>'
-    +'<p class="analysis-note">Same-time comparisons place that time on the line between the surrounding measurements, then calculate the score through that point. They are separate from the completed-score weekly analysis below.</p>'
-  +'</section>';
+  return {date:activeDate,score:Number(day.score),partial:true,isCalendarToday:activeDate===calendarToday};
 }
 
 function fox2DownloadCsv(filename,rows){
@@ -800,7 +683,6 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   var previousCalendarWeek=weekToDate?scoreWindowSummary(scoreDays,addIsoDays(weekToDate.startDate,-7),addIsoDays(weekToDate.startDate,-1)):null;
   var currentScoreWeek=weekToDate?scoreWindowSummary(scoreDays,weekToDate.startDate,weekToDate.throughDate):null;
   var today=liveTodaySnapshot(history.activeDate);
-  var todayContext=todayComparison(today,history.points,weekToDate);
   var weekCopy=weekToDateCopy(weekToDate,lastOfficial,scoreDays,previousCalendarWeek);
   var tagInsights=buildTagInsights(tagRows||[],history);
   window._fox2TagInsights=tagInsights;
@@ -888,7 +770,6 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
     +'<section class="analysis-conclusion-list" aria-label="Your conclusions">'
       +insightHtml
     +'</section>'
-    +todaySoFarHtml(todayContext)
     +recentScoreSummaryHtml(scoreDays,weekToDate,previousCalendarWeek,today)
     +weekToDateEvidenceHtml(weekToDate,lastOfficial,scoreDays,previousCalendarWeek,currentScoreWeek)
     +weeklyStateHistoryHtml(weeklyStates,weekToDate,scoreDays)

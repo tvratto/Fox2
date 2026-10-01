@@ -194,34 +194,6 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(html.includes('no saved Daily Fuel Score'));
 })();
 
-(function calculatesSameTimeAuc(){
-  const points=[
-    {minute:0,value:2},
-    {minute:60,value:4},
-    {minute:120,value:2},
-    {minute:180,value:8}
-  ];
-  assert.equal(context.partialAucAtMinute(points,120),6);
-  assert.equal(context.partialAucAtMinute([{minute:430,value:4},{minute:1115,value:4}],434),14.6);
-  assert.equal(context.partialAucAtMinute([{minute:430,value:4}],434),null);
-  assert.equal(context.partialAucAtMinute([{minute:480,value:4}],240),4);
-})();
-
-(function comparesTodayOnlyWithSameTimeHistory(){
-  const today={date:'2026-09-30',score:20,partial:true,cutoffMinute:120};
-  const points=[
-    {date:'2026-09-29',minute:0,value:1},{date:'2026-09-29',minute:120,value:3},
-    {date:'2026-09-21',minute:0,value:1},{date:'2026-09-21',minute:120,value:2},
-    {date:'2026-09-22',minute:0,value:2},{date:'2026-09-22',minute:120,value:2}
-  ];
-  const week={startDate:'2026-09-28',throughDate:'2026-09-29'};
-  const comparison=context.todayComparison(today,points,week);
-  assert.equal(comparison.yesterdayEstimate,4);
-  assert.equal(comparison.previousWeekDays,2);
-  assert.ok(comparison.title.includes('ahead of yesterday at this time'));
-  assert.ok(context.todaySoFarHtml(comparison).includes('separate from the completed-score weekly analysis'));
-})();
-
 (function showsTodayAsAnIncompleteOutlinedBar(){
   const days=[{date:'2026-09-29',score:94}];
   const week={startDate:'2026-09-28',throughDate:'2026-09-29'};
