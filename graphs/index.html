@@ -88,6 +88,13 @@ html, body {
 .analysis-conclusion.is-change .analysis-conclusion-icon { background: rgba(34,211,238,.14); color: #22D3EE; }
 .analysis-conclusion h2 { margin: 0 0 4px; font-size: 16px; line-height: 1.2; font-weight: 850; }
 .analysis-conclusion p { margin: 0; color: rgba(255,255,255,.58); font-size: 14px; line-height: 1.42; }
+.analysis-insight-visual { margin-top: 11px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.07); }
+.analysis-mini-chart { width: 100%; height: auto; display: block; overflow: visible; }
+.analysis-mini-chart text { font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+.analysis-mini-meta { display: flex; justify-content: space-between; gap: 10px; margin-top: 3px; color: rgba(255,255,255,.38); font-size: 10px; line-height: 1.2; }
+.analysis-mini-meta span:last-child { text-align: right; }
+.analysis-mini-bar-track { height: 7px; overflow: hidden; border-radius: 99px; background: rgba(255,255,255,.09); }
+.analysis-mini-bar-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg,#22D3EE,#A855F7); }
 .analysis-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 16px; }
 .analysis-kpi { padding: 12px; border-radius: 16px; background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.07); }
 .analysis-kpi-label { color: rgba(255,255,255,.4); font-size: 12px; line-height: 1.2; font-weight: 800; }
@@ -8172,7 +8179,7 @@ function initDayGraphPopup(){
 </div>
 
 <script src="state-engine.js?v=20260930-11"></script>
-<script src="analysis.js?v=20261001-03"></script>
+<script src="analysis.js?v=20261001-04"></script>
 
 </body>
 </html>

@@ -237,6 +237,31 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(insight.answer.includes('easier to repeat'));
 })();
 
+(function buildsQuestionSpecificEvidenceCharts(){
+  const withinDay=context.withinDayEvidenceSvg([
+    {date:'2026-09-29',movement:'responsive',range:3}
+  ],[
+    {date:'2026-09-29',minute:480,value:2},
+    {date:'2026-09-29',minute:780,value:5},
+    {date:'2026-09-29',minute:1140,value:2.5}
+  ]);
+  assert.ok(withinDay.includes('Fat-use measurements across 2026-09-29'));
+  assert.ok(withinDay.includes('8:00am'));
+  assert.ok(withinDay.includes('7:00pm'));
+
+  const daily=context.dailyScoreEvidenceSvg([
+    {date:'2026-09-28',score:70},{date:'2026-09-29',score:93}
+  ],'Daily Fuel Scores this week');
+  assert.ok(daily.includes('Daily Fuel Score 70'));
+  assert.ok(daily.includes('Daily Fuel Score 93'));
+
+  const tagged=context.tagEvidenceHtml({evidence:{
+    kind:'immediate',rate:.6,stat:{rises:3,eligible:5}
+  }});
+  assert.ok(tagged.includes('width:60%'));
+  assert.ok(tagged.includes('3 of 5'));
+})();
+
 (function avoidsRepeatingSummarySections(){
   const source=context.renderHistoricalAnalysis.toString();
   assert.ok(!source.includes('weekToDateEvidenceHtml('));
@@ -246,6 +271,7 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(source.includes('weeklyTrendHtml(scoreDays,all,weekToDate)'));
   assert.ok(!source.includes('weeklyStateHistoryHtml('));
   assert.ok(!source.includes('recentScoreSummaryHtml'));
+  assert.ok(source.includes("+insight.visual+"));
 })();
 
 console.log('analysis tests passed');

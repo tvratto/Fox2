@@ -222,6 +222,77 @@ function dayToDayScoreInsight(current,previous){
   return null;
 }
 
+function analysisEscape(value){
+  return String(value===null||value===undefined?'':value)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function compactEvidenceLine(items,ariaLabel,leftLabel,rightLabel){
+  if(!items||items.length<2) return '';
+  var values=items.map(function(item){return Number(item.value);}).filter(function(value){return isFinite(value);});
+  if(values.length<2) return '';
+  var w=280,h=62,left=5,right=5,top=13,bottom=7;
+  var min=Math.min.apply(null,values),max=Math.max.apply(null,values);
+  var pad=Math.max(1,(max-min)*.18);
+  var low=min-pad,high=max+pad;
+  var xMin=Number(items[0].x),xMax=Number(items[items.length-1].x);
+  if(xMax===xMin) xMax=xMin+1;
+  var x=function(value){return left+(Number(value)-xMin)*(w-left-right)/(xMax-xMin);};
+  var y=function(value){return top+(high-Number(value))*(h-top-bottom)/(high-low);};
+  var points=items.map(function(item){return x(item.x).toFixed(1)+','+y(item.value).toFixed(1);}).join(' ');
+  var labels=items.length<=7?items.map(function(item){
+    return '<text x="'+x(item.x).toFixed(1)+'" y="'+Math.max(9,y(item.value)-6).toFixed(1)+'" text-anchor="middle" font-size="8.5" font-weight="800" fill="rgba(255,255,255,.68)">'+Math.round(Number(item.value)*10)/10+'</text>';
+  }).join(''):'';
+  var dots=items.map(function(item){
+    return '<circle cx="'+x(item.x).toFixed(1)+'" cy="'+y(item.value).toFixed(1)+'" r="2.7" fill="#22D3EE"><title>'+analysisEscape(item.title||item.value)+'</title></circle>';
+  }).join('');
+  return '<div class="analysis-insight-visual"><svg class="analysis-mini-chart" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="'+analysisEscape(ariaLabel)+'">'
+    +'<line x1="'+left+'" y1="'+(h-bottom)+'" x2="'+(w-right)+'" y2="'+(h-bottom)+'" stroke="rgba(255,255,255,.08)"/>'
+    +'<polyline points="'+points+'" fill="none" stroke="#22D3EE" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>'
+    +dots+labels+'</svg><div class="analysis-mini-meta"><span>'+analysisEscape(leftLabel)+'</span><span>'+analysisEscape(rightLabel)+'</span></div></div>';
+}
+
+function dailyScoreEvidenceSvg(days,label){
+  var recent=(days||[]).slice(-7);
+  if(recent.length<2) return '';
+  var items=recent.map(function(day,index){
+    return {x:index,value:Number(day.score),title:day.date+': Daily Fuel Score '+day.score};
+  });
+  return compactEvidenceLine(items,label||'Recent Daily Fuel Scores',recent[0].date.slice(5),recent[recent.length-1].date.slice(5));
+}
+
+function withinDayEvidenceSvg(days,points){
+  var candidates=(days||[]).filter(function(day){return day.movement==='responsive'||Number(day.range)>=2;});
+  var chosen=candidates.length?candidates[candidates.length-1]:null;
+  if(!chosen) return '';
+  var sameDay=(points||[]).filter(function(point){return point.date===chosen.date;}).sort(function(a,b){return a.minute-b.minute;});
+  if(sameDay.length<2) return '';
+  function timeLabel(minute){
+    var hour=Math.floor(minute/60),minutes=Math.round(minute%60);
+    var suffix=hour>=12?'pm':'am';
+    var shown=hour%12||12;
+    return shown+':'+String(minutes).padStart(2,'0')+suffix;
+  }
+  var items=sameDay.map(function(point){
+    return {x:point.minute,value:point.value,title:timeLabel(point.minute)+': level '+point.value};
+  });
+  return compactEvidenceLine(items,'Fat-use measurements across '+chosen.date,timeLabel(sameDay[0].minute),timeLabel(sameDay[sameDay.length-1].minute));
+}
+
+function tagEvidenceHtml(insight){
+  var evidence=insight&&insight.evidence;
+  if(!evidence) return '';
+  if(evidence.kind==='immediate'){
+    var pct=Math.round(evidence.rate*100);
+    return '<div class="analysis-insight-visual analysis-mini-bar"><div class="analysis-mini-bar-track"><div class="analysis-mini-bar-fill" style="width:'+pct+'%"></div></div><div class="analysis-mini-meta"><span>Tagged occasions followed by an increase</span><span>'+evidence.stat.rises+' of '+evidence.stat.eligible+'</span></div></div>';
+  }
+  if(!isFinite(Number(evidence.comparisonMedian))||!isFinite(Number(evidence.taggedMedian))) return '';
+  return compactEvidenceLine([
+    {x:0,value:evidence.comparisonMedian,title:'Other days: '+evidence.comparisonMedian},
+    {x:1,value:evidence.taggedMedian,title:'Tagged days: '+evidence.taggedMedian}
+  ],'Daily Fuel Score comparison','Other days','Tagged days');
+}
+
 function fox2DownloadCsv(filename,rows){
   var blob=new Blob(['\ufeff'+rows.join('\r\n')+'\r\n'],{type:'text/csv;charset=utf-8'});
   var url=URL.createObjectURL(blob);
@@ -699,10 +770,10 @@ function buildTagInsights(tagRows,history){
       immediateCandidates.push({kind:'immediate',rank:rate*20+Math.min(stat.eligible,40)/100,stat:stat,rate:rate,medianDelta:medianDelta});
     }
     if(!excludedPositive[stat.name]&&taggedScores.length>=5&&sameDelta!==null&&sameDelta>=5){
-      sustainedCandidates.push({kind:'same_day',rank:70+Math.min(sameDelta,40),stat:stat,delta:sameDelta,count:taggedScores.length});
+      sustainedCandidates.push({kind:'same_day',rank:70+Math.min(sameDelta,40),stat:stat,delta:sameDelta,count:taggedScores.length,taggedMedian:analysisMedian(taggedScores),comparisonMedian:analysisMedian(untaggedScores)});
     }
     if(!excludedPositive[stat.name]&&nextDelta!==null&&nextDelta>=10){
-      sustainedCandidates.push({kind:'next_day',rank:60+Math.min(nextDelta,40),stat:stat,delta:nextDelta,count:nextScores.length});
+      sustainedCandidates.push({kind:'next_day',rank:60+Math.min(nextDelta,40),stat:stat,delta:nextDelta,count:nextScores.length,taggedMedian:analysisMedian(nextScores),comparisonMedian:analysisMedian(otherNextScores)});
     }
   });
   immediateCandidates.sort(function(a,b){return b.rank-a.rank;});
@@ -796,49 +867,52 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   var currentResponseDays=current.filter(function(d){return d.movement==='responsive';}).length;
   var stallPattern=dominant.level==='low' && movement==='Steady';
   var underfuelPattern=dominant.level==='high' && movement==='Steady';
+  var recentScoreVisual=dailyScoreEvidenceSvg(scoreDays,'Recent Daily Fuel Scores');
+  var withinDayVisual=withinDayEvidenceSvg(current,measurementPoints);
+  var currentWeekVisual=currentDayToDay?dailyScoreEvidenceSvg(currentDayToDay.days,'Daily Fuel Scores this week'):'';
 
   // Select questions from the evidence instead of showing a fixed checklist.
   var insights=[];
-  function addInsight(question,answer,tone,icon){
-    insights.push({question:question,answer:answer,tone:tone||'',icon:icon||'→'});
+  function addInsight(question,answer,tone,icon,visual){
+    insights.push({question:question,answer:answer,tone:tone||'',icon:icon||'→',visual:visual||''});
   }
   if(stallPattern){
     addInsight('Am I stalled?',
       'Your recent fat use has stayed low without a clear increase. That gives you a clear starting point for finding what moves it higher.',
-      'is-change','→');
+      'is-change','→',recentScoreVisual);
   }else if(underfuelPattern){
     addInsight('Could I be pushing too hard?',
       'Possibly. Your fat-use signal has stayed unusually elevated without regularly coming back down. More is not necessarily better—make sure you are adequately fueled and getting enough protein.',
-      'is-watch','!');
+      'is-watch','!',recentScoreVisual);
   }else{
     if(higherUseDays===0&&currentResponseDays>0){
       addInsight('Am I making progress?',
         'Your body is moving into greater fat use during parts of the day, although the effect is not sustained yet.',
-        'is-change','↑');
+        'is-change','↑',withinDayVisual);
     }else if(higherUseDays===0){
       addInsight('What can I improve?',
         'FOX2 is not seeing a clear increase yet. Your recent results establish a useful baseline to improve from.',
-        'is-change','→');
+        'is-change','→',recentScoreVisual);
     }else if(higherUseDays<Math.ceil(current.length/2)){
       addInsight('Am I using more fat for energy?',
         'Yes, at times. '+higherUseDays+' of your last '+current.length+' classifiable days reached the Higher Fat-Use range. Repeat what worked on those days and see whether it happens more often.',
-        'is-change','→');
+        'is-change','→',recentScoreVisual);
     }else{
       addInsight('Am I sustaining greater fat use?',
         'Yes. '+higherUseDays+' of your last '+current.length+' classifiable days reached the Higher Fat-Use range. Keep doing what has been working.',
-        '','✓');
+        '','✓',recentScoreVisual);
     }
   }
   if(dayToDayInsight){
-    addInsight(dayToDayInsight.question,dayToDayInsight.answer,dayToDayInsight.tone,dayToDayInsight.icon);
+    addInsight(dayToDayInsight.question,dayToDayInsight.answer,dayToDayInsight.tone,dayToDayInsight.icon,currentWeekVisual);
   }
   tagInsights.slice(0,1).forEach(function(tagInsight){
     if(tagInsight.question!==weekCopy.question){
-      addInsight(tagInsight.question,tagInsight.answer,tagInsight.tone,tagInsight.icon);
+      addInsight(tagInsight.question,tagInsight.answer,tagInsight.tone,tagInsight.icon,tagEvidenceHtml(tagInsight));
     }
   });
   var insightHtml=insights.slice(0,3).map(function(insight){
-    return '<article class="analysis-conclusion '+insight.tone+'"><div class="analysis-conclusion-icon">'+insight.icon+'</div><div><h2>'+insight.question+'</h2><p>'+insight.answer+'</p></div></article>';
+    return '<article class="analysis-conclusion '+insight.tone+'"><div class="analysis-conclusion-icon">'+insight.icon+'</div><div><h2>'+insight.question+'</h2><p>'+insight.answer+'</p>'+insight.visual+'</div></article>';
   }).join('');
   shell.innerHTML=''
     +'<section class="analysis-card analysis-hero">'
