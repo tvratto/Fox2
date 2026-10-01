@@ -204,4 +204,12 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(html.includes('outlined gold bar is today so far'));
 })();
 
+(function avoidsRepeatingSummarySections(){
+  const source=context.renderHistoricalAnalysis.toString();
+  assert.ok(!source.includes('weekToDateEvidenceHtml('));
+  assert.ok(!source.includes('Why FOX2 says this'));
+  assert.ok(!source.includes('How your fat use has changed'));
+  assert.ok(!source.includes('addInsight(weekCopy.question'));
+})();
+
 console.log('analysis tests passed');

@@ -366,7 +366,7 @@ function recentScoreSummaryHtml(days,week,previousCalendarWeek,today){
   var currentShade=currentIndex<0?'':'<rect x="'+(left+currentIndex*step).toFixed(1)+'" y="'+top+'" width="'+((slots.length-currentIndex)*step).toFixed(1)+'" height="'+ph+'" fill="rgba(255,210,60,.035)"/>';
   var partialDescription=today&&today.isCalendarToday===false?'the latest measured day at the time of its last measurement':'today so far';
   return '<section class="analysis-card"><h2 class="analysis-section-title">Your recent scores at a glance</h2>'
-    +'<p class="analysis-section-copy">Each solid bar is one completed Daily Fuel Score. The outlined gold bar is '+partialDescription+'. A gap means no Daily Fuel Score was available. The dashed line is the average across all of the previous week’s completed scores.</p>'
+    +'<p class="analysis-section-copy">Solid bars are completed scores; the outlined gold bar is '+partialDescription+'. The dashed line is the previous week’s average.</p>'
     +'<svg class="analysis-chart" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="Daily Fuel Scores for the latest 14 calendar days, including gaps">'
       +'<rect x="'+left+'" y="'+y(60)+'" width="'+pw+'" height="'+(y(0)-y(60))+'" fill="rgba(34,211,238,.055)"/>'
       +'<rect x="'+left+'" y="'+y(120)+'" width="'+pw+'" height="'+(y(60)-y(120))+'" fill="rgba(74,222,128,.06)"/>'
@@ -681,7 +681,6 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   window._fox2WeekToDate=weekToDate;
   var lastOfficial=typeof Fox2StateEngine!=='undefined'?Fox2StateEngine.currentState(weeklyStates):null;
   var previousCalendarWeek=weekToDate?scoreWindowSummary(scoreDays,addIsoDays(weekToDate.startDate,-7),addIsoDays(weekToDate.startDate,-1)):null;
-  var currentScoreWeek=weekToDate?scoreWindowSummary(scoreDays,weekToDate.startDate,weekToDate.throughDate):null;
   var today=liveTodaySnapshot(history.activeDate);
   var weekCopy=weekToDateCopy(weekToDate,lastOfficial,scoreDays,previousCalendarWeek);
   var tagInsights=buildTagInsights(tagRows||[],history);
@@ -696,16 +695,8 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   if(!baseline.length) baseline=all.slice(0,Math.max(0,all.length-recent.length));
   var dominant=analysisDominantLevel(current);
   var currentRate=analysisRate(current);
-  var recentRate=analysisRate(recent);
-  var baselineRate=analysisRate(baseline);
-  var lifetimeRate=analysisRate(all);
   var movement=analysisMovementLabel(currentRate);
-  var delta=recentRate-baselineRate;
-  var momentum=delta>=.20?'Increasing':delta<=-.20?'Decreasing':'Holding steady';
-  var levelName={low:'Low',medium:'Moderate',high:'High'}[dominant.level];
   var higherUseDays=current.filter(function(d){return d.score>120;}).length;
-  var above60Days=current.filter(function(d){return d.score>60;}).length;
-  var above180Days=current.filter(function(d){return d.score>180;}).length;
   var currentResponseDays=current.filter(function(d){return d.movement==='responsive';}).length;
   var stallPattern=dominant.level==='low' && movement==='Steady';
   var underfuelPattern=dominant.level==='high' && movement==='Steady';
@@ -715,13 +706,9 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   function addInsight(question,answer,tone,icon){
     insights.push({question:question,answer:answer,tone:tone||'',icon:icon||'→'});
   }
-  addInsight(weekCopy.question,weekCopy.answer,weekCopy.tone,weekCopy.icon);
-  tagInsights.forEach(function(tagInsight){
-    addInsight(tagInsight.question,tagInsight.answer,tagInsight.tone,tagInsight.icon);
-  });
   if(stallPattern){
     addInsight('Am I stalled?',
-      'Your recent fat use has stayed low without a clear increase. That is a starting point, not a failure. Choose one change you can repeat and tag each attempt so FOX2 can build a useful comparison.',
+      'Your recent fat use has stayed low without a clear increase. That is a starting point, not a failure.',
       'is-change','→');
   }else if(underfuelPattern){
     addInsight('Could I be pushing too hard?',
@@ -730,11 +717,11 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   }else{
     if(higherUseDays===0&&currentResponseDays>0){
       addInsight('Am I making progress?',
-        'Yes—your body is moving into greater fat use during parts of the day. The effect is not sustained yet, but a little more consistency may help those periods happen more often or last longer.',
+        'Your body is moving into greater fat use during parts of the day, although the effect is not sustained yet.',
         'is-change','↑');
     }else if(higherUseDays===0){
       addInsight('What can I improve?',
-        'FOX2 is not seeing a clear increase yet. Choose one change you can repeat and tag each attempt while FOX2 builds enough examples to compare.',
+        'FOX2 is not seeing a clear increase yet. Your recent results establish a useful baseline to improve from.',
         'is-change','→');
     }else if(higherUseDays<Math.ceil(current.length/2)){
       addInsight('Am I using more fat for energy?',
@@ -746,21 +733,14 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
         '','✓');
     }
   }
-  var insightHtml=insights.slice(0,3).map(function(insight){
+  tagInsights.slice(0,1).forEach(function(tagInsight){
+    if(tagInsight.question!==weekCopy.question){
+      addInsight(tagInsight.question,tagInsight.answer,tagInsight.tone,tagInsight.icon);
+    }
+  });
+  var insightHtml=insights.slice(0,2).map(function(insight){
     return '<article class="analysis-conclusion '+insight.tone+'"><div class="analysis-conclusion-icon">'+insight.icon+'</div><div><h2>'+insight.question+'</h2><p>'+insight.answer+'</p></div></article>';
   }).join('');
-  var patternColors={
-    'low-steady':'#155E75','low-responsive':'#22D3EE',
-    'medium-steady':'#166534','medium-responsive':'#4ADE80',
-    'high-steady':'#6B21A8','high-responsive':'#C084FC'
-  };
-  var strip=all.map(function(day){
-    var label=day.date+' · '+day.level+' + '+day.movement+' · score '+day.score;
-    return '<div class="analysis-pattern-day" style="background:'+patternColors[day.key]+'" title="'+label+'" aria-label="'+label+'"></div>';
-  }).join('');
-  var legend=[['#22D3EE','Low'],['#4ADE80','Medium'],['#C084FC','High'],['rgba(255,255,255,.28)','Darker = steady']]
-    .map(function(item){return '<span class="analysis-legend-item"><span class="analysis-legend-dot" style="background:'+item[0]+'"></span>'+item[1]+'</span>';}).join('');
-
   shell.innerHTML=''
     +'<section class="analysis-card analysis-hero">'
       +'<div class="analysis-eyebrow">Your questions, answered</div>'
@@ -771,19 +751,7 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
       +insightHtml
     +'</section>'
     +recentScoreSummaryHtml(scoreDays,weekToDate,previousCalendarWeek,today)
-    +weekToDateEvidenceHtml(weekToDate,lastOfficial,scoreDays,previousCalendarWeek,currentScoreWeek)
     +weeklyStateHistoryHtml(weeklyStates,weekToDate,scoreDays)
-    +'<section class="analysis-card">'
-      +'<h2 class="analysis-section-title">Why FOX2 says this</h2>'
-      +'<p class="analysis-section-copy">FOX2 compares your recent fat use with your own complete history.</p>'
-      +'<div class="analysis-kpis">'
-        +'<div class="analysis-kpi"><div class="analysis-kpi-label">Recent fat use</div><div class="analysis-kpi-value">'+levelName+'</div></div>'
-        +'<div class="analysis-kpi"><div class="analysis-kpi-label">Days with clear increases</div><div class="analysis-kpi-value">'+currentResponseDays+' of '+current.length+'</div></div>'
-        +'<div class="analysis-kpi"><div class="analysis-kpi-label">Compared with before</div><div class="analysis-kpi-value">'+(momentum==='Increasing'?'Improving':momentum==='Decreasing'?'Lower':'Holding steady')+'</div></div>'
-        +'<div class="analysis-kpi"><div class="analysis-kpi-label">'+(above180Days?'Days above 180':higherUseDays?'Days above 120':'Days above 60')+'</div><div class="analysis-kpi-value">'+(above180Days||higherUseDays||above60Days)+' of '+current.length+'</div></div>'
-      +'</div>'
-      +'<div class="analysis-range-list">'+scoreRangeDistributionHtml(current)+'</div>'
-    +'</section>'
     +'<section class="analysis-card"><h2 class="analysis-section-title">Is your body responding more often?</h2>'
       +'<p class="analysis-section-copy">These are days when your measurements rose clearly above your usual level and later returned toward it.</p>'
       +'<div class="analysis-bars">'+renderAnalysisBar('Latest '+recent.length+' days',recent)
@@ -795,9 +763,5 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
     +'<section class="analysis-card"><h2 class="analysis-section-title">Daily Fuel Score over time</h2>'
       +'<p class="analysis-section-copy">Every classifiable day from the beginning. The highlighted area is your latest 14-day pattern.</p>'
       +scoreTrendSvg(all)+'</section>'
-    +'<section class="analysis-card"><h2 class="analysis-section-title">How your fat use has changed</h2>'
-      +'<p class="analysis-section-copy">Each block is one classifiable day, from earliest to latest.</p>'
-      +'<div class="analysis-pattern-strip" role="img" aria-label="Daily pattern history from earliest to latest">'+strip+'</div>'
-      +'<div class="analysis-legend">'+legend+'</div></section>'
     +'<div class="analysis-footnote">Based on '+all.length+' of '+history.completedWithScore+' completed days. A clear increase requires a rise at least two signal levels above the recent personal baseline and a return toward that baseline within 72 hours. Days without enough readings across the day are left out of daily classification. Tag comparisons describe associations, not causes. FOX2 does not diagnose stalled metabolism, muscle loss, or under-fueling.</div>';
 }
