@@ -89,6 +89,10 @@ html, body {
 .analysis-timeframe { margin-bottom: 6px; color: rgba(255,210,60,.72); font-size: 11px; line-height: 1.2; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
 .analysis-conclusion h2 { margin: 0 0 4px; font-size: 16px; line-height: 1.2; font-weight: 850; }
 .analysis-conclusion p { margin: 0; color: rgba(255,255,255,.58); font-size: 14px; line-height: 1.42; }
+.analysis-why { margin-top: 11px; border-top: 1px solid rgba(255,255,255,.08); padding-top: 9px; }
+.analysis-why summary { width: fit-content; cursor: pointer; color: rgba(255,255,255,.62); font-size: 12px; line-height: 1.3; font-weight: 850; }
+.analysis-why[open] summary { margin-bottom: 8px; color: var(--gold); }
+.analysis-why > p { margin: 0 0 8px; color: rgba(255,255,255,.52); font-size: 13px; line-height: 1.4; }
 .analysis-insight-visual { margin-top: 11px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.07); }
 .analysis-mini-chart { width: 100%; height: auto; display: block; overflow: visible; }
 .analysis-mini-chart text { font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
@@ -8181,7 +8185,7 @@ function initDayGraphPopup(){
 </div>
 
 <script src="state-engine.js?v=20260930-11"></script>
-<script src="analysis.js?v=20261001-07"></script>
+<script src="analysis.js?v=20261001-08"></script>
 
 </body>
 </html>

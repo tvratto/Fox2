@@ -39,9 +39,10 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
     tray_tags:['🚶']
   }));
   const insight=context.buildTagInsight(tags,history);
-  assert.equal(insight.question,'What gets my fat use moving?');
-  assert.ok(insight.answer.includes('5 of 5'));
-  assert.ok(insight.answer.includes('typical increase was 2.5 levels'));
+  assert.equal(insight.question,'What may be helping?');
+  assert.ok(insight.answer.includes('may be helping your body draw on fat for energy'));
+  assert.ok(insight.detail.includes('5 of 5'));
+  assert.ok(insight.detail.includes('typical rise was 2.5 Fat Zone levels'));
 })();
 
 (function separatesImmediateFromSustainedEffects(){
@@ -59,9 +60,9 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
     .concat(walkDates.map(date=>({day_date:date,events:[],tray_tags:['🚶']})));
   const insights=context.buildTagInsights(tags,history);
   assert.equal(insights.length,2);
-  assert.equal(insights[0].question,'What gets my fat use moving?');
+  assert.equal(insights[0].question,'What may be helping?');
   assert.ok(insights[0].answer.includes('🏃 Run'));
-  assert.equal(insights[1].question,'What appears to help it last?');
+  assert.equal(insights[1].question,'What may help it last?');
   assert.ok(insights[1].answer.includes('🚶 Walk'));
 })();
 
@@ -70,7 +71,7 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.equal(insights.length,1);
   assert.equal(insights[0].question,'What should I test next?');
   assert.ok(insights[0].answer.includes('tag it each time'));
-  assert.ok(insights[0].answer.includes('repeated examples'));
+  assert.ok(insights[0].answer.includes('FOX2 will watch'));
 })();
 
 (function preservesAlreadyCorrectScoresAtTheDateFixBoundary(){
@@ -99,9 +100,9 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   const priorWeek={classifiableDays:1,metrics:{meanScore:90}};
   const copy=context.weekToDateCopy(wtd,null,sample,priorWeek);
   assert.equal(copy.question,'What should I watch next?');
-  assert.ok(copy.summary.includes('60'));
-  assert.ok(copy.summary.includes('90'));
-  assert.ok(copy.summary.includes('one day does not define the week')||copy.title.includes('one day does not define the week'));
+  assert.ok(copy.title.includes('below last week'));
+  assert.ok(copy.title.includes('one day does not define the week'));
+  assert.ok(!/60|90/.test(copy.summary));
   assert.ok(!/quiet|responsive|pattern/i.test(copy.title+' '+copy.summary+' '+copy.answer));
 })();
 
@@ -119,12 +120,11 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   const previousWeek={classifiableDays:6,metrics:{meanScore:95}};
   const copy=context.weekToDateCopy(week,null,allDays,previousWeek);
   const evidence=context.weekToDateEvidenceHtml(week,null,allDays,previousWeek);
-  assert.equal(copy.title,'Yesterday was right in line with last week.');
-  assert.ok(copy.summary.includes('Daily Fuel Score was 94'));
-  assert.ok(copy.summary.includes('no classifiable score for the day before'));
-  assert.ok(copy.summary.includes('averaged 95 across 6 days with saved scores'));
+  assert.equal(copy.title,'Yesterday was close to your usual result last week.');
+  assert.ok(copy.summary.includes('steady result to build on'));
+  assert.ok(!copy.summary.includes('94'));
   assert.ok(evidence.includes('Yesterday’s score'));
-  assert.ok(evidence.includes('Fat use yesterday</div><div class="analysis-kpi-value">Balanced'));
+  assert.ok(evidence.includes('Daily Fuel Score range</div><div class="analysis-kpi-value">Balanced'));
   assert.ok(evidence.includes('No comparable day'));
   assert.ok(evidence.includes('95 · 6 days'));
   assert.ok(!evidence.includes('Typical daily score'));
@@ -170,11 +170,10 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   const week=engine.buildWeekToDate(sample,{referenceDate:'2026-09-30'});
   const copy=context.weekToDateCopy(week,null,sample,null);
   assert.equal(week.trajectory,'fading');
-  assert.equal(copy.title,'You’re behind last week—but your fat-use signal is still moving.');
-  assert.ok(copy.summary.includes('64.5'));
-  assert.ok(copy.summary.includes('110'));
-  assert.ok(copy.summary.includes('something useful to build on'));
-  assert.ok(!copy.title.includes('something encouraging here'));
+  assert.equal(copy.title,'This week is a little behind last week.');
+  assert.ok(copy.summary.includes('shift toward fat for energy'));
+  assert.ok(copy.summary.includes('choose one safe part to repeat'));
+  assert.ok(!/64\.5|110/.test(copy.summary));
 })();
 
 (function buildsEightWeekTrendWithRangeAndResponsiveness(){
@@ -201,8 +200,8 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   const html=context.weeklyTrendHtml(scores,classified,week);
   assert.ok(html.includes('Your last 8 weeks'));
   assert.ok(html.includes('This week’s average is 80 so far'));
-  assert.ok(html.includes('marker color shows how often readings moved meaningfully'));
-  assert.ok(html.includes('average 80, range 60–100, typical day-to-day change 30, 1 of 2 assessable days responsive · incomplete week'));
+  assert.ok(html.includes('Color shows how often your Fat Zone clearly went up'));
+  assert.ok(html.includes('average 80, range 60–100, typical day-to-day change 30, 1 of 2 well-measured days had a clear rise and return · incomplete week'));
   assert.ok(html.includes('no completed scores'));
 })();
 
@@ -218,8 +217,8 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.equal(movement.range,70);
   assert.equal(movement.meaningfulMoves,1);
   const insight=context.dayToDayScoreInsight(movement,null);
-  assert.equal(insight.question,'Can my body reach higher fat-use levels?');
-  assert.ok(insight.answer.includes('Some days reached higher fat-use levels than others'));
+  assert.equal(insight.question,'Is this shift showing up on more days?');
+  assert.ok(insight.answer.includes('body draws on fat for energy more often than others'));
   assert.ok(!insight.answer.toLowerCase().includes('inconsistent'));
 })();
 
@@ -233,8 +232,8 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
     {date:'2026-09-30',score:115},{date:'2026-10-01',score:125}
   ],'2026-09-28','2026-10-04');
   const insight=context.dayToDayScoreInsight(current,previous);
-  assert.equal(insight.question,'Are my higher results becoming more repeatable?');
-  assert.ok(insight.answer.includes('easier to repeat'));
+  assert.equal(insight.question,'Is the change lasting longer?');
+  assert.ok(insight.answer.includes('for more of the day'));
 })();
 
 (function buildsQuestionSpecificEvidenceCharts(){
@@ -245,11 +244,11 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
     {date:'2026-09-29',minute:780,value:5},
     {date:'2026-09-29',minute:1140,value:2.5}
   ]);
-  assert.ok(withinDay.includes('Fat-use measurements across 2026-09-29'));
+  assert.ok(withinDay.includes('Fat Zone measurements across 2026-09-29'));
   assert.ok(withinDay.includes('8:00am'));
   assert.ok(withinDay.includes('7:00pm'));
   assert.ok(withinDay.includes('Your usual level'));
-  assert.ok(withinDay.includes('Fat use increased here'));
+  assert.ok(withinDay.includes('Your Fat Zone went up'));
   assert.ok(withinDay.includes('rose above your usual level'));
   assert.ok(withinDay.includes('One-day example · Sep 29'));
   assert.ok(withinDay.includes('<path'));
@@ -273,15 +272,32 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
 (function avoidsRepeatingSummarySections(){
   const source=context.renderHistoricalAnalysis.toString();
   assert.ok(!source.includes('weekToDateEvidenceHtml('));
-  assert.ok(!source.includes('Why FOX2 says this'));
   assert.ok(!source.includes('How your fat use has changed'));
   assert.ok(!source.includes('addInsight(weekCopy.question'));
   assert.ok(source.includes('weeklyTrendHtml(scoreDays,all,weekToDate)'));
   assert.ok(!source.includes('weeklyStateHistoryHtml('));
   assert.ok(!source.includes('recentScoreSummaryHtml'));
-  assert.ok(source.includes("+insight.visual+"));
+  assert.ok(source.includes('analysisWhyHtml(insight.detail,insight.visual)'));
   assert.ok(source.includes('analysis-timeframe'));
   assert.ok(source.includes('This week so far'));
+})();
+
+(function givesAPlainLanguageLookbackForAStandoutPeriod(){
+  const days=[{
+    date:'2026-09-30',movement:'responsive',
+    responseEpisode:{baseline:2,peak:5,startTime:Date.parse('2026-09-30T14:00:00Z'),startMinute:840}
+  }];
+  const noTag=context.analysisLookbackWindow(days,[]);
+  assert.ok(noTag.guidance.includes('Wednesday afternoon stood out'));
+  assert.ok(noTag.guidance.includes('Tuesday evening through Wednesday morning'));
+  assert.ok(noTag.guidance.includes('Choose one safe part'));
+  assert.ok(noTag.evidence.includes('Fat Zone rose from a usual level near 2 to 5'));
+
+  const withTag=context.analysisLookbackWindow(days,[{
+    day_date:'2026-09-30',events:[{icon:'🚶',name:'Walk',minute:600}]
+  }]);
+  assert.ok(withTag.guidance.includes('You tagged 🚶 Walk beforehand'));
+  assert.ok(withTag.guidance.includes('We don’t know yet if it helped'));
 })();
 
 console.log('analysis tests passed');
