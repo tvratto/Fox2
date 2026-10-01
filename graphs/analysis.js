@@ -13,6 +13,13 @@ function addIsoDays(iso,amount){
   return d.toISOString().slice(0,10);
 }
 
+function analysisShortDate(iso){
+  var parts=String(iso||'').split('-');
+  if(parts.length!==3) return String(iso||'');
+  var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return months[Number(parts[1])-1]+' '+Number(parts[2]);
+}
+
 function analysisMedian(values){
   var sorted=values.slice().sort(function(a,b){return a-b;});
   var mid=Math.floor(sorted.length/2);
@@ -329,7 +336,7 @@ function withinDayEvidenceSvg(days,points){
     +dots
     +'<text x="'+left+'" y="'+(h-4)+'" font-size="10.5" fill="rgba(255,255,255,.4)">'+timeLabel(sameDay[0].minute)+'</text>'
     +'<text x="'+(w-right)+'" y="'+(h-4)+'" text-anchor="end" font-size="10.5" fill="rgba(255,255,255,.4)">'+timeLabel(sameDay[sameDay.length-1].minute)+'</text>'
-    +'</svg><div class="analysis-response-caption">This day’s measurements rose above your usual level.</div></div>';
+    +'</svg><div class="analysis-response-caption">One-day example · '+analysisShortDate(chosen.date)+' · These measurements rose above your usual level.</div></div>';
 }
 
 function tagEvidenceHtml(insight){
@@ -344,6 +351,13 @@ function tagEvidenceHtml(insight){
     {x:0,value:evidence.comparisonMedian,title:'Other days: '+evidence.comparisonMedian},
     {x:1,value:evidence.taggedMedian,title:'Tagged days: '+evidence.taggedMedian}
   ],'Daily Fuel Score comparison','Other days','Tagged days');
+}
+
+function tagInsightTimeframe(insight){
+  var evidence=insight&&insight.evidence;
+  if(!evidence) return 'Building your history';
+  if(evidence.kind==='immediate') return 'Repeated choice · '+evidence.stat.eligible+' occasions';
+  return 'Repeated choice · '+evidence.count+' days';
 }
 
 function fox2DownloadCsv(filename,rows){
@@ -923,53 +937,55 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   var recentScoreVisual=dailyScoreEvidenceSvg(scoreDays,'Recent Daily Fuel Scores');
   var withinDayVisual=withinDayEvidenceSvg(current,measurementPoints);
   var currentWeekVisual=currentDayToDay?dailyScoreEvidenceSvg(currentDayToDay.days,'Daily Fuel Scores this week'):'';
+  var recentTimeframe='Recent pattern · '+current.length+' measured days';
+  var weekTimeframe=weekToDate?'This week · '+analysisShortDate(weekToDate.startDate)+'–'+analysisShortDate(weekToDate.throughDate):'This week';
 
   // Select questions from the evidence instead of showing a fixed checklist.
   var insights=[];
-  function addInsight(question,answer,tone,icon,visual){
-    insights.push({question:question,answer:answer,tone:tone||'',icon:icon||'→',visual:visual||''});
+  function addInsight(question,answer,tone,icon,visual,timeframe){
+    insights.push({question:question,answer:answer,tone:tone||'',icon:icon||'→',visual:visual||'',timeframe:timeframe||''});
   }
   if(stallPattern){
     addInsight('Am I stalled?',
       'Your recent fat use has stayed low without a clear increase. That gives you a clear starting point for finding what moves it higher.',
-      'is-change','→',recentScoreVisual);
+      'is-change','→',recentScoreVisual,recentTimeframe);
   }else if(underfuelPattern){
     addInsight('Could I be pushing too hard?',
       'Possibly. Your fat-use signal has stayed unusually elevated without regularly coming back down. More is not necessarily better—make sure you are adequately fueled and getting enough protein.',
-      'is-watch','!',recentScoreVisual);
+      'is-watch','!',recentScoreVisual,recentTimeframe);
   }else{
     if(higherUseDays===0&&currentResponseDays>0){
       addInsight('Am I making progress?',
         'Your body is moving into greater fat use during parts of the day, although the effect is not sustained yet.',
-        'is-change','↑',withinDayVisual);
+        'is-change','↑',withinDayVisual,recentTimeframe);
     }else if(higherUseDays===0){
       addInsight('What can I improve?',
         'FOX2 is not seeing a clear increase yet. Your recent results establish a useful baseline to improve from.',
-        'is-change','→',recentScoreVisual);
+        'is-change','→',recentScoreVisual,recentTimeframe);
     }else if(higherUseDays<Math.ceil(current.length/2)){
       addInsight('Am I using more fat for energy?',
         'Yes, at times. '+higherUseDays+' of your last '+current.length+' classifiable days reached the Higher Fat-Use range. Repeat what worked on those days and see whether it happens more often.',
-        'is-change','→',recentScoreVisual);
+        'is-change','→',recentScoreVisual,recentTimeframe);
     }else{
       addInsight('Am I sustaining greater fat use?',
         'Yes. '+higherUseDays+' of your last '+current.length+' classifiable days reached the Higher Fat-Use range. Keep doing what has been working.',
-        '','✓',recentScoreVisual);
+        '','✓',recentScoreVisual,recentTimeframe);
     }
   }
   if(dayToDayInsight){
-    addInsight(dayToDayInsight.question,dayToDayInsight.answer,dayToDayInsight.tone,dayToDayInsight.icon,currentWeekVisual);
+    addInsight(dayToDayInsight.question,dayToDayInsight.answer,dayToDayInsight.tone,dayToDayInsight.icon,currentWeekVisual,weekTimeframe);
   }
   tagInsights.slice(0,1).forEach(function(tagInsight){
     if(tagInsight.question!==weekCopy.question){
-      addInsight(tagInsight.question,tagInsight.answer,tagInsight.tone,tagInsight.icon,tagEvidenceHtml(tagInsight));
+      addInsight(tagInsight.question,tagInsight.answer,tagInsight.tone,tagInsight.icon,tagEvidenceHtml(tagInsight),tagInsightTimeframe(tagInsight));
     }
   });
   var insightHtml=insights.slice(0,3).map(function(insight){
-    return '<article class="analysis-conclusion '+insight.tone+'"><div class="analysis-conclusion-icon">'+insight.icon+'</div><div><h2>'+insight.question+'</h2><p>'+insight.answer+'</p>'+insight.visual+'</div></article>';
+    return '<article class="analysis-conclusion '+insight.tone+'"><div class="analysis-conclusion-icon">'+insight.icon+'</div><div><div class="analysis-timeframe">'+insight.timeframe+'</div><h2>'+insight.question+'</h2><p>'+insight.answer+'</p>'+insight.visual+'</div></article>';
   }).join('');
   shell.innerHTML=''
     +'<section class="analysis-card analysis-hero">'
-      +'<div class="analysis-eyebrow">Your questions, answered</div>'
+      +'<div class="analysis-eyebrow">This week so far</div>'
       +'<h1 class="analysis-title">'+weekCopy.title+'</h1>'
       +'<p class="analysis-summary">'+weekCopy.summary+'</p>'
     +'</section>'
@@ -983,7 +999,7 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
         +renderAnalysisBar('Previous '+baseline.length+' days',baseline)
         +renderAnalysisBar('Complete history',all)+'</div></section>'
     +'<section class="analysis-card"><h2 class="analysis-section-title">When your fat use increased</h2>'
-      +'<p class="analysis-section-copy">Gold marks a clear increase above your usual level; blue marks the return. These changes can be an early sign that your choices are having an effect.</p>'
+      +'<p class="analysis-section-copy">Across your complete history, gold marks a clear increase above your usual level and blue marks the return. These changes can be an early sign that your choices are having an effect.</p>'
       +measurementResponseSvg(measurementPoints,completedEpisodes)+'</section>'
     +'<section class="analysis-card"><h2 class="analysis-section-title">Daily Fuel Score over time</h2>'
       +'<p class="analysis-section-copy">Every classifiable day from the beginning. The highlighted area is your latest 14-day pattern.</p>'

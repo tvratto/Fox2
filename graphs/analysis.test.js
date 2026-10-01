@@ -251,6 +251,7 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(withinDay.includes('Your usual level'));
   assert.ok(withinDay.includes('Fat use increased here'));
   assert.ok(withinDay.includes('rose above your usual level'));
+  assert.ok(withinDay.includes('One-day example · Sep 29'));
   assert.ok(withinDay.includes('<path'));
   assert.ok(!withinDay.includes('analysis-moment-orb'));
 
@@ -265,6 +266,8 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   }});
   assert.ok(tagged.includes('width:60%'));
   assert.ok(tagged.includes('3 of 5'));
+  assert.equal(context.tagInsightTimeframe({evidence:{kind:'immediate',stat:{eligible:5}}}),'Repeated choice · 5 occasions');
+  assert.equal(context.tagInsightTimeframe({evidence:{kind:'same_day',count:6}}),'Repeated choice · 6 days');
 })();
 
 (function avoidsRepeatingSummarySections(){
@@ -277,6 +280,8 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(!source.includes('weeklyStateHistoryHtml('));
   assert.ok(!source.includes('recentScoreSummaryHtml'));
   assert.ok(source.includes("+insight.visual+"));
+  assert.ok(source.includes('analysis-timeframe'));
+  assert.ok(source.includes('This week so far'));
 })();
 
 console.log('analysis tests passed');
