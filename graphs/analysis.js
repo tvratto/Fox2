@@ -338,6 +338,29 @@ function weeklyTrendSeries(scoreDays,classifiableDays,week,weekCount){
   return result;
 }
 
+function weeklyTrendSummary(weeks){
+  if(!weeks||!weeks.length) return '';
+  var current=weeks[weeks.length-1];
+  var previous=null;
+  for(var i=weeks.length-2;i>=0;i--){
+    if(weeks[i].mean!==null){
+      previous=weeks[i];
+      break;
+    }
+  }
+  if(current.mean!==null&&previous){
+    var delta=Math.round((current.mean-previous.mean)*10)/10;
+    var difference=Math.abs(delta);
+    var comparison=difference<5
+      ?'close to last week’s average of '+previous.mean
+      :'about '+difference+' points '+(delta>0?'above':'below')+' last week’s average of '+previous.mean;
+    return 'This week’s average is '+current.mean+' so far—'+comparison+'.';
+  }
+  if(current.mean!==null) return 'This week’s average is '+current.mean+' so far. More weeks will make the trend clearer.';
+  if(previous) return 'This week does not yet have a completed Daily Fuel Score. The latest completed week averaged '+previous.mean+'.';
+  return 'More completed Daily Fuel Scores are needed to show a weekly trend.';
+}
+
 function weeklyTrendHtml(scoreDays,classifiableDays,week){
   var weeks=weeklyTrendSeries(scoreDays,classifiableDays,week,8);
   var plotted=weeks.filter(function(item){return item.mean!==null;});
@@ -380,7 +403,7 @@ function weeklyTrendHtml(scoreDays,classifiableDays,week){
       +'<text x="'+cx.toFixed(1)+'" y="'+Math.max(10,cy-9).toFixed(1)+'" text-anchor="middle" font-size="9" font-weight="800" fill="rgba(255,255,255,.82)">'+item.mean+'</text>'+dateLabel;
   }).join('');
   return '<section class="analysis-card"><h2 class="analysis-section-title">Your last 8 weeks</h2>'
-    +'<p class="analysis-section-copy">The line follows each week’s average. Whiskers show its lowest and highest completed daily scores; marker color shows how often the within-day signal was responsive.</p>'
+    +'<p class="analysis-section-copy">'+weeklyTrendSummary(weeks)+' Each point is a weekly average; whiskers show the daily low-to-high range, and marker color shows how often readings moved meaningfully during the day.</p>'
     +'<svg class="analysis-chart" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="Eight-week Daily Fuel Score trend with weekly ranges and responsiveness">'
       +'<rect x="'+left+'" y="'+y(60)+'" width="'+pw+'" height="'+(y(0)-y(60))+'" fill="rgba(34,211,238,.05)"/>'
       +'<rect x="'+left+'" y="'+y(120)+'" width="'+pw+'" height="'+(y(60)-y(120))+'" fill="rgba(74,222,128,.055)"/>'
@@ -389,7 +412,7 @@ function weeklyTrendHtml(scoreDays,classifiableDays,week){
       +'<text x="'+(left-6)+'" y="'+(y(60)+3)+'" text-anchor="end" font-size="9" fill="rgba(255,255,255,.35)">60</text><text x="'+(left-6)+'" y="'+(y(120)+3)+'" text-anchor="end" font-size="9" fill="rgba(255,255,255,.35)">120</text>'
       +segments+marks
     +'</svg>'
-    +'<div class="analysis-legend"><span class="analysis-legend-item"><span class="analysis-legend-dot" style="background:#22D3EE"></span>Few responsive days</span><span class="analysis-legend-item"><span class="analysis-legend-dot" style="background:#4ADE80"></span>Some</span><span class="analysis-legend-item"><span class="analysis-legend-dot" style="background:#C084FC"></span>Frequent</span><span class="analysis-legend-item"><span class="analysis-legend-dot" style="background:#64748B"></span>Not enough readings</span><span class="analysis-legend-item"><span class="analysis-legend-dot" style="background:#FFD23C"></span>Current week</span></div>'
+    +'<div class="analysis-legend"><span class="analysis-legend-item"><span class="analysis-legend-dot" style="background:#22D3EE"></span>Little within-day movement</span><span class="analysis-legend-item"><span class="analysis-legend-dot" style="background:#4ADE80"></span>Some within-day movement</span><span class="analysis-legend-item"><span class="analysis-legend-dot" style="background:#C084FC"></span>Frequent within-day movement</span><span class="analysis-legend-item"><span class="analysis-legend-dot" style="background:#64748B"></span>Not enough readings</span><span class="analysis-legend-item"><span class="analysis-legend-dot" style="background:#FFD23C"></span>Current week</span></div>'
   +'</section>';
 }
 
@@ -764,7 +787,6 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
       +insightHtml
     +'</section>'
     +weeklyTrendHtml(scoreDays,all,weekToDate)
-    +weeklyStateHistoryHtml(weeklyStates,weekToDate,scoreDays)
     +'<section class="analysis-card"><h2 class="analysis-section-title">Is your body responding more often?</h2>'
       +'<p class="analysis-section-copy">These are days when your measurements rose clearly above your usual level and later returned toward it.</p>'
       +'<div class="analysis-bars">'+renderAnalysisBar('Latest '+recent.length+' days',recent)
