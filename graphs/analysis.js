@@ -263,16 +263,18 @@ function dailyScoreEvidenceSvg(days,label){
 
 function withinDayEvidenceSvg(days,points){
   var responsive=(days||[]).filter(function(day){return day.movement==='responsive';});
-  var candidates=(days||[]).filter(function(day){return Number(day.range)>=2;});
-  var pool=responsive.concat(candidates.filter(function(day){return day.movement!=='responsive';})).sort(function(a,b){return b.date.localeCompare(a.date);});
-  var chosen=null,sameDay=null;
+  var pool=responsive.slice().sort(function(a,b){return b.date.localeCompare(a.date);});
+  var chosen=null,sameDay=null,baseline=null;
   for(var candidateIndex=0;candidateIndex<pool.length;candidateIndex++){
+    var candidateBaseline=pool[candidateIndex].responseEpisode&&Number(pool[candidateIndex].responseEpisode.baseline);
+    if(!isFinite(candidateBaseline)) continue;
     var candidatePoints=(points||[]).filter(function(point){return point.date===pool[candidateIndex].date;}).sort(function(a,b){return a.minute-b.minute;});
     if(candidatePoints.length<2) continue;
     var candidatePeak=Math.max.apply(null,candidatePoints.map(function(point){return Number(point.value);}));
-    if(candidatePeak>=Number(candidatePoints[0].value)+.5){
+    if(candidatePeak>=Number(candidatePoints[0].value)+.5&&candidatePeak>=candidateBaseline+2){
       chosen=pool[candidateIndex];
       sameDay=candidatePoints;
+      baseline=candidateBaseline;
       break;
     }
   }
@@ -283,34 +285,51 @@ function withinDayEvidenceSvg(days,points){
     var shown=hour%12||12;
     return shown+':'+String(minutes).padStart(2,'0')+suffix;
   }
-  var start=sameDay[0];
   var peak=sameDay.reduce(function(best,point){return point.value>best.value?point:best;},sameDay[0]);
-  var later=sameDay[sameDay.length-1];
-  var moments=[{point:start,label:'Starting level',kind:'is-start'}];
-  if(peak!==start&&peak!==later) moments.push({point:peak,label:'Higher fat use',kind:'is-peak'});
-  if(peak===later&&sameDay.length>=3){
-    var middle=sameDay[Math.floor((sameDay.length-1)/2)];
-    if(middle!==start&&middle!==peak){
-      moments.push({point:middle,label:middle.value>start.value?'Moving higher':'Later reading',kind:'is-later'});
+  var values=sameDay.map(function(point){return Number(point.value);}).concat([baseline]);
+  var min=Math.min.apply(null,values),max=Math.max.apply(null,values);
+  var pad=Math.max(.75,(max-min)*.22);
+  var low=min-pad,high=max+pad;
+  var w=300,h=126,left=8,right=8,top=25,bottom=22;
+  var xMin=sameDay[0].minute,xMax=sameDay[sameDay.length-1].minute;
+  var x=function(value){return left+(Number(value)-xMin)*(w-left-right)/(xMax-xMin);};
+  var y=function(value){return top+(high-Number(value))*(h-top-bottom)/(high-low);};
+  var coords=sameDay.map(function(point){return {x:x(point.minute),y:y(point.value),point:point};});
+  var path='M '+coords[0].x.toFixed(1)+' '+coords[0].y.toFixed(1);
+  if(coords.length===2){
+    path+=' L '+coords[1].x.toFixed(1)+' '+coords[1].y.toFixed(1);
+  }else{
+    for(var curveIndex=1;curveIndex<coords.length-1;curveIndex++){
+      var midX=(coords[curveIndex].x+coords[curveIndex+1].x)/2;
+      var midY=(coords[curveIndex].y+coords[curveIndex+1].y)/2;
+      path+=' Q '+coords[curveIndex].x.toFixed(1)+' '+coords[curveIndex].y.toFixed(1)+' '+midX.toFixed(1)+' '+midY.toFixed(1);
     }
+    path+=' Q '+coords[coords.length-2].x.toFixed(1)+' '+coords[coords.length-2].y.toFixed(1)+' '+coords[coords.length-1].x.toFixed(1)+' '+coords[coords.length-1].y.toFixed(1);
   }
-  if(later!==start){
-    moments.push({
-      point:later,
-      label:later===peak?'Higher fat use':later.value<=peak.value-.5?'Came back down':'Later reading',
-      kind:later===peak?'is-peak':'is-later'
-    });
-  }
-  var values=moments.map(function(moment){return Number(moment.point.value);});
-  var low=Math.min.apply(null,values),high=Math.max.apply(null,values);
-  var momentHtml=moments.map(function(moment,index){
-    var normalized=high===low ? .5 : (Number(moment.point.value)-low)/(high-low);
-    var size=Math.round(48+normalized*12);
-    var arrow=index?'<div class="analysis-moment-arrow" aria-hidden="true">→</div>':'';
-    return arrow+'<div class="analysis-moment '+moment.kind+'"><div class="analysis-moment-orb" style="--moment-size:'+size+'px">'+Math.round(Number(moment.point.value)*10)/10+'</div><div class="analysis-moment-title">'+moment.label+'</div><div class="analysis-moment-time">'+timeLabel(moment.point.minute)+'</div></div>';
+  var baselineY=y(baseline);
+  var bandTop=y(baseline+.25),bandBottom=y(baseline-.25);
+  var clipId='fox2-rise-'+chosen.date.replace(/-/g,'');
+  var dots=coords.map(function(coord){
+    var raised=Number(coord.point.value)>baseline+.5;
+    return '<circle cx="'+coord.x.toFixed(1)+'" cy="'+coord.y.toFixed(1)+'" r="4" fill="'+(raised?'#FFD23C':'#22D3EE')+'" stroke="#08090b" stroke-width="2"><title>'+timeLabel(coord.point.minute)+': level '+coord.point.value+'</title></circle>';
   }).join('');
-  var aria='Fat-use measurements across '+chosen.date+': started at '+start.value+', reached '+peak.value+', and later measured '+later.value;
-  return '<div class="analysis-insight-visual analysis-moment-story" role="img" aria-label="'+analysisEscape(aria)+'">'+momentHtml+'</div>';
+  var peakX=x(peak.minute),peakY=y(peak.value);
+  var calloutX=Math.max(72,Math.min(w-72,peakX));
+  var aria='Fat-use measurements across '+chosen.date+' rose from a usual level of '+baseline+' to '+peak.value;
+  return '<div class="analysis-insight-visual"><svg class="analysis-mini-chart" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="'+analysisEscape(aria)+'">'
+    +'<defs><clipPath id="'+clipId+'"><rect x="0" y="0" width="'+w+'" height="'+Math.max(0,baselineY)+'"/></clipPath></defs>'
+    +'<rect x="'+left+'" y="'+top+'" width="'+(w-left-right)+'" height="'+Math.max(0,baselineY-top)+'" rx="10" fill="rgba(255,210,60,.045)"/>'
+    +'<rect x="'+left+'" y="'+Math.min(bandTop,bandBottom).toFixed(1)+'" width="'+(w-left-right)+'" height="'+Math.max(8,Math.abs(bandBottom-bandTop)).toFixed(1)+'" rx="4" fill="rgba(34,211,238,.1)"/>'
+    +'<text x="'+(left+7)+'" y="'+(baselineY+4).toFixed(1)+'" font-size="11" font-weight="800" fill="rgba(255,255,255,.48)">Your usual level</text>'
+    +'<path d="'+path+'" fill="none" stroke="#22D3EE" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>'
+    +'<path d="'+path+'" fill="none" stroke="#FFD23C" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" clip-path="url(#'+clipId+')"/>'
+    +'<line x1="'+calloutX.toFixed(1)+'" y1="18" x2="'+peakX.toFixed(1)+'" y2="'+Math.max(22,peakY-6).toFixed(1)+'" stroke="rgba(255,210,60,.55)" stroke-width="1.2"/>'
+    +'<rect x="'+(calloutX-68).toFixed(1)+'" y="2" width="136" height="20" rx="10" fill="rgba(255,210,60,.14)" stroke="rgba(255,210,60,.38)"/>'
+    +'<text x="'+calloutX.toFixed(1)+'" y="15.5" text-anchor="middle" font-size="10.5" font-weight="900" fill="#FFD23C">Fat use increased here</text>'
+    +dots
+    +'<text x="'+left+'" y="'+(h-4)+'" font-size="10.5" fill="rgba(255,255,255,.4)">'+timeLabel(sameDay[0].minute)+'</text>'
+    +'<text x="'+(w-right)+'" y="'+(h-4)+'" text-anchor="end" font-size="10.5" fill="rgba(255,255,255,.4)">'+timeLabel(sameDay[sameDay.length-1].minute)+'</text>'
+    +'</svg><div class="analysis-response-caption">This day’s measurements rose above your usual level.</div></div>';
 }
 
 function tagEvidenceHtml(insight){

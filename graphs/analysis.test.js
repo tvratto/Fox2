@@ -239,7 +239,7 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
 
 (function buildsQuestionSpecificEvidenceCharts(){
   const withinDay=context.withinDayEvidenceSvg([
-    {date:'2026-09-29',movement:'responsive',range:3}
+    {date:'2026-09-29',movement:'responsive',range:3,responseEpisode:{baseline:2}}
   ],[
     {date:'2026-09-29',minute:480,value:2},
     {date:'2026-09-29',minute:780,value:5},
@@ -248,11 +248,11 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(withinDay.includes('Fat-use measurements across 2026-09-29'));
   assert.ok(withinDay.includes('8:00am'));
   assert.ok(withinDay.includes('7:00pm'));
-  assert.ok(withinDay.includes('Starting level'));
-  assert.ok(withinDay.includes('Higher fat use'));
-  assert.ok(withinDay.includes('Came back down'));
-  assert.ok(withinDay.includes('analysis-moment-orb'));
-  assert.ok(!withinDay.includes('<polyline'));
+  assert.ok(withinDay.includes('Your usual level'));
+  assert.ok(withinDay.includes('Fat use increased here'));
+  assert.ok(withinDay.includes('rose above your usual level'));
+  assert.ok(withinDay.includes('<path'));
+  assert.ok(!withinDay.includes('analysis-moment-orb'));
 
   const daily=context.dailyScoreEvidenceSvg([
     {date:'2026-09-28',score:70},{date:'2026-09-29',score:93}
