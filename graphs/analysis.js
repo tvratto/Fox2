@@ -169,18 +169,6 @@ function scoreWindowSummary(scoreDays,startDate,endDate){
   };
 }
 
-function liveTodaySnapshot(activeDate){
-  if(typeof DAYS==='undefined'||typeof TODAY_IDX==='undefined') return null;
-  var day=null;
-  for(var i=DAYS.length-1;i>=0;i--){
-    if(DAYS[i]&&DAYS[i].isoDate===activeDate&&Array.isArray(DAYS[i].pts)&&DAYS[i].pts.length){day=DAYS[i];break;}
-  }
-  if(!day||day.isoDate!==activeDate||!isFinite(Number(day.score))||Number(day.score)<=0) return null;
-  var now=new Date();
-  var calendarToday=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
-  return {date:activeDate,score:Number(day.score),partial:true,isCalendarToday:activeDate===calendarToday};
-}
-
 function fox2DownloadCsv(filename,rows){
   var blob=new Blob(['\ufeff'+rows.join('\r\n')+'\r\n'],{type:'text/csv;charset=utf-8'});
   var url=URL.createObjectURL(blob);
@@ -327,56 +315,82 @@ function scoreTrendSvg(days){
     +'</svg>';
 }
 
-function recentScoreSummaryHtml(days,week,previousCalendarWeek,today){
-  if(!week||!week.throughDate) return '';
-  var endDate=today&&today.date?today.date:week.throughDate;
-  var startDate=addIsoDays(endDate,-13);
-  var byDate={};
-  (days||[]).forEach(function(day){byDate[day.date]=day;});
-  if(today) byDate[today.date]=today;
-  var slots=[];
-  for(var i=0;i<14;i++){
-    var date=addIsoDays(startDate,i);
-    slots.push({date:date,day:byDate[date]||null});
+function weeklyTrendSeries(scoreDays,classifiableDays,week,weekCount){
+  if(!week||!week.startDate) return [];
+  var count=weekCount||8;
+  var result=[];
+  for(var i=count-1;i>=0;i--){
+    var startDate=addIsoDays(week.startDate,-7*i);
+    var endDate=i===0?week.throughDate:addIsoDays(startDate,6);
+    var scores=(scoreDays||[]).filter(function(day){return day.date>=startDate&&day.date<=endDate;});
+    var values=scores.map(function(day){return Number(day.score);});
+    var assessable=(classifiableDays||[]).filter(function(day){return day.date>=startDate&&day.date<=endDate;});
+    var responsive=assessable.filter(function(day){return day.movement==='responsive';}).length;
+    result.push({
+      startDate:startDate,endDate:endDate,current:i===0,days:values.length,
+      mean:values.length?Math.round(values.reduce(function(sum,value){return sum+value;},0)/values.length*10)/10:null,
+      low:values.length?Math.min.apply(null,values):null,
+      high:values.length?Math.max.apply(null,values):null,
+      assessableDays:assessable.length,responsiveDays:responsive,
+      responseRate:assessable.length?responsive/assessable.length:null
+    });
   }
-  var values=slots.filter(function(slot){return slot.day;}).map(function(slot){return Number(slot.day.score);});
-  if(!values.length) return '';
-  var w=360,h=168,left=32,right=8,top=12,bottom=28;
+  return result;
+}
+
+function weeklyTrendHtml(scoreDays,classifiableDays,week){
+  var weeks=weeklyTrendSeries(scoreDays,classifiableDays,week,8);
+  var plotted=weeks.filter(function(item){return item.mean!==null;});
+  if(!plotted.length) return '';
+  var values=[];
+  plotted.forEach(function(item){values.push(item.low,item.high,item.mean);});
+  var w=360,h=210,left=32,right=9,top=22,bottom=38;
   var pw=w-left-right,ph=h-top-bottom;
-  var maxScore=Math.max.apply(null,values.concat([120]));
-  var maxY=Math.ceil(maxScore/30)*30;
+  var maxY=Math.ceil(Math.max.apply(null,values.concat([180]))/30)*30;
+  var x=function(index){return left+index*pw/(weeks.length-1);};
   var y=function(value){return top+ph-(Math.min(value,maxY)/maxY)*ph;};
-  var step=pw/slots.length;
-  var barWidth=Math.max(5,step-5);
-  var currentIndex=slots.findIndex(function(slot){return slot.date>=week.startDate;});
-  var bars=slots.map(function(slot,index){
-    var x=left+index*step+(step-barWidth)/2;
-    if(!slot.day){
-      return '<circle cx="'+(x+barWidth/2).toFixed(1)+'" cy="'+(top+ph+1)+'" r="1.8" fill="rgba(255,255,255,.16)"><title>'+slot.date+': no saved Daily Fuel Score</title></circle>';
+  var responseColor=function(rate){
+    if(rate===null) return '#64748B';
+    if(rate<.34) return '#22D3EE';
+    if(rate<.67) return '#4ADE80';
+    return '#C084FC';
+  };
+  var segments='';
+  for(var i=1;i<weeks.length;i++){
+    if(weeks[i-1].mean===null||weeks[i].mean===null) continue;
+    segments+='<line x1="'+x(i-1).toFixed(1)+'" y1="'+y(weeks[i-1].mean).toFixed(1)+'" x2="'+x(i).toFixed(1)+'" y2="'+y(weeks[i].mean).toFixed(1)+'" stroke="rgba(255,255,255,.62)" stroke-width="2"/>';
+  }
+  var marks=weeks.map(function(item,index){
+    var cx=x(index);
+    var label=Number(item.startDate.slice(5,7))+'/'+Number(item.startDate.slice(8,10));
+    var dateLabel='<text x="'+cx.toFixed(1)+'" y="'+(h-8)+'" text-anchor="middle" font-size="8.5" fill="rgba(255,255,255,.42)">'+label+'</text>';
+    if(item.mean===null){
+      return '<circle cx="'+cx.toFixed(1)+'" cy="'+(top+ph+1)+'" r="1.8" fill="rgba(255,255,255,.16)"><title>'+item.startDate+': no completed scores</title></circle>'+dateLabel;
     }
-    var score=Number(slot.day.score);
-    if(slot.day.partial){
-      return '<rect x="'+x.toFixed(1)+'" y="'+y(score).toFixed(1)+'" width="'+barWidth.toFixed(1)+'" height="'+Math.max(2,top+ph-y(score)).toFixed(1)+'" rx="3" fill="rgba(255,210,60,.18)" stroke="#FFD23C" stroke-width="1.5" stroke-dasharray="3 2"><title>'+slot.date+': '+score+(slot.day.isCalendarToday===false?' at last measurement':' so far')+' (incomplete)</title></rect>';
-    }
-    var color=score<=60?'#22D3EE':score<=120?'#4ADE80':score<=180?'#C084FC':'#F472B6';
-    return '<rect x="'+x.toFixed(1)+'" y="'+y(score).toFixed(1)+'" width="'+barWidth.toFixed(1)+'" height="'+Math.max(2,top+ph-y(score)).toFixed(1)+'" rx="3" fill="'+color+'"><title>'+slot.date+': '+score+'</title></rect>';
+    var cy=y(item.mean),lowY=y(item.low),highY=y(item.high);
+    var color=responseColor(item.responseRate);
+    var status=item.current?' · incomplete week':'';
+    var responsiveness=item.assessableDays?item.responsiveDays+' of '+item.assessableDays+' assessable days responsive':'responsiveness not assessable';
+    var title=item.startDate+' to '+item.endDate+': average '+item.mean+', range '+item.low+'–'+item.high+', '+responsiveness+status;
+    var outer=item.current?'<circle cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="6.7" fill="none" stroke="#FFD23C" stroke-width="1.5"/>':'';
+    return '<line x1="'+cx.toFixed(1)+'" y1="'+highY.toFixed(1)+'" x2="'+cx.toFixed(1)+'" y2="'+lowY.toFixed(1)+'" stroke="rgba(255,255,255,.45)" stroke-width="1.4"/>'
+      +'<line x1="'+(cx-4).toFixed(1)+'" y1="'+highY.toFixed(1)+'" x2="'+(cx+4).toFixed(1)+'" y2="'+highY.toFixed(1)+'" stroke="rgba(255,255,255,.45)"/>'
+      +'<line x1="'+(cx-4).toFixed(1)+'" y1="'+lowY.toFixed(1)+'" x2="'+(cx+4).toFixed(1)+'" y2="'+lowY.toFixed(1)+'" stroke="rgba(255,255,255,.45)"/>'
+      +outer+'<circle cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="4.2" fill="'+color+'"><title>'+title+'</title></circle>'
+      +'<text x="'+cx.toFixed(1)+'" y="'+Math.max(10,cy-9).toFixed(1)+'" text-anchor="middle" font-size="9" font-weight="800" fill="rgba(255,255,255,.82)">'+item.mean+'</text>'+dateLabel;
   }).join('');
-  var average=previousCalendarWeek&&previousCalendarWeek.classifiableDays?previousCalendarWeek.metrics.meanScore:null;
-  var averageLine=average===null?'':'<line x1="'+left+'" y1="'+y(average).toFixed(1)+'" x2="'+(left+pw)+'" y2="'+y(average).toFixed(1)+'" stroke="rgba(255,210,60,.72)" stroke-width="1.4" stroke-dasharray="5 4"/><text x="'+(left+pw-2)+'" y="'+(y(average)-5).toFixed(1)+'" text-anchor="end" font-size="9" fill="rgba(255,210,60,.84)">last week avg '+average+'</text>';
-  var currentShade=currentIndex<0?'':'<rect x="'+(left+currentIndex*step).toFixed(1)+'" y="'+top+'" width="'+((slots.length-currentIndex)*step).toFixed(1)+'" height="'+ph+'" fill="rgba(255,210,60,.035)"/>';
-  var partialDescription=today&&today.isCalendarToday===false?'the latest measured day at the time of its last measurement':'today so far';
-  return '<section class="analysis-card"><h2 class="analysis-section-title">Your recent scores at a glance</h2>'
-    +'<p class="analysis-section-copy">Solid bars are completed scores; the outlined gold bar is '+partialDescription+'. The dashed line is the previous week’s average.</p>'
-    +'<svg class="analysis-chart" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="Daily Fuel Scores for the latest 14 calendar days, including gaps">'
-      +'<rect x="'+left+'" y="'+y(60)+'" width="'+pw+'" height="'+(y(0)-y(60))+'" fill="rgba(34,211,238,.055)"/>'
-      +'<rect x="'+left+'" y="'+y(120)+'" width="'+pw+'" height="'+(y(60)-y(120))+'" fill="rgba(74,222,128,.06)"/>'
-      +'<rect x="'+left+'" y="'+top+'" width="'+pw+'" height="'+(y(120)-top)+'" fill="rgba(168,85,247,.06)"/>'
-      +currentShade
+  return '<section class="analysis-card"><h2 class="analysis-section-title">Your last 8 weeks</h2>'
+    +'<p class="analysis-section-copy">The line follows each week’s average. Whiskers show its lowest and highest completed daily scores; marker color shows how often the within-day signal was responsive.</p>'
+    +'<svg class="analysis-chart" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="Eight-week Daily Fuel Score trend with weekly ranges and responsiveness">'
+      +'<rect x="'+left+'" y="'+y(60)+'" width="'+pw+'" height="'+(y(0)-y(60))+'" fill="rgba(34,211,238,.05)"/>'
+      +'<rect x="'+left+'" y="'+y(120)+'" width="'+pw+'" height="'+(y(60)-y(120))+'" fill="rgba(74,222,128,.055)"/>'
+      +'<rect x="'+left+'" y="'+top+'" width="'+pw+'" height="'+(y(120)-top)+'" fill="rgba(168,85,247,.055)"/>'
       +'<line x1="'+left+'" y1="'+y(60)+'" x2="'+(left+pw)+'" y2="'+y(60)+'" stroke="rgba(255,255,255,.1)"/><line x1="'+left+'" y1="'+y(120)+'" x2="'+(left+pw)+'" y2="'+y(120)+'" stroke="rgba(255,255,255,.1)"/>'
       +'<text x="'+(left-6)+'" y="'+(y(60)+3)+'" text-anchor="end" font-size="9" fill="rgba(255,255,255,.35)">60</text><text x="'+(left-6)+'" y="'+(y(120)+3)+'" text-anchor="end" font-size="9" fill="rgba(255,255,255,.35)">120</text>'
-      +averageLine+bars
-      +'<text x="'+left+'" y="'+(h-7)+'" font-size="9" fill="rgba(255,255,255,.38)">'+startDate.slice(5)+'</text><text x="'+(left+pw)+'" y="'+(h-7)+'" text-anchor="end" font-size="9" fill="rgba(255,255,255,.38)">'+endDate.slice(5)+'</text>'
-    +'</svg></section>';
+      +segments+marks
+    +'</svg>'
+    +'<div class="analysis-legend"><span class="analysis-legend-item"><span class="analysis-legend-dot" style="background:#22D3EE"></span>Few responsive days</span><span class="analysis-legend-item"><span class="analysis-legend-dot" style="background:#4ADE80"></span>Some</span><span class="analysis-legend-item"><span class="analysis-legend-dot" style="background:#C084FC"></span>Frequent</span><span class="analysis-legend-item"><span class="analysis-legend-dot" style="background:#64748B"></span>Not enough readings</span><span class="analysis-legend-item"><span class="analysis-legend-dot" style="background:#FFD23C"></span>Current week</span></div>'
+  +'</section>';
 }
 
 function renderAnalysisBar(label,days){
@@ -681,7 +695,6 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   window._fox2WeekToDate=weekToDate;
   var lastOfficial=typeof Fox2StateEngine!=='undefined'?Fox2StateEngine.currentState(weeklyStates):null;
   var previousCalendarWeek=weekToDate?scoreWindowSummary(scoreDays,addIsoDays(weekToDate.startDate,-7),addIsoDays(weekToDate.startDate,-1)):null;
-  var today=liveTodaySnapshot(history.activeDate);
   var weekCopy=weekToDateCopy(weekToDate,lastOfficial,scoreDays,previousCalendarWeek);
   var tagInsights=buildTagInsights(tagRows||[],history);
   window._fox2TagInsights=tagInsights;
@@ -750,7 +763,7 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
     +'<section class="analysis-conclusion-list" aria-label="Your conclusions">'
       +insightHtml
     +'</section>'
-    +recentScoreSummaryHtml(scoreDays,weekToDate,previousCalendarWeek,today)
+    +weeklyTrendHtml(scoreDays,all,weekToDate)
     +weeklyStateHistoryHtml(weeklyStates,weekToDate,scoreDays)
     +'<section class="analysis-card"><h2 class="analysis-section-title">Is your body responding more often?</h2>'
       +'<p class="analysis-section-copy">These are days when your measurements rose clearly above your usual level and later returned toward it.</p>'

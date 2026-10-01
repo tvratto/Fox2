@@ -177,31 +177,29 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(!copy.title.includes('something encouraging here'));
 })();
 
-(function summarizesRecentScoresWithCalendarGaps(){
-  const days=[
-    {date:'2026-09-21',score:77},
-    {date:'2026-09-22',score:107},
-    {date:'2026-09-27',score:72},
-    {date:'2026-09-29',score:94}
+(function buildsEightWeekTrendWithRangeAndResponsiveness(){
+  const scores=[
+    {date:'2026-09-21',score:90},{date:'2026-09-22',score:110},
+    {date:'2026-09-28',score:60},{date:'2026-09-29',score:100},{date:'2026-09-30',score:80}
   ];
-  const week={startDate:'2026-09-28',throughDate:'2026-09-29'};
-  const previousWeek={classifiableDays:3,metrics:{meanScore:85.3}};
-  const html=context.recentScoreSummaryHtml(days,week,previousWeek);
-  assert.ok(html.includes('Your recent scores at a glance'));
-  assert.ok(html.includes('latest 14 calendar days, including gaps'));
-  assert.ok(html.includes('last week avg 85.3'));
-  assert.ok(html.includes('2026-09-29: 94'));
-  assert.ok(html.includes('no saved Daily Fuel Score'));
-})();
-
-(function showsTodayAsAnIncompleteOutlinedBar(){
-  const days=[{date:'2026-09-29',score:94}];
-  const week={startDate:'2026-09-28',throughDate:'2026-09-29'};
-  const today={date:'2026-09-30',score:31,partial:true};
-  const html=context.recentScoreSummaryHtml(days,week,null,today);
-  assert.ok(html.includes('2026-09-30: 31 so far (incomplete)'));
-  assert.ok(html.includes('stroke-dasharray="3 2"'));
-  assert.ok(html.includes('outlined gold bar is today so far'));
+  const classified=[
+    {date:'2026-09-21',movement:'responsive'},{date:'2026-09-22',movement:'responsive'},
+    {date:'2026-09-28',movement:'responsive'},{date:'2026-09-29',movement:'steady'}
+  ];
+  const week={startDate:'2026-09-28',throughDate:'2026-09-30'};
+  const series=context.weeklyTrendSeries(scores,classified,week,8);
+  assert.equal(series.length,8);
+  assert.equal(series[0].startDate,'2026-08-10');
+  assert.equal(series[7].mean,80);
+  assert.equal(series[7].low,60);
+  assert.equal(series[7].high,100);
+  assert.equal(series[7].responseRate,.5);
+  assert.equal(series[7].current,true);
+  const html=context.weeklyTrendHtml(scores,classified,week);
+  assert.ok(html.includes('Your last 8 weeks'));
+  assert.ok(html.includes('Whiskers show its lowest and highest'));
+  assert.ok(html.includes('average 80, range 60–100, 1 of 2 assessable days responsive · incomplete week'));
+  assert.ok(html.includes('no completed scores'));
 })();
 
 (function avoidsRepeatingSummarySections(){
@@ -210,6 +208,8 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(!source.includes('Why FOX2 says this'));
   assert.ok(!source.includes('How your fat use has changed'));
   assert.ok(!source.includes('addInsight(weekCopy.question'));
+  assert.ok(source.includes('weeklyTrendHtml(scoreDays,all,weekToDate)'));
+  assert.ok(!source.includes('recentScoreSummaryHtml'));
 })();
 
 console.log('analysis tests passed');
