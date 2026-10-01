@@ -194,14 +194,47 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.equal(series[7].low,60);
   assert.equal(series[7].high,100);
   assert.equal(series[7].responseRate,.5);
+  assert.equal(series[7].consecutiveDayPairs,2);
+  assert.equal(series[7].medianDayToDayChange,30);
   assert.equal(series[7].current,true);
   assert.equal(context.weeklyTrendSummary(series),'This week’s average is 80 so far—about 20 points below last week’s average of 100.');
   const html=context.weeklyTrendHtml(scores,classified,week);
   assert.ok(html.includes('Your last 8 weeks'));
   assert.ok(html.includes('This week’s average is 80 so far'));
   assert.ok(html.includes('marker color shows how often readings moved meaningfully'));
-  assert.ok(html.includes('average 80, range 60–100, 1 of 2 assessable days responsive · incomplete week'));
+  assert.ok(html.includes('average 80, range 60–100, typical day-to-day change 30, 1 of 2 assessable days responsive · incomplete week'));
   assert.ok(html.includes('no completed scores'));
+})();
+
+(function separatesDayToDayMovementFromMeasurementResponsiveness(){
+  const movement=context.dayToDayScoreMovement([
+    {date:'2026-09-28',score:50},
+    {date:'2026-09-29',score:85},
+    {date:'2026-10-01',score:120}
+  ],'2026-09-28','2026-10-04');
+  assert.equal(movement.dayCount,3);
+  assert.equal(movement.pairCount,1);
+  assert.equal(movement.medianAbsoluteChange,35);
+  assert.equal(movement.range,70);
+  assert.equal(movement.meaningfulMoves,1);
+  const insight=context.dayToDayScoreInsight(movement,null);
+  assert.equal(insight.question,'Can my body reach higher fat-use levels?');
+  assert.ok(insight.answer.includes('Some days reached higher fat-use levels than others'));
+  assert.ok(!insight.answer.toLowerCase().includes('inconsistent'));
+})();
+
+(function describesRepeatabilityAsProgress(){
+  const previous=context.dayToDayScoreMovement([
+    {date:'2026-09-21',score:60},{date:'2026-09-22',score:120},
+    {date:'2026-09-23',score:70},{date:'2026-09-24',score:130}
+  ],'2026-09-21','2026-09-27');
+  const current=context.dayToDayScoreMovement([
+    {date:'2026-09-28',score:105},{date:'2026-09-29',score:120},
+    {date:'2026-09-30',score:115},{date:'2026-10-01',score:125}
+  ],'2026-09-28','2026-10-04');
+  const insight=context.dayToDayScoreInsight(current,previous);
+  assert.equal(insight.question,'Are my higher results becoming more repeatable?');
+  assert.ok(insight.answer.includes('easier to repeat'));
 })();
 
 (function avoidsRepeatingSummarySections(){
