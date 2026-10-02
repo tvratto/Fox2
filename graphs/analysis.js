@@ -1201,41 +1201,86 @@ function analysisStallInsight(scoreDays,history,referenceDate){
   };
 }
 
-function analysisDaypartVisual(averages,outcome,recurringEveningRise){
-  var parts=['morning','afternoon','evening'];
-  if(!parts.every(function(part){return isFinite(Number(averages[part]));})) return '';
-  var labels={morning:'Morning',afternoon:'Afternoon',evening:'Evening'};
-  var flows={
-    morning:['Yesterday afternoon','Last night','Morning'],
-    afternoon:['Last night','This morning','Midday dip'],
-    evening:['This morning','This afternoon',recurringEveningRise?'Evening rise':'Evening']
-  };
-  var xs=[44,160,276],top=13,bottom=72;
-  var maxValue=Math.max.apply(null,parts.map(function(part){return Number(averages[part]);}));
-  var maxScale=Math.max(8,Math.ceil(maxValue+1));
-  var y=function(value){return top+(maxScale-Number(value))/maxScale*(bottom-top);};
-  var points=parts.map(function(part,index){return xs[index]+','+y(averages[part]).toFixed(1);}).join(' ');
-  var aria='Typical Fat Zone by time of day: '+parts.map(function(part){return labels[part]+' '+Number(averages[part]).toFixed(1);}).join(', ')+'.';
-  var dots=parts.map(function(part,index){
-    var active=part===outcome;
-    return '<circle cx="'+xs[index]+'" cy="'+y(averages[part]).toFixed(1)+'" r="'+(active?5:4)+'" fill="'+(active?'#FFD23C':'#22D3EE')+'" stroke="#08090b" stroke-width="2"/>'
-      +'<text x="'+xs[index]+'" y="96" text-anchor="middle" font-size="11" font-weight="800" fill="rgba(255,255,255,.58)">'+labels[part]+'</text>';
+function analysisDaypartVisual(points,outcome,referenceDate,recurringEveningRise){
+  var byDate={};
+  (points||[]).forEach(function(point){
+    var minute=Number(point.minute),value=Number(point.value);
+    if(!isFinite(minute)||!isFinite(value)) return;
+    if(!byDate[point.date]) byDate[point.date]=[];
+    byDate[point.date].push({date:point.date,minute:minute,value:value});
+  });
+  function partMean(day,part){
+    var values=day.filter(function(point){return analysisDayPart(point.minute)===part;}).map(function(point){return point.value;});
+    return values.length?values.reduce(function(sum,value){return sum+value;},0)/values.length:null;
+  }
+  var candidates=Object.keys(byDate).map(function(date){
+    var day=byDate[date].slice().sort(function(a,b){return a.minute-b.minute;});
+    if(day.length<3||day[day.length-1].minute-day[0].minute<360) return null;
+    var morning=partMean(day,'morning'),afternoon=partMean(day,'afternoon'),evening=partMean(day,'evening');
+    var strength=null;
+    if(outcome==='afternoon'&&morning!==null&&afternoon!==null&&evening!==null) strength=(morning+evening)/2-afternoon;
+    else if(outcome==='morning'&&morning!==null&&(afternoon!==null||evening!==null)) strength=Math.max(afternoon===null?-Infinity:afternoon,evening===null?-Infinity:evening)-morning;
+    else if(outcome==='evening'&&evening!==null&&(morning!==null||afternoon!==null)){
+      strength=recurringEveningRise&&afternoon!==null?evening-afternoon:Math.max(morning===null?-Infinity:morning,afternoon===null?-Infinity:afternoon)-evening;
+    }
+    return strength===null||!isFinite(strength)?null:{date:date,points:day,strength:strength};
+  }).filter(Boolean).sort(function(a,b){return b.strength-a.strength||b.date.localeCompare(a.date);});
+  if(!candidates.length) return '';
+  var chosen=candidates[0],day=chosen.points;
+  var target=day.filter(function(point){return analysisDayPart(point.minute)===outcome;}).reduce(function(best,point){
+    if(!best) return point;
+    if(outcome==='evening'&&recurringEveningRise) return point.value>best.value?point:best;
+    return point.value<best.value?point:best;
+  },null);
+  if(!target) return '';
+  function timeLabel(minute){
+    var hour=Math.floor(minute/60),minutes=Math.round(minute%60),suffix=hour>=12?'pm':'am';
+    return (hour%12||12)+(minutes?':'+String(minutes).padStart(2,'0'):'')+suffix;
+  }
+  var values=day.map(function(point){return point.value;});
+  var min=Math.min.apply(null,values),max=Math.max.apply(null,values),pad=Math.max(.8,(max-min)*.22);
+  var low=min-pad,high=max+pad,w=320,h=150,left=12,right=12,top=32,bottom=27;
+  var xMin=day[0].minute,xMax=day[day.length-1].minute;
+  var x=function(value){return left+(Number(value)-xMin)*(w-left-right)/(xMax-xMin);};
+  var y=function(value){return top+(high-Number(value))*(h-top-bottom)/(high-low);};
+  var coords=day.map(function(point){return {x:x(point.minute),y:y(point.value),point:point};});
+  var path='M '+coords[0].x.toFixed(1)+' '+coords[0].y.toFixed(1);
+  for(var index=1;index<coords.length-1;index++){
+    var midX=(coords[index].x+coords[index+1].x)/2,midY=(coords[index].y+coords[index+1].y)/2;
+    path+=' Q '+coords[index].x.toFixed(1)+' '+coords[index].y.toFixed(1)+' '+midX.toFixed(1)+' '+midY.toFixed(1);
+  }
+  if(coords.length===2) path+=' L '+coords[1].x.toFixed(1)+' '+coords[1].y.toFixed(1);
+  else path+=' Q '+coords[coords.length-2].x.toFixed(1)+' '+coords[coords.length-2].y.toFixed(1)+' '+coords[coords.length-1].x.toFixed(1)+' '+coords[coords.length-1].y.toFixed(1);
+  var targetX=x(target.minute),targetY=y(target.value),arrowId='fox2-daypart-arrow-'+chosen.date.replace(/-/g,'');
+  var callout=outcome==='afternoon'?'Midday dip':outcome==='morning'?'Lower morning':recurringEveningRise?'Evening rise':'Evening drop';
+  var labelX=Math.max(67,Math.min(w-67,targetX)),labelY=10;
+  var dots=coords.map(function(coord){
+    var active=coord.point===target;
+    return '<circle cx="'+coord.x.toFixed(1)+'" cy="'+coord.y.toFixed(1)+'" r="'+(active?5:3.8)+'" fill="'+(active?'#FFD23C':'#22D3EE')+'" stroke="#08090b" stroke-width="2"><title>'+timeLabel(coord.point.minute)+': Fat Zone '+coord.point.value+'</title></circle>';
   }).join('');
-  var flow=flows[outcome];
+  var relative=analysisRelativeDay(chosen.date,referenceDate);
+  var caption=outcome==='afternoon'
+    ?relative+', your Fat Zone fell around midday and then came back up later.'
+    :outcome==='morning'
+      ?relative+', your Fat Zone started lower and went up later in the day.'
+      :recurringEveningRise
+        ?relative+', your Fat Zone went up from afternoon into the evening.'
+        :relative+', your Fat Zone was higher earlier and fell by evening.';
+  var aria=caption+' The chart uses the actual measurements saved that day.';
   return '<div class="analysis-daypart-visual">'
-    +'<div class="analysis-daypart-label">Your typical day</div>'
-    +'<svg class="analysis-daypart-chart" viewBox="0 0 320 102" role="img" aria-label="'+analysisEscape(aria)+'">'
-      +'<line x1="24" y1="72" x2="296" y2="72" stroke="rgba(255,255,255,.09)" stroke-width="1"/>'
-      +'<polyline points="'+points+'" fill="none" stroke="rgba(255,255,255,.48)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>'
+    +'<div class="analysis-daypart-label">A recent day that shows this pattern</div>'
+    +'<svg class="analysis-daypart-chart" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="'+analysisEscape(aria)+'">'
+      +'<defs><marker id="'+arrowId+'" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#FFD23C"/></marker></defs>'
+      +'<line x1="'+left+'" y1="'+(h-bottom)+'" x2="'+(w-right)+'" y2="'+(h-bottom)+'" stroke="rgba(255,255,255,.09)" stroke-width="1"/>'
+      +'<path d="'+path+'" fill="none" stroke="#22D3EE" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>'
+      +'<rect x="'+(labelX-55).toFixed(1)+'" y="'+labelY+'" width="110" height="22" rx="11" fill="rgba(255,210,60,.14)" stroke="rgba(255,210,60,.38)"/>'
+      +'<text x="'+labelX.toFixed(1)+'" y="25" text-anchor="middle" font-size="11" font-weight="900" fill="#FFD23C">'+callout+'</text>'
+      +'<line x1="'+labelX.toFixed(1)+'" y1="32" x2="'+targetX.toFixed(1)+'" y2="'+Math.max(38,targetY-7).toFixed(1)+'" stroke="#FFD23C" stroke-width="1.6" marker-end="url(#'+arrowId+')"/>'
       +dots
+      +'<text x="'+left+'" y="'+(h-7)+'" font-size="11" font-weight="800" fill="rgba(255,255,255,.5)">'+timeLabel(day[0].minute)+'</text>'
+      +'<text x="'+(w-right)+'" y="'+(h-7)+'" text-anchor="end" font-size="11" font-weight="800" fill="rgba(255,255,255,.5)">'+timeLabel(day[day.length-1].minute)+'</text>'
     +'</svg>'
-    +'<div class="analysis-action-flow" aria-label="Try a change in '+analysisEscape(flow[0])+' or '+analysisEscape(flow[1])+', then watch '+analysisEscape(flow[2])+'">'
-      +'<div class="analysis-action-step"><small>Try</small><strong>'+flow[0]+'</strong></div>'
-      +'<div class="analysis-action-join">or</div>'
-      +'<div class="analysis-action-step"><small>Try</small><strong>'+flow[1]+'</strong></div>'
-      +'<div class="analysis-action-join">→</div>'
-      +'<div class="analysis-action-step is-watch"><small>Watch</small><strong>'+flow[2]+'</strong></div>'
-    +'</div>'
+    +'<div class="analysis-daypart-caption"><strong>'+analysisEscape(relative)+'</strong> '+analysisEscape(caption.slice(relative.length+2))+' This is one real day from your measurements.</div>'
   +'</div>';
 }
 
@@ -1302,7 +1347,7 @@ function analysisDaypartOpportunity(history,referenceDate){
   return {
     question:'What could I try?',
     answer:answer,
-    visual:outcome?analysisDaypartVisual(averages,outcome,recurringEveningRise):'',
+    visual:outcome?analysisDaypartVisual((history.points||[]).filter(function(point){return point.date>=start&&point.date<referenceDate;}),outcome,referenceDate,recurringEveningRise):'',
     detail:clearGap
       ?'FOX2 compared your morning, afternoon, and evening Fat Zones across recent completed days. '+partName.charAt(0).toUpperCase()+partName.slice(1)+' was the lowest part of your typical day, and '+highest+' was the highest.'
       :recurringEveningRise
@@ -1439,7 +1484,7 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
     +'</section>';
   var helpingBlock=helpingInsight?'<div class="analysis-experiment"><h3>'+helpingInsight.question+'</h3><p>'+helpingInsight.answer+'</p>'+analysisWhyHtml(helpingInsight.detail,tagEvidenceHtml(helpingInsight))+'</div>':'';
   var actionQuestion=helpingInsight?'What else could I try?':daypartOpportunity&&daypartOpportunity.question;
-  var actionBlock=daypartOpportunity?'<div class="analysis-experiment"><h3>'+actionQuestion+'</h3><p>'+daypartOpportunity.answer+'</p>'+(daypartOpportunity.visual||'')+analysisWhyHtml(daypartOpportunity.detail,'')+'</div>':'';
+  var actionBlock=daypartOpportunity?'<div class="analysis-experiment"><h3>'+actionQuestion+'</h3><p>'+daypartOpportunity.answer+'</p>'+analysisWhyHtml(daypartOpportunity.detail,daypartOpportunity.visual||'')+'</div>':'';
   var helpingVisual=helpingInsight?tagEvidenceHtml(helpingInsight):'';
   var stallHtml=stallInsight?'<article class="analysis-conclusion '+stallInsight.tone+'"><div class="analysis-conclusion-icon">'+stallInsight.icon+'</div><div>'
     +'<h2>'+stallInsight.question+'</h2><p>'+stallInsight.answer+'</p>'

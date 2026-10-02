@@ -334,11 +334,32 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(opportunity.answer.includes('middle of the day looks like your biggest opportunity'));
   assert.ok(opportunity.answer.includes('night before or that morning'));
   assert.ok(!opportunity.answer.includes('midday meal'));
-  assert.ok(opportunity.visual.includes('Your typical day'));
-  assert.ok(opportunity.visual.includes('<strong>Last night</strong>'));
-  assert.ok(opportunity.visual.includes('<strong>This morning</strong>'));
-  assert.ok(opportunity.visual.includes('<strong>Midday dip</strong>'));
-  assert.ok(opportunity.visual.indexOf('Last night')<opportunity.visual.indexOf('Midday dip'));
+  assert.ok(opportunity.visual.includes('A recent day that shows this pattern'));
+  assert.ok(opportunity.visual.includes('Midday dip'));
+  assert.ok(opportunity.visual.includes('This is one real day from your measurements'));
+  assert.ok(!opportunity.visual.includes('analysis-action-flow'));
+})();
+
+(function usesAnActualDayForTheDaypartEvidenceGraphic(){
+  const points=[
+    {date:'2026-09-25',minute:480,value:4},
+    {date:'2026-09-25',minute:780,value:2},
+    {date:'2026-09-25',minute:1140,value:5},
+    {date:'2026-09-26',minute:480,value:5},
+    {date:'2026-09-26',minute:780,value:4},
+    {date:'2026-09-26',minute:1140,value:5}
+  ];
+  const visual=context.analysisDaypartVisual(points,'afternoon','2026-09-30',false);
+  assert.ok(visual.includes('Last Friday'));
+  assert.ok(visual.includes('Fat Zone 2'));
+  assert.ok(visual.includes('8am'));
+  assert.ok(visual.includes('7pm'));
+})();
+
+(function keepsTheDaypartGraphicInsideWhyFox2SaysThis(){
+  const source=context.renderHistoricalAnalysis.toString();
+  assert.ok(source.includes("analysisWhyHtml(daypartOpportunity.detail,daypartOpportunity.visual||'')"));
+  assert.ok(!source.includes("+(daypartOpportunity.visual||'')+analysisWhyHtml"));
 })();
 
 (function callsOutARecurringEveningRiseEvenWhenDaypartAveragesAreClose(){
@@ -353,7 +374,8 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(opportunity.answer.includes('often goes up from afternoon to evening'));
   assert.ok(!opportunity.answer.includes('no single part of the day has a much lower average'));
   assert.ok(opportunity.detail.includes('6 of 10 comparable recent days'));
-  assert.ok(opportunity.visual.includes('<strong>Evening rise</strong>'));
+  assert.ok(opportunity.visual.includes('Evening rise'));
+  assert.ok(opportunity.visual.includes('This is one real day from your measurements'));
 })();
 
 (function usesEightRecentWeeksAndOnlyResurfacesStrongOlderEvidence(){
