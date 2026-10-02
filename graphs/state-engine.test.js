@@ -117,4 +117,18 @@ function days(start,scores,responsive){
   assert.equal(wtd.trajectory,'early');
 })();
 
+(function keepsSavedScoresWhenWithinDayMovementIsUnknown(){
+  const sample=[
+    {date:'2026-01-12',score:150,movement:'unknown'},
+    {date:'2026-01-13',score:160,movement:'unknown'},
+    {date:'2026-01-14',score:170,movement:'unknown'}
+  ];
+  const wtd=engine.buildWeekToDate(sample,{referenceDate:'2026-01-15'});
+  assert.equal(wtd.current.classifiableDays,3);
+  assert.equal(wtd.current.metrics.meanScore,160);
+  assert.equal(wtd.current.metrics.assessableDays,0);
+  assert.equal(wtd.current.metrics.responseRate,null);
+  assert.equal(wtd.current.safetyFlag,'none');
+})();
+
 console.log('state-engine tests passed');

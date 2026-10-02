@@ -277,9 +277,11 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(source.includes('weeklyTrendHtml(scoreDays,all,weekToDate)'));
   assert.ok(!source.includes('weeklyStateHistoryHtml('));
   assert.ok(!source.includes('recentScoreSummaryHtml'));
-  assert.ok(source.includes('analysisWhyHtml(insight.detail,insight.visual)'));
+  assert.ok(source.includes('analysisWhyHtml(progressInsight.detail,recentScoreVisual)'));
+  assert.ok(!source.includes('tagInsights.slice('));
   assert.ok(source.includes('analysis-timeframe'));
-  assert.ok(source.includes('This week so far'));
+  assert.ok(source.indexOf('What changed recently?')<source.indexOf('How is this week going?'));
+  assert.ok(source.indexOf('How is this week going?')<source.indexOf('Am I making progress overall?'));
 })();
 
 (function givesAPlainLanguageLookbackForAStandoutPeriod(){
@@ -287,17 +289,32 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
     date:'2026-09-30',movement:'responsive',
     responseEpisode:{baseline:2,peak:5,startTime:Date.parse('2026-09-30T14:00:00Z'),startMinute:840}
   }];
-  const noTag=context.analysisLookbackWindow(days,[]);
-  assert.ok(noTag.guidance.includes('Wednesday afternoon stood out'));
+  const noTag=context.analysisLookbackWindow(days,[],'2026-10-01',5);
+  assert.ok(noTag.guidance.includes('Wednesday, Sep 30, in the afternoon stood out'));
   assert.ok(noTag.guidance.includes('Tuesday evening through Wednesday morning'));
   assert.ok(noTag.guidance.includes('Choose one safe part'));
   assert.ok(noTag.evidence.includes('Fat Zone rose from a usual level near 2 to 5'));
 
   const withTag=context.analysisLookbackWindow(days,[{
     day_date:'2026-09-30',events:[{icon:'🚶',name:'Walk',minute:600}]
-  }]);
+  }],'2026-10-01',5);
   assert.ok(withTag.guidance.includes('You tagged 🚶 Walk beforehand'));
   assert.ok(withTag.guidance.includes('We don’t know yet if it helped'));
+
+  assert.equal(context.analysisLookbackWindow(days,[],'2026-10-06',5),null);
+})();
+
+(function comparesRecentCalendarPeriodsBeforeClaimingProgress(){
+  const recentScores=[
+    {date:'2026-09-18',score:95},{date:'2026-09-20',score:110},{date:'2026-09-24',score:125},{date:'2026-09-29',score:130}
+  ];
+  const previousScores=[
+    {date:'2026-09-03',score:75},{date:'2026-09-05',score:80},{date:'2026-09-09',score:85},{date:'2026-09-14',score:90}
+  ];
+  const insight=context.analysisRecentProgressInsight(recentScores,previousScores,[],[]);
+  assert.ok(insight.answer.includes('for more of the day than it did in the two weeks before'));
+  assert.ok(insight.detail.includes('latest 14 days include 4 saved Daily Fuel Scores'));
+  assert.ok(insight.detail.includes('14 days before averaged'));
 })();
 
 console.log('analysis tests passed');

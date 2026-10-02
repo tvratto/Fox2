@@ -16,6 +16,19 @@ The order is always:
 
 FOX2 selects the most relevant questions from the evidence. It should normally show one primary answer and no more than two secondary answers.
 
+### Narrative order
+
+The analysis moves outward in time instead of presenting independent algorithm results:
+
+1. A specific event from the last five calendar days, when one is present.
+2. How the current Monday–Sunday week is going.
+3. Whether the latest 14 calendar days improved compared with the 14 days before.
+4. The longer weekly and complete-history trends.
+
+An event older than five calendar days may support the longer analysis, but FOX2 should not ask the person to remember what happened before it. Always name a specific event with its weekday, date, and part of day.
+
+Repeated-tag evidence belongs with the event or change it helps explain. It should not appear as an unrelated analysis card. A claim that a shift is showing up on more days requires a direct comparison with an earlier period; ordinary differences between days are not enough.
+
 ## Shared language
 
 ### Customer-facing concepts
@@ -166,6 +179,8 @@ When a day or part of a day stands out:
 3. Check for tags during that period.
 4. Ask the person to choose one safe, repeatable part of the routine to test again.
 5. Ask them to tag it next time so FOX2 can see whether the pattern happens again.
+
+Only give this look-back prompt when the event occurred within the latest five calendar days.
 
 Use the best message supported by the available context:
 

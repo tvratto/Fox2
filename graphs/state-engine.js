@@ -98,14 +98,15 @@
     if(!count) return state;
 
     var scores=windowDays.map(function(day){return Number(day.score);});
-    var responsive=windowDays.filter(function(day){return day.movement==='responsive';});
+    var assessable=windowDays.filter(function(day){return day.movement==='responsive'||day.movement==='steady';});
+    var responsive=assessable.filter(function(day){return day.movement==='responsive';});
     var higher=windowDays.filter(function(day){return Number(day.score)>120;});
     var amplitudes=responsive.map(function(day){return Number(day.responseAmplitude)||0;}).filter(function(v){return v>0;});
     var medianScore=median(scores);
-    var responseRate=responsive.length/count;
+    var responseRate=assessable.length?responsive.length/assessable.length:null;
     var higherRate=higher.length/count;
     var level=levelForScore(medianScore);
-    var response=responseBand(responseRate);
+    var response=responseRate===null?'unknown':responseBand(responseRate);
     var higherUse=higherUseBand(higherRate);
     var bandDays={low:0,moderate:0,higher:0,strong:0};
     windowDays.forEach(function(day){bandDays[levelForScore(Number(day.score))]++;});
@@ -115,7 +116,7 @@
     state.metrics={
       medianScore:round(medianScore,1),meanScore:round(mean(scores),1),
       minScore:Math.min.apply(null,scores),maxScore:Math.max.apply(null,scores),
-      responsiveDays:responsive.length,responseRate:round(responseRate,3),
+      assessableDays:assessable.length,responsiveDays:responsive.length,responseRate:responseRate===null?null:round(responseRate,3),
       higherUseDays:higher.length,higherUseRate:round(higherRate,3),
       bandDays:bandDays,
       above60Days:above60,above60Rate:round(above60/count,3),
@@ -135,7 +136,7 @@
     if(coverage!=='sufficient') return state;
     state.stateId=(level+'_'+response).toUpperCase();
     state.stateLabel=titleCase(level)+' + '+titleCase(response);
-    if((level==='higher'||level==='strong')&&response==='quiet'){
+    if((level==='higher'||level==='strong')&&response==='quiet'&&assessable.length){
       state.safetyFlag='watch_high_steady';
     }
     return state;
@@ -156,7 +157,7 @@
       var transition={kind:'baseline',changes:[],scoreDirection:'unknown',responseDirection:'unknown',above60Direction:'unknown',above120Direction:'unknown',above180Direction:'unknown'};
       if(previous){
         var scoreDelta=round(state.metrics.medianScore-previous.metrics.medianScore,1);
-        var responseDelta=round(state.metrics.responseRate-previous.metrics.responseRate,3);
+        var responseDelta=state.metrics.responseRate!==null&&previous.metrics.responseRate!==null?round(state.metrics.responseRate-previous.metrics.responseRate,3):null;
         var above60Delta=round(state.metrics.above60Rate-previous.metrics.above60Rate,3);
         var above120Delta=round(state.metrics.above120Rate-previous.metrics.above120Rate,3);
         var above180Delta=round(state.metrics.above180Rate-previous.metrics.above180Rate,3);
@@ -250,7 +251,7 @@
       state.coverage='provisional';
       state.stateId=(state.level+'_'+state.response).toUpperCase();
       state.stateLabel=titleCase(state.level)+' + '+titleCase(state.response);
-      if((state.level==='higher'||state.level==='strong')&&state.response==='quiet') state.safetyFlag='watch_high_steady';
+      if((state.level==='higher'||state.level==='strong')&&state.response==='quiet'&&state.metrics.assessableDays) state.safetyFlag='watch_high_steady';
     }
     return state;
   }
@@ -282,16 +283,18 @@
       var earlier=currentDays.slice(0,-2);
       var latestScore=median(latest.map(function(d){return Number(d.score);}));
       var earlierScore=median(earlier.map(function(d){return Number(d.score);}));
-      var latestResponse=latest.filter(function(d){return d.movement==='responsive';}).length/latest.length;
-      var earlierResponse=earlier.filter(function(d){return d.movement==='responsive';}).length/earlier.length;
-      if(latestScore-earlierScore>=10||latestResponse-earlierResponse>=.34){
+      var latestAssessable=latest.filter(function(d){return d.movement==='responsive'||d.movement==='steady';});
+      var earlierAssessable=earlier.filter(function(d){return d.movement==='responsive'||d.movement==='steady';});
+      var latestResponse=latestAssessable.length?latestAssessable.filter(function(d){return d.movement==='responsive';}).length/latestAssessable.length:null;
+      var earlierResponse=earlierAssessable.length?earlierAssessable.filter(function(d){return d.movement==='responsive';}).length/earlierAssessable.length:null;
+      if(latestScore-earlierScore>=10||(latestResponse!==null&&earlierResponse!==null&&latestResponse-earlierResponse>=.34)){
         result.trajectory='recovering';
       }
     }
 
     if(previous.classifiableDays){
       var scoreDelta=round(current.metrics.medianScore-previous.metrics.medianScore,1);
-      var responseDelta=round(current.metrics.responseRate-previous.metrics.responseRate,3);
+      var responseDelta=current.metrics.responseRate!==null&&previous.metrics.responseRate!==null?round(current.metrics.responseRate-previous.metrics.responseRate,3):null;
       var above60Delta=round(current.metrics.above60Rate-previous.metrics.above60Rate,3);
       var above120Delta=round(current.metrics.above120Rate-previous.metrics.above120Rate,3);
       var above180Delta=round(current.metrics.above180Rate-previous.metrics.above180Rate,3);
