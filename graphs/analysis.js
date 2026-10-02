@@ -510,13 +510,13 @@ function tagEvidenceHtml(insight){
   if(!evidence) return '';
   if(evidence.kind==='immediate'){
     var pct=Math.round(evidence.rate*100);
-    return '<div class="analysis-insight-visual analysis-mini-bar"><div class="analysis-mini-bar-track"><div class="analysis-mini-bar-fill" style="width:'+pct+'%"></div></div><div class="analysis-mini-meta"><span>Tagged occasions followed by an increase</span><span>'+evidence.stat.rises+' of '+evidence.stat.eligible+'</span></div></div>';
+    return '<div class="analysis-insight-visual analysis-mini-bar"><div class="analysis-mini-bar-track"><div class="analysis-mini-bar-fill" style="width:'+pct+'%"></div></div><div class="analysis-mini-meta"><span>'+analysisEscape(evidence.stat.name)+' tags followed by more fat use</span><span>'+evidence.stat.rises+' of '+evidence.stat.eligible+'</span></div></div>';
   }
   if(!isFinite(Number(evidence.comparisonMedian))||!isFinite(Number(evidence.taggedMedian))) return '';
   return compactEvidenceLine([
     {x:0,value:evidence.comparisonMedian,title:'Other days: '+evidence.comparisonMedian},
     {x:1,value:evidence.taggedMedian,title:'Tagged days: '+evidence.taggedMedian}
-  ],'Daily Fuel Score comparison','Other days','Tagged days');
+  ],'How the tagged days compared with other recent days','Other days',analysisEscape(evidence.stat.name)+' days');
 }
 
 function tagInsightTimeframe(insight){
@@ -1082,17 +1082,17 @@ function buildTagInsights(tagRows,history,options){
   return selected.slice(0,2).map(function(best){
     var label=best.stat.icon+' '+best.stat.name;
     if(best.kind==='immediate'){
-      var immediateEvidence='This pattern appeared after '+best.stat.rises+' of '+best.stat.eligible+' tagged '+best.stat.name.toLowerCase()+' occasions.';
+      var immediateEvidence='On '+best.stat.rises+' of '+best.stat.eligible+' recent times you used the '+best.stat.name+' tag, your results suggested your body was using more fat for energy afterward.';
       var immediateAnswer=label+' may be helping your metabolism shift toward using more fat for energy afterward.';
       if(best.supporting){
-        immediateEvidence+=' '+best.supporting.stat.icon+' '+best.supporting.stat.name+' showed a similar pattern after '+best.supporting.stat.rises+' of '+best.supporting.stat.eligible+' tagged occasions.';
+        immediateEvidence+=' The '+best.supporting.stat.name+' tag showed a similar pattern on '+best.supporting.stat.rises+' of '+best.supporting.stat.eligible+' recent occasions.';
       }
       return {question:'What may be helping?',answer:immediateAnswer,detail:immediateEvidence,tone:'is-change',icon:best.stat.icon,evidence:best};
     }
     if(best.kind==='same_day'){
-      return {question:'What may be helping?',answer:'On days you tagged '+label+', your results suggest your body may use fat for energy for more of the day.',detail:'This pattern appeared across '+best.count+' tagged days.',tone:'is-change',icon:best.stat.icon,evidence:best};
+      return {question:'What may be helping?',answer:'On days you tagged '+label+', your results suggest your body may use fat for energy for more of the day.',detail:'Across '+best.count+' recent days with the '+best.stat.name+' tag, your results suggested your body used fat for energy for more of the day than on other recent days.',tone:'is-change',icon:best.stat.icon,evidence:best};
     }
-    return {question:'What may be helping?',answer:'After days tagged '+label+', your results suggest your body may use more fat for energy the following day.',detail:'This pattern appeared across '+best.count+' tagged follow-up days.',tone:'is-change',icon:best.stat.icon,evidence:best};
+    return {question:'What may be helping?',answer:'After days tagged '+label+', your results suggest your body may use more fat for energy the following day.',detail:'Across '+best.count+' recent days after the '+best.stat.name+' tag, your results suggested your body used more fat for energy than on other recent days.',tone:'is-change',icon:best.stat.icon,evidence:best};
   });
 }
 

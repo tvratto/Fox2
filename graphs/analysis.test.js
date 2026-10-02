@@ -42,6 +42,7 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.equal(insight.question,'What may be helping?');
   assert.ok(insight.answer.includes('may be helping your metabolism shift toward using more fat for energy'));
   assert.ok(insight.detail.includes('5 of 5'));
+  assert.ok(insight.detail.includes('your results suggested your body was using more fat for energy afterward'));
   assert.ok(!insight.detail.includes('Fat Zone'));
 })();
 
@@ -258,10 +259,11 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(daily.includes('Daily Fuel Score 93'));
 
   const tagged=context.tagEvidenceHtml({evidence:{
-    kind:'immediate',rate:.6,stat:{rises:3,eligible:5}
+    kind:'immediate',rate:.6,stat:{name:'Run',rises:3,eligible:5}
   }});
   assert.ok(tagged.includes('width:60%'));
   assert.ok(tagged.includes('3 of 5'));
+  assert.ok(tagged.includes('Run tags followed by more fat use'));
   assert.equal(context.tagInsightTimeframe({evidence:{kind:'immediate',stat:{eligible:5}}}),'Repeated choice · 5 occasions');
   assert.equal(context.tagInsightTimeframe({evidence:{kind:'same_day',count:6}}),'Repeated choice · 6 days');
 })();
