@@ -301,20 +301,42 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(withTag.guidance.includes('You tagged 🚶 Walk beforehand'));
   assert.ok(withTag.guidance.includes('We don’t know yet if it helped'));
 
+  assert.ok(context.analysisLookbackWindow(days,[],'2026-10-05',5));
   assert.equal(context.analysisLookbackWindow(days,[],'2026-10-06',5),null);
 })();
 
-(function comparesRecentCalendarPeriodsBeforeClaimingProgress(){
-  const recentScores=[
-    {date:'2026-09-18',score:95},{date:'2026-09-20',score:110},{date:'2026-09-24',score:125},{date:'2026-09-29',score:130}
+(function distinguishesBalancedMaintenanceFromGettingClose(){
+  const timRecent=[91,88,94,90].map((score,index)=>({date:'2026-09-'+String(15+index).padStart(2,'0'),score}));
+  const timPrior=[89,93,90,92].map((score,index)=>({date:'2026-09-'+String(1+index).padStart(2,'0'),score}));
+  const tim=context.analysisRecentProgressInsight(timRecent,timPrior,[],[]);
+  assert.equal(tim.tier,'balanced');
+  assert.ok(tim.headline.includes('steady, balanced fuel pattern'));
+  assert.ok(tim.answer.includes('maintenance is your goal'));
+  assert.ok(!/\b91\b|\b120\b/.test(tim.headline+' '+tim.answer));
+
+  const maggieRecent=[103,119,128,135,104,114].map((score,index)=>({date:'2026-08-'+String(12+index).padStart(2,'0'),score}));
+  const maggiePrior=[95,99,101,102].map((score,index)=>({date:'2026-07-'+String(28+index).padStart(2,'0'),score}));
+  const maggie=context.analysisRecentProgressInsight(maggieRecent,maggiePrior,[],[]);
+  assert.equal(maggie.tier,'balanced-near-higher');
+  assert.ok(maggie.headline.includes('getting close to a higher fat-use range'));
+  assert.ok(maggie.answer.includes('already reaching it on some days'));
+  assert.ok(!/\b109\b|\b120\b/.test(maggie.headline+' '+maggie.answer));
+  assert.ok(maggie.detail.includes('above 120'));
+})();
+
+(function callsOutARecentStrongerDayWithoutClaimingCause(){
+  const scores=[
+    {date:'2026-08-21',score:85},{date:'2026-08-22',score:150},
+    {date:'2026-08-23',score:114},{date:'2026-08-24',score:95}
   ];
-  const previousScores=[
-    {date:'2026-09-03',score:75},{date:'2026-09-05',score:80},{date:'2026-09-09',score:85},{date:'2026-09-14',score:90}
-  ];
-  const insight=context.analysisRecentProgressInsight(recentScores,previousScores,[],[]);
-  assert.ok(insight.answer.includes('for more of the day than it did in the two weeks before'));
-  assert.ok(insight.detail.includes('latest 14 days include 4 saved Daily Fuel Scores'));
-  assert.ok(insight.detail.includes('14 days before averaged'));
+  const opportunity=context.analysisRecentScoreOpportunity(scores,'2026-08-26',[{
+    day_date:'2026-08-22',events:[{icon:'🏃',name:'Run',minute:600}]
+  }],111);
+  assert.ok(opportunity.title.includes('Saturday, Aug 22'));
+  assert.ok(opportunity.answer.includes('higher fat-use range'));
+  assert.ok(opportunity.answer.includes('You tagged 🏃 Run'));
+  assert.ok(opportunity.answer.includes('We don’t know yet if it helped'));
+  assert.ok(!opportunity.answer.includes('150'));
 })();
 
 console.log('analysis tests passed');

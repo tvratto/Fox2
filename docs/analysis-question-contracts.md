@@ -81,6 +81,21 @@ The metabolic bridge is:
 
 Use `suggests`, `may`, and `appears` for metabolic meaning. Breath acetone supports an inference about making ketone fuel from fat. It does not directly measure total fat burned, body-fat loss, or the exact share of energy coming from fat.
 
+### Daily Fuel Score tiers
+
+The analysis uses four internal tiers to interpret a person's recent position:
+
+| Daily Fuel Score | Internal interpretation | Main customer meaning |
+| --- | --- | --- |
+| 0–60 | Low fat use | Building toward balanced fuel use |
+| Above 60 through 120 | Balanced fuel use | A steady pattern that may be useful for maintenance; stronger days may show how to move higher if body-fat reduction is the goal |
+| Above 120 through 180 | Higher fat use | The FOX2 range where body-fat loss may become more likely |
+| Above 180 | Strong fat use | High and sustained; focus on adequate food, protein, and sustainability rather than always pushing higher |
+
+These are product probability tiers, not clinical cutoffs or guarantees. The main message does not lead with the numbers. It says whether the person is building toward balanced use, holding a balanced pattern, getting close to the next range, already reaching it on some days, or sustaining a higher range. Exact averages, thresholds, and day counts belong under **Why FOX2 says this**.
+
+Recent position and direction are separate. Someone holding steady in balanced fuel use needs a different message from someone near the top of that range who already reaches higher fat use on several days, even if neither has a large week-over-week increase.
+
 ### Evidence types must remain separate
 
 | Evidence | What it can answer | What it cannot answer by itself |
