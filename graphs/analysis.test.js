@@ -317,8 +317,10 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   const opportunity=context.analysisDaypartOpportunity({points},'2026-09-30');
   assert.equal(opportunity.question,'What could I try?');
   assert.ok(opportunity.answer.includes('morning looks like your biggest opportunity'));
+  assert.ok(opportunity.answer.includes('Fat Zone often goes up in the evening'));
   assert.ok(opportunity.answer.includes('morning meal, timing, or activity'));
   assert.ok(opportunity.detail.includes('The morning was the lowest part'));
+  assert.ok(opportunity.detail.includes('evening was the highest'));
 })();
 
 (function usesEightRecentWeeksAndOnlyResurfacesStrongOlderEvidence(){
