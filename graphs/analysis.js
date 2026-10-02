@@ -1318,6 +1318,7 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   var helpingInsight=recentTagInsight||((stallInsight&&extendedStall)?analysisHistoricalTagInsight(tagRows||[],tagHistory,history.activeDate):null);
   var recentTimeframe='Last 14 calendar days · '+analysisShortDate(recentStart)+'–'+analysisShortDate(recentEnd);
   var progressExplanation=analysisProgressExplanation(currentDayToDay,previousDayToDay,recentMeasuredDays,previousMeasuredDays);
+  var positionHtml=analysisTierGuideHtml(progressInsight,recentAverage);
   var openingHtml='<section class="analysis-card analysis-hero">'
     +'<div class="analysis-eyebrow">'+recentTimeframe+'</div>'
     +'<h1 class="analysis-title">Am I making progress?</h1>'
@@ -1335,9 +1336,8 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
     +'<h2>'+helpingInsight.question+'</h2><p>'+helpingInsight.answer+'</p>'
     +analysisWhyHtml(helpingInsight.detail,helpingVisual)
     +'</div></article>':'';
-  shell.innerHTML=openingHtml
+  shell.innerHTML=positionHtml+openingHtml
     +(stallHtml||standaloneHelpingHtml?'<section class="analysis-conclusion-list" aria-label="Questions answered">'+stallHtml+standaloneHelpingHtml+'</section>':'')
-    +analysisTierGuideHtml(progressInsight,recentAverage)
     +weeklyTrendHtml(scoreDays,all,weekToDate)
     +'<section class="analysis-card"><h2 class="analysis-section-title">Daily Fuel Score over time</h2>'
       +'<p class="analysis-section-copy">Every saved day from the beginning. The highlighted area is the latest 14 calendar days.</p>'
