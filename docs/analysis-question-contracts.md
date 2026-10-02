@@ -21,7 +21,7 @@ FOX2 selects the most relevant questions from the evidence. It should normally s
 The analysis begins with the person's main question and then shows the most useful supporting context:
 
 1. **Am I making progress?** One answer that combines the current week, the latest 14 calendar days, and the strongest relevant sign of progress.
-2. **What stood out recently?** One specific event from the last five calendar days, only when it gives the person something useful to repeat or investigate.
+2. **Could I be stalled?** A conditional answer when recent Daily Fuel Scores remain below the higher range and have stayed level or gone down. The answer includes any encouraging within-day evidence and the status of a repeated tagged experiment.
 3. **Where am I now?** The person's recent Low, Balanced, Higher, or Strong fuel-use range.
 4. The longer weekly and complete-history trends that support the answer.
 
@@ -29,7 +29,7 @@ The analysis begins with the person's main question and then shows the most usef
 
 An event older than five calendar days may support the longer analysis, but FOX2 should not ask the person to remember what happened before it. In the main answer, use a natural label such as “Yesterday afternoon” or “Last Friday morning.” Put the exact date in the supporting detail.
 
-Repeated-tag evidence belongs with the event or change it helps explain. It should not appear as an unrelated analysis card. A claim that a shift is showing up on more days requires a direct comparison with an earlier period; ordinary differences between days are not enough.
+Repeated-tag evidence belongs inside the question it helps answer. If FOX2 asks the person to tag something, that same section must say what FOX2 is testing, count the usable examples, and eventually report the result. A claim that a shift is showing up on more days requires a direct comparison with an earlier period; ordinary differences between days are not enough.
 
 ## Shared language
 
@@ -115,11 +115,11 @@ The requirement for at least three measurements spanning six hours applies only 
 | Priority | User question | Underlying concern | Primary timeframe | Minimum evidence | Possible answer families | Supporting visual |
 | --- | --- | --- | --- | --- | --- | --- |
 | 1 | Am I making progress? | Is my body drawing on fat for energy more often, for longer, or across more days? | Several timescales, from the latest well-measured day through completed calendar weeks | Depends on the sign of progress; each answer must state its timeframe and evidence strength | Happening more often; lasting longer; showing up across more days; not clear yet | One small visual for each sign of progress being described |
-| 2 | What stood out recently? | Did a recent day or part of a day give me something useful to repeat or investigate? | Latest five calendar days | One unusually strong Daily Fuel Score or one well-measured Fat Zone increase | Stronger day; brief increase; possible repeated-tag association; nothing useful to call out | The named day or period only |
+| 2 | Could I be stalled? | If I am trying to reduce body fat, do my recent results help explain why progress feels stalled? | Latest seven calendar days, with longer history for context | At least four saved Daily Fuel Scores; recent average below 120; later scores roughly level or lower | Possibly stalled with an encouraging sign; possibly stalled with a tagged experiment; not currently supported | Seven-day score direction plus only the within-day evidence used in the answer |
 | 3 | Is my body drawing on fat for energy more often? | Does the Fat Zone go higher than it used to? | Recent measured days, with history for context | At least two Daily Fuel Scores or one well-measured day | Not seen yet; seen briefly; happening more often; lasting longer | Highlighted higher days or a specifically named day curve |
 | 4 | Does my Fat Zone change during the day? | Does the pattern suggest that fat use changes as the day changes? | Several individual days | At least three readings spanning six hours on each included day | Not enough coverage; little change; changes on some days; changes often | Small multiples: one clearly labeled curve per date |
 | 5 | Is this shift showing up on more days? | Is the change happening often, not just once in a while? | Completed weeks | At least four Daily Fuel Scores in each compared week | Too early; promising but occasional; happening across more days; continuing | Weekly average with day-to-day range |
-| 6 | Am I stalled? | Have my scores and Fat Zones stayed the same long enough that I should try a change? | At least two completed weeks | Enough Daily Fuel Scores, plus enough Fat Zone readings for any claim about changes within a day | Too early to tell; no clear increase yet; an early change is starting; not currently stalled | Multi-week score and Fat Zone summary |
+| 6 | What stood out recently? | Did a recent day genuinely differ from my own history? | Latest five calendar days | A result that is unusual relative to enough personal history, not merely the latest qualifying rise | Unusually strong score; unusually large or long rise; repeated tag association; nothing worth showing | The named day or period only |
 | 7 | Could I be pushing too hard? | Has my Fat Zone stayed very high without coming back down? | Recent weeks | Repeated high Daily Fuel Scores plus enough Fat Zone readings across the day | No such pattern; check that you are eating enough; the pattern has continued and may be worth discussing with a professional | Weekly trend plus clearly labeled high, steady days |
 | 8 | What appears to be helping? | Which repeated choices are followed by a more favorable pattern? | Repeated tagged occasions | Threshold depends on comparison type; see tag contract | Still gathering; same-day association; later-reading association; next-day association | Tagged versus comparison occasions |
 | 9 | How is this week going? | Is the current week supporting progress, holding steady, or offering time to recover? This is supporting evidence for “Am I making progress?”, not a separate headline card. | Current Monday through last measured day | One or more Daily Fuel Scores this week | Early start; ahead of the same point last week; similar; behind with time to act; recovering | Current week versus the same weekdays last week |
@@ -277,6 +277,58 @@ The expanded explanation may say:
 
 This answer may say that the results suggest the body is drawing on fat for energy more often, for longer, or across more days. It must not say that the person burned a specific amount of fat, lost body fat, preserved or lost muscle, changed A1C, changed resting metabolic rate, entered starvation mode, or that a tagged choice caused the change.
 
+## Contract 2: Could I be stalled?
+
+### What the person is really asking
+
+“If I am trying to reduce body fat, do my recent results help explain why progress feels stalled—and is there anything encouraging I can build on?”
+
+FOX2 does not know the person's goal and does not measure weight loss directly. The answer must therefore begin with `Possibly` and use conditional wording: `If you’re trying to reduce body fat...`
+
+### When the answer appears
+
+The Analysis page shows this question when all of these are true:
+
+1. The latest seven calendar days contain at least four saved Daily Fuel Scores.
+2. Missing days are ignored, never filled with zero.
+3. The seven-day average is below 120, FOX2's internal boundary for the range where body-fat loss becomes more likely.
+4. Either the latest three scored days have gone down by at least five points overall, or the later half of the seven-day window averages no more than five points above the earlier half.
+
+The question does not appear when the recent average is 120 or higher, when there are fewer than four scored days, or when the later part of the week has clearly gone up.
+
+The Analysis page must continue to answer this question whenever the evidence supports it. A three-to-four-day cooldown applies only to proactive device prompts or notifications, so the person is not repeatedly interrupted by the same message. It must not hide the answer when the person deliberately opens Analysis.
+
+### Answer composition
+
+The main answer has three parts:
+
+1. **Possibly stalled:** explain that the recent scores remain below the higher range and have stayed about the same or gone down.
+2. **Encouraging evidence:** call out higher-range days, recurring Fat Zone changes, or another real sign that the person can build on. Describe a recurring pattern as recurring; never present an ordinary day as a unique event.
+3. **Visible experiment:** include the relevant tag result or the progress of the repeated tag FOX2 is evaluating.
+
+Example:
+
+> Possibly. If you’re trying to reduce body fat, your recent results may help explain why progress feels stalled. Your Daily Fuel Scores have stayed about the same and remain below the range where body-fat loss becomes more likely. The encouraging part is that you already reach the higher range on some days.
+
+### Tag feedback loop
+
+FOX2 must never ask a person to tag something as a vague future chore. If the stall answer asks for a tag, the same section must show one of these states:
+
+| State | Requirement | Customer-facing result |
+| --- | --- | --- |
+| No repeated choice | No usable repeated tag | Say that FOX2 is not tracking a repeated choice yet. Explain that the same tag should be used for one safe, repeatable change and that the result will be reported here. |
+| Gathering comparisons | One to four usable examples of the same tag | Name the tag, show the count toward five, and say that FOX2 will report the result here. |
+| No consistent association | At least five useful comparisons without the required lift | Say that FOX2 has not found a consistent increase. Do not keep implying that the choice is helping. |
+| Possible immediate association | At least five timed tagged occasions; at least half followed by a Fat Zone rise of 1.5 or more | Say that the choice may be helping and show the qualifying count under `Why FOX2 says this`. |
+| Possible same-day association | At least five tagged score days and five comparison days; tagged median at least five points higher | Say that the choice may be helping the higher pattern last through more of the day. |
+| Possible next-day association | Enough tagged follow-up and comparison days; next-day median at least ten points higher | Say that the choice may be associated with a stronger following day. |
+
+Timed tags may be compared with measurements before and after the event. Day-level tags may be compared with same-day and next-day Daily Fuel Scores. A tag can show an association, never causation.
+
+### Claim boundary
+
+The stall answer may say that FOX2 results could help explain why body-fat progress feels stalled. It must not say that weight loss has definitely stopped, that a meal or activity caused the pattern, or that the person has damaged their metabolism. The 120 boundary is a FOX2 product hypothesis based on internal observations, not a clinically validated cutoff or guarantee.
+
 ## Remaining contracts to decide together
 
 For each remaining question, we should settle the decisions below before changing the interface.
@@ -287,7 +339,6 @@ For each remaining question, we should settle the decisions below before changin
 | Is my body drawing on fat for energy more often? | Whether one well-measured day is enough for an early “yes,” and how to explain the difference between a brief rise and a change that lasts |
 | Does my Fat Zone change during the day? | Whether a return must happen before midnight or may happen within the current 72-hour rule |
 | Is this shift showing up on more days? | Whether this requires a smaller score range, more days above a threshold, or both |
-| Am I stalled? | How many completed weeks are required and how low/flat the evidence must remain before showing this question |
 | Could I be pushing too hard? | The duration and thresholds that justify a careful protective prompt without implying a diagnosis |
 | What appears to be helping? | Exact minimum repeats for later-reading, same-day, and next-day tag comparisons |
 | What should I try next? | The priority order among measurement coverage, repeating a promising choice, and trying a new sustainable choice |

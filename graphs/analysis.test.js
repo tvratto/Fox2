@@ -282,7 +282,45 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(!source.includes('tagInsights.slice('));
   assert.ok(!source.includes('How is this week going?</h2>'));
   assert.ok(!source.includes('Am I making progress overall?'));
-  assert.ok(source.indexOf('Am I making progress?')<source.indexOf('What stood out recently?'));
+  assert.ok(!source.includes('What stood out recently?'));
+  assert.ok(source.includes('analysisStallInsight(scoreDays,history,history.activeDate)'));
+  assert.ok(source.includes("shell.innerHTML=openingHtml"));
+})();
+
+(function raisesAStallQuestionOnlyForAFlatOrFallingSub120Week(){
+  const scores=[92,96,94,91,93,90].map((score,index)=>({date:'2026-09-'+String(23+index).padStart(2,'0'),score}));
+  const history={days:[
+    {date:'2026-09-24',movement:'responsive',range:3},
+    {date:'2026-09-26',movement:'responsive',range:4},
+    {date:'2026-09-28',movement:'steady',range:1}
+  ],points:[]};
+  const insight=context.analysisStallInsight(scores,history,'2026-09-30');
+  assert.equal(insight.question,'Could I be stalled?');
+  assert.ok(insight.answer.includes('If you’re trying to reduce body fat'));
+  assert.ok(insight.answer.includes('Fat Zone still goes up and down'));
+  assert.ok(insight.detail.includes('Missing days were not counted as zero'));
+
+  const improving=[70,74,79,86,94].map((score,index)=>({date:'2026-09-'+String(24+index).padStart(2,'0'),score}));
+  assert.equal(context.analysisStallInsight(improving,{days:[],points:[]},'2026-09-30'),null);
+  const higher=[126,132,129,135].map((score,index)=>({date:'2026-09-'+String(25+index).padStart(2,'0'),score}));
+  assert.equal(context.analysisStallInsight(higher,{days:[],points:[]},'2026-09-30'),null);
+})();
+
+(function makesTaggingAVisibleExperimentInsideTheAnswer(){
+  const noTags=context.analysisTagExperimentStatus([], {days:[],points:[]});
+  assert.equal(noTags.title,'What could I test?');
+  assert.ok(noTags.answer.includes('report the result here'));
+  assert.ok(noTags.answer.includes('five useful examples'));
+
+  const gathering=context.analysisTagExperimentStatus([
+    {day_date:'2026-09-25',events:[{icon:'🚶',name:'Walk',minute:600}]},
+    {day_date:'2026-09-26',events:[{icon:'🚶',name:'Walk',minute:600}]}
+  ],{
+    days:[{date:'2026-09-25',score:90},{date:'2026-09-26',score:95}],points:[]
+  });
+  assert.equal(gathering.title,'What is FOX2 testing?');
+  assert.ok(gathering.answer.includes('2 of 5 useful comparisons'));
+  assert.ok(gathering.answer.includes('FOX2 will report what it finds here'));
 })();
 
 (function givesAPlainLanguageLookbackForAStandoutPeriod(){
