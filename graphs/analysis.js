@@ -24,6 +24,15 @@ function analysisWeekday(iso){
   return ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date(iso+'T00:00:00Z').getUTCDay()];
 }
 
+function analysisRelativeDay(iso,referenceDate){
+  if(!referenceDate) return analysisWeekday(iso);
+  var age=Math.round((new Date(referenceDate+'T00:00:00Z')-new Date(iso+'T00:00:00Z'))/86400000);
+  if(age===0) return 'Today';
+  if(age===1) return 'Yesterday';
+  if(age>=2&&age<=7) return 'Last '+analysisWeekday(iso);
+  return analysisWeekday(iso);
+}
+
 function analysisDayPart(minute){
   if(Number(minute)<720) return 'morning';
   if(Number(minute)<1020) return 'afternoon';
@@ -62,7 +71,8 @@ function analysisLookbackWindow(days,tagRows,referenceDate,maxAgeDays){
   });
   tagged.sort(function(a,b){return b.time-a.time;});
   var datedEventLabel=weekday+', '+analysisShortDate(day.date)+', in the '+part;
-  var guidance=datedEventLabel+' stood out. ';
+  var displayEventLabel=analysisRelativeDay(day.date,referenceDate)+' '+part;
+  var guidance=displayEventLabel+' stood out. ';
   if(tagged.length){
     guidance+='You tagged '+tagged[0].label+' beforehand. We don’t know yet if it helped. If it is safe to repeat, try it again and tag it.';
   }else{
@@ -70,7 +80,7 @@ function analysisLookbackWindow(days,tagRows,referenceDate,maxAgeDays){
   }
   var evidence='On '+analysisShortDate(day.date)+', your Fat Zone rose from a usual level near '
     +Math.round(Number(episode.baseline)*10)/10+' to '+Math.round(Number(episode.peak)*10)/10+'.';
-  return {date:day.date,eventLabel:eventLabel,datedEventLabel:datedEventLabel,guidance:guidance,evidence:evidence,day:day,tag:tagged[0]||null};
+  return {date:day.date,eventLabel:eventLabel,displayEventLabel:displayEventLabel,datedEventLabel:datedEventLabel,guidance:guidance,evidence:evidence,day:day,tag:tagged[0]||null};
 }
 
 function analysisMedian(values){
@@ -369,7 +379,7 @@ function analysisRecentScoreOpportunity(scoreDays,referenceDate,tagRows,recentAv
     if(icon){tag={icon:icon,name:names[icon]||'tagged choice'};return true;}
     return false;
   });
-  var label=analysisWeekday(best.date)+', '+analysisShortDate(best.date);
+  var label=analysisRelativeDay(best.date,referenceDate);
   var answer=Number(best.score)>120
     ?'Your result reached a higher fat-use range that day. '
     :'Your result moved closer to a higher fat-use range that day. ';
@@ -380,7 +390,7 @@ function analysisRecentScoreOpportunity(scoreDays,referenceDate,tagRows,recentAv
   }
   return {
     date:best.date,title:label+' was one of your stronger days.',answer:answer,
-    detail:'The Daily Fuel Score on '+analysisShortDate(best.date)+' was '+best.score+', compared with a recent average of '+recentAverage+'.',
+    detail:'The Daily Fuel Score on '+analysisWeekday(best.date)+', '+analysisShortDate(best.date)+' was '+best.score+', compared with a recent average of '+recentAverage+'.',
     tag:tag
   };
 }
@@ -521,6 +531,43 @@ function analysisWhyHtml(detail,visual){
   return '<details class="analysis-why"><summary>Why FOX2 says this</summary>'
     +(detail?'<p>'+analysisEscape(detail)+'</p>':'')
     +(visual||'')+'</details>';
+}
+
+function analysisTierGuideHtml(insight,recentAverage){
+  if(!insight||!isFinite(Number(recentAverage))) return '';
+  var average=Number(recentAverage);
+  var markerPct=average<=60?average/60*25
+    :average<=120?25+(average-60)/60*25
+    :average<=180?50+(average-120)/60*25
+    :75+Math.min(1,(average-180)/60)*25;
+  markerPct=Math.max(2,Math.min(98,markerPct));
+  var activeTier=insight.tier==='balanced-near-higher'?'balanced':insight.tier;
+  var positionCopy=insight.tier==='balanced-near-higher'
+    ?'Your recent pattern is in balanced fuel use and close to the higher range.'
+    :activeTier==='low'?'Your recent pattern is building toward balanced fuel use.'
+    :activeTier==='balanced'?'Your recent pattern is in balanced fuel use.'
+    :activeTier==='higher'?'Your recent pattern is in higher fat use.'
+    :'Your recent pattern is in strong fat use.';
+  var ranges=[
+    {key:'low',name:'Low',copy:'Building toward balanced fuel use.'},
+    {key:'balanced',name:'Balanced',copy:'Uses fat regularly and may support maintenance.'},
+    {key:'higher',name:'Higher',copy:'Body-fat loss may become more likely.'},
+    {key:'strong',name:'Strong',copy:'High and sustained; more is not always better.'}
+  ];
+  var definitions=ranges.map(function(range){
+    return '<div class="analysis-tier-definition '+(range.key===activeTier?'is-active':'')+'"><strong>'+range.name+'</strong><span>'+range.copy+'</span></div>';
+  }).join('');
+  return '<section class="analysis-card analysis-tier-card">'
+    +'<h2 class="analysis-section-title">Your fuel-use range</h2>'
+    +'<p class="analysis-section-copy">'+positionCopy+'</p>'
+    +'<div class="analysis-tier-scale" role="img" aria-label="Your recent Daily Fuel Score is in the '+analysisEscape(activeTier)+' fuel-use range">'
+      +'<div class="analysis-tier-marker" style="left:'+markerPct.toFixed(1)+'%"><span>'+(insight.tier==='balanced-near-higher'?'Close to higher':'You are here')+'</span></div>'
+      +'<div class="analysis-tier-segment is-low"></div><div class="analysis-tier-segment is-balanced"></div><div class="analysis-tier-segment is-higher"></div><div class="analysis-tier-segment is-strong"></div>'
+    +'</div>'
+    +'<div class="analysis-tier-names"><span>Low</span><span>Balanced</span><span>Higher</span><span>Strong</span></div>'
+    +'<div class="analysis-tier-definitions">'+definitions+'</div>'
+    +'<details class="analysis-why"><summary>How FOX2 defines these ranges</summary><p>Low is 0–60. Balanced is above 60 through 120. Higher is above 120 through 180. Strong is above 180. These are FOX2 probability ranges, not clinical cutoffs or guarantees.</p></details>'
+  +'</section>';
 }
 
 function fox2DownloadCsv(filename,rows){
@@ -1108,7 +1155,8 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   var currentWeekVisual=currentDayToDay?dailyScoreEvidenceSvg(currentDayToDay.days,'Daily Fuel Scores this week'):'';
   var lookback=analysisLookbackWindow(recentMeasuredDays,tagRows||[],history.activeDate,5);
   var progressInsight=analysisRecentProgressInsight(recentScoreDays,previousScoreDays,recentMeasuredDays,previousMeasuredDays);
-  var scoreOpportunity=analysisRecentScoreOpportunity(recentScoreDays,history.activeDate,tagRows||[],analysisAverageScore(recentScoreDays));
+  var recentAverage=analysisAverageScore(recentScoreDays);
+  var scoreOpportunity=analysisRecentScoreOpportunity(recentScoreDays,history.activeDate,tagRows||[],recentAverage);
   var recentTimeframe='Last 14 calendar days · '+analysisShortDate(recentStart)+'–'+analysisShortDate(recentEnd);
   var weekTimeframe=weekToDate?'This week · '+analysisShortDate(weekToDate.startDate)+'–'+analysisShortDate(weekToDate.throughDate):'This week';
   var currentWeekDetail=currentDayToDay&&currentDayToDay.dayCount
@@ -1122,7 +1170,7 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
     var matchingTagInsight=lookback.tag?tagInsights.filter(function(insight){
       return insight.evidence&&insight.evidence.kind==='immediate'&&insight.evidence.stat&&insight.evidence.stat.icon===lookback.tag.icon;
     })[0]:null;
-    var lookbackAction=lookback.guidance.replace(lookback.datedEventLabel+' stood out. ','');
+    var lookbackAction=lookback.guidance.replace(lookback.displayEventLabel+' stood out. ','');
     var recentAnswer='Your body may have been drawing on fat for energy, but only briefly. '+lookbackAction;
     var recentDetail=lookback.evidence;
     if(matchingTagInsight){
@@ -1131,7 +1179,7 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
     }
     openingHtml='<section class="analysis-card analysis-hero">'
       +'<div class="analysis-eyebrow">What changed recently?</div>'
-      +'<h1 class="analysis-title">'+lookback.datedEventLabel+' stood out.</h1>'
+      +'<h1 class="analysis-title">'+lookback.displayEventLabel+' stood out.</h1>'
       +'<p class="analysis-summary">'+recentAnswer+'</p>'
       +analysisWhyHtml(recentDetail,withinDayEvidenceSvg([lookback.day],measurementPoints))
       +'</section>';
@@ -1157,6 +1205,7 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
     +'<section class="analysis-conclusion-list" aria-label="Your analysis">'
       +weekHtml+progressHtml
     +'</section>'
+    +analysisTierGuideHtml(progressInsight,recentAverage)
     +weeklyTrendHtml(scoreDays,all,weekToDate)
     +'<section class="analysis-card"><h2 class="analysis-section-title">Daily Fuel Score over time</h2>'
       +'<p class="analysis-section-copy">Every saved day from the beginning. The highlighted area is the latest 14 calendar days.</p>'

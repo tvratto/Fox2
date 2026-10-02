@@ -290,7 +290,7 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
     responseEpisode:{baseline:2,peak:5,startTime:Date.parse('2026-09-30T14:00:00Z'),startMinute:840}
   }];
   const noTag=context.analysisLookbackWindow(days,[],'2026-10-01',5);
-  assert.ok(noTag.guidance.includes('Wednesday, Sep 30, in the afternoon stood out'));
+  assert.ok(noTag.guidance.includes('Yesterday afternoon stood out'));
   assert.ok(noTag.guidance.includes('Tuesday evening through Wednesday morning'));
   assert.ok(noTag.guidance.includes('Choose one safe part'));
   assert.ok(noTag.evidence.includes('Fat Zone rose from a usual level near 2 to 5'));
@@ -332,11 +332,27 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   const opportunity=context.analysisRecentScoreOpportunity(scores,'2026-08-26',[{
     day_date:'2026-08-22',events:[{icon:'🏃',name:'Run',minute:600}]
   }],111);
-  assert.ok(opportunity.title.includes('Saturday, Aug 22'));
+  assert.ok(opportunity.title.includes('Last Saturday'));
   assert.ok(opportunity.answer.includes('higher fat-use range'));
   assert.ok(opportunity.answer.includes('You tagged 🏃 Run'));
   assert.ok(opportunity.answer.includes('We don’t know yet if it helped'));
   assert.ok(!opportunity.answer.includes('150'));
+})();
+
+(function showsTheTierWithoutLeadingWithNumbers(){
+  const insight={tier:'balanced-near-higher'};
+  const html=context.analysisTierGuideHtml(insight,109);
+  assert.ok(html.includes('Your fuel-use range'));
+  assert.ok(html.includes('close to the higher range'));
+  assert.ok(html.includes('Close to higher'));
+  assert.ok(html.includes('analysis-tier-definition balanced')||html.includes('analysis-tier-definition is-active'));
+  assert.ok(html.includes('How FOX2 defines these ranges'));
+  assert.ok(html.includes('Balanced is above 60 through 120'));
+})();
+
+(function usesNaturalRelativeDayNames(){
+  assert.equal(context.analysisRelativeDay('2026-09-25','2026-09-30'),'Last Friday');
+  assert.equal(context.analysisRelativeDay('2026-09-29','2026-09-30'),'Yesterday');
 })();
 
 console.log('analysis tests passed');
