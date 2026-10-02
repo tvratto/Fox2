@@ -1201,6 +1201,93 @@ function analysisStallInsight(scoreDays,history,referenceDate){
   };
 }
 
+function analysisOverextendedInsight(weekToDate,lastOfficial){
+  var current=weekToDate&&weekToDate.current;
+  var currentFlag=weekToDate&&weekToDate.trajectory==='possibly_overextended'&&current&&current.classifiableDays>=3;
+  var completedFlag=lastOfficial&&lastOfficial.safetyFlag==='persistent_high_steady';
+  if(!currentFlag&&!completedFlag) return null;
+  var state=currentFlag?current:lastOfficial;
+  var period=currentFlag?'this week':'your latest completed week';
+  return {
+    question:'Could I be pushing too hard?',tone:'is-watch',icon:'!',priority:100,
+    answer:'Possibly. Your Fat Zone has stayed high without coming back down much. More is not always better. Rather than trying to push higher, focus on a routine you can sustain and make sure you’re eating enough, including protein.',
+    detail:'Across '+state.classifiableDays+' measured day'+(state.classifiableDays===1?'':'s')+' in '+period+', your Daily Fuel Scores stayed in a higher range while your well-measured days showed little movement back down.',
+    visual:dailyScoreEvidenceSvg(state.days||[],'Daily Fuel Scores during '+period)
+  };
+}
+
+function analysisLastingChangeInsight(weeklyStates){
+  var usable=(weeklyStates||[]).filter(function(state){return state.coverage==='sufficient'&&state.metrics&&isFinite(Number(state.metrics.medianScore));});
+  if(usable.length<3) return null;
+  var recent=usable.slice(-3);
+  if(addIsoDays(recent[0].endDate,1)!==recent[1].startDate||addIsoDays(recent[1].endDate,1)!==recent[2].startDate) return null;
+  var starting=Number(recent[0].metrics.medianScore);
+  var later=[Number(recent[1].metrics.medianScore),Number(recent[2].metrics.medianScore)];
+  if(Math.min.apply(null,later)<starting+8||(later[0]+later[1])/2<starting+10) return null;
+  var visual=compactEvidenceLine(recent.map(function(state,index){
+    return {x:index,value:Number(state.metrics.medianScore),title:state.startDate+' to '+state.endDate+': typical score '+state.metrics.medianScore};
+  }),'Typical Daily Fuel Score across the latest three completed weeks',analysisShortDate(recent[0].startDate),analysisShortDate(recent[2].endDate));
+  return {
+    question:'Is the change lasting?',tone:'is-change',icon:'✓',priority:70,
+    answer:'So far, yes. Your higher results have carried across more than one completed week. That suggests the shift toward fat for energy is lasting beyond one strong day.',
+    detail:'FOX2 compared your latest three completed weeks. Their typical Daily Fuel Scores were '+recent.map(function(state){return state.metrics.medianScore;}).join(', ')+'.',
+    visual:visual
+  };
+}
+
+function analysisStrongestPeriodInsight(weeklyStates){
+  var usable=(weeklyStates||[]).filter(function(state){return state.coverage==='sufficient'&&state.metrics&&isFinite(Number(state.metrics.medianScore));});
+  if(usable.length<3) return null;
+  var latest=usable[usable.length-1];
+  if(!latest.historical||!latest.historical.newHighestMedian) return null;
+  var shown=usable.slice(-6);
+  var visual=compactEvidenceLine(shown.map(function(state,index){
+    return {x:index,value:Number(state.metrics.medianScore),title:state.startDate+' to '+state.endDate+': typical score '+state.metrics.medianScore};
+  }),'Your latest completed week compared with earlier weeks',analysisShortDate(shown[0].startDate),analysisShortDate(latest.endDate));
+  return {
+    question:'Is this one of my strongest periods?',tone:'is-change',icon:'↑',priority:60,
+    answer:'Yes. Your latest completed week was your strongest so far in FOX2. The higher pattern showed up across several days, not just once.',
+    detail:'FOX2 compared the typical Daily Fuel Score from your latest completed week with '+(usable.length-1)+' earlier completed week'+(usable.length===2?'':'s')+'.',
+    visual:visual
+  };
+}
+
+function analysisStandoutQuestion(scoreDays,referenceDate){
+  if(!referenceDate) return null;
+  var recentStart=addIsoDays(referenceDate,-5);
+  var recent=(scoreDays||[]).filter(function(day){return day.date>=recentStart&&day.date<referenceDate;});
+  var earlier=(scoreDays||[]).filter(function(day){return day.date<recentStart;});
+  if(!recent.length||earlier.length<10) return null;
+  var earlierScores=earlier.map(function(day){return Number(day.score);}).filter(function(value){return isFinite(value);}).sort(function(a,b){return a-b;});
+  if(earlierScores.length<10) return null;
+  var percentileIndex=Math.max(0,Math.ceil(earlierScores.length*.9)-1);
+  var threshold=earlierScores[percentileIndex];
+  var typical=analysisMedian(earlierScores);
+  var best=recent.slice().sort(function(a,b){return Number(b.score)-Number(a.score)||b.date.localeCompare(a.date);})[0];
+  if(Number(best.score)<threshold||Number(best.score)<typical+15) return null;
+  var label=analysisRelativeDay(best.date,referenceDate);
+  var visualDays=(scoreDays||[]).filter(function(day){return day.date>=addIsoDays(best.date,-3)&&day.date<=addIsoDays(best.date,3);});
+  return {
+    question:'Did I have an unusually strong day?',tone:'is-change',icon:'↑',priority:50,
+    answer:label+' was unusually strong for you. Your results suggest your body may have drawn on fat for energy for more of that day. Think about what was different the night before and that morning.',
+    detail:'The Daily Fuel Score on '+analysisWeekday(best.date)+', '+analysisShortDate(best.date)+' was '+best.score+'. That was higher than at least 90% of your earlier saved days.',
+    visual:dailyScoreEvidenceSvg(visualDays,'Daily Fuel Scores around '+analysisShortDate(best.date))
+  };
+}
+
+function analysisSelectQuestions(candidates,limit){
+  return (candidates||[]).filter(Boolean).sort(function(a,b){return Number(b.priority||0)-Number(a.priority||0);}).slice(0,limit||2);
+}
+
+function analysisQuestionCardHtml(insight,extraHtml){
+  if(!insight) return '';
+  return '<article class="analysis-conclusion '+(insight.tone||'')+'"><div class="analysis-conclusion-icon">'+(insight.icon||'?')+'</div><div>'
+    +'<h2>'+analysisEscape(insight.question)+'</h2><p>'+insight.answer+'</p>'
+    +analysisWhyHtml(insight.detail||'',insight.visual||'')
+    +(extraHtml||'')
+    +'</div></article>';
+}
+
 function analysisDaypartVisual(points,outcome,referenceDate,recurringEveningRise){
   var byDate={};
   (points||[]).forEach(function(point){
@@ -1471,7 +1558,7 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   var progressInsight=analysisRecentProgressInsight(recentScoreDays,previousScoreDays,recentMeasuredDays,previousMeasuredDays);
   var recentAverage=analysisAverageScore(recentScoreDays);
   var stallInsight=analysisStallInsight(scoreDays,history,history.activeDate);
-  var daypartOpportunity=stallInsight?analysisDaypartOpportunity(history,history.activeDate):null;
+  var daypartOpportunity=analysisDaypartOpportunity(history,history.activeDate);
   var extendedStall=analysisExtendedStall(scoreDays,history.activeDate);
   var helpingInsight=recentTagInsight||((stallInsight&&extendedStall)?analysisHistoricalTagInsight(tagRows||[],tagHistory,history.activeDate):null);
   var recentTimeframe='Last 14 calendar days · '+analysisShortDate(recentStart)+'–'+analysisShortDate(recentEnd);
@@ -1492,12 +1579,28 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
     +'</section>';
   var actionQuestion=helpingInsight?'What else could I try?':daypartOpportunity&&daypartOpportunity.question;
   var actionBlock=daypartOpportunity?'<div class="analysis-experiment"><h3>'+actionQuestion+'</h3><p>'+daypartOpportunity.answer+'</p>'+analysisWhyHtml(daypartOpportunity.detail,daypartOpportunity.visual||'')+'</div>':'';
-  var stallHtml=stallInsight?'<article class="analysis-conclusion '+stallInsight.tone+'"><div class="analysis-conclusion-icon">'+stallInsight.icon+'</div><div>'
-    +'<h2>'+stallInsight.question+'</h2><p>'+stallInsight.answer+'</p>'
-    +analysisWhyHtml(stallInsight.detail,'')
-    +actionBlock
-    +'</div></article>':'';
+  var overextendedInsight=analysisOverextendedInsight(weekToDate,lastOfficial);
+  var lastingInsight=analysisLastingChangeInsight(weeklyStates);
+  var strongestInsight=lastingInsight?null:analysisStrongestPeriodInsight(weeklyStates);
+  var standoutInsight=analysisStandoutQuestion(scoreDays,history.activeDate);
+  var prioritizedStall=stallInsight?Object.assign({},stallInsight,{priority:90}):null;
+  var nextStepInsight=!stallInsight&&!overextendedInsight&&daypartOpportunity?{
+    question:actionQuestion,answer:daypartOpportunity.answer,detail:daypartOpportunity.detail,
+    visual:daypartOpportunity.visual,tone:'is-change',icon:'→',priority:30
+  }:null;
+  var secondaryQuestions=analysisSelectQuestions([
+    overextendedInsight,
+    prioritizedStall,
+    lastingInsight,
+    strongestInsight,
+    standoutInsight,
+    nextStepInsight
+  ],2);
+  var secondaryHtml=secondaryQuestions.map(function(insight){
+    return analysisQuestionCardHtml(insight,insight===prioritizedStall?actionBlock:'');
+  }).join('');
+  window._fox2SelectedQuestions=secondaryQuestions;
   shell.innerHTML=positionHtml+openingHtml
-    +(stallHtml?'<section class="analysis-conclusion-list" aria-label="Questions answered">'+stallHtml+'</section>':'')
+    +(secondaryHtml?'<section class="analysis-conclusion-list" aria-label="Questions answered">'+secondaryHtml+'</section>':'')
     +'<div class="analysis-footnote">Based on '+scoreDays.length+' completed days with scores, including '+all.length+' days with enough readings for within-day comparisons. A clear increase requires a rise at least two Fat Zone levels above your recent baseline and a return toward it within 72 hours. Days without enough readings are left out of within-day comparisons, but their saved Daily Fuel Scores still count in daily and weekly comparisons. Tags show patterns, not causes. FOX2 does not diagnose stalled metabolism, muscle loss, or under-fueling.</div>';
 }

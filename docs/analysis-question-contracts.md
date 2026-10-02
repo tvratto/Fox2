@@ -372,7 +372,7 @@ These are specification gaps, not necessarily software defects:
 2. Weekly score comparisons and Fat Zone changes within a day are not always separated in visible language.
 3. The current response-return rule may extend as far as 72 hours, although the interface describes the result as change “during the day.”
 4. Several useful historical signals already calculated by the state engine—personal highs, threshold streaks, and first higher-use weeks—are not yet translated into customer questions.
-5. The interface can show up to three answers, but it does not yet distinguish an umbrella answer made from several related observations from several unrelated question cards.
+5. The interface now ranks a first set of evidence-backed secondary questions—stall, sustained high results, a change lasting across completed weeks, a personal-best period, a genuinely unusual recent day, and a data-based next step—and shows no more than two. The remaining inventory still needs agreed contracts before it joins the router.
 
 ## Review workflow
 

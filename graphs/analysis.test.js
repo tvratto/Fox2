@@ -285,12 +285,63 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(!source.includes('What stood out recently?'));
   assert.ok(source.includes('analysisStallInsight(scoreDays,history,history.activeDate)'));
   assert.ok(source.includes("shell.innerHTML=positionHtml+openingHtml"));
-  assert.ok(source.indexOf('+helpingBlock')<source.indexOf("var stallHtml=stallInsight?"));
-  assert.ok(!source.includes("+analysisWhyHtml(stallInsight.detail,'')\n    +helpingBlock"));
+  assert.ok(source.indexOf('+helpingBlock')<source.indexOf('var prioritizedStall='));
   assert.ok(!source.includes('standaloneHelpingHtml'));
+  assert.ok(source.includes('analysisSelectQuestions(['));
+  assert.ok(source.includes('analysisQuestionCardHtml(insight'));
   assert.ok(source.includes("document.getElementById('history-score-trend')"));
   assert.ok(source.includes('historyTrend.innerHTML=scoreDays.length'));
   assert.ok(source.indexOf('Daily Fuel Score over time')<source.indexOf('var helpingBlock='));
+})();
+
+(function selectsOnlyTheTwoMostRelevantSupportedQuestions(){
+  const selected=context.analysisSelectQuestions([
+    {question:'Low priority',priority:10},
+    {question:'Safety',priority:100},
+    null,
+    {question:'Progress detail',priority:60}
+  ],2);
+  assert.deepEqual(selected.map(item=>item.question),['Safety','Progress detail']);
+})();
+
+(function surfacesAProtectiveQuestionForHighSteadyResults(){
+  const insight=context.analysisOverextendedInsight({
+    trajectory:'possibly_overextended',
+    current:{classifiableDays:3,days:[
+      {date:'2026-09-28',score:190},{date:'2026-09-29',score:195},{date:'2026-09-30',score:200}
+    ]}
+  },null);
+  assert.equal(insight.question,'Could I be pushing too hard?');
+  assert.ok(insight.answer.includes('eating enough'));
+  assert.equal(insight.priority,100);
+})();
+
+(function recognizesAChangeThatLastedAcrossCompletedWeeks(){
+  function week(start,end,median){
+    return {startDate:start,endDate:end,coverage:'sufficient',metrics:{medianScore:median},historical:{}};
+  }
+  const insight=context.analysisLastingChangeInsight([
+    week('2026-09-07','2026-09-13',80),
+    week('2026-09-14','2026-09-20',92),
+    week('2026-09-21','2026-09-27',96)
+  ]);
+  assert.equal(insight.question,'Is the change lasting?');
+  assert.ok(insight.answer.includes('more than one completed week'));
+  assert.ok(insight.visual.includes('latest three completed weeks'));
+})();
+
+(function onlyCallsOutARecentDayWhenItIsUnusualForThatPerson(){
+  const earlier=Array.from({length:12},(_,index)=>({date:'2026-09-'+String(index+1).padStart(2,'0'),score:70+(index%4)*3}));
+  const insight=context.analysisStandoutQuestion(earlier.concat([
+    {date:'2026-09-25',score:82},
+    {date:'2026-09-28',score:135}
+  ]),'2026-09-30');
+  assert.equal(insight.question,'Did I have an unusually strong day?');
+  assert.ok(insight.answer.includes('Last Monday was unusually strong'));
+  assert.ok(insight.detail.includes('higher than at least 90%'));
+
+  const ordinary=context.analysisStandoutQuestion(earlier.concat([{date:'2026-09-28',score:80}]),'2026-09-30');
+  assert.equal(ordinary,null);
 })();
 
 (function placesTheLongTermScoreChartInHistory(){
