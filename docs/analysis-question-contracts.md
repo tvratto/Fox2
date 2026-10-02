@@ -304,24 +304,42 @@ The main answer has three parts:
 
 1. **Possibly stalled:** explain that the recent scores remain below the higher range and have stayed about the same or gone down.
 2. **Encouraging evidence:** call out higher-range days, recurring Fat Zone changes, or another real sign that the person can build on. Describe a recurring pattern as recurring; never present an ordinary day as a unique event.
-3. **Visible experiment:** include the relevant tag result or the progress of the repeated tag FOX2 is evaluating.
+3. **Helpful association, when supported:** include a positive repeated tag result. Keep inconclusive and negative tag findings silent.
 
 Example:
 
 > Possibly. If you’re trying to reduce body fat, your recent results may help explain why progress feels stalled. Your Daily Fuel Scores have stayed about the same and remain below the range where body-fat loss becomes more likely. The encouraging part is that you already reach the higher range on some days.
 
-### Tag feedback loop
+### Tag analysis
 
-FOX2 must never ask a person to tag something as a vague future chore. If the stall answer asks for a tag, the same section must show one of these states:
+For normal coaching, FOX2 analyzes the most-used tags from the latest eight weeks ending on the latest measurement date. It first ranks tags by how often the person actually uses them, then evaluates positive associations among the three most-used tags. Older data does not displace a current, frequently used behavior merely because an old tag produced one dramatic result.
 
-| State | Requirement | Customer-facing result |
+`What may be helping?` appears only for a supported positive association:
+
+| Evidence timescale | Requirement | Customer-facing meaning |
 | --- | --- | --- |
-| No repeated choice | No usable repeated tag | Say that FOX2 is not tracking a repeated choice yet. Explain that the same tag should be used for one safe, repeatable change and that the result will be reported here. |
-| Gathering comparisons | One to four usable examples of the same tag | Name the tag, show the count toward five, and say that FOX2 will report the result here. |
-| No consistent association | At least five useful comparisons without the required lift | Say that FOX2 has not found a consistent increase. Do not keep implying that the choice is helping. |
-| Possible immediate association | At least five timed tagged occasions; at least half followed by a Fat Zone rise of 1.5 or more | Say that the choice may be helping and show the qualifying count under `Why FOX2 says this`. |
-| Possible same-day association | At least five tagged score days and five comparison days; tagged median at least five points higher | Say that the choice may be helping the higher pattern last through more of the day. |
-| Possible next-day association | Enough tagged follow-up and comparison days; next-day median at least ten points higher | Say that the choice may be associated with a stronger following day. |
+| After an activity | At least five timed tagged occasions; at least half followed by the required measurement increase | “Walking may be helping your metabolism shift toward using more fat for energy afterward.” |
+| Across the tagged day | At least five tagged score days and five comparison days; tagged median at least five points higher | “On days you walk, your results suggest your body may use fat for energy for more of the day.” |
+| The following day | Enough tagged follow-up and comparison days; next-day median at least ten points higher | “Your results suggest walking may support more fat use into the following day.” |
+
+Exact qualifying counts belong under `Why FOX2 says this`, phrased as “This pattern appeared after 6 of 9 recent tagged walks.” The main answer must describe the metabolic meaning, not announce a Fat Zone calculation.
+
+Inconclusive tags, unused tags, and tags without a positive association remain silent. FOX2 must never tell someone that walking, running, or another choice is “not working.” A breath-acetone result cannot measure every benefit of that behavior.
+
+### Complete-history rescue during an extended stall
+
+The deeper historical search activates only when all of these are true:
+
+1. The latest 21 calendar days contain at least 12 saved Daily Fuel Scores.
+2. The average remains below 120.
+3. The later half of the period averages no more than five points above the earlier half.
+4. No positive association is available among the most-used tags from the latest eight weeks.
+
+FOX2 then searches the earlier personal history for one strong, repeated positive association. Historical evidence uses a higher bar than current evidence: at least seven immediate occasions with a 60% response rate, at least seven tagged same-day comparisons with an eight-point lift, or at least five following-day comparisons with a twelve-point lift.
+
+The message must clearly describe the result as earlier evidence:
+
+> Earlier in your history, walking may have helped your metabolism shift toward using more fat for energy afterward. If walking still works for you, it may be worth trying again and using the same tag so FOX2 can see whether the pattern returns.
 
 Timed tags may be compared with measurements before and after the event. Day-level tags may be compared with same-day and next-day Daily Fuel Scores. A tag can show an association, never causation.
 

@@ -982,7 +982,8 @@ function weekToDateEvidenceHtml(week,lastOfficial,allDays,previousCalendarWeek,c
     +'</div></section>';
 }
 
-function buildTagInsights(tagRows,history){
+function buildTagInsights(tagRows,history,options){
+  options=options||{};
   var excludedPositive={Note:true,Meal:true,Snack:true,'High carb':true,Alcohol:true,'Poor sleep':true,Stress:true};
   var dayByDate={};
   history.days.forEach(function(day){dayByDate[day.date]=day;});
@@ -1020,7 +1021,10 @@ function buildTagInsights(tagRows,history){
   var allDates=Object.keys(dayByDate);
   var immediateCandidates=[];
   var sustainedCandidates=[];
-  Object.keys(stats).forEach(function(key){
+  var statKeys=Object.keys(stats).sort(function(a,b){
+    return Object.keys(stats[b].dates).length-Object.keys(stats[a].dates).length;
+  }).slice(0,options.maxTags||3);
+  statKeys.forEach(function(key){
     var stat=stats[key];
     stat.events.forEach(function(event){
       var points=pointsByDate[event.date]||[];
@@ -1054,9 +1058,12 @@ function buildTagInsights(tagRows,history){
       sustainedCandidates.push({kind:'next_day',rank:60+Math.min(nextDelta,40),stat:stat,delta:nextDelta,count:nextScores.length,taggedMedian:analysisMedian(nextScores),comparisonMedian:analysisMedian(otherNextScores)});
     }
   });
-  immediateCandidates.sort(function(a,b){return b.rank-a.rank;});
-  sustainedCandidates.sort(function(a,b){return b.rank-a.rank;});
-  var tagCount=Object.keys(stats).length;
+  immediateCandidates.sort(function(a,b){
+    return Object.keys(b.stat.dates).length-Object.keys(a.stat.dates).length||b.rank-a.rank;
+  });
+  sustainedCandidates.sort(function(a,b){
+    return Object.keys(b.stat.dates).length-Object.keys(a.stat.dates).length||b.rank-a.rank;
+  });
   var selected=[];
   if(immediateCandidates.length){
     var immediateBest=immediateCandidates[0];
@@ -1070,25 +1077,22 @@ function buildTagInsights(tagRows,history){
     selected.push(different||sustainedCandidates[0]);
   }
   if(!selected.length){
-    if(!tagCount){
-      return [{question:'What should I test next?',answer:'Choose one safe change you can repeat and tag it each time. FOX2 will watch for what happens later that day and the next day.',evidence:'There are no repeated tagged choices to compare yet.',tone:'is-change',icon:'+'}];
-    }
-    return [{question:'What appears to be helping?',answer:'It’s too early to tell. Keep repeating one safe change and tag it each time so FOX2 can see if the same pattern happens again.',evidence:'No tagged choice has repeated often enough for a fair comparison yet.',tone:'is-change',icon:'→'}];
+    return [];
   }
   return selected.slice(0,2).map(function(best){
     var label=best.stat.icon+' '+best.stat.name;
     if(best.kind==='immediate'){
-      var immediateEvidence=label+' was followed by a rise on '+best.stat.rises+' of '+best.stat.eligible+' measured occasions. The typical rise was '+Math.round(best.medianDelta*10)/10+' Fat Zone levels.';
-      var immediateAnswer=label+' may be helping your body draw on fat for energy. Try it again and tag it so FOX2 can see if the pattern keeps happening.';
+      var immediateEvidence='This pattern appeared after '+best.stat.rises+' of '+best.stat.eligible+' tagged '+best.stat.name.toLowerCase()+' occasions.';
+      var immediateAnswer=label+' may be helping your metabolism shift toward using more fat for energy afterward.';
       if(best.supporting){
-        immediateEvidence+=' '+best.supporting.stat.icon+' '+best.supporting.stat.name+' showed a similar short-term pattern on '+best.supporting.stat.rises+' of '+best.supporting.stat.eligible+' measured occasions.';
+        immediateEvidence+=' '+best.supporting.stat.icon+' '+best.supporting.stat.name+' showed a similar pattern after '+best.supporting.stat.rises+' of '+best.supporting.stat.eligible+' tagged occasions.';
       }
       return {question:'What may be helping?',answer:immediateAnswer,detail:immediateEvidence,tone:'is-change',icon:best.stat.icon,evidence:best};
     }
     if(best.kind==='same_day'){
-      return {question:'What may help it last?',answer:label+' may be helping the shift toward fat for energy last longer. Try it again as one simple test.',detail:'Across '+best.count+' tagged days, your Daily Fuel Score was typically about '+Math.round(best.delta)+' points higher.',tone:'is-change',icon:best.stat.icon,evidence:best};
+      return {question:'What may be helping?',answer:'On days you tagged '+label+', your results suggest your body may use fat for energy for more of the day.',detail:'This pattern appeared across '+best.count+' tagged days.',tone:'is-change',icon:best.stat.icon,evidence:best};
     }
-    return {question:'What may help tomorrow?',answer:label+' may be helping the shift toward fat for energy carry into the next day. Try it again and see if the pattern repeats.',detail:'The day after this tag, your Daily Fuel Score was typically about '+Math.round(best.delta)+' points higher.',tone:'is-change',icon:best.stat.icon,evidence:best};
+    return {question:'What may be helping?',answer:'After days tagged '+label+', your results suggest your body may use more fat for energy the following day.',detail:'This pattern appeared across '+best.count+' tagged follow-up days.',tone:'is-change',icon:best.stat.icon,evidence:best};
   });
 }
 
@@ -1157,61 +1161,57 @@ function analysisStallInsight(scoreDays,history,referenceDate){
   };
 }
 
-function analysisTagExperimentStatus(tagRows,history){
-  var insights=buildTagInsights(tagRows||[],history);
-  var supported=insights.filter(function(insight){return insight.evidence&&typeof insight.evidence==='object'&&insight.evidence.kind;})[0]||null;
-  if(supported){
-    return {title:'What may be helping?',answer:supported.answer,detail:supported.detail,visual:tagEvidenceHtml(supported),icon:supported.icon};
-  }
-  var names={'🍎':'Snack','🍽️':'Meal','🥩':'Protein','💧':'Hydration','🍳':'Low carb','🍕':'High carb','🍷':'Alcohol','🚶':'Walk','🏃':'Run','🏋️':'Workout','⏱️':'Fasting','😴':'Poor sleep','🧠':'Stress','💉':'GLP-1'};
-  var scores={};
-  (history.days||[]).forEach(function(day){scores[day.date]=true;});
-  var pointsByDate={};
-  (history.points||[]).forEach(function(point){
-    if(!pointsByDate[point.date]) pointsByDate[point.date]=[];
-    pointsByDate[point.date].push(point);
-  });
-  Object.keys(pointsByDate).forEach(function(date){pointsByDate[date].sort(function(a,b){return a.minute-b.minute;});});
-  var counts={};
-  (tagRows||[]).forEach(function(row){
-    var date=String(row.day_date||'');
-    var seen={};
-    (Array.isArray(row.events)?row.events:[]).forEach(function(event){
-      if(event.name==='Note'||event.icon==='✏️') return;
-      var key=event.icon||event.name;
-      if(!counts[key]) counts[key]={icon:event.icon||'•',name:event.name||names[event.icon]||'tagged choice',dates:{},usable:{},eventUsable:0};
-      counts[key].dates[date]=true;
-      seen[key]=true;
-      if(scores[date]) counts[key].usable[date]=true;
-      if(isFinite(Number(event.minute))){
-        var points=pointsByDate[date]||[];
-        var before=points.filter(function(point){return point.minute<=Number(event.minute)&&Number(event.minute)-point.minute<=360;}).slice(-1)[0];
-        var after=points.filter(function(point){return point.minute>Number(event.minute)&&point.minute<=Number(event.minute)+480;});
-        if(before&&after.length) counts[key].eventUsable++;
-      }
-    });
-    (Array.isArray(row.tray_tags)?row.tray_tags:[]).forEach(function(icon){
-      if(icon==='✏️'||seen[icon]) return;
-      if(!counts[icon]) counts[icon]={icon:icon,name:names[icon]||'tagged choice',dates:{},usable:{},eventUsable:0};
-      counts[icon].dates[date]=true;
-      if(scores[date]) counts[icon].usable[date]=true;
-    });
-  });
-  var candidates=Object.keys(counts).map(function(key){
-    var item=counts[key];
-    item.count=Object.keys(item.dates).length;
-    item.usableCount=Math.max(Object.keys(item.usable).length,item.eventUsable);
-    return item;
-  }).sort(function(a,b){return b.usableCount-a.usableCount||b.count-a.count;});
-  if(candidates.length){
-    var best=candidates[0];
-    var label=(best.icon?best.icon+' ':'')+best.name;
-    if(best.usableCount>=5){
-      return {title:'What is FOX2 learning?',answer:'FOX2 has compared '+best.usableCount+' '+label+' days and has not found a consistent increase yet. That is useful too: do not assume this choice is helping just because it was tagged.',detail:'A tag only becomes a positive finding when the same choice is repeatedly followed by a meaningfully higher Fat Zone or Daily Fuel Score.',visual:'',icon:'→'};
+function analysisTagWindow(tagRows,history,startDate,endDate){
+  return {
+    rows:(tagRows||[]).filter(function(row){
+      var date=String(row.day_date||'');
+      return (!startDate||date>=startDate)&&(!endDate||date<=endDate);
+    }),
+    history:{
+      days:(history.days||[]).filter(function(day){return (!startDate||day.date>=startDate)&&(!endDate||day.date<=endDate);}),
+      points:(history.points||[]).filter(function(point){return (!startDate||point.date>=startDate)&&(!endDate||point.date<=endDate);})
     }
-    return {title:'What is FOX2 testing?',answer:'FOX2 is watching '+label+'. It has '+best.usableCount+' of 5 useful comparison'+(best.usableCount===1?'':'s')+' so far. Keep using the same tag when you repeat this choice, and FOX2 will report what it finds here.',detail:best.count+' tagged occasion'+(best.count===1?' has':'s have')+' been recorded. A useful comparison also needs a saved Daily Fuel Score or measurements around the timed tag.',visual:'',icon:'→'};
-  }
-  return {title:'What could I test?',answer:'FOX2 is not tracking a repeated choice yet. If you make one safe, repeatable change, use the same tag each time. FOX2 will compare those days and report the result here after five useful examples.',detail:'The analysis will count the tagged examples here and will only suggest that something may be helping after the pattern repeats.',visual:'',icon:'+'};
+  };
+}
+
+function analysisSupportedTagInsight(tagRows,history){
+  return buildTagInsights(tagRows||[],history,{maxTags:3}).filter(function(insight){
+    return insight.evidence&&typeof insight.evidence==='object'&&insight.evidence.kind;
+  })[0]||null;
+}
+
+function analysisExtendedStall(scoreDays,referenceDate){
+  if(!referenceDate) return false;
+  var start=addIsoDays(referenceDate,-21);
+  var recent=(scoreDays||[]).filter(function(day){return day.date>=start&&day.date<referenceDate;}).slice().sort(function(a,b){return a.date.localeCompare(b.date);});
+  if(recent.length<12||analysisAverageScore(recent)>=120) return false;
+  var midpoint=Math.ceil(recent.length/2);
+  return analysisAverageScore(recent.slice(midpoint))<=analysisAverageScore(recent.slice(0,midpoint))+5;
+}
+
+function analysisHistoricalTagInsight(tagRows,history,referenceDate){
+  var recentStart=addIsoDays(referenceDate,-56);
+  var older=analysisTagWindow(tagRows,history,null,addIsoDays(recentStart,-1));
+  var insight=analysisSupportedTagInsight(older.rows,older.history);
+  if(!insight) return null;
+  var evidence=insight.evidence;
+  var strong=evidence.kind==='immediate'?evidence.stat.eligible>=7&&evidence.rate>=.60
+    :evidence.kind==='same_day'?evidence.count>=7&&evidence.delta>=8
+    :evidence.count>=5&&evidence.delta>=12;
+  if(!strong) return null;
+  var dates=Object.keys(evidence.stat.dates||{}).sort();
+  var label=evidence.stat.icon+' '+evidence.stat.name;
+  var activity=evidence.stat.name.toLowerCase();
+  var meaning=evidence.kind==='immediate'
+    ?label+' may have helped your metabolism shift toward using more fat for energy afterward.'
+    :evidence.kind==='same_day'
+      ?'On days you tagged '+label+', your results suggested your body may have used fat for energy for more of the day.'
+      :'After days tagged '+label+', your results suggested your body may have used more fat for energy the following day.';
+  return {
+    question:'What helped before?',icon:evidence.stat.icon,tone:'is-change',historical:true,evidence:evidence,
+    answer:'Earlier in your history, '+meaning+' If '+activity+' still works for you, it may be worth trying again and using the same tag so FOX2 can see whether the pattern returns.',
+    detail:(dates.length?'From '+analysisShortDate(dates[0])+' through '+analysisShortDate(dates[dates.length-1])+', ':'')+insight.detail
+  };
 }
 
 function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
@@ -1258,9 +1258,11 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   var dayToDayInsight=dayToDayScoreInsight(currentDayToDay,previousDayToDay);
   window._fox2DayToDayMovement={current:currentDayToDay,previous:previousDayToDay,insight:dayToDayInsight};
   var tagHistory={days:analysisDays,points:history.points};
-  var tagInsights=buildTagInsights(tagRows||[],tagHistory);
-  window._fox2TagInsights=tagInsights;
-  window._fox2TagInsight=tagInsights[0];
+  var recentTagStart=addIsoDays(history.activeDate,-56);
+  var recentTagWindow=analysisTagWindow(tagRows||[],tagHistory,recentTagStart,addIsoDays(history.activeDate,-1));
+  var recentTagInsight=analysisSupportedTagInsight(recentTagWindow.rows,recentTagWindow.history);
+  window._fox2TagInsights=recentTagInsight?[recentTagInsight]:[];
+  window._fox2TagInsight=recentTagInsight;
 
   var recentStart=addIsoDays(history.activeDate,-14);
   var recentEnd=addIsoDays(history.activeDate,-1);
@@ -1276,7 +1278,8 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   var progressInsight=analysisRecentProgressInsight(recentScoreDays,previousScoreDays,recentMeasuredDays,previousMeasuredDays);
   var recentAverage=analysisAverageScore(recentScoreDays);
   var stallInsight=analysisStallInsight(scoreDays,history,history.activeDate);
-  var tagExperiment=stallInsight?analysisTagExperimentStatus(tagRows||[],tagHistory):null;
+  var extendedStall=analysisExtendedStall(scoreDays,history.activeDate);
+  var helpingInsight=recentTagInsight||((stallInsight&&extendedStall)?analysisHistoricalTagInsight(tagRows||[],tagHistory,history.activeDate):null);
   var recentTimeframe='Last 14 calendar days · '+analysisShortDate(recentStart)+'–'+analysisShortDate(recentEnd);
   var currentWeekDetail=currentDayToDay&&currentDayToDay.dayCount
     ?currentDayToDay.dayCount+' saved Daily Fuel Score'+(currentDayToDay.dayCount===1?'':'s')+' this week with an average of '+currentDayToDay.mean+'.'
@@ -1288,13 +1291,20 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
     +'<p class="analysis-summary"><strong>'+progressInsight.headline+'</strong> '+weekCopy.title+' '+progressInsight.answer+'</p>'
     +analysisWhyHtml(currentWeekDetail+' '+progressInsight.detail,recentScoreVisual)
     +'</section>';
+  var helpingBlock=helpingInsight?'<div class="analysis-experiment"><h3>'+helpingInsight.question+'</h3><p>'+helpingInsight.answer+'</p></div>':'';
+  var helpingDetail=helpingInsight?helpingInsight.detail:'';
+  var helpingVisual=helpingInsight?tagEvidenceHtml(helpingInsight):'';
   var stallHtml=stallInsight?'<article class="analysis-conclusion '+stallInsight.tone+'"><div class="analysis-conclusion-icon">'+stallInsight.icon+'</div><div>'
     +'<h2>'+stallInsight.question+'</h2><p>'+stallInsight.answer+'</p>'
-    +'<div class="analysis-experiment"><h3>'+tagExperiment.title+'</h3><p>'+tagExperiment.answer+'</p>'+(tagExperiment.visual||'')+'</div>'
-    +analysisWhyHtml(stallInsight.detail+' '+tagExperiment.detail,'')
+    +helpingBlock
+    +analysisWhyHtml(stallInsight.detail+(helpingDetail?' '+helpingDetail:''),helpingVisual)
+    +'</div></article>':'';
+  var standaloneHelpingHtml=!stallInsight&&helpingInsight?'<article class="analysis-conclusion is-change"><div class="analysis-conclusion-icon">'+helpingInsight.icon+'</div><div>'
+    +'<h2>'+helpingInsight.question+'</h2><p>'+helpingInsight.answer+'</p>'
+    +analysisWhyHtml(helpingInsight.detail,helpingVisual)
     +'</div></article>':'';
   shell.innerHTML=openingHtml
-    +(stallHtml?'<section class="analysis-conclusion-list" aria-label="Questions answered">'+stallHtml+'</section>':'')
+    +(stallHtml||standaloneHelpingHtml?'<section class="analysis-conclusion-list" aria-label="Questions answered">'+stallHtml+standaloneHelpingHtml+'</section>':'')
     +analysisTierGuideHtml(progressInsight,recentAverage)
     +weeklyTrendHtml(scoreDays,all,weekToDate)
     +'<section class="analysis-card"><h2 class="analysis-section-title">Daily Fuel Score over time</h2>'

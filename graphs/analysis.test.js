@@ -40,9 +40,9 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   }));
   const insight=context.buildTagInsight(tags,history);
   assert.equal(insight.question,'What may be helping?');
-  assert.ok(insight.answer.includes('may be helping your body draw on fat for energy'));
+  assert.ok(insight.answer.includes('may be helping your metabolism shift toward using more fat for energy'));
   assert.ok(insight.detail.includes('5 of 5'));
-  assert.ok(insight.detail.includes('typical rise was 2.5 Fat Zone levels'));
+  assert.ok(!insight.detail.includes('Fat Zone'));
 })();
 
 (function separatesImmediateFromSustainedEffects(){
@@ -62,16 +62,13 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.equal(insights.length,2);
   assert.equal(insights[0].question,'What may be helping?');
   assert.ok(insights[0].answer.includes('🏃 Run'));
-  assert.equal(insights[1].question,'What may help it last?');
+  assert.equal(insights[1].question,'What may be helping?');
   assert.ok(insights[1].answer.includes('🚶 Walk'));
 })();
 
-(function promptsForAnExperimentWithoutTags(){
+(function keepsInconclusiveTagsSilent(){
   const insights=context.buildTagInsights([], {days:[],points:[]});
-  assert.equal(insights.length,1);
-  assert.equal(insights[0].question,'What should I test next?');
-  assert.ok(insights[0].answer.includes('tag it each time'));
-  assert.ok(insights[0].answer.includes('FOX2 will watch'));
+  assert.equal(insights.length,0);
 })();
 
 (function preservesAlreadyCorrectScoresAtTheDateFixBoundary(){
@@ -306,21 +303,31 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.equal(context.analysisStallInsight(higher,{days:[],points:[]},'2026-09-30'),null);
 })();
 
-(function makesTaggingAVisibleExperimentInsideTheAnswer(){
-  const noTags=context.analysisTagExperimentStatus([], {days:[],points:[]});
-  assert.equal(noTags.title,'What could I test?');
-  assert.ok(noTags.answer.includes('report the result here'));
-  assert.ok(noTags.answer.includes('five useful examples'));
+(function usesEightRecentWeeksAndOnlyResurfacesStrongOlderEvidence(){
+  const windowed=context.analysisTagWindow([
+    {day_date:'2026-07-01',events:[]},
+    {day_date:'2026-09-20',events:[]}
+  ],{days:[{date:'2026-07-01'},{date:'2026-09-20'}],points:[]},'2026-08-05','2026-09-29');
+  assert.deepEqual(windowed.rows.map(row=>row.day_date),['2026-09-20']);
 
-  const gathering=context.analysisTagExperimentStatus([
-    {day_date:'2026-09-25',events:[{icon:'🚶',name:'Walk',minute:600}]},
-    {day_date:'2026-09-26',events:[{icon:'🚶',name:'Walk',minute:600}]}
-  ],{
-    days:[{date:'2026-09-25',score:90},{date:'2026-09-26',score:95}],points:[]
-  });
-  assert.equal(gathering.title,'What is FOX2 testing?');
-  assert.ok(gathering.answer.includes('2 of 5 useful comparisons'));
-  assert.ok(gathering.answer.includes('FOX2 will report what it finds here'));
+  const stalled=Array.from({length:14},(_,index)=>({date:'2026-09-'+String(8+index).padStart(2,'0'),score:90+(index%2)}));
+  assert.equal(context.analysisExtendedStall(stalled,'2026-09-29'),true);
+  assert.equal(context.analysisSupportedTagInsight([], {days:[],points:[]}),null);
+
+  const oldDates=Array.from({length:7},(_,index)=>'2026-05-'+String(index+1).padStart(2,'0'));
+  const olderTags=oldDates.map(date=>({day_date:date,events:[{icon:'🚶',name:'Walk',minute:420}]}));
+  const olderHistory={
+    days:oldDates.map(date=>({date,score:90})),
+    points:oldDates.flatMap(date=>[
+      {date,minute:400,value:2},
+      {date,minute:520,value:4.5}
+    ])
+  };
+  const historical=context.analysisHistoricalTagInsight(olderTags,olderHistory,'2026-10-01');
+  assert.equal(historical.question,'What helped before?');
+  assert.ok(historical.answer.includes('Earlier in your history'));
+  assert.ok(historical.answer.includes('metabolism shift toward using more fat for energy'));
+  assert.ok(historical.answer.includes('whether the pattern returns'));
 })();
 
 (function givesAPlainLanguageLookbackForAStandoutPeriod(){
