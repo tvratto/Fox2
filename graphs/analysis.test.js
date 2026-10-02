@@ -323,6 +323,20 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(opportunity.detail.includes('evening was the highest'));
 })();
 
+(function callsOutARecurringEveningRiseEvenWhenDaypartAveragesAreClose(){
+  const points=[];
+  for(let day=20;day<30;day++){
+    const date='2026-09-'+day;
+    points.push({date,minute:480,value:4});
+    points.push({date,minute:840,value:4});
+    points.push({date,minute:1140,value:day<26?5:4});
+  }
+  const opportunity=context.analysisDaypartOpportunity({points},'2026-09-30');
+  assert.ok(opportunity.answer.includes('often goes up from afternoon to evening'));
+  assert.ok(opportunity.answer.includes('no single part of the day has a much lower average'));
+  assert.ok(opportunity.detail.includes('6 of 10 comparable recent days'));
+})();
+
 (function usesEightRecentWeeksAndOnlyResurfacesStrongOlderEvidence(){
   const windowed=context.analysisTagWindow([
     {day_date:'2026-07-01',events:[]},

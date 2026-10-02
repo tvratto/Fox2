@@ -1231,8 +1231,21 @@ function analysisDaypartOpportunity(history,referenceDate){
   var lowest=eligible[0];
   var highest=eligible[eligible.length-1];
   var clearGap=averages[highest]-averages[lowest]>=.75;
+  var afternoonEvening=[];
+  Object.keys(byDay).forEach(function(date){
+    var afternoon=byDay[date].afternoon;
+    var evening=byDay[date].evening;
+    if(!afternoon.length||!evening.length) return;
+    var afternoonMean=afternoon.reduce(function(sum,value){return sum+value;},0)/afternoon.length;
+    var eveningMean=evening.reduce(function(sum,value){return sum+value;},0)/evening.length;
+    afternoonEvening.push(eveningMean-afternoonMean);
+  });
+  var eveningRiseCount=afternoonEvening.filter(function(change){return change>=.5;}).length;
+  var recurringEveningRise=afternoonEvening.length>=5&&eveningRiseCount>=Math.ceil(afternoonEvening.length*.6);
   var answer='';
-  if(!clearGap){
+  if(!clearGap&&recurringEveningRise){
+    answer='Your Fat Zone often goes up from afternoon to evening, even though no single part of the day has a much lower average. If you want to increase your Daily Fuel Score, try one small, sustainable change earlier in the day and see whether that rise begins sooner or lasts longer.';
+  }else if(!clearGap){
     answer='If you want to increase your Daily Fuel Score, no single time of day stands out as the main opportunity. Try one small, sustainable change and keep the rest of your routine similar for several days. The next sign to look for is a higher Fat Zone lasting longer.';
   }else if(lowest==='morning'){
     answer='If you want to increase your Daily Fuel Score, the morning looks like your biggest opportunity. '
@@ -1252,6 +1265,8 @@ function analysisDaypartOpportunity(history,referenceDate){
     answer:answer,
     detail:clearGap
       ?'FOX2 compared your morning, afternoon, and evening Fat Zones across recent completed days. '+partName.charAt(0).toUpperCase()+partName.slice(1)+' was the lowest part of your typical day, and '+highest+' was the highest.'
+      :recurringEveningRise
+        ?'FOX2 compared days with both afternoon and evening measurements. Your Fat Zone rose by at least half a level from afternoon to evening on '+eveningRiseCount+' of '+afternoonEvening.length+' comparable recent days.'
       :'FOX2 compared your morning, afternoon, and evening Fat Zones across recent completed days. They were close enough that one part of the day did not clearly stand out.'
   };
 }
@@ -1383,13 +1398,14 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
     +analysisWhyHtml(progressExplanation||progressInsight.detail,recentScoreVisual)
     +'</section>';
   var helpingBlock=helpingInsight?'<div class="analysis-experiment"><h3>'+helpingInsight.question+'</h3><p>'+helpingInsight.answer+'</p>'+analysisWhyHtml(helpingInsight.detail,tagEvidenceHtml(helpingInsight))+'</div>':'';
-  var actionBlock=daypartOpportunity?'<div class="analysis-experiment"><h3>'+daypartOpportunity.question+'</h3><p>'+daypartOpportunity.answer+'</p>'+analysisWhyHtml(daypartOpportunity.detail,'')+'</div>':'';
+  var actionQuestion=helpingInsight?'What else could I try?':daypartOpportunity&&daypartOpportunity.question;
+  var actionBlock=daypartOpportunity?'<div class="analysis-experiment"><h3>'+actionQuestion+'</h3><p>'+daypartOpportunity.answer+'</p>'+analysisWhyHtml(daypartOpportunity.detail,'')+'</div>':'';
   var helpingVisual=helpingInsight?tagEvidenceHtml(helpingInsight):'';
   var stallHtml=stallInsight?'<article class="analysis-conclusion '+stallInsight.tone+'"><div class="analysis-conclusion-icon">'+stallInsight.icon+'</div><div>'
     +'<h2>'+stallInsight.question+'</h2><p>'+stallInsight.answer+'</p>'
     +analysisWhyHtml(stallInsight.detail,'')
-    +actionBlock
     +helpingBlock
+    +actionBlock
     +'</div></article>':'';
   var standaloneHelpingHtml=!stallInsight&&helpingInsight?'<article class="analysis-conclusion is-change"><div class="analysis-conclusion-icon">'+helpingInsight.icon+'</div><div>'
     +'<h2>'+helpingInsight.question+'</h2><p>'+helpingInsight.answer+'</p>'
