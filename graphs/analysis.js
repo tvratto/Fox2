@@ -1493,7 +1493,6 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
     +'</div></article>':'';
   shell.innerHTML=positionHtml+openingHtml
     +(stallHtml?'<section class="analysis-conclusion-list" aria-label="Questions answered">'+stallHtml+'</section>':'')
-    +weeklyTrendHtml(scoreDays,all,weekToDate)
     +'<section class="analysis-card"><h2 class="analysis-section-title">Daily Fuel Score over time</h2>'
       +'<p class="analysis-section-copy">Every saved day from the beginning. The highlighted area is the latest 14 calendar days.</p>'
       +scoreTrendSvg(scoreDays,recentStart)+'</section>'
