@@ -334,6 +334,11 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(opportunity.answer.includes('middle of the day looks like your biggest opportunity'));
   assert.ok(opportunity.answer.includes('night before or that morning'));
   assert.ok(!opportunity.answer.includes('midday meal'));
+  assert.ok(opportunity.visual.includes('Your typical day'));
+  assert.ok(opportunity.visual.includes('<strong>Last night</strong>'));
+  assert.ok(opportunity.visual.includes('<strong>This morning</strong>'));
+  assert.ok(opportunity.visual.includes('<strong>Midday dip</strong>'));
+  assert.ok(opportunity.visual.indexOf('Last night')<opportunity.visual.indexOf('Midday dip'));
 })();
 
 (function callsOutARecurringEveningRiseEvenWhenDaypartAveragesAreClose(){
@@ -348,6 +353,7 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(opportunity.answer.includes('often goes up from afternoon to evening'));
   assert.ok(!opportunity.answer.includes('no single part of the day has a much lower average'));
   assert.ok(opportunity.detail.includes('6 of 10 comparable recent days'));
+  assert.ok(opportunity.visual.includes('<strong>Evening rise</strong>'));
 })();
 
 (function usesEightRecentWeeksAndOnlyResurfacesStrongOlderEvidence(){

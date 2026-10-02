@@ -1201,6 +1201,44 @@ function analysisStallInsight(scoreDays,history,referenceDate){
   };
 }
 
+function analysisDaypartVisual(averages,outcome,recurringEveningRise){
+  var parts=['morning','afternoon','evening'];
+  if(!parts.every(function(part){return isFinite(Number(averages[part]));})) return '';
+  var labels={morning:'Morning',afternoon:'Afternoon',evening:'Evening'};
+  var flows={
+    morning:['Yesterday afternoon','Last night','Morning'],
+    afternoon:['Last night','This morning','Midday dip'],
+    evening:['This morning','This afternoon',recurringEveningRise?'Evening rise':'Evening']
+  };
+  var xs=[44,160,276],top=13,bottom=72;
+  var maxValue=Math.max.apply(null,parts.map(function(part){return Number(averages[part]);}));
+  var maxScale=Math.max(8,Math.ceil(maxValue+1));
+  var y=function(value){return top+(maxScale-Number(value))/maxScale*(bottom-top);};
+  var points=parts.map(function(part,index){return xs[index]+','+y(averages[part]).toFixed(1);}).join(' ');
+  var aria='Typical Fat Zone by time of day: '+parts.map(function(part){return labels[part]+' '+Number(averages[part]).toFixed(1);}).join(', ')+'.';
+  var dots=parts.map(function(part,index){
+    var active=part===outcome;
+    return '<circle cx="'+xs[index]+'" cy="'+y(averages[part]).toFixed(1)+'" r="'+(active?5:4)+'" fill="'+(active?'#FFD23C':'#22D3EE')+'" stroke="#08090b" stroke-width="2"/>'
+      +'<text x="'+xs[index]+'" y="96" text-anchor="middle" font-size="11" font-weight="800" fill="rgba(255,255,255,.58)">'+labels[part]+'</text>';
+  }).join('');
+  var flow=flows[outcome];
+  return '<div class="analysis-daypart-visual">'
+    +'<div class="analysis-daypart-label">Your typical day</div>'
+    +'<svg class="analysis-daypart-chart" viewBox="0 0 320 102" role="img" aria-label="'+analysisEscape(aria)+'">'
+      +'<line x1="24" y1="72" x2="296" y2="72" stroke="rgba(255,255,255,.09)" stroke-width="1"/>'
+      +'<polyline points="'+points+'" fill="none" stroke="rgba(255,255,255,.48)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>'
+      +dots
+    +'</svg>'
+    +'<div class="analysis-action-flow" aria-label="Try a change in '+analysisEscape(flow[0])+' or '+analysisEscape(flow[1])+', then watch '+analysisEscape(flow[2])+'">'
+      +'<div class="analysis-action-step"><small>Try</small><strong>'+flow[0]+'</strong></div>'
+      +'<div class="analysis-action-join">or</div>'
+      +'<div class="analysis-action-step"><small>Try</small><strong>'+flow[1]+'</strong></div>'
+      +'<div class="analysis-action-join">→</div>'
+      +'<div class="analysis-action-step is-watch"><small>Watch</small><strong>'+flow[2]+'</strong></div>'
+    +'</div>'
+  +'</div>';
+}
+
 function analysisDaypartOpportunity(history,referenceDate){
   if(!history||!referenceDate) return null;
   var start=addIsoDays(referenceDate,-14);
@@ -1260,9 +1298,11 @@ function analysisDaypartOpportunity(history,referenceDate){
     answer='If you want to increase your Daily Fuel Score, the later part of the day looks like your biggest opportunity. Your Fat Zone is higher earlier and often falls by evening. Try one small, sustainable change that morning or afternoon and see whether the earlier pattern carries farther into the day.';
   }
   var partName=lowest==='afternoon'?'the middle of the day':lowest==='evening'?'the later part of the day':'the morning';
+  var outcome=clearGap?lowest:recurringEveningRise?'evening':null;
   return {
     question:'What could I try?',
     answer:answer,
+    visual:outcome?analysisDaypartVisual(averages,outcome,recurringEveningRise):'',
     detail:clearGap
       ?'FOX2 compared your morning, afternoon, and evening Fat Zones across recent completed days. '+partName.charAt(0).toUpperCase()+partName.slice(1)+' was the lowest part of your typical day, and '+highest+' was the highest.'
       :recurringEveningRise
@@ -1399,7 +1439,7 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
     +'</section>';
   var helpingBlock=helpingInsight?'<div class="analysis-experiment"><h3>'+helpingInsight.question+'</h3><p>'+helpingInsight.answer+'</p>'+analysisWhyHtml(helpingInsight.detail,tagEvidenceHtml(helpingInsight))+'</div>':'';
   var actionQuestion=helpingInsight?'What else could I try?':daypartOpportunity&&daypartOpportunity.question;
-  var actionBlock=daypartOpportunity?'<div class="analysis-experiment"><h3>'+actionQuestion+'</h3><p>'+daypartOpportunity.answer+'</p>'+analysisWhyHtml(daypartOpportunity.detail,'')+'</div>':'';
+  var actionBlock=daypartOpportunity?'<div class="analysis-experiment"><h3>'+actionQuestion+'</h3><p>'+daypartOpportunity.answer+'</p>'+(daypartOpportunity.visual||'')+analysisWhyHtml(daypartOpportunity.detail,'')+'</div>':'';
   var helpingVisual=helpingInsight?tagEvidenceHtml(helpingInsight):'';
   var stallHtml=stallInsight?'<article class="analysis-conclusion '+stallInsight.tone+'"><div class="analysis-conclusion-icon">'+stallInsight.icon+'</div><div>'
     +'<h2>'+stallInsight.question+'</h2><p>'+stallInsight.answer+'</p>'
