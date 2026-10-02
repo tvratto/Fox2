@@ -565,8 +565,10 @@ function analysisTierGuideHtml(insight,recentAverage){
       +'<div class="analysis-tier-segment is-low"></div><div class="analysis-tier-segment is-balanced"></div><div class="analysis-tier-segment is-higher"></div><div class="analysis-tier-segment is-strong"></div>'
     +'</div>'
     +'<div class="analysis-tier-names"><span>Low</span><span>Balanced</span><span>Higher</span><span>Strong</span></div>'
-    +'<div class="analysis-tier-definitions">'+definitions+'</div>'
-    +'<details class="analysis-why"><summary>How FOX2 defines these ranges</summary><p>Low is 0–60. Balanced is above 60 through 120. Higher is above 120 through 180. Strong is above 180. These are FOX2 probability ranges, not clinical cutoffs or guarantees.</p></details>'
+    +'<details class="analysis-why"><summary>How FOX2 defines these ranges</summary>'
+      +'<div class="analysis-tier-definitions">'+definitions+'</div>'
+      +'<p>Low is 0–60. Balanced is above 60 through 120. Higher is above 120 through 180. Strong is above 180. These are FOX2 probability ranges, not clinical cutoffs or guarantees.</p>'
+    +'</details>'
   +'</section>';
 }
 
