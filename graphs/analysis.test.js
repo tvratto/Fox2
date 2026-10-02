@@ -404,9 +404,10 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
 
 (function showsTheTierWithoutLeadingWithNumbers(){
   const insight={tier:'balanced-near-higher'};
-  const html=context.analysisTierGuideHtml(insight,109);
+  const html=context.analysisTierGuideHtml(insight,109,'Last 14 calendar days · Sep 18–Oct 1');
   assert.ok(html.includes('Where am I now?'));
   assert.ok(html.includes('<h1 class="analysis-title">Where am I now?</h1>'));
+  assert.ok(html.indexOf('Last 14 calendar days')<html.indexOf('Where am I now?'));
   assert.ok(html.includes('close to the higher range'));
   assert.ok(html.includes('Close to higher'));
   assert.ok(html.includes('analysis-tier-definition balanced')||html.includes('analysis-tier-definition is-active'));
@@ -414,6 +415,7 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(html.includes('Balanced is above 60 through 120'));
   assert.ok(html.includes('14 completed calendar days before your latest measurement'));
   assert.ok(html.includes('Days without a saved score are left out'));
+  assert.ok(html.indexOf('How FOX2 defines these ranges')<html.indexOf('FOX2 places you here'));
   assert.ok(html.indexOf('How FOX2 defines these ranges')<html.indexOf('analysis-tier-definitions'));
 })();
 

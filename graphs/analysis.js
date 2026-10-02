@@ -571,7 +571,7 @@ function analysisWhyHtml(detail,visual){
     +(visual||'')+'</details>';
 }
 
-function analysisTierGuideHtml(insight,recentAverage){
+function analysisTierGuideHtml(insight,recentAverage,timeframe){
   if(!insight||!isFinite(Number(recentAverage))) return '';
   var average=Number(recentAverage);
   var markerPct=average<=60?average/60*25
@@ -596,15 +596,16 @@ function analysisTierGuideHtml(insight,recentAverage){
     return '<div class="analysis-tier-definition '+(range.key===activeTier?'is-active':'')+'"><strong>'+range.name+'</strong><span>'+range.copy+'</span></div>';
   }).join('');
   return '<section class="analysis-card analysis-tier-card analysis-hero">'
+    +(timeframe?'<div class="analysis-eyebrow">'+analysisEscape(timeframe)+'</div>':'')
     +'<h1 class="analysis-title">Where am I now?</h1>'
     +'<p class="analysis-section-copy">'+positionCopy+'</p>'
-    +'<p class="analysis-tier-method">FOX2 places you here using the average of your saved Daily Fuel Scores from the 14 completed calendar days before your latest measurement. Days without a saved score are left out.</p>'
     +'<div class="analysis-tier-scale" role="img" aria-label="Your recent Daily Fuel Score is in the '+analysisEscape(activeTier)+' fuel-use range">'
       +'<div class="analysis-tier-marker" style="left:'+markerPct.toFixed(1)+'%"><span>'+(insight.tier==='balanced-near-higher'?'Close to higher':'You are here')+'</span></div>'
       +'<div class="analysis-tier-segment is-low"></div><div class="analysis-tier-segment is-balanced"></div><div class="analysis-tier-segment is-higher"></div><div class="analysis-tier-segment is-strong"></div>'
     +'</div>'
     +'<div class="analysis-tier-names"><span>Low</span><span>Balanced</span><span>Higher</span><span>Strong</span></div>'
     +'<details class="analysis-why"><summary>How FOX2 defines these ranges</summary>'
+      +'<p>FOX2 places you here using the average of your saved Daily Fuel Scores from the 14 completed calendar days before your latest measurement. Days without a saved score are left out.</p>'
       +'<div class="analysis-tier-definitions">'+definitions+'</div>'
       +'<p>Low is 0–60. Balanced is above 60 through 120. Higher is above 120 through 180. Strong is above 180. These are FOX2 probability ranges, not clinical cutoffs or guarantees.</p>'
     +'</details>'
@@ -1319,9 +1320,8 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   var helpingInsight=recentTagInsight||((stallInsight&&extendedStall)?analysisHistoricalTagInsight(tagRows||[],tagHistory,history.activeDate):null);
   var recentTimeframe='Last 14 calendar days · '+analysisShortDate(recentStart)+'–'+analysisShortDate(recentEnd);
   var progressExplanation=analysisProgressExplanation(currentDayToDay,previousDayToDay,recentMeasuredDays,previousMeasuredDays);
-  var positionHtml=analysisTierGuideHtml(progressInsight,recentAverage);
+  var positionHtml=analysisTierGuideHtml(progressInsight,recentAverage,recentTimeframe);
   var openingHtml='<section class="analysis-card">'
-    +'<div class="analysis-eyebrow">'+recentTimeframe+'</div>'
     +'<h2 class="analysis-major-title">Am I making progress?</h2>'
     +'<p class="analysis-summary"><strong>'+progressInsight.headline+'</strong> '+weekCopy.title+' '+progressInsight.answer+'</p>'
     +analysisWhyHtml(progressExplanation||progressInsight.detail,recentScoreVisual)
