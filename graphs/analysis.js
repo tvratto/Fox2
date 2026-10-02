@@ -595,8 +595,8 @@ function analysisTierGuideHtml(insight,recentAverage){
   var definitions=ranges.map(function(range){
     return '<div class="analysis-tier-definition '+(range.key===activeTier?'is-active':'')+'"><strong>'+range.name+'</strong><span>'+range.copy+'</span></div>';
   }).join('');
-  return '<section class="analysis-card analysis-tier-card">'
-    +'<h2 class="analysis-section-title">Where am I now?</h2>'
+  return '<section class="analysis-card analysis-tier-card analysis-hero">'
+    +'<h1 class="analysis-title">Where am I now?</h1>'
     +'<p class="analysis-section-copy">'+positionCopy+'</p>'
     +'<p class="analysis-tier-method">FOX2 places you here using the average of your saved Daily Fuel Scores from the 14 completed calendar days before your latest measurement. Days without a saved score are left out.</p>'
     +'<div class="analysis-tier-scale" role="img" aria-label="Your recent Daily Fuel Score is in the '+analysisEscape(activeTier)+' fuel-use range">'
@@ -1320,9 +1320,9 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   var recentTimeframe='Last 14 calendar days · '+analysisShortDate(recentStart)+'–'+analysisShortDate(recentEnd);
   var progressExplanation=analysisProgressExplanation(currentDayToDay,previousDayToDay,recentMeasuredDays,previousMeasuredDays);
   var positionHtml=analysisTierGuideHtml(progressInsight,recentAverage);
-  var openingHtml='<section class="analysis-card analysis-hero">'
+  var openingHtml='<section class="analysis-card">'
     +'<div class="analysis-eyebrow">'+recentTimeframe+'</div>'
-    +'<h1 class="analysis-title">Am I making progress?</h1>'
+    +'<h2 class="analysis-major-title">Am I making progress?</h2>'
     +'<p class="analysis-summary"><strong>'+progressInsight.headline+'</strong> '+weekCopy.title+' '+progressInsight.answer+'</p>'
     +analysisWhyHtml(progressExplanation||progressInsight.detail,recentScoreVisual)
     +'</section>';
