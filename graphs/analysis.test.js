@@ -297,7 +297,8 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.equal(insight.question,'Could I be stalled?');
   assert.ok(insight.answer.includes('If you’re trying to reduce body fat'));
   assert.ok(insight.answer.includes('Fat Zone still goes up and down'));
-  assert.ok(insight.detail.includes('Missing days were not counted as zero'));
+  assert.ok(insight.detail.includes('Days without a saved score were left out'));
+  assert.ok(!insight.detail.includes('averaged'));
 
   const improving=[70,74,79,86,94].map((score,index)=>({date:'2026-09-'+String(24+index).padStart(2,'0'),score}));
   assert.equal(context.analysisStallInsight(improving,{days:[],points:[]},'2026-09-30'),null);

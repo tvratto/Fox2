@@ -1157,7 +1157,7 @@ function analysisStallInsight(scoreDays,history,referenceDate){
   return {
     question:'Could I be stalled?',tone:'is-watch',icon:'?',
     answer:'Possibly. If you’re trying to reduce body fat, your recent results may help explain why progress feels stalled. Your Daily Fuel Scores have '+direction+' and remain below the range where body-fat loss becomes more likely. '+analysisWithinDayContext(history,recent,referenceDate),
-    detail:'The latest seven calendar days include '+recent.length+' saved Daily Fuel Scores with an average of '+average+'. The earlier part averaged '+early+' and the later part averaged '+late+'. Missing days were not counted as zero.'
+    detail:'FOX2 compared the '+recent.length+' days with saved scores from your latest week. Your later results '+(direction==='gone down'?'were lower than your earlier results':'stayed close to your earlier results')+'. Days without a saved score were left out.'
   };
 }
 
@@ -1291,13 +1291,12 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
     +'<p class="analysis-summary"><strong>'+progressInsight.headline+'</strong> '+weekCopy.title+' '+progressInsight.answer+'</p>'
     +analysisWhyHtml(currentWeekDetail+' '+progressInsight.detail,recentScoreVisual)
     +'</section>';
-  var helpingBlock=helpingInsight?'<div class="analysis-experiment"><h3>'+helpingInsight.question+'</h3><p>'+helpingInsight.answer+'</p></div>':'';
-  var helpingDetail=helpingInsight?helpingInsight.detail:'';
+  var helpingBlock=helpingInsight?'<div class="analysis-experiment"><h3>'+helpingInsight.question+'</h3><p>'+helpingInsight.answer+'</p>'+analysisWhyHtml(helpingInsight.detail,tagEvidenceHtml(helpingInsight))+'</div>':'';
   var helpingVisual=helpingInsight?tagEvidenceHtml(helpingInsight):'';
   var stallHtml=stallInsight?'<article class="analysis-conclusion '+stallInsight.tone+'"><div class="analysis-conclusion-icon">'+stallInsight.icon+'</div><div>'
     +'<h2>'+stallInsight.question+'</h2><p>'+stallInsight.answer+'</p>'
     +helpingBlock
-    +analysisWhyHtml(stallInsight.detail+(helpingDetail?' '+helpingDetail:''),helpingVisual)
+    +analysisWhyHtml(stallInsight.detail,'')
     +'</div></article>':'';
   var standaloneHelpingHtml=!stallInsight&&helpingInsight?'<article class="analysis-conclusion is-change"><div class="analysis-conclusion-icon">'+helpingInsight.icon+'</div><div>'
     +'<h2>'+helpingInsight.question+'</h2><p>'+helpingInsight.answer+'</p>'
