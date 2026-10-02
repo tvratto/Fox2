@@ -1244,7 +1244,7 @@ function analysisDaypartOpportunity(history,referenceDate){
   var recurringEveningRise=afternoonEvening.length>=5&&eveningRiseCount>=Math.ceil(afternoonEvening.length*.6);
   var answer='';
   if(!clearGap&&recurringEveningRise){
-    answer='Your Fat Zone often goes up from afternoon to evening, even though no single part of the day has a much lower average. If you want to increase your Daily Fuel Score, try one small, sustainable change earlier in the day and see whether that rise begins sooner or lasts longer.';
+    answer='Your Fat Zone often goes up from afternoon to evening. If you want to increase your Daily Fuel Score, try one small, sustainable change earlier in the day and see whether that rise begins sooner or lasts longer.';
   }else if(!clearGap){
     answer='If you want to increase your Daily Fuel Score, no single time of day stands out as the main opportunity. Try one small, sustainable change and keep the rest of your routine similar for several days. The next sign to look for is a higher Fat Zone lasting longer.';
   }else if(lowest==='morning'){

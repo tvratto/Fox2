@@ -333,7 +333,7 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   }
   const opportunity=context.analysisDaypartOpportunity({points},'2026-09-30');
   assert.ok(opportunity.answer.includes('often goes up from afternoon to evening'));
-  assert.ok(opportunity.answer.includes('no single part of the day has a much lower average'));
+  assert.ok(!opportunity.answer.includes('no single part of the day has a much lower average'));
   assert.ok(opportunity.detail.includes('6 of 10 comparable recent days'));
 })();
 
