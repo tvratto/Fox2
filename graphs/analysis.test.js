@@ -284,7 +284,9 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(!source.includes('What stood out recently?'));
   assert.ok(source.includes('analysisStallInsight(scoreDays,history,history.activeDate)'));
   assert.ok(source.includes("shell.innerHTML=positionHtml+openingHtml"));
-  assert.ok(source.indexOf("analysisWhyHtml(stallInsight.detail,'')")<source.indexOf('+helpingBlock'));
+  assert.ok(source.indexOf('+helpingBlock')<source.indexOf("var stallHtml=stallInsight?"));
+  assert.ok(!source.includes("+analysisWhyHtml(stallInsight.detail,'')\n    +helpingBlock"));
+  assert.ok(!source.includes('standaloneHelpingHtml'));
 })();
 
 (function raisesAStallQuestionOnlyForAFlatOrFallingSub120Week(){

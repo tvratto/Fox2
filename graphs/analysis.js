@@ -1477,27 +1477,22 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   var recentTimeframe='Last 14 calendar days · '+analysisShortDate(recentStart)+'–'+analysisShortDate(recentEnd);
   var progressExplanation=analysisProgressExplanation(currentDayToDay,previousDayToDay,recentMeasuredDays,previousMeasuredDays);
   var positionHtml=analysisTierGuideHtml(progressInsight,recentAverage,recentTimeframe);
+  var helpingBlock=helpingInsight?'<div class="analysis-experiment"><h3>'+helpingInsight.question+'</h3><p>'+helpingInsight.answer+'</p>'+analysisWhyHtml(helpingInsight.detail,tagEvidenceHtml(helpingInsight))+'</div>':'';
   var openingHtml='<section class="analysis-card">'
     +'<h2 class="analysis-major-title">Am I making progress?</h2>'
     +'<p class="analysis-summary"><strong>'+progressInsight.headline+'</strong> '+weekCopy.title+' '+progressInsight.answer+'</p>'
     +analysisWhyHtml(progressExplanation||progressInsight.detail,recentScoreVisual)
+    +helpingBlock
     +'</section>';
-  var helpingBlock=helpingInsight?'<div class="analysis-experiment"><h3>'+helpingInsight.question+'</h3><p>'+helpingInsight.answer+'</p>'+analysisWhyHtml(helpingInsight.detail,tagEvidenceHtml(helpingInsight))+'</div>':'';
   var actionQuestion=helpingInsight?'What else could I try?':daypartOpportunity&&daypartOpportunity.question;
   var actionBlock=daypartOpportunity?'<div class="analysis-experiment"><h3>'+actionQuestion+'</h3><p>'+daypartOpportunity.answer+'</p>'+analysisWhyHtml(daypartOpportunity.detail,daypartOpportunity.visual||'')+'</div>':'';
-  var helpingVisual=helpingInsight?tagEvidenceHtml(helpingInsight):'';
   var stallHtml=stallInsight?'<article class="analysis-conclusion '+stallInsight.tone+'"><div class="analysis-conclusion-icon">'+stallInsight.icon+'</div><div>'
     +'<h2>'+stallInsight.question+'</h2><p>'+stallInsight.answer+'</p>'
     +analysisWhyHtml(stallInsight.detail,'')
-    +helpingBlock
     +actionBlock
     +'</div></article>':'';
-  var standaloneHelpingHtml=!stallInsight&&helpingInsight?'<article class="analysis-conclusion is-change"><div class="analysis-conclusion-icon">'+helpingInsight.icon+'</div><div>'
-    +'<h2>'+helpingInsight.question+'</h2><p>'+helpingInsight.answer+'</p>'
-    +analysisWhyHtml(helpingInsight.detail,helpingVisual)
-    +'</div></article>':'';
   shell.innerHTML=positionHtml+openingHtml
-    +(stallHtml||standaloneHelpingHtml?'<section class="analysis-conclusion-list" aria-label="Questions answered">'+stallHtml+standaloneHelpingHtml+'</section>':'')
+    +(stallHtml?'<section class="analysis-conclusion-list" aria-label="Questions answered">'+stallHtml+'</section>':'')
     +weeklyTrendHtml(scoreDays,all,weekToDate)
     +'<section class="analysis-card"><h2 class="analysis-section-title">Daily Fuel Score over time</h2>'
       +'<p class="analysis-section-copy">Every saved day from the beginning. The highlighted area is the latest 14 calendar days.</p>'
