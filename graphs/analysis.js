@@ -308,15 +308,17 @@ function analysisRecentProgressInsight(recentScores,previousScores,recentMeasure
   var previousAverage=analysisAverageScore(previousScores);
   var scoreDelta=recentAverage!==null&&previousAverage!==null?Math.round((recentAverage-previousAverage)*10)/10:null;
   var recentHigher=(recentScores||[]).filter(function(day){return Number(day.score)>120;}).length;
-  var previousHigher=(previousScores||[]).filter(function(day){return Number(day.score)>120;}).length;
   var recentResponses=(recentMeasured||[]).filter(function(day){return day.movement==='responsive';}).length;
   var previousResponses=(previousMeasured||[]).filter(function(day){return day.movement==='responsive';}).length;
-  var scoreEvidence=recentAverage===null?'There are no saved Daily Fuel Scores in the latest 14 days.'
-    :'Your latest 14 days include '+recentScores.length+' saved Daily Fuel Score'+(recentScores.length===1?'':'s')+' with an average of '+recentAverage+'.'
-      +(previousAverage===null?' There are not enough earlier scores for a direct comparison.':' The 14 days before averaged '+previousAverage+'.')
-      +' '+recentHigher+' of '+recentScores.length+' recent score days were above 120'
-      +(previousScores&&previousScores.length?', compared with '+previousHigher+' of '+previousScores.length+' in the 14 days before.':'.')
-      +(recentMeasured&&recentMeasured.length?' '+recentResponses+' of '+recentMeasured.length+' well-measured days had a clear rise and return.':'');
+  var scoreEvidence=recentAverage===null?'FOX2 needs a few saved days before it can show how your metabolism is changing.'
+    :previousAverage===null?'FOX2 is still building your starting point for a longer-term comparison.'
+    :scoreDelta>=8?'Over the last two weeks, your results suggest your body has been using more fat for energy across the day than before.'
+    :scoreDelta<=-8?'Over the last two weeks, your results suggest your body has been using less fat for energy across the day than before.'
+    :'Your overall fat-use pattern has stayed fairly steady over the last two weeks.';
+  if(recentHigher>0) scoreEvidence+=' Some recent days reached the range where body-fat loss may become more likely.';
+  if(recentMeasured&&recentMeasured.length&&recentResponses>previousResponses){
+    scoreEvidence+=' Your Fat Zone is also rising during more well-measured days than it did before.';
+  }
 
   if(recentAverage===null){
     return {tier:'unknown',headline:'FOX2 is still building your starting point.',answer:'Keep measuring so FOX2 can show where your recent pattern sits and what may help it change.',detail:scoreEvidence,tone:'is-change',icon:'→'};
@@ -359,6 +361,42 @@ function analysisRecentProgressInsight(recentScores,previousScores,recentMeasure
     answer:'More is not always better. Focus on eating enough, getting enough protein, and keeping your routine sustainable rather than trying to push higher.',
     detail:scoreEvidence,tone:'is-watch',icon:'!'
   };
+}
+
+function analysisProgressExplanation(currentWeek,previousWeek,recentMeasured,previousMeasured){
+  var sentences=[];
+  if(currentWeek&&currentWeek.dayCount&&previousWeek&&previousWeek.dayCount){
+    var delta=Number(currentWeek.mean)-Number(previousWeek.mean);
+    if(currentWeek.dayCount===1){
+      sentences.push(delta>=8
+        ?'Your first day this week suggests your body used more fat for energy across the day than it usually did last week.'
+        :delta<=-8
+          ?'Your first day this week suggests your body used less fat for energy across the day than it usually did last week.'
+          :'Your first day this week looks close to your usual pattern from last week.');
+      sentences.push('It is still early, so the next few days will show whether that direction lasts.');
+    }else{
+      sentences.push(delta>=8
+        ?'So far this week, your results suggest your body is using more fat for energy across the day than last week.'
+        :delta<=-8
+          ?'So far this week, your results suggest your body is using less fat for energy across the day than last week.'
+          :'So far this week, your body appears to be using about the same amount of fat for energy across the day as last week.');
+    }
+  }else if(currentWeek&&currentWeek.dayCount){
+    sentences.push('FOX2 is still building enough history to show how this week compares with your usual pattern.');
+  }
+
+  var recentResponses=(recentMeasured||[]).filter(function(day){return day.movement==='responsive';}).length;
+  var previousResponses=(previousMeasured||[]).filter(function(day){return day.movement==='responsive';}).length;
+  var recentRate=recentMeasured&&recentMeasured.length?recentResponses/recentMeasured.length:0;
+  var previousRate=previousMeasured&&previousMeasured.length?previousResponses/previousMeasured.length:0;
+  if(recentResponses&&recentRate>previousRate+.15){
+    sentences.push('The encouraging part is that your Fat Zone is rising during more days than before. That suggests your metabolism is responding to something in your routine.');
+  }else if(recentResponses){
+    sentences.push('The encouraging part is that your Fat Zone still rises during the day. That shows your metabolism can respond, even if the higher results are not lasting as long yet.');
+  }else if(sentences.length){
+    sentences.push('The next sign of progress would be higher Fat Zones showing up more often or lasting longer.');
+  }
+  return sentences.join(' ');
 }
 
 function analysisRecentScoreOpportunity(scoreDays,referenceDate,tagRows,recentAverage){
@@ -1279,15 +1317,12 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   var extendedStall=analysisExtendedStall(scoreDays,history.activeDate);
   var helpingInsight=recentTagInsight||((stallInsight&&extendedStall)?analysisHistoricalTagInsight(tagRows||[],tagHistory,history.activeDate):null);
   var recentTimeframe='Last 14 calendar days · '+analysisShortDate(recentStart)+'–'+analysisShortDate(recentEnd);
-  var currentWeekDetail=currentDayToDay&&currentDayToDay.dayCount
-    ?currentDayToDay.dayCount+' saved Daily Fuel Score'+(currentDayToDay.dayCount===1?'':'s')+' this week with an average of '+currentDayToDay.mean+'.'
-      +(previousDayToDay&&previousDayToDay.dayCount?' The previous week averaged '+previousDayToDay.mean+' across '+previousDayToDay.dayCount+' saved day'+(previousDayToDay.dayCount===1?'':'s')+'.':'')
-    :'';
+  var progressExplanation=analysisProgressExplanation(currentDayToDay,previousDayToDay,recentMeasuredDays,previousMeasuredDays);
   var openingHtml='<section class="analysis-card analysis-hero">'
     +'<div class="analysis-eyebrow">'+recentTimeframe+'</div>'
     +'<h1 class="analysis-title">Am I making progress?</h1>'
     +'<p class="analysis-summary"><strong>'+progressInsight.headline+'</strong> '+weekCopy.title+' '+progressInsight.answer+'</p>'
-    +analysisWhyHtml(currentWeekDetail+' '+progressInsight.detail,recentScoreVisual)
+    +analysisWhyHtml(progressExplanation||progressInsight.detail,recentScoreVisual)
     +'</section>';
   var helpingBlock=helpingInsight?'<div class="analysis-experiment"><h3>'+helpingInsight.question+'</h3><p>'+helpingInsight.answer+'</p>'+analysisWhyHtml(helpingInsight.detail,tagEvidenceHtml(helpingInsight))+'</div>':'';
   var helpingVisual=helpingInsight?tagEvidenceHtml(helpingInsight):'';

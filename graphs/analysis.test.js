@@ -371,7 +371,20 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(maggie.headline.includes('getting close to a higher fat-use range'));
   assert.ok(maggie.answer.includes('already reaching it on some days'));
   assert.ok(!/\b109\b|\b120\b/.test(maggie.headline+' '+maggie.answer));
-  assert.ok(maggie.detail.includes('above 120'));
+  assert.ok(maggie.detail.includes('body-fat loss may become more likely'));
+})();
+
+(function explainsProgressAsMetabolicContextInsteadOfStatistics(){
+  const explanation=context.analysisProgressExplanation(
+    {dayCount:4,mean:82.3},
+    {dayCount:7,mean:95.7},
+    [{movement:'responsive'},{movement:'steady'}],
+    [{movement:'steady'},{movement:'steady'}]
+  );
+  assert.ok(explanation.includes('using less fat for energy across the day than last week'));
+  assert.ok(explanation.includes('encouraging part'));
+  assert.ok(explanation.includes('metabolism is responding'));
+  assert.ok(!/82\.3|95\.7|four|seven|average|saved Daily Fuel Score/i.test(explanation));
 })();
 
 (function callsOutARecentStrongerDayWithoutClaimingCause(){
