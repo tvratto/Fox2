@@ -288,6 +288,17 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(source.indexOf('+helpingBlock')<source.indexOf("var stallHtml=stallInsight?"));
   assert.ok(!source.includes("+analysisWhyHtml(stallInsight.detail,'')\n    +helpingBlock"));
   assert.ok(!source.includes('standaloneHelpingHtml'));
+  assert.ok(source.includes("document.getElementById('history-score-trend')"));
+  assert.ok(source.includes('historyTrend.innerHTML=scoreDays.length'));
+  assert.ok(source.indexOf('Daily Fuel Score over time')<source.indexOf('var helpingBlock='));
+})();
+
+(function placesTheLongTermScoreChartInHistory(){
+  const pageSource=fs.readFileSync(__dirname+'/index.html','utf8');
+  const historyCanvas=pageSource.indexOf('id="card-fuel"');
+  const historyTrend=pageSource.indexOf('id="history-score-trend"');
+  const analysisShell=pageSource.indexOf('id="analysis-shell"');
+  assert.ok(historyCanvas>=0&&historyTrend>historyCanvas&&historyTrend<analysisShell);
 })();
 
 (function raisesAStallQuestionOnlyForAFlatOrFallingSub120Week(){

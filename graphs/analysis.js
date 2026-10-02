@@ -1477,6 +1477,12 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   var recentTimeframe='Last 14 calendar days · '+analysisShortDate(recentStart)+'–'+analysisShortDate(recentEnd);
   var progressExplanation=analysisProgressExplanation(currentDayToDay,previousDayToDay,recentMeasuredDays,previousMeasuredDays);
   var positionHtml=analysisTierGuideHtml(progressInsight,recentAverage,recentTimeframe);
+  var historyTrend=document.getElementById('history-score-trend');
+  if(historyTrend){
+    historyTrend.innerHTML=scoreDays.length?'<section class="analysis-card"><h2 class="analysis-section-title">Daily Fuel Score over time</h2>'
+      +'<p class="analysis-section-copy">Every saved day from the beginning. The highlighted area is the latest 14 calendar days.</p>'
+      +scoreTrendSvg(scoreDays,recentStart)+'</section>':'';
+  }
   var helpingBlock=helpingInsight?'<div class="analysis-experiment"><h3>'+helpingInsight.question+'</h3><p>'+helpingInsight.answer+'</p>'+analysisWhyHtml(helpingInsight.detail,tagEvidenceHtml(helpingInsight))+'</div>':'';
   var openingHtml='<section class="analysis-card">'
     +'<h2 class="analysis-major-title">Am I making progress?</h2>'
@@ -1493,8 +1499,5 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
     +'</div></article>':'';
   shell.innerHTML=positionHtml+openingHtml
     +(stallHtml?'<section class="analysis-conclusion-list" aria-label="Questions answered">'+stallHtml+'</section>':'')
-    +'<section class="analysis-card"><h2 class="analysis-section-title">Daily Fuel Score over time</h2>'
-      +'<p class="analysis-section-copy">Every saved day from the beginning. The highlighted area is the latest 14 calendar days.</p>'
-      +scoreTrendSvg(scoreDays,recentStart)+'</section>'
     +'<div class="analysis-footnote">Based on '+scoreDays.length+' completed days with scores, including '+all.length+' days with enough readings for within-day comparisons. A clear increase requires a rise at least two Fat Zone levels above your recent baseline and a return toward it within 72 hours. Days without enough readings are left out of within-day comparisons, but their saved Daily Fuel Scores still count in daily and weekly comparisons. Tags show patterns, not causes. FOX2 does not diagnose stalled metabolism, muscle loss, or under-fueling.</div>';
 }

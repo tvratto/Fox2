@@ -56,6 +56,7 @@ html, body {
 .page::-webkit-scrollbar { display: none; }
 .card-wrap { width: 100%; max-width: 420px; margin: auto 0; }
 .card-wrap canvas { width: 100%; height: auto; display: block; }
+.history-score-trend { margin-top: 12px; }
 .analysis-page { gap: 14px; align-items: center; }
 .analysis-shell { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 12px; }
 .analysis-card {
@@ -1865,6 +1866,7 @@ html, body {
         <div id="dot-popup-fuel-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div>
         <div id="dot-popup-fuel-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div>
       </div>
+      <div class="history-score-trend" id="history-score-trend"></div>
     </div>
   </div>
   <div class="page analysis-page">
@@ -8203,7 +8205,7 @@ function initDayGraphPopup(){
 </div>
 
 <script src="state-engine.js?v=20260930-11"></script>
-<script src="analysis.js?v=20261002-22"></script>
+<script src="analysis.js?v=20261002-23"></script>
 
 </body>
 </html>
