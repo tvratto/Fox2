@@ -1201,6 +1201,56 @@ function analysisStallInsight(scoreDays,history,referenceDate){
   };
 }
 
+function analysisDaypartOpportunity(history,referenceDate){
+  if(!history||!referenceDate) return null;
+  var start=addIsoDays(referenceDate,-14);
+  var byDay={};
+  (history.points||[]).forEach(function(point){
+    if(point.date<start||point.date>=referenceDate) return;
+    var minute=Number(point.minute);
+    var value=Number(point.value);
+    if(!isFinite(minute)||!isFinite(value)) return;
+    var part=minute<720?'morning':minute<1020?'afternoon':'evening';
+    if(!byDay[point.date]) byDay[point.date]={morning:[],afternoon:[],evening:[]};
+    byDay[point.date][part].push(value);
+  });
+  var parts=['morning','afternoon','evening'];
+  var averages={};
+  var counts={};
+  parts.forEach(function(part){
+    var daily=Object.keys(byDay).map(function(date){
+      var values=byDay[date][part];
+      return values.length?values.reduce(function(sum,value){return sum+value;},0)/values.length:null;
+    }).filter(function(value){return value!==null;});
+    counts[part]=daily.length;
+    averages[part]=daily.length?daily.reduce(function(sum,value){return sum+value;},0)/daily.length:null;
+  });
+  var eligible=parts.filter(function(part){return counts[part]>=3;});
+  if(eligible.length<2) return null;
+  eligible.sort(function(a,b){return averages[a]-averages[b];});
+  var lowest=eligible[0];
+  var highest=eligible[eligible.length-1];
+  var clearGap=averages[highest]-averages[lowest]>=.75;
+  var answer='';
+  if(!clearGap){
+    answer='If you want to increase your Daily Fuel Score, no single time of day stands out as the main opportunity. Try one small, sustainable change and keep the rest of your routine similar for several days. The next sign to look for is a higher Fat Zone lasting longer.';
+  }else if(lowest==='morning'){
+    answer='If you want to increase your Daily Fuel Score, the morning looks like your biggest opportunity. Your Fat Zone is usually lower then than later in the day. Try one small, sustainable change to your morning meal, timing, or activity for several days and see whether the higher pattern begins earlier or lasts longer.';
+  }else if(lowest==='afternoon'){
+    answer='If you want to increase your Daily Fuel Score, the middle of the day looks like your biggest opportunity. Your Fat Zone tends to dip then. Try one small, sustainable change to your midday meal, timing, or activity for several days and see whether the dip becomes smaller.';
+  }else{
+    answer='If you want to increase your Daily Fuel Score, the later part of the day looks like your biggest opportunity. Your Fat Zone often falls by evening. Try one small, sustainable change that may help your earlier pattern carry farther into the day.';
+  }
+  var partName=lowest==='afternoon'?'the middle of the day':lowest==='evening'?'the later part of the day':'the morning';
+  return {
+    question:'What could I try?',
+    answer:answer,
+    detail:clearGap
+      ?'FOX2 compared your morning, afternoon, and evening Fat Zones across recent completed days. '+partName.charAt(0).toUpperCase()+partName.slice(1)+' was the lowest part of your typical day.'
+      :'FOX2 compared your morning, afternoon, and evening Fat Zones across recent completed days. They were close enough that one part of the day did not clearly stand out.'
+  };
+}
+
 function analysisTagWindow(tagRows,history,startDate,endDate){
   return {
     rows:(tagRows||[]).filter(function(row){
@@ -1316,6 +1366,7 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   var progressInsight=analysisRecentProgressInsight(recentScoreDays,previousScoreDays,recentMeasuredDays,previousMeasuredDays);
   var recentAverage=analysisAverageScore(recentScoreDays);
   var stallInsight=analysisStallInsight(scoreDays,history,history.activeDate);
+  var daypartOpportunity=stallInsight?analysisDaypartOpportunity(history,history.activeDate):null;
   var extendedStall=analysisExtendedStall(scoreDays,history.activeDate);
   var helpingInsight=recentTagInsight||((stallInsight&&extendedStall)?analysisHistoricalTagInsight(tagRows||[],tagHistory,history.activeDate):null);
   var recentTimeframe='Last 14 calendar days · '+analysisShortDate(recentStart)+'–'+analysisShortDate(recentEnd);
@@ -1327,10 +1378,12 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
     +analysisWhyHtml(progressExplanation||progressInsight.detail,recentScoreVisual)
     +'</section>';
   var helpingBlock=helpingInsight?'<div class="analysis-experiment"><h3>'+helpingInsight.question+'</h3><p>'+helpingInsight.answer+'</p>'+analysisWhyHtml(helpingInsight.detail,tagEvidenceHtml(helpingInsight))+'</div>':'';
+  var actionBlock=daypartOpportunity?'<div class="analysis-experiment"><h3>'+daypartOpportunity.question+'</h3><p>'+daypartOpportunity.answer+'</p>'+analysisWhyHtml(daypartOpportunity.detail,'')+'</div>':'';
   var helpingVisual=helpingInsight?tagEvidenceHtml(helpingInsight):'';
   var stallHtml=stallInsight?'<article class="analysis-conclusion '+stallInsight.tone+'"><div class="analysis-conclusion-icon">'+stallInsight.icon+'</div><div>'
     +'<h2>'+stallInsight.question+'</h2><p>'+stallInsight.answer+'</p>'
     +analysisWhyHtml(stallInsight.detail,'')
+    +actionBlock
     +helpingBlock
     +'</div></article>':'';
   var standaloneHelpingHtml=!stallInsight&&helpingInsight?'<article class="analysis-conclusion is-change"><div class="analysis-conclusion-icon">'+helpingInsight.icon+'</div><div>'

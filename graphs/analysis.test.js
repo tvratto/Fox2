@@ -307,6 +307,20 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.equal(context.analysisStallInsight(higher,{days:[],points:[]},'2026-09-30'),null);
 })();
 
+(function findsThePartOfTheDayWithTheMostRoomToImprove(){
+  const points=[];
+  ['2026-09-24','2026-09-25','2026-09-26','2026-09-27'].forEach(function(date){
+    points.push({date,minute:480,value:2});
+    points.push({date,minute:840,value:4});
+    points.push({date,minute:1140,value:5});
+  });
+  const opportunity=context.analysisDaypartOpportunity({points},'2026-09-30');
+  assert.equal(opportunity.question,'What could I try?');
+  assert.ok(opportunity.answer.includes('morning looks like your biggest opportunity'));
+  assert.ok(opportunity.answer.includes('morning meal, timing, or activity'));
+  assert.ok(opportunity.detail.includes('The morning was the lowest part'));
+})();
+
 (function usesEightRecentWeeksAndOnlyResurfacesStrongOlderEvidence(){
   const windowed=context.analysisTagWindow([
     {day_date:'2026-07-01',events:[]},
