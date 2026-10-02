@@ -56,8 +56,6 @@ html, body {
 .page::-webkit-scrollbar { display: none; }
 .card-wrap { width: 100%; max-width: 420px; margin: auto 0; }
 .card-wrap canvas { width: 100%; height: auto; display: block; }
-.pattern-page { gap: 14px; }
-.pattern-page .card-wrap { margin: 0; }
 .analysis-page { gap: 14px; align-items: center; }
 .analysis-shell { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 12px; }
 .analysis-card {
@@ -1808,8 +1806,7 @@ html, body {
   <div class="top-header-inner">
     <button class="nav-tab active" data-page="0">Results</button>
     <button class="nav-tab" data-page="1">History</button>
-    <button class="nav-tab" data-page="2">Fuel Pattern</button>
-    <button class="nav-tab" data-page="3">Analysis</button>
+    <button class="nav-tab" data-page="2">Analysis</button>
   </div>
   <div id="debug-bar" style="display:none;">v1.1</div>
 </div>
@@ -1860,13 +1857,6 @@ html, body {
       <div id="dot-popup-fuel" style="display:none;position:fixed;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:999999;white-space:nowrap;">
         <div id="dot-popup-fuel-val" style="font-size:15px;font-weight:700;color:#fff;text-align:center;"></div>
         <div id="dot-popup-fuel-time" style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-top:2px;"></div>
-      </div>
-    </div>
-  </div>
-  <div class="page pattern-page">
-    <div class="card-wrap" id="card-insights-wrap" style="position:relative;"><canvas id="card-insights" style="cursor:pointer;"></canvas>
-      <div id="tag-pattern-popup" style="display:none;position:fixed;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:1000;white-space:nowrap;">
-        <div id="tag-pattern-popup-text" style="font-size:13px;color:rgba(255,255,255,0.85);text-align:center;"></div>
       </div>
     </div>
   </div>
@@ -3057,7 +3047,7 @@ function buildGraphCard(forcedView) {
   var VALUE_GAP = 4;
 
   tabHitBoxes = [];
-  var tabLabel = forcedView === 'zones' ? 'Fuel' : 'Summary';
+  var tabLabel = forcedView === 'zones' ? 'Fat Zones' : 'Summary';
 
   // ── Single always-active tab ──────────────────────────────────
   var tx = boxX + 6;
@@ -3159,9 +3149,9 @@ function buildGraphCard(forcedView) {
     var total = zt.glucose + zt.mixed + zt.fat || 1;
 
     var zones = [
-      { label: 'Minimal', value: Math.round(zt.glucose / total * 100) + '%', color: '#00d4ff', pct: zt.glucose / total },
-      { label: 'Balanced', value: Math.round(zt.mixed / total * 100) + '%', color: '#4caf82', pct: zt.mixed / total },
-      { label: 'High +', value: Math.round(zt.fat / total * 100) + '%', color: '#a855f7', pct: zt.fat / total }
+      { label: 'Low', value: Math.round(zt.glucose / total * 100) + '%', color: '#22D3EE', pct: zt.glucose / total },
+      { label: 'Balanced', value: Math.round(zt.mixed / total * 100) + '%', color: '#4ADE80', pct: zt.mixed / total },
+      { label: 'Higher +', value: Math.round(zt.fat / total * 100) + '%', color: '#A855F7', pct: zt.fat / total }
     ];
 
     for (var s = 0; s < zones.length; s++) {
@@ -5174,8 +5164,9 @@ window.addEventListener('load', function() {
     try {
       renderCard();
 
-      insightsCanvas = buildInsightsCard();
       var destI = document.getElementById('card-insights');
+      if (destI) {
+      insightsCanvas = buildInsightsCard();
       destI.width = insightsCanvas.width; destI.height = insightsCanvas.height;
       destI.getContext('2d').drawImage(insightsCanvas, 0, 0);
 
@@ -5266,6 +5257,7 @@ window.addEventListener('load', function() {
         if (Date.now() - insightsLastTouch < 500) return; // already handled via touch events
         handleInsightsTap(e.clientX, e.clientY);
       });
+      }
 
     } catch(e) {
       console.error('FOX2 render error:', e && e.message, e && e.stack);
@@ -8204,7 +8196,7 @@ function initDayGraphPopup(){
 </div>
 
 <script src="state-engine.js?v=20260930-11"></script>
-<script src="analysis.js?v=20261002-7"></script>
+<script src="analysis.js?v=20261002-8"></script>
 
 </body>
 </html>

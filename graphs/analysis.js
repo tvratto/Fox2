@@ -1272,8 +1272,6 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   var previousScoreDays=scoreDays.filter(function(day){return day.date>=previousStart&&day.date<=previousEnd;});
   var recentMeasuredDays=all.filter(function(day){return day.date>=recentStart&&day.date<=recentEnd;});
   var previousMeasuredDays=all.filter(function(day){return day.date>=previousStart&&day.date<=previousEnd;});
-  var measurementPoints=history.points.filter(function(p){return p.date!==history.activeDate;});
-  var completedEpisodes=history.episodes.filter(function(e){return e.peakDate!==history.activeDate;});
   var recentScoreVisual=dailyScoreEvidenceSvg(recentScoreDays,'Daily Fuel Scores from the last 14 days');
   var progressInsight=analysisRecentProgressInsight(recentScoreDays,previousScoreDays,recentMeasuredDays,previousMeasuredDays);
   var recentAverage=analysisAverageScore(recentScoreDays);
@@ -1309,8 +1307,5 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
     +'<section class="analysis-card"><h2 class="analysis-section-title">Daily Fuel Score over time</h2>'
       +'<p class="analysis-section-copy">Every saved day from the beginning. The highlighted area is the latest 14 calendar days.</p>'
       +scoreTrendSvg(scoreDays,recentStart)+'</section>'
-    +'<section class="analysis-card"><h2 class="analysis-section-title">Fat Zone changes over time</h2>'
-      +'<p class="analysis-section-copy">Across your history, gold marks when your Fat Zone went clearly above its usual level. Blue marks when it came back down.</p>'
-      +measurementResponseSvg(measurementPoints,completedEpisodes)+'</section>'
     +'<div class="analysis-footnote">Based on '+scoreDays.length+' completed days with scores, including '+all.length+' days with enough readings for within-day comparisons. A clear increase requires a rise at least two Fat Zone levels above your recent baseline and a return toward it within 72 hours. Days without enough readings are left out of within-day comparisons, but their saved Daily Fuel Scores still count in daily and weekly comparisons. Tags show patterns, not causes. FOX2 does not diagnose stalled metabolism, muscle loss, or under-fueling.</div>';
 }

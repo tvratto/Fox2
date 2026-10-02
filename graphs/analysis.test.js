@@ -406,4 +406,21 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.equal(context.analysisRelativeDay('2026-09-29','2026-09-30'),'Yesterday');
 })();
 
+(function removesRetiredAnalysisAndPatternUi(){
+  const analysisSource=fs.readFileSync(__dirname+'/analysis.js','utf8');
+  const pageSource=fs.readFileSync(__dirname+'/index.html','utf8');
+  assert.ok(!analysisSource.includes('<h2 class="analysis-section-title">Fat Zone changes over time</h2>'));
+  assert.ok(!pageSource.includes('>Fuel Pattern</button>'));
+  assert.ok(!pageSource.includes('<div class="page pattern-page">'));
+})();
+
+(function keepsHistoryColorsAlignedWithFatZoneRanges(){
+  const pageSource=fs.readFileSync(__dirname+'/index.html','utf8');
+  assert.ok(pageSource.includes("var rounded = Math.round(ppm); return rounded <= 2 ? 0 : rounded <= 4 ? 1 : rounded <= 7 ? 2 : 3;"));
+  assert.ok(pageSource.includes("var tabLabel = forcedView === 'zones' ? 'Fat Zones' : 'Summary';"));
+  assert.ok(pageSource.includes("{ label: 'Low', value: Math.round(zt.glucose / total * 100) + '%', color: '#22D3EE'"));
+  assert.ok(pageSource.includes("{ label: 'Balanced', value: Math.round(zt.mixed / total * 100) + '%', color: '#4ADE80'"));
+  assert.ok(pageSource.includes("{ label: 'Higher +', value: Math.round(zt.fat / total * 100) + '%', color: '#A855F7'"));
+})();
+
 console.log('analysis tests passed');
