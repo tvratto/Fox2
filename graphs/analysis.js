@@ -1295,8 +1295,8 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   var helpingVisual=helpingInsight?tagEvidenceHtml(helpingInsight):'';
   var stallHtml=stallInsight?'<article class="analysis-conclusion '+stallInsight.tone+'"><div class="analysis-conclusion-icon">'+stallInsight.icon+'</div><div>'
     +'<h2>'+stallInsight.question+'</h2><p>'+stallInsight.answer+'</p>'
-    +helpingBlock
     +analysisWhyHtml(stallInsight.detail,'')
+    +helpingBlock
     +'</div></article>':'';
   var standaloneHelpingHtml=!stallInsight&&helpingInsight?'<article class="analysis-conclusion is-change"><div class="analysis-conclusion-icon">'+helpingInsight.icon+'</div><div>'
     +'<h2>'+helpingInsight.question+'</h2><p>'+helpingInsight.answer+'</p>'
