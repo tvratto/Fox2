@@ -598,6 +598,7 @@ function analysisTierGuideHtml(insight,recentAverage){
   return '<section class="analysis-card analysis-tier-card">'
     +'<h2 class="analysis-section-title">Where am I now?</h2>'
     +'<p class="analysis-section-copy">'+positionCopy+'</p>'
+    +'<p class="analysis-tier-method">FOX2 places you here using the average of your saved Daily Fuel Scores from the 14 completed calendar days before your latest measurement. Days without a saved score are left out.</p>'
     +'<div class="analysis-tier-scale" role="img" aria-label="Your recent Daily Fuel Score is in the '+analysisEscape(activeTier)+' fuel-use range">'
       +'<div class="analysis-tier-marker" style="left:'+markerPct.toFixed(1)+'%"><span>'+(insight.tier==='balanced-near-higher'?'Close to higher':'You are here')+'</span></div>'
       +'<div class="analysis-tier-segment is-low"></div><div class="analysis-tier-segment is-balanced"></div><div class="analysis-tier-segment is-higher"></div><div class="analysis-tier-segment is-strong"></div>'

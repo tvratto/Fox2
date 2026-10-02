@@ -411,6 +411,8 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(html.includes('analysis-tier-definition balanced')||html.includes('analysis-tier-definition is-active'));
   assert.ok(html.includes('How FOX2 defines these ranges'));
   assert.ok(html.includes('Balanced is above 60 through 120'));
+  assert.ok(html.includes('14 completed calendar days before your latest measurement'));
+  assert.ok(html.includes('Days without a saved score are left out'));
   assert.ok(html.indexOf('How FOX2 defines these ranges')<html.indexOf('analysis-tier-definitions'));
 })();
 
