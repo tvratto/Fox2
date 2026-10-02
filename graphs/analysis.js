@@ -558,7 +558,7 @@ function analysisTierGuideHtml(insight,recentAverage){
     return '<div class="analysis-tier-definition '+(range.key===activeTier?'is-active':'')+'"><strong>'+range.name+'</strong><span>'+range.copy+'</span></div>';
   }).join('');
   return '<section class="analysis-card analysis-tier-card">'
-    +'<h2 class="analysis-section-title">Your fuel-use range</h2>'
+    +'<h2 class="analysis-section-title">Where am I now?</h2>'
     +'<p class="analysis-section-copy">'+positionCopy+'</p>'
     +'<div class="analysis-tier-scale" role="img" aria-label="Your recent Daily Fuel Score is in the '+analysisEscape(activeTier)+' fuel-use range">'
       +'<div class="analysis-tier-marker" style="left:'+markerPct.toFixed(1)+'%"><span>'+(insight.tier==='balanced-near-higher'?'Close to higher':'You are here')+'</span></div>'
@@ -1152,19 +1152,22 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   var measurementPoints=history.points.filter(function(p){return p.date!==history.activeDate;});
   var completedEpisodes=history.episodes.filter(function(e){return e.peakDate!==history.activeDate;});
   var recentScoreVisual=dailyScoreEvidenceSvg(recentScoreDays,'Daily Fuel Scores from the last 14 days');
-  var currentWeekVisual=currentDayToDay?dailyScoreEvidenceSvg(currentDayToDay.days,'Daily Fuel Scores this week'):'';
   var lookback=analysisLookbackWindow(recentMeasuredDays,tagRows||[],history.activeDate,5);
   var progressInsight=analysisRecentProgressInsight(recentScoreDays,previousScoreDays,recentMeasuredDays,previousMeasuredDays);
   var recentAverage=analysisAverageScore(recentScoreDays);
   var scoreOpportunity=analysisRecentScoreOpportunity(recentScoreDays,history.activeDate,tagRows||[],recentAverage);
   var recentTimeframe='Last 14 calendar days · '+analysisShortDate(recentStart)+'–'+analysisShortDate(recentEnd);
-  var weekTimeframe=weekToDate?'This week · '+analysisShortDate(weekToDate.startDate)+'–'+analysisShortDate(weekToDate.throughDate):'This week';
   var currentWeekDetail=currentDayToDay&&currentDayToDay.dayCount
     ?currentDayToDay.dayCount+' saved Daily Fuel Score'+(currentDayToDay.dayCount===1?'':'s')+' this week with an average of '+currentDayToDay.mean+'.'
       +(previousDayToDay&&previousDayToDay.dayCount?' The previous week averaged '+previousDayToDay.mean+' across '+previousDayToDay.dayCount+' saved day'+(previousDayToDay.dayCount===1?'':'s')+'.':'')
     :'';
-  var openingHtml='';
-  var weekHtml='';
+  var openingHtml='<section class="analysis-card analysis-hero">'
+    +'<div class="analysis-eyebrow">'+recentTimeframe+'</div>'
+    +'<h1 class="analysis-title">Am I making progress?</h1>'
+    +'<p class="analysis-summary"><strong>'+progressInsight.headline+'</strong> '+weekCopy.title+' '+progressInsight.answer+'</p>'
+    +analysisWhyHtml(currentWeekDetail+' '+progressInsight.detail,recentScoreVisual)
+    +'</section>';
+  var recentHtml='';
   var useLookback=lookback&&(!scoreOpportunity||lookback.date>=scoreOpportunity.date);
   if(useLookback){
     var matchingTagInsight=lookback.tag?tagInsights.filter(function(insight){
@@ -1177,34 +1180,20 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
       recentAnswer='Your body may have been drawing on fat for energy, but only briefly. '+matchingTagInsight.answer;
       recentDetail+=' '+matchingTagInsight.detail;
     }
-    openingHtml='<section class="analysis-card analysis-hero">'
-      +'<div class="analysis-eyebrow">What changed recently?</div>'
-      +'<h1 class="analysis-title">'+lookback.displayEventLabel+' stood out.</h1>'
-      +'<p class="analysis-summary">'+recentAnswer+'</p>'
+    recentHtml='<article class="analysis-conclusion is-change"><div class="analysis-conclusion-icon">↑</div><div>'
+      +'<h2>What stood out recently?</h2>'
+      +'<p><strong>'+lookback.displayEventLabel+' stood out.</strong> '+recentAnswer+'</p>'
       +analysisWhyHtml(recentDetail,withinDayEvidenceSvg([lookback.day],measurementPoints))
-      +'</section>';
-    weekHtml='<article class="analysis-conclusion '+weekCopy.tone+'"><div class="analysis-conclusion-icon">'+weekCopy.icon+'</div><div><div class="analysis-timeframe">'+weekTimeframe+'</div><h2>How is this week going?</h2><p>'+weekCopy.title+' '+weekCopy.summary+'</p>'+analysisWhyHtml(currentWeekDetail,currentWeekVisual)+'</div></article>';
+      +'</div></article>';
   }else if(scoreOpportunity){
-    openingHtml='<section class="analysis-card analysis-hero">'
-      +'<div class="analysis-eyebrow">What stood out recently?</div>'
-      +'<h1 class="analysis-title">'+scoreOpportunity.title+'</h1>'
-      +'<p class="analysis-summary">'+scoreOpportunity.answer+'</p>'
+    recentHtml='<article class="analysis-conclusion is-change"><div class="analysis-conclusion-icon">↑</div><div>'
+      +'<h2>What stood out recently?</h2>'
+      +'<p><strong>'+scoreOpportunity.title+'</strong> '+scoreOpportunity.answer+'</p>'
       +analysisWhyHtml(scoreOpportunity.detail,'')
-      +'</section>';
-    weekHtml='<article class="analysis-conclusion '+weekCopy.tone+'"><div class="analysis-conclusion-icon">'+weekCopy.icon+'</div><div><div class="analysis-timeframe">'+weekTimeframe+'</div><h2>How is this week going?</h2><p>'+weekCopy.title+' '+weekCopy.summary+'</p>'+analysisWhyHtml(currentWeekDetail,currentWeekVisual)+'</div></article>';
-  }else{
-    openingHtml='<section class="analysis-card analysis-hero">'
-      +'<div class="analysis-eyebrow">How is this week going?</div>'
-      +'<h1 class="analysis-title">'+weekCopy.title+'</h1>'
-      +'<p class="analysis-summary">'+weekCopy.summary+'</p>'
-      +analysisWhyHtml(currentWeekDetail,currentWeekVisual)
-      +'</section>';
+      +'</div></article>';
   }
-  var progressHtml='<article class="analysis-conclusion '+progressInsight.tone+'"><div class="analysis-conclusion-icon">'+progressInsight.icon+'</div><div><div class="analysis-timeframe">'+recentTimeframe+'</div><h2>Am I making progress overall?</h2><p><strong>'+progressInsight.headline+'</strong> '+progressInsight.answer+'</p>'+analysisWhyHtml(progressInsight.detail,recentScoreVisual)+'</div></article>';
   shell.innerHTML=openingHtml
-    +'<section class="analysis-conclusion-list" aria-label="Your analysis">'
-      +weekHtml+progressHtml
-    +'</section>'
+    +(recentHtml?'<section class="analysis-conclusion-list" aria-label="Recent opportunity">'+recentHtml+'</section>':'')
     +analysisTierGuideHtml(progressInsight,recentAverage)
     +weeklyTrendHtml(scoreDays,all,weekToDate)
     +'<section class="analysis-card"><h2 class="analysis-section-title">Daily Fuel Score over time</h2>'

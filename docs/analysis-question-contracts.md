@@ -18,14 +18,16 @@ FOX2 selects the most relevant questions from the evidence. It should normally s
 
 ### Narrative order
 
-The analysis moves outward in time instead of presenting independent algorithm results:
+The analysis begins with the person's main question and then shows the most useful supporting context:
 
-1. A specific event from the last five calendar days, when one is present.
-2. How the current Monday–Sunday week is going.
-3. Whether the latest 14 calendar days improved compared with the 14 days before.
-4. The longer weekly and complete-history trends.
+1. **Am I making progress?** One answer that combines the current week, the latest 14 calendar days, and the strongest relevant sign of progress.
+2. **What stood out recently?** One specific event from the last five calendar days, only when it gives the person something useful to repeat or investigate.
+3. **Where am I now?** The person's recent Low, Balanced, Higher, or Strong fuel-use range.
+4. The longer weekly and complete-history trends that support the answer.
 
-An event older than five calendar days may support the longer analysis, but FOX2 should not ask the person to remember what happened before it. Always name a specific event with its weekday, date, and part of day.
+“How is this week going?” is evidence for “Am I making progress?” It should not repeat the same conclusion in a separate top-level card.
+
+An event older than five calendar days may support the longer analysis, but FOX2 should not ask the person to remember what happened before it. In the main answer, use a natural label such as “Yesterday afternoon” or “Last Friday morning.” Put the exact date in the supporting detail.
 
 Repeated-tag evidence belongs with the event or change it helps explain. It should not appear as an unrelated analysis card. A claim that a shift is showing up on more days requires a direct comparison with an earlier period; ordinary differences between days are not enough.
 
@@ -113,17 +115,18 @@ The requirement for at least three measurements spanning six hours applies only 
 | Priority | User question | Underlying concern | Primary timeframe | Minimum evidence | Possible answer families | Supporting visual |
 | --- | --- | --- | --- | --- | --- | --- |
 | 1 | Am I making progress? | Is my body drawing on fat for energy more often, for longer, or across more days? | Several timescales, from the latest well-measured day through completed calendar weeks | Depends on the sign of progress; each answer must state its timeframe and evidence strength | Happening more often; lasting longer; showing up across more days; not clear yet | One small visual for each sign of progress being described |
-| 2 | How is this week going? | Do I have an opportunity to continue, improve, or recover before Sunday? | Current Monday through last measured day | One or more Daily Fuel Scores this week | Early start; ahead of the same point last week; similar; behind with time to act; recovering | Current week versus the same weekdays last week |
+| 2 | What stood out recently? | Did a recent day or part of a day give me something useful to repeat or investigate? | Latest five calendar days | One unusually strong Daily Fuel Score or one well-measured Fat Zone increase | Stronger day; brief increase; possible repeated-tag association; nothing useful to call out | The named day or period only |
 | 3 | Is my body drawing on fat for energy more often? | Does the Fat Zone go higher than it used to? | Recent measured days, with history for context | At least two Daily Fuel Scores or one well-measured day | Not seen yet; seen briefly; happening more often; lasting longer | Highlighted higher days or a specifically named day curve |
 | 4 | Does my Fat Zone change during the day? | Does the pattern suggest that fat use changes as the day changes? | Several individual days | At least three readings spanning six hours on each included day | Not enough coverage; little change; changes on some days; changes often | Small multiples: one clearly labeled curve per date |
 | 5 | Is this shift showing up on more days? | Is the change happening often, not just once in a while? | Completed weeks | At least four Daily Fuel Scores in each compared week | Too early; promising but occasional; happening across more days; continuing | Weekly average with day-to-day range |
 | 6 | Am I stalled? | Have my scores and Fat Zones stayed the same long enough that I should try a change? | At least two completed weeks | Enough Daily Fuel Scores, plus enough Fat Zone readings for any claim about changes within a day | Too early to tell; no clear increase yet; an early change is starting; not currently stalled | Multi-week score and Fat Zone summary |
 | 7 | Could I be pushing too hard? | Has my Fat Zone stayed very high without coming back down? | Recent weeks | Repeated high Daily Fuel Scores plus enough Fat Zone readings across the day | No such pattern; check that you are eating enough; the pattern has continued and may be worth discussing with a professional | Weekly trend plus clearly labeled high, steady days |
 | 8 | What appears to be helping? | Which repeated choices are followed by a more favorable pattern? | Repeated tagged occasions | Threshold depends on comparison type; see tag contract | Still gathering; same-day association; later-reading association; next-day association | Tagged versus comparison occasions |
-| 9 | What should I try next? | What is the smallest useful experiment based on my evidence gap? | Current evidence state | Any amount of data | Measure across more of the day; repeat a promising choice; try one sustainable change; protect adequate food/protein intake | Usually no chart; link to the evidence that motivated the suggestion |
-| 10 | Is this my strongest period so far? | How does the current period compare with my own history? | Complete history | At least three usable completed weeks | New personal high; among stronger periods; within usual range | Current week highlighted against personal history |
-| 11 | Is the change lasting? | Has the better pattern lasted beyond one good day or week? | Several completed weeks | At least three weeks that can be fairly compared | Too early; starting; lasting; eased recently | Weekly summaries in date order |
-| 12 | What happened on this day? | How did my Fat Zone change that day? | One named date | Readings from that date | Went up; came down; went up and came back down; changed little; not enough readings | One curve titled with the exact date |
+| 9 | How is this week going? | Is the current week supporting progress, holding steady, or offering time to recover? This is supporting evidence for “Am I making progress?”, not a separate headline card. | Current Monday through last measured day | One or more Daily Fuel Scores this week | Early start; ahead of the same point last week; similar; behind with time to act; recovering | Current week versus the same weekdays last week |
+| 10 | What should I try next? | What is the smallest useful experiment based on my evidence gap? | Current evidence state | Any amount of data | Measure across more of the day; repeat a promising choice; try one sustainable change; protect adequate food/protein intake | Usually no chart; link to the evidence that motivated the suggestion |
+| 11 | Is this my strongest period so far? | How does the current period compare with my own history? | Complete history | At least three usable completed weeks | New personal high; among stronger periods; within usual range | Current week highlighted against personal history |
+| 12 | Is the change lasting? | Has the better pattern lasted beyond one good day or week? | Several completed weeks | At least three weeks that can be fairly compared | Too early; starting; lasting; eased recently | Weekly summaries in date order |
+| 13 | What happened on this day? | How did my Fat Zone change that day? | One named date | Readings from that date | Went up; came down; went up and came back down; changed little; not enough readings | One curve titled with the exact date |
 
 ## Contract 1: Am I making progress?
 

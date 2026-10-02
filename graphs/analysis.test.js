@@ -277,11 +277,12 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(source.includes('weeklyTrendHtml(scoreDays,all,weekToDate)'));
   assert.ok(!source.includes('weeklyStateHistoryHtml('));
   assert.ok(!source.includes('recentScoreSummaryHtml'));
-  assert.ok(source.includes('analysisWhyHtml(progressInsight.detail,recentScoreVisual)'));
+  assert.ok(source.includes("<h1 class=\"analysis-title\">Am I making progress?</h1>"));
+  assert.ok(source.includes("weekCopy.title+' '+progressInsight.answer"));
   assert.ok(!source.includes('tagInsights.slice('));
-  assert.ok(source.includes('analysis-timeframe'));
-  assert.ok(source.indexOf('What changed recently?')<source.indexOf('How is this week going?'));
-  assert.ok(source.indexOf('How is this week going?')<source.indexOf('Am I making progress overall?'));
+  assert.ok(!source.includes('How is this week going?</h2>'));
+  assert.ok(!source.includes('Am I making progress overall?'));
+  assert.ok(source.indexOf('Am I making progress?')<source.indexOf('What stood out recently?'));
 })();
 
 (function givesAPlainLanguageLookbackForAStandoutPeriod(){
@@ -342,7 +343,7 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
 (function showsTheTierWithoutLeadingWithNumbers(){
   const insight={tier:'balanced-near-higher'};
   const html=context.analysisTierGuideHtml(insight,109);
-  assert.ok(html.includes('Your fuel-use range'));
+  assert.ok(html.includes('Where am I now?'));
   assert.ok(html.includes('close to the higher range'));
   assert.ok(html.includes('Close to higher'));
   assert.ok(html.includes('analysis-tier-definition balanced')||html.includes('analysis-tier-definition is-active'));
