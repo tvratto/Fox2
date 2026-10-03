@@ -6,10 +6,10 @@ Status: working product specification. This document describes intended behavior
 
 FOX2 should answer the metabolic questions supported by a person's own data. It should not present a fixed checklist, lead with statistical terminology, or show a visual whose timeframe differs from the answer it is meant to support.
 
-The order is always:
+The decision engine uses the person's likely question to choose what to analyze. The interface presents the answer as a direct, supportive statement—not as a questionnaire. The visible order is:
 
-1. The person's question.
-2. A short answer about what it may mean for their body.
+1. A short conclusion about what the person's data suggests.
+2. What it may mean for their body.
 3. One clear thing to keep doing or try next.
 4. A simple visual that supports the answer.
 5. Optional detail showing the numbers and calculation.
@@ -18,12 +18,12 @@ FOX2 selects the most relevant questions from the evidence. It should normally s
 
 ### Narrative order
 
-The analysis begins with the person's main question and then shows the most useful supporting context:
+The analysis begins with the person's current position and then shows the most useful conclusions:
 
-1. **Am I making progress?** One answer that combines the current week, the latest 14 calendar days, and the strongest relevant sign of progress.
-2. **Could I be stalled?** A conditional answer when recent Daily Fuel Scores remain below the higher range and have stayed level or gone down. The answer includes any encouraging within-day evidence and the status of a repeated tagged experiment.
-3. **Where am I now?** The person's recent Low, Balanced, Higher, or Strong fuel-use range.
-4. The longer weekly and complete-history trends that support the answer.
+1. **Current position:** A statement describing the person's recent Low, Balanced, Higher, or Strong fuel-use range.
+2. **Progress:** One statement that combines the current week, the latest 14 calendar days, and the strongest relevant sign of progress.
+3. **Selected conclusions:** No more than two additional statements chosen from the evidence, such as progress leveling off, a change lasting, an unusually strong day, or a sustained-high protective prompt.
+4. Supporting details and visuals under **Why FOX2 says this**.
 
 “How is this week going?” is evidence for “Am I making progress?” It should not repeat the same conclusion in a separate top-level card.
 

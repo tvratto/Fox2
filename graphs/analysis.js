@@ -580,6 +580,10 @@ function analysisTierGuideHtml(insight,recentAverage,timeframe){
     :75+Math.min(1,(average-180)/60)*25;
   markerPct=Math.max(2,Math.min(98,markerPct));
   var activeTier=insight.tier==='balanced-near-higher'?'balanced':insight.tier;
+  var tierHeadline=activeTier==='low'?'Your recent pattern is in low fuel use.'
+    :activeTier==='balanced'?'Your recent pattern is in balanced fuel use.'
+    :activeTier==='higher'?'Your recent pattern is in higher fat use.'
+    :'Your recent pattern is in strong fat use.';
   var positionCopy=insight.tier==='balanced-near-higher'
     ?'Your recent pattern is in balanced fuel use and close to the higher range.'
     :activeTier==='low'?'Your recent pattern is building toward balanced fuel use.'
@@ -597,7 +601,7 @@ function analysisTierGuideHtml(insight,recentAverage,timeframe){
   }).join('');
   return '<section class="analysis-card analysis-tier-card analysis-hero">'
     +(timeframe?'<div class="analysis-eyebrow">'+analysisEscape(timeframe)+'</div>':'')
-    +'<h1 class="analysis-title">Where am I now?</h1>'
+    +'<h1 class="analysis-title">'+tierHeadline+'</h1>'
     +'<p class="analysis-section-copy">'+positionCopy+'</p>'
     +'<div class="analysis-tier-scale" role="img" aria-label="Your recent Daily Fuel Score is in the '+analysisEscape(activeTier)+' fuel-use range">'
       +'<div class="analysis-tier-marker" style="left:'+markerPct.toFixed(1)+'%"><span>'+(insight.tier==='balanced-near-higher'?'Close to higher':'You are here')+'</span></div>'
@@ -1123,16 +1127,16 @@ function buildTagInsights(tagRows,history,options){
     var label=best.stat.icon+' '+best.stat.name;
     if(best.kind==='immediate'){
       var immediateEvidence='On '+best.stat.rises+' of '+best.stat.eligible+' recent times you used the '+best.stat.name+' tag, your results suggested your body was using more fat for energy afterward.';
-      var immediateAnswer=label+' may be helping your metabolism shift toward using more fat for energy afterward.';
+      var immediateAnswer='We’ve seen this pattern after several recent times you tagged '+best.stat.name+'.';
       if(best.supporting){
         immediateEvidence+=' The '+best.supporting.stat.name+' tag showed a similar pattern on '+best.supporting.stat.rises+' of '+best.supporting.stat.eligible+' recent occasions.';
       }
-      return {question:'What may be helping?',answer:immediateAnswer,detail:immediateEvidence,tone:'is-change',icon:best.stat.icon,evidence:best};
+      return {question:'What may be helping?',headline:label+' may be helping your body use more fat for energy.',answer:immediateAnswer,detail:immediateEvidence,tone:'is-change',icon:best.stat.icon,evidence:best};
     }
     if(best.kind==='same_day'){
-      return {question:'What may be helping?',answer:'On days you tagged '+label+', your results suggest your body may use fat for energy for more of the day.',detail:'Across '+best.count+' recent days with the '+best.stat.name+' tag, your results suggested your body used fat for energy for more of the day than on other recent days.',tone:'is-change',icon:best.stat.icon,evidence:best};
+      return {question:'What may be helping?',headline:'On days tagged '+label+', you may use fat for energy for more of the day.',answer:'This pattern has appeared across several recent tagged days.',detail:'Across '+best.count+' recent days with the '+best.stat.name+' tag, your results suggested your body used fat for energy for more of the day than on other recent days.',tone:'is-change',icon:best.stat.icon,evidence:best};
     }
-    return {question:'What may be helping?',answer:'After days tagged '+label+', your results suggest your body may use more fat for energy the following day.',detail:'Across '+best.count+' recent days after the '+best.stat.name+' tag, your results suggested your body used more fat for energy than on other recent days.',tone:'is-change',icon:best.stat.icon,evidence:best};
+    return {question:'What may be helping?',headline:label+' may support more fat use into the following day.',answer:'This pattern has appeared after several recent tagged days.',detail:'Across '+best.count+' recent days after the '+best.stat.name+' tag, your results suggested your body used more fat for energy than on other recent days.',tone:'is-change',icon:best.stat.icon,evidence:best};
   });
 }
 
@@ -1195,8 +1199,8 @@ function analysisStallInsight(scoreDays,history,referenceDate){
   if(!threeDown&&delta>5) return null;
   var direction=threeDown||delta<=-8?'gone down':'stayed about the same';
   return {
-    question:'Could I be stalled?',tone:'is-watch',icon:'?',
-    answer:'Possibly. If you’re trying to reduce body fat, your recent results may help explain why progress feels stalled. Your Daily Fuel Scores have '+direction+' and remain below the range where body-fat loss becomes more likely. '+analysisWithinDayContext(history,recent,referenceDate),
+    question:'Could I be stalled?',headline:direction==='gone down'?'Your recent progress may have slowed.':'Your recent progress may have leveled off.',tone:'is-watch',icon:'?',
+    answer:'If you’re trying to reduce body fat, your recent results may help explain why progress feels stalled. Your Daily Fuel Scores have '+direction+' and remain below the range where body-fat loss becomes more likely. '+analysisWithinDayContext(history,recent,referenceDate),
     detail:'FOX2 compared the '+recent.length+' days with saved scores from your latest week. Your later results '+(direction==='gone down'?'were lower than your earlier results':'stayed close to your earlier results')+'. Days without a saved score were left out.'
   };
 }
@@ -1209,8 +1213,8 @@ function analysisOverextendedInsight(weekToDate,lastOfficial){
   var state=currentFlag?current:lastOfficial;
   var period=currentFlag?'this week':'your latest completed week';
   return {
-    question:'Could I be pushing too hard?',tone:'is-watch',icon:'!',priority:100,
-    answer:'Possibly. Your Fat Zone has stayed high without coming back down much. More is not always better. Rather than trying to push higher, focus on a routine you can sustain and make sure you’re eating enough, including protein.',
+    question:'Could I be pushing too hard?',headline:'Your Fat Zone has stayed high for a long time.',tone:'is-watch',icon:'!',priority:100,
+    answer:'More is not always better. Rather than trying to push higher, focus on a routine you can sustain and make sure you’re eating enough, including protein.',
     detail:'Across '+state.classifiableDays+' measured day'+(state.classifiableDays===1?'':'s')+' in '+period+', your Daily Fuel Scores stayed in a higher range while your well-measured days showed little movement back down.',
     visual:dailyScoreEvidenceSvg(state.days||[],'Daily Fuel Scores during '+period)
   };
@@ -1228,8 +1232,8 @@ function analysisLastingChangeInsight(weeklyStates){
     return {x:index,value:Number(state.metrics.medianScore),title:state.startDate+' to '+state.endDate+': typical score '+state.metrics.medianScore};
   }),'Typical Daily Fuel Score across the latest three completed weeks',analysisShortDate(recent[0].startDate),analysisShortDate(recent[2].endDate));
   return {
-    question:'Is the change lasting?',tone:'is-change',icon:'✓',priority:70,
-    answer:'So far, yes. Your higher results have carried across more than one completed week. That suggests the shift toward fat for energy is lasting beyond one strong day.',
+    question:'Is the change lasting?',headline:'This improvement has lasted for several weeks.',tone:'is-change',icon:'✓',priority:70,
+    answer:'Your higher results have carried across more than one completed week. That suggests the shift toward fat for energy is lasting beyond one strong day.',
     detail:'FOX2 compared your latest three completed weeks. Their typical Daily Fuel Scores were '+recent.map(function(state){return state.metrics.medianScore;}).join(', ')+'.',
     visual:visual
   };
@@ -1245,8 +1249,8 @@ function analysisStrongestPeriodInsight(weeklyStates){
     return {x:index,value:Number(state.metrics.medianScore),title:state.startDate+' to '+state.endDate+': typical score '+state.metrics.medianScore};
   }),'Your latest completed week compared with earlier weeks',analysisShortDate(shown[0].startDate),analysisShortDate(latest.endDate));
   return {
-    question:'Is this one of my strongest periods?',tone:'is-change',icon:'↑',priority:60,
-    answer:'Yes. Your latest completed week was your strongest so far in FOX2. The higher pattern showed up across several days, not just once.',
+    question:'Is this one of my strongest periods?',headline:'This is one of your strongest periods so far.',tone:'is-change',icon:'↑',priority:60,
+    answer:'Your latest completed week was your strongest so far in FOX2. The higher pattern showed up across several days, not just once.',
     detail:'FOX2 compared the typical Daily Fuel Score from your latest completed week with '+(usable.length-1)+' earlier completed week'+(usable.length===2?'':'s')+'.',
     visual:visual
   };
@@ -1268,8 +1272,8 @@ function analysisStandoutQuestion(scoreDays,referenceDate){
   var label=analysisRelativeDay(best.date,referenceDate);
   var visualDays=(scoreDays||[]).filter(function(day){return day.date>=addIsoDays(best.date,-3)&&day.date<=addIsoDays(best.date,3);});
   return {
-    question:'Did I have an unusually strong day?',tone:'is-change',icon:'↑',priority:50,
-    answer:label+' was unusually strong for you. Your results suggest your body may have drawn on fat for energy for more of that day. Think about what was different the night before and that morning.',
+    question:'Did I have an unusually strong day?',headline:label+' was an unusually strong day.',tone:'is-change',icon:'↑',priority:50,
+    answer:'Your results suggest your body may have drawn on fat for energy for more of that day. Think about what was different the night before and that morning.',
     detail:'The Daily Fuel Score on '+analysisWeekday(best.date)+', '+analysisShortDate(best.date)+' was '+best.score+'. That was higher than at least 90% of your earlier saved days.',
     visual:dailyScoreEvidenceSvg(visualDays,'Daily Fuel Scores around '+analysisShortDate(best.date))
   };
@@ -1282,7 +1286,7 @@ function analysisSelectQuestions(candidates,limit){
 function analysisQuestionCardHtml(insight,extraHtml){
   if(!insight) return '';
   return '<article class="analysis-conclusion '+(insight.tone||'')+'"><div class="analysis-conclusion-icon">'+(insight.icon||'?')+'</div><div>'
-    +'<h2>'+analysisEscape(insight.question)+'</h2><p>'+insight.answer+'</p>'
+    +'<h2>'+analysisEscape(insight.headline||insight.question)+'</h2><p>'+insight.answer+'</p>'
     +analysisWhyHtml(insight.detail||'',insight.visual||'')
     +(extraHtml||'')
     +'</div></article>';
@@ -1416,23 +1420,27 @@ function analysisDaypartOpportunity(history,referenceDate){
   if(!clearGap&&recurringEveningRise){
     answer='Your Fat Zone often goes up from afternoon to evening. If you want to increase your Daily Fuel Score, try one small, sustainable change that morning or afternoon and see whether the evening rise begins sooner or lasts longer.';
   }else if(!clearGap){
-    answer='If you want to increase your Daily Fuel Score, no single time of day stands out as the main opportunity. Try one small, sustainable change, then watch what happens over the next two parts of the day. Fat Zone changes may reflect choices made hours earlier.';
+    answer='No single time of day stands out yet. Try one small, sustainable change, then watch what happens over the next two parts of the day. Fat Zone changes may reflect choices made hours earlier.';
   }else if(lowest==='morning'){
-    answer='If you want to increase your Daily Fuel Score, the morning looks like your biggest opportunity. '
-      +(highest==='evening'
+    answer=(highest==='evening'
         ?'Your Fat Zone often goes up in the evening, showing that your metabolism can reach a higher fat-use pattern. Try one small, sustainable change the afternoon or evening before and see whether your morning Fat Zone starts higher.'
         :'Your Fat Zone often goes up by the afternoon. Try one small, sustainable change the afternoon or evening before and see whether your morning Fat Zone starts higher.');
   }else if(lowest==='afternoon'){
-    answer='If you want to increase your Daily Fuel Score, the middle of the day looks like your biggest opportunity. Your Fat Zone tends to dip then'
+    answer='Your Fat Zone tends to dip in the middle of the day'
       +(highest==='evening'?' before going back up in the evening.':'.')
       +' Try one small, sustainable change the night before or that morning and see whether the midday dip becomes smaller.';
   }else{
-    answer='If you want to increase your Daily Fuel Score, the later part of the day looks like your biggest opportunity. Your Fat Zone is higher earlier and often falls by evening. Try one small, sustainable change that morning or afternoon and see whether the earlier pattern carries farther into the day.';
+    answer='Your Fat Zone is higher earlier and often falls by evening. Try one small, sustainable change that morning or afternoon and see whether the earlier pattern carries farther into the day.';
   }
   var partName=lowest==='afternoon'?'the middle of the day':lowest==='evening'?'the later part of the day':'the morning';
   var outcome=clearGap?lowest:recurringEveningRise?'evening':null;
+  var headline=!clearGap&&recurringEveningRise?'Your evening rise is something to build on.'
+    :!clearGap?'One repeatable change could reveal your next opportunity.'
+    :lowest==='morning'?'Your morning is your biggest opportunity.'
+    :lowest==='afternoon'?'Your midday dip is your clearest opportunity.'
+    :'Your evening is your biggest opportunity.';
   return {
-    question:'What could I try?',
+    question:'What could I try?',headline:headline,
     answer:answer,
     visual:outcome?analysisDaypartVisual((history.points||[]).filter(function(point){return point.date>=start&&point.date<referenceDate;}),outcome,referenceDate,recurringEveningRise):'',
     detail:clearGap
@@ -1570,22 +1578,22 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
       +'<p class="analysis-section-copy">Every saved day from the beginning. The highlighted area is the latest 14 calendar days.</p>'
       +scoreTrendSvg(scoreDays,recentStart)+'</section>':'';
   }
-  var helpingBlock=helpingInsight?'<div class="analysis-experiment"><h3>'+helpingInsight.question+'</h3><p>'+helpingInsight.answer+'</p>'+analysisWhyHtml(helpingInsight.detail,tagEvidenceHtml(helpingInsight))+'</div>':'';
+  var helpingBlock=helpingInsight?'<div class="analysis-experiment"><h3>'+analysisEscape(helpingInsight.headline||helpingInsight.question)+'</h3><p>'+helpingInsight.answer+'</p>'+analysisWhyHtml(helpingInsight.detail,tagEvidenceHtml(helpingInsight))+'</div>':'';
   var openingHtml='<section class="analysis-card">'
-    +'<h2 class="analysis-major-title">Am I making progress?</h2>'
-    +'<p class="analysis-summary"><strong>'+progressInsight.headline+'</strong> '+weekCopy.title+' '+progressInsight.answer+'</p>'
+    +'<h2 class="analysis-major-title">'+analysisEscape(progressInsight.headline)+'</h2>'
+    +'<p class="analysis-summary">'+weekCopy.title+' '+progressInsight.answer+'</p>'
     +analysisWhyHtml(progressExplanation||progressInsight.detail,recentScoreVisual)
     +helpingBlock
     +'</section>';
-  var actionQuestion=helpingInsight?'What else could I try?':daypartOpportunity&&daypartOpportunity.question;
-  var actionBlock=daypartOpportunity?'<div class="analysis-experiment"><h3>'+actionQuestion+'</h3><p>'+daypartOpportunity.answer+'</p>'+analysisWhyHtml(daypartOpportunity.detail,daypartOpportunity.visual||'')+'</div>':'';
+  var actionHeadline=daypartOpportunity&&daypartOpportunity.headline;
+  var actionBlock=daypartOpportunity?'<div class="analysis-experiment"><h3>'+analysisEscape(actionHeadline)+'</h3><p>'+daypartOpportunity.answer+'</p>'+analysisWhyHtml(daypartOpportunity.detail,daypartOpportunity.visual||'')+'</div>':'';
   var overextendedInsight=analysisOverextendedInsight(weekToDate,lastOfficial);
   var lastingInsight=analysisLastingChangeInsight(weeklyStates);
   var strongestInsight=lastingInsight?null:analysisStrongestPeriodInsight(weeklyStates);
   var standoutInsight=analysisStandoutQuestion(scoreDays,history.activeDate);
   var prioritizedStall=stallInsight?Object.assign({},stallInsight,{priority:90}):null;
   var nextStepInsight=!stallInsight&&!overextendedInsight&&daypartOpportunity?{
-    question:actionQuestion,answer:daypartOpportunity.answer,detail:daypartOpportunity.detail,
+    question:daypartOpportunity.question,headline:actionHeadline,answer:daypartOpportunity.answer,detail:daypartOpportunity.detail,
     visual:daypartOpportunity.visual,tone:'is-change',icon:'→',priority:30
   }:null;
   var secondaryQuestions=analysisSelectQuestions([

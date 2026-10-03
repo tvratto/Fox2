@@ -40,7 +40,8 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   }));
   const insight=context.buildTagInsight(tags,history);
   assert.equal(insight.question,'What may be helping?');
-  assert.ok(insight.answer.includes('may be helping your metabolism shift toward using more fat for energy'));
+  assert.ok(insight.headline.includes('may be helping your body use more fat for energy'));
+  assert.ok(insight.answer.includes('several recent times you tagged Walk'));
   assert.ok(insight.detail.includes('5 of 5'));
   assert.ok(insight.detail.includes('your results suggested your body was using more fat for energy afterward'));
   assert.ok(!insight.detail.includes('Fat Zone'));
@@ -62,9 +63,9 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   const insights=context.buildTagInsights(tags,history);
   assert.equal(insights.length,2);
   assert.equal(insights[0].question,'What may be helping?');
-  assert.ok(insights[0].answer.includes('🏃 Run'));
+  assert.ok(insights[0].headline.includes('🏃 Run'));
   assert.equal(insights[1].question,'What may be helping?');
-  assert.ok(insights[1].answer.includes('🚶 Walk'));
+  assert.ok(insights[1].headline.includes('🚶 Walk'));
 })();
 
 (function keepsInconclusiveTagsSilent(){
@@ -277,7 +278,7 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(!source.includes('Your last 8 weeks'));
   assert.ok(!source.includes('weeklyStateHistoryHtml('));
   assert.ok(!source.includes('recentScoreSummaryHtml'));
-  assert.ok(source.includes("<h2 class=\"analysis-major-title\">Am I making progress?</h2>"));
+  assert.ok(source.includes("<h2 class=\"analysis-major-title\">'+analysisEscape(progressInsight.headline)+'</h2>"));
   assert.ok(source.includes("weekCopy.title+' '+progressInsight.answer"));
   assert.ok(!source.includes('tagInsights.slice('));
   assert.ok(!source.includes('How is this week going?</h2>'));
@@ -302,6 +303,17 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
     {question:'Progress detail',priority:60}
   ],2);
   assert.deepEqual(selected.map(item=>item.question),['Safety','Progress detail']);
+})();
+
+(function presentsTheConclusionInsteadOfTheInternalQuestion(){
+  const html=context.analysisQuestionCardHtml({
+    question:'Could I be stalled?',
+    headline:'Your recent progress may have leveled off.',
+    answer:'Your recent results have stayed about the same.',
+    detail:'Four recent days were compared.',tone:'is-watch',icon:'?'
+  },'');
+  assert.ok(html.includes('Your recent progress may have leveled off.'));
+  assert.ok(!html.includes('Could I be stalled?'));
 })();
 
 (function surfacesAProtectiveQuestionForHighSteadyResults(){
@@ -337,7 +349,7 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
     {date:'2026-09-28',score:135}
   ]),'2026-09-30');
   assert.equal(insight.question,'Did I have an unusually strong day?');
-  assert.ok(insight.answer.includes('Last Monday was unusually strong'));
+  assert.ok(insight.headline.includes('Last Monday was an unusually strong day'));
   assert.ok(insight.detail.includes('higher than at least 90%'));
 
   const ordinary=context.analysisStandoutQuestion(earlier.concat([{date:'2026-09-28',score:80}]),'2026-09-30');
@@ -381,7 +393,8 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   });
   const opportunity=context.analysisDaypartOpportunity({points},'2026-09-30');
   assert.equal(opportunity.question,'What could I try?');
-  assert.ok(opportunity.answer.includes('morning looks like your biggest opportunity'));
+  assert.equal(opportunity.headline,'Your morning is your biggest opportunity.');
+  assert.equal(opportunity.headline,'Your morning is your biggest opportunity.');
   assert.ok(opportunity.answer.includes('Fat Zone often goes up in the evening'));
   assert.ok(opportunity.answer.includes('afternoon or evening before'));
   assert.ok(opportunity.detail.includes('The morning was the lowest part'));
@@ -396,7 +409,7 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
     points.push({date,minute:1140,value:5});
   });
   const opportunity=context.analysisDaypartOpportunity({points},'2026-09-30');
-  assert.ok(opportunity.answer.includes('middle of the day looks like your biggest opportunity'));
+  assert.equal(opportunity.headline,'Your midday dip is your clearest opportunity.');
   assert.ok(opportunity.answer.includes('night before or that morning'));
   assert.ok(!opportunity.answer.includes('midday meal'));
   assert.ok(opportunity.visual.includes('A recent day that shows this pattern'));
@@ -541,9 +554,10 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
 (function showsTheTierWithoutLeadingWithNumbers(){
   const insight={tier:'balanced-near-higher'};
   const html=context.analysisTierGuideHtml(insight,109,'Last 14 calendar days · Sep 18–Oct 1');
-  assert.ok(html.includes('Where am I now?'));
-  assert.ok(html.includes('<h1 class="analysis-title">Where am I now?</h1>'));
-  assert.ok(html.indexOf('Last 14 calendar days')<html.indexOf('Where am I now?'));
+  assert.ok(html.includes('Your recent pattern is in balanced fuel use.'));
+  assert.ok(html.includes('<h1 class="analysis-title">Your recent pattern is in balanced fuel use.</h1>'));
+  assert.ok(html.indexOf('Last 14 calendar days')<html.indexOf('Your recent pattern is in balanced fuel use.'));
+  assert.ok(!html.includes('Where am I now?'));
   assert.ok(html.includes('close to the higher range'));
   assert.ok(html.includes('Close to higher'));
   assert.ok(html.includes('analysis-tier-definition balanced')||html.includes('analysis-tier-definition is-active'));
