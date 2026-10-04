@@ -190,11 +190,11 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(evidence.detail.includes('41 on the first two days'));
   assert.ok(evidence.detail.includes('78.5 on the latest two days'));
   assert.ok(evidence.visual.includes('Daily Fuel Scores this week, comparing the first two days with the latest two days'));
-  assert.ok(evidence.visual.includes('◯ First two days'));
-  assert.ok(evidence.visual.includes('◯ Latest two days'));
-  assert.equal((evidence.visual.match(/<ellipse /g)||[]).length,2);
+  assert.ok(evidence.visual.includes('First two days &rarr; Latest two days'));
+  assert.equal((evidence.visual.match(/<polygon /g)||[]).length,1);
+  assert.equal((evidence.visual.match(/<ellipse /g)||[]).length,0);
   assert.ok(!evidence.visual.includes('#FFD23C'));
-  assert.ok(!evidence.visual.includes('comparisonSplit'));
+  assert.ok(evidence.visual.includes('stroke="rgba(255,255,255,.8)"'));
   assert.ok(!evidence.visual.includes('last 14 days'));
 })();
 

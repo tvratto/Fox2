@@ -454,28 +454,37 @@ function compactEvidenceLine(items,ariaLabel,leftLabel,rightLabel,options){
   var labels=items.length<=7?items.map(function(item){
     return '<text x="'+x(item.x).toFixed(1)+'" y="'+Math.max(9,y(item.value)-6).toFixed(1)+'" text-anchor="middle" font-size="8.5" font-weight="800" fill="rgba(255,255,255,.68)">'+Math.round(Number(item.value)*10)/10+'</text>';
   }).join(''):'';
-  var comparisonGroups=Array.isArray(options.comparisonGroups)?options.comparisonGroups:[];
-  var groupOvals=comparisonGroups.map(function(group){
-    var groupItems=items.slice(group.start,group.end+1);
-    if(!groupItems.length) return '';
-    var xs=groupItems.map(function(item){return x(item.x);});
-    var ys=groupItems.map(function(item){return y(item.value);});
-    var minX=Math.min.apply(null,xs),maxX=Math.max.apply(null,xs);
-    var minY=Math.min.apply(null,ys),maxY=Math.max.apply(null,ys);
-    return '<ellipse cx="'+((minX+maxX)/2).toFixed(1)+'" cy="'+((minY+maxY)/2).toFixed(1)+'" rx="'+Math.max(13,(maxX-minX)/2+8).toFixed(1)+'" ry="'+Math.max(10,(maxY-minY)/2+7).toFixed(1)+'" fill="rgba(255,255,255,.025)" stroke="rgba(255,255,255,.72)" stroke-width="1.5"/>';
-  }).join('');
+  var comparisonArrow=options.comparisonArrow||null;
+  var arrow='';
+  if(comparisonArrow){
+    function centroid(indexes){
+      var chosen=indexes.map(function(index){return items[index];}).filter(Boolean);
+      return {
+        x:chosen.reduce(function(sum,item){return sum+x(item.x);},0)/chosen.length,
+        y:chosen.reduce(function(sum,item){return sum+y(item.value);},0)/chosen.length
+      };
+    }
+    var from=centroid(comparisonArrow.from),to=centroid(comparisonArrow.to);
+    var dx=to.x-from.x,dy=to.y-from.y,length=Math.sqrt(dx*dx+dy*dy)||1;
+    var ux=dx/length,uy=dy/length,px=-uy,py=ux;
+    var lineStart={x:from.x+ux*9,y:from.y+uy*9};
+    var lineEnd={x:to.x-ux*12,y:to.y-uy*12};
+    var tip={x:to.x-ux*5,y:to.y-uy*5};
+    var base={x:to.x-ux*14,y:to.y-uy*14};
+    arrow='<line x1="'+lineStart.x.toFixed(1)+'" y1="'+lineStart.y.toFixed(1)+'" x2="'+lineEnd.x.toFixed(1)+'" y2="'+lineEnd.y.toFixed(1)+'" stroke="rgba(255,255,255,.8)" stroke-width="2"/>'
+      +'<polygon points="'+tip.x.toFixed(1)+','+tip.y.toFixed(1)+' '+(base.x+px*4).toFixed(1)+','+(base.y+py*4).toFixed(1)+' '+(base.x-px*4).toFixed(1)+','+(base.y-py*4).toFixed(1)+'" fill="rgba(255,255,255,.8)"/>';
+  }
   var dots=items.map(function(item){
-    var color=comparisonGroups.length?'rgba(255,255,255,.92)':'#22D3EE';
+    var color=comparisonArrow?'rgba(255,255,255,.92)':'#22D3EE';
     return '<circle cx="'+x(item.x).toFixed(1)+'" cy="'+y(item.value).toFixed(1)+'" r="2.9" fill="'+color+'"><title>'+analysisEscape(item.title||item.value)+'</title></circle>';
   }).join('');
-  var meta=!comparisonGroups.length
+  var meta=!comparisonArrow
     ?'<div class="analysis-mini-meta"><span>'+analysisEscape(leftLabel)+'</span><span>'+analysisEscape(rightLabel)+'</span></div>'
-    :'<div class="analysis-mini-meta"><span>◯ '+analysisEscape(leftLabel)+'</span><span>◯ '+analysisEscape(rightLabel)+'</span></div>';
+    :'<div class="analysis-mini-meta" style="justify-content:center"><span>'+analysisEscape(leftLabel)+' &rarr; '+analysisEscape(rightLabel)+'</span></div>';
   return '<div class="analysis-insight-visual"><svg class="analysis-mini-chart" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="'+analysisEscape(ariaLabel)+'">'
     +'<line x1="'+left+'" y1="'+(h-bottom)+'" x2="'+(w-right)+'" y2="'+(h-bottom)+'" stroke="rgba(255,255,255,.08)"/>'
-    +groupOvals
-    +'<polyline points="'+points+'" fill="none" stroke="'+(comparisonGroups.length?'rgba(255,255,255,.34)':'#22D3EE')+'" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>'
-    +dots+labels+'</svg>'+meta+'</div>';
+    +'<polyline points="'+points+'" fill="none" stroke="'+(comparisonArrow?'rgba(255,255,255,.24)':'#22D3EE')+'" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>'
+    +arrow+dots+labels+'</svg>'+meta+'</div>';
 }
 
 function dailyScoreEvidenceSvg(days,label){
@@ -493,9 +502,9 @@ function dailyScoreRecoveryEvidenceSvg(days,label){
   var items=recent.map(function(day,index){
     return {x:index,value:Number(day.score),title:day.date+': Daily Fuel Score '+day.score};
   });
-  return compactEvidenceLine(items,label||'Daily Fuel Scores this week','First two days','Latest two days',{comparisonGroups:[
-    {start:0,end:1},{start:recent.length-2,end:recent.length-1}
-  ]});
+  return compactEvidenceLine(items,label||'Daily Fuel Scores this week','First two days','Latest two days',{comparisonArrow:{
+    from:[0,1],to:[recent.length-2,recent.length-1]
+  }});
 }
 
 function withinDayEvidenceSvg(days,points){
