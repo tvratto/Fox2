@@ -993,6 +993,37 @@ function weekToDateCopy(week,lastOfficial,allDays,previousCalendarWeek){
   return copy;
 }
 
+function analysisWeekEvidence(week){
+  if(!week||!week.current||!week.current.classifiableDays) return {detail:'',visual:''};
+  var currentDays=(week.current.days||[]).filter(function(day){return isFinite(Number(day.score));}).slice().sort(function(a,b){return a.date.localeCompare(b.date);});
+  if(week.trajectory==='recovering'&&currentDays.length>=3){
+    var latest=currentDays.slice(-2);
+    var earlier=currentDays.slice(0,-2);
+    var earlierTypical=Math.round(analysisMedian(earlier.map(function(day){return Number(day.score);})) * 10) / 10;
+    var latestTypical=Math.round(analysisMedian(latest.map(function(day){return Number(day.score);})) * 10) / 10;
+    return {
+      detail:'FOX2 compared your latest two saved Daily Fuel Scores this week with the earlier saved days. The typical result went from '+earlierTypical+' earlier in the week to '+latestTypical+' on the latest two days. Days without a saved score were left out.',
+      visual:dailyScoreEvidenceSvg(currentDays,'Daily Fuel Scores this week, from the slower start through the stronger later days')
+    };
+  }
+  var previous=week.previous;
+  if(previous&&previous.classifiableDays&&isFinite(Number(previous.metrics&&previous.metrics.medianScore))&&isFinite(Number(week.current.metrics&&week.current.metrics.medianScore))){
+    var previousTypical=Number(previous.metrics.medianScore);
+    var currentTypical=Number(week.current.metrics.medianScore);
+    return {
+      detail:'FOX2 compared your saved Daily Fuel Scores this week with the same weekdays last week. The typical result was '+previousTypical+' last week and '+currentTypical+' this week. Days without a saved score were left out.',
+      visual:compactEvidenceLine([
+        {x:0,value:previousTypical,title:'Same weekdays last week: typical Daily Fuel Score '+previousTypical},
+        {x:1,value:currentTypical,title:'This week: typical Daily Fuel Score '+currentTypical}
+      ],'Typical Daily Fuel Score this week compared with the same weekdays last week','Last week','This week')
+    };
+  }
+  return {
+    detail:'FOX2 used the saved Daily Fuel Scores from this week. Days without a saved score were left out.',
+    visual:dailyScoreEvidenceSvg(currentDays,'Daily Fuel Scores this week')
+  };
+}
+
 function weekToDateEvidenceHtml(week,lastOfficial,allDays,previousCalendarWeek,currentScoreWeek){
   if(!week||!week.current||!week.current.classifiableDays) return '';
   var current=week.current;
@@ -1616,7 +1647,6 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   var previousScoreDays=scoreDays.filter(function(day){return day.date>=previousStart&&day.date<=previousEnd;});
   var recentMeasuredDays=all.filter(function(day){return day.date>=recentStart&&day.date<=recentEnd;});
   var previousMeasuredDays=all.filter(function(day){return day.date>=previousStart&&day.date<=previousEnd;});
-  var recentScoreVisual=dailyScoreEvidenceSvg(recentScoreDays,'Daily Fuel Scores from the last 14 days');
   var progressInsight=analysisRecentProgressInsight(recentScoreDays,previousScoreDays,recentMeasuredDays,previousMeasuredDays);
   var recentAverage=analysisAverageScore(recentScoreDays);
   var stallInsight=analysisStallInsight(scoreDays,history,history.activeDate);
@@ -1624,7 +1654,7 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   var extendedStall=analysisExtendedStall(scoreDays,history.activeDate);
   var helpingInsight=recentTagInsight||((stallInsight&&extendedStall)?analysisHistoricalTagInsight(tagRows||[],tagHistory,history.activeDate):null);
   var recentTimeframe='Last 14 calendar days · '+analysisShortDate(recentStart)+'–'+analysisShortDate(recentEnd);
-  var progressExplanation=analysisProgressExplanation(currentDayToDay,previousDayToDay,recentMeasuredDays,previousMeasuredDays);
+  var weekEvidence=analysisWeekEvidence(weekToDate);
   var positionHtml=analysisTierGuideHtml(progressInsight,recentAverage,recentTimeframe);
   var historyTrend=document.getElementById('history-score-trend');
   if(historyTrend){
@@ -1636,7 +1666,7 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   var openingHtml='<section class="analysis-card">'
     +'<h2 class="analysis-major-title">'+analysisEscape(weekCopy.title)+'</h2>'
     +'<p class="analysis-summary">'+weekCopy.summary+'</p>'
-    +analysisWhyHtml(progressExplanation||progressInsight.detail,recentScoreVisual)
+    +analysisWhyHtml(weekEvidence.detail,weekEvidence.visual)
     +helpingBlock
     +'</section>';
   var actionHeadline=daypartOpportunity&&daypartOpportunity.headline;

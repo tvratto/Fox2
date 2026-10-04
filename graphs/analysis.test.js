@@ -185,6 +185,12 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   const copy=context.weekToDateCopy(week,null,sample,null);
   assert.equal(copy.title,'This week got stronger after a slower start.');
   assert.ok(!/starting to turn around/i.test(copy.title+' '+copy.summary+' '+copy.answer));
+  const evidence=context.analysisWeekEvidence(week);
+  assert.ok(evidence.detail.includes('latest two saved Daily Fuel Scores'));
+  assert.ok(evidence.detail.includes('41 earlier in the week'));
+  assert.ok(evidence.detail.includes('78.5 on the latest two days'));
+  assert.ok(evidence.visual.includes('Daily Fuel Scores this week, from the slower start through the stronger later days'));
+  assert.ok(!evidence.visual.includes('last 14 days'));
 })();
 
 (function buildsEightWeekTrendWithRangeAndResponsiveness(){
