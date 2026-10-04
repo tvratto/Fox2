@@ -601,7 +601,7 @@ function analysisTierGuideHtml(insight,recentAverage,timeframe){
   return '<section class="analysis-card analysis-tier-card analysis-hero">'
     +(timeframe?'<div class="analysis-eyebrow">'+analysisEscape(timeframe)+'</div>':'')
     +'<h1 class="analysis-title">'+tierHeadline+'</h1>'
-    +'<p class="analysis-section-copy">'+positionCopy+'</p>'
+    +(positionCopy!==tierHeadline?'<p class="analysis-section-copy">'+positionCopy+'</p>':'')
     +'<div class="analysis-tier-scale" role="img" aria-label="Your recent Daily Fuel Score is in the '+analysisEscape(activeTier)+' fuel-use range">'
       +'<div class="analysis-tier-marker" style="left:'+markerPct.toFixed(1)+'%"><span>'+(insight.tier==='balanced-near-higher'?'Close to higher':'You are here')+'</span></div>'
       +'<div class="analysis-tier-segment is-low"></div><div class="analysis-tier-segment is-balanced"></div><div class="analysis-tier-segment is-higher"></div><div class="analysis-tier-segment is-strong"></div>'
