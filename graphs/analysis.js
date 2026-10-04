@@ -454,19 +454,27 @@ function compactEvidenceLine(items,ariaLabel,leftLabel,rightLabel,options){
   var labels=items.length<=7?items.map(function(item){
     return '<text x="'+x(item.x).toFixed(1)+'" y="'+Math.max(9,y(item.value)-6).toFixed(1)+'" text-anchor="middle" font-size="8.5" font-weight="800" fill="rgba(255,255,255,.68)">'+Math.round(Number(item.value)*10)/10+'</text>';
   }).join(''):'';
-  var comparisonSplit=isFinite(Number(options.comparisonSplit))?Number(options.comparisonSplit):null;
-  var dots=items.map(function(item,index){
-    var latest=comparisonSplit!==null&&index>=comparisonSplit;
-    var color=latest?'#FFD23C':'#22D3EE';
-    var ring=comparisonSplit===null?'':'<circle cx="'+x(item.x).toFixed(1)+'" cy="'+y(item.value).toFixed(1)+'" r="6" fill="none" stroke="'+color+'" stroke-width="1.7" opacity=".9"/>';
-    return ring+'<circle cx="'+x(item.x).toFixed(1)+'" cy="'+y(item.value).toFixed(1)+'" r="2.9" fill="'+color+'"><title>'+analysisEscape(item.title||item.value)+'</title></circle>';
+  var comparisonGroups=Array.isArray(options.comparisonGroups)?options.comparisonGroups:[];
+  var groupOvals=comparisonGroups.map(function(group){
+    var groupItems=items.slice(group.start,group.end+1);
+    if(!groupItems.length) return '';
+    var xs=groupItems.map(function(item){return x(item.x);});
+    var ys=groupItems.map(function(item){return y(item.value);});
+    var minX=Math.min.apply(null,xs),maxX=Math.max.apply(null,xs);
+    var minY=Math.min.apply(null,ys),maxY=Math.max.apply(null,ys);
+    return '<ellipse cx="'+((minX+maxX)/2).toFixed(1)+'" cy="'+((minY+maxY)/2).toFixed(1)+'" rx="'+Math.max(13,(maxX-minX)/2+8).toFixed(1)+'" ry="'+Math.max(10,(maxY-minY)/2+7).toFixed(1)+'" fill="rgba(255,255,255,.025)" stroke="rgba(255,255,255,.72)" stroke-width="1.5"/>';
   }).join('');
-  var meta=comparisonSplit===null
+  var dots=items.map(function(item){
+    var color=comparisonGroups.length?'rgba(255,255,255,.92)':'#22D3EE';
+    return '<circle cx="'+x(item.x).toFixed(1)+'" cy="'+y(item.value).toFixed(1)+'" r="2.9" fill="'+color+'"><title>'+analysisEscape(item.title||item.value)+'</title></circle>';
+  }).join('');
+  var meta=!comparisonGroups.length
     ?'<div class="analysis-mini-meta"><span>'+analysisEscape(leftLabel)+'</span><span>'+analysisEscape(rightLabel)+'</span></div>'
-    :'<div class="analysis-mini-meta"><span style="color:#22D3EE">◯ '+analysisEscape(leftLabel)+'</span><span style="color:#FFD23C">◯ '+analysisEscape(rightLabel)+'</span></div>';
+    :'<div class="analysis-mini-meta"><span>◯ '+analysisEscape(leftLabel)+'</span><span>◯ '+analysisEscape(rightLabel)+'</span></div>';
   return '<div class="analysis-insight-visual"><svg class="analysis-mini-chart" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="'+analysisEscape(ariaLabel)+'">'
     +'<line x1="'+left+'" y1="'+(h-bottom)+'" x2="'+(w-right)+'" y2="'+(h-bottom)+'" stroke="rgba(255,255,255,.08)"/>'
-    +'<polyline points="'+points+'" fill="none" stroke="'+(comparisonSplit===null?'#22D3EE':'rgba(255,255,255,.34)')+'" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>'
+    +groupOvals
+    +'<polyline points="'+points+'" fill="none" stroke="'+(comparisonGroups.length?'rgba(255,255,255,.34)':'#22D3EE')+'" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>'
     +dots+labels+'</svg>'+meta+'</div>';
 }
 
@@ -481,11 +489,13 @@ function dailyScoreEvidenceSvg(days,label){
 
 function dailyScoreRecoveryEvidenceSvg(days,label){
   var recent=(days||[]).slice(-7);
-  if(recent.length<3) return dailyScoreEvidenceSvg(recent,label);
+  if(recent.length<4) return dailyScoreEvidenceSvg(recent,label);
   var items=recent.map(function(day,index){
     return {x:index,value:Number(day.score),title:day.date+': Daily Fuel Score '+day.score};
   });
-  return compactEvidenceLine(items,label||'Daily Fuel Scores this week','Earlier days','Latest two days',{comparisonSplit:recent.length-2});
+  return compactEvidenceLine(items,label||'Daily Fuel Scores this week','First two days','Latest two days',{comparisonGroups:[
+    {start:0,end:1},{start:recent.length-2,end:recent.length-1}
+  ]});
 }
 
 function withinDayEvidenceSvg(days,points){
@@ -1013,14 +1023,14 @@ function weekToDateCopy(week,lastOfficial,allDays,previousCalendarWeek){
 function analysisWeekEvidence(week){
   if(!week||!week.current||!week.current.classifiableDays) return {detail:'',visual:''};
   var currentDays=(week.current.days||[]).filter(function(day){return isFinite(Number(day.score));}).slice().sort(function(a,b){return a.date.localeCompare(b.date);});
-  if(week.trajectory==='recovering'&&currentDays.length>=3){
+  if(week.trajectory==='recovering'&&currentDays.length>=4){
     var latest=currentDays.slice(-2);
-    var earlier=currentDays.slice(0,-2);
+    var earlier=currentDays.slice(0,2);
     var earlierTypical=Math.round(analysisMedian(earlier.map(function(day){return Number(day.score);})) * 10) / 10;
     var latestTypical=Math.round(analysisMedian(latest.map(function(day){return Number(day.score);})) * 10) / 10;
     return {
-      detail:'FOX2 compared your latest two saved Daily Fuel Scores this week with the earlier saved days. The typical result went from '+earlierTypical+' earlier in the week to '+latestTypical+' on the latest two days. Days without a saved score were left out.',
-      visual:dailyScoreRecoveryEvidenceSvg(currentDays,'Daily Fuel Scores this week, comparing the earlier days with the latest two days')
+      detail:'FOX2 compared your first two saved Daily Fuel Scores this week with the latest two. The typical result went from '+earlierTypical+' on the first two days to '+latestTypical+' on the latest two days. Days without a saved score were left out.',
+      visual:dailyScoreRecoveryEvidenceSvg(currentDays,'Daily Fuel Scores this week, comparing the first two days with the latest two days')
     };
   }
   var previous=week.previous;
