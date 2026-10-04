@@ -175,6 +175,18 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(!/64\.5|110/.test(copy.summary));
 })();
 
+(function describesALateWeekRecoveryWithoutSayingItIsStarting(){
+  const sample=[40,42,72,85].map((score,index)=>({
+    date:'2026-01-'+String(12+index).padStart(2,'0'),score,
+    movement:index===3?'responsive':'steady',range:index===3?3:1,responseAmplitude:index===3?3:0
+  }));
+  const week=engine.buildWeekToDate(sample,{referenceDate:'2026-01-16'});
+  assert.equal(week.trajectory,'recovering');
+  const copy=context.weekToDateCopy(week,null,sample,null);
+  assert.equal(copy.title,'This week got stronger after a slower start.');
+  assert.ok(!/starting to turn around/i.test(copy.title+' '+copy.summary+' '+copy.answer));
+})();
+
 (function buildsEightWeekTrendWithRangeAndResponsiveness(){
   const scores=[
     {date:'2026-09-21',score:90},{date:'2026-09-22',score:110},
