@@ -437,8 +437,9 @@ function analysisEscape(value){
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-function compactEvidenceLine(items,ariaLabel,leftLabel,rightLabel){
+function compactEvidenceLine(items,ariaLabel,leftLabel,rightLabel,options){
   if(!items||items.length<2) return '';
+  options=options||{};
   var values=items.map(function(item){return Number(item.value);}).filter(function(value){return isFinite(value);});
   if(values.length<2) return '';
   var w=280,h=62,left=5,right=5,top=13,bottom=7;
@@ -453,13 +454,20 @@ function compactEvidenceLine(items,ariaLabel,leftLabel,rightLabel){
   var labels=items.length<=7?items.map(function(item){
     return '<text x="'+x(item.x).toFixed(1)+'" y="'+Math.max(9,y(item.value)-6).toFixed(1)+'" text-anchor="middle" font-size="8.5" font-weight="800" fill="rgba(255,255,255,.68)">'+Math.round(Number(item.value)*10)/10+'</text>';
   }).join(''):'';
-  var dots=items.map(function(item){
-    return '<circle cx="'+x(item.x).toFixed(1)+'" cy="'+y(item.value).toFixed(1)+'" r="2.7" fill="#22D3EE"><title>'+analysisEscape(item.title||item.value)+'</title></circle>';
+  var comparisonSplit=isFinite(Number(options.comparisonSplit))?Number(options.comparisonSplit):null;
+  var dots=items.map(function(item,index){
+    var latest=comparisonSplit!==null&&index>=comparisonSplit;
+    var color=latest?'#FFD23C':'#22D3EE';
+    var ring=comparisonSplit===null?'':'<circle cx="'+x(item.x).toFixed(1)+'" cy="'+y(item.value).toFixed(1)+'" r="6" fill="none" stroke="'+color+'" stroke-width="1.7" opacity=".9"/>';
+    return ring+'<circle cx="'+x(item.x).toFixed(1)+'" cy="'+y(item.value).toFixed(1)+'" r="2.9" fill="'+color+'"><title>'+analysisEscape(item.title||item.value)+'</title></circle>';
   }).join('');
+  var meta=comparisonSplit===null
+    ?'<div class="analysis-mini-meta"><span>'+analysisEscape(leftLabel)+'</span><span>'+analysisEscape(rightLabel)+'</span></div>'
+    :'<div class="analysis-mini-meta"><span style="color:#22D3EE">◯ '+analysisEscape(leftLabel)+'</span><span style="color:#FFD23C">◯ '+analysisEscape(rightLabel)+'</span></div>';
   return '<div class="analysis-insight-visual"><svg class="analysis-mini-chart" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="'+analysisEscape(ariaLabel)+'">'
     +'<line x1="'+left+'" y1="'+(h-bottom)+'" x2="'+(w-right)+'" y2="'+(h-bottom)+'" stroke="rgba(255,255,255,.08)"/>'
-    +'<polyline points="'+points+'" fill="none" stroke="#22D3EE" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>'
-    +dots+labels+'</svg><div class="analysis-mini-meta"><span>'+analysisEscape(leftLabel)+'</span><span>'+analysisEscape(rightLabel)+'</span></div></div>';
+    +'<polyline points="'+points+'" fill="none" stroke="'+(comparisonSplit===null?'#22D3EE':'rgba(255,255,255,.34)')+'" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>'
+    +dots+labels+'</svg>'+meta+'</div>';
 }
 
 function dailyScoreEvidenceSvg(days,label){
@@ -469,6 +477,15 @@ function dailyScoreEvidenceSvg(days,label){
     return {x:index,value:Number(day.score),title:day.date+': Daily Fuel Score '+day.score};
   });
   return compactEvidenceLine(items,label||'Recent Daily Fuel Scores',recent[0].date.slice(5),recent[recent.length-1].date.slice(5));
+}
+
+function dailyScoreRecoveryEvidenceSvg(days,label){
+  var recent=(days||[]).slice(-7);
+  if(recent.length<3) return dailyScoreEvidenceSvg(recent,label);
+  var items=recent.map(function(day,index){
+    return {x:index,value:Number(day.score),title:day.date+': Daily Fuel Score '+day.score};
+  });
+  return compactEvidenceLine(items,label||'Daily Fuel Scores this week','Earlier days','Latest two days',{comparisonSplit:recent.length-2});
 }
 
 function withinDayEvidenceSvg(days,points){
@@ -1003,7 +1020,7 @@ function analysisWeekEvidence(week){
     var latestTypical=Math.round(analysisMedian(latest.map(function(day){return Number(day.score);})) * 10) / 10;
     return {
       detail:'FOX2 compared your latest two saved Daily Fuel Scores this week with the earlier saved days. The typical result went from '+earlierTypical+' earlier in the week to '+latestTypical+' on the latest two days. Days without a saved score were left out.',
-      visual:dailyScoreEvidenceSvg(currentDays,'Daily Fuel Scores this week, from the slower start through the stronger later days')
+      visual:dailyScoreRecoveryEvidenceSvg(currentDays,'Daily Fuel Scores this week, comparing the earlier days with the latest two days')
     };
   }
   var previous=week.previous;

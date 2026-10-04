@@ -189,7 +189,11 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(evidence.detail.includes('latest two saved Daily Fuel Scores'));
   assert.ok(evidence.detail.includes('41 earlier in the week'));
   assert.ok(evidence.detail.includes('78.5 on the latest two days'));
-  assert.ok(evidence.visual.includes('Daily Fuel Scores this week, from the slower start through the stronger later days'));
+  assert.ok(evidence.visual.includes('Daily Fuel Scores this week, comparing the earlier days with the latest two days'));
+  assert.ok(evidence.visual.includes('◯ Earlier days'));
+  assert.ok(evidence.visual.includes('◯ Latest two days'));
+  assert.ok(evidence.visual.includes('r="6"'));
+  assert.ok(evidence.visual.includes('#FFD23C'));
   assert.ok(!evidence.visual.includes('last 14 days'));
 })();
 
