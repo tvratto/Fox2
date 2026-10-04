@@ -356,6 +356,24 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.equal(ordinary,null);
 })();
 
+(function pointsAStandoutDayBackToTheRelevantEarlierWindow(){
+  const insight={date:'2026-09-28',answer:'generic',detail:'Monday was unusually strong.'};
+  const points=[];
+  ['2026-09-21','2026-09-22','2026-09-23','2026-09-24'].forEach(date=>{
+    points.push({date,minute:480,value:2},{date,minute:840,value:2},{date,minute:1140,value:2.5});
+  });
+  points.push(
+    {date:'2026-09-28',minute:480,value:2},
+    {date:'2026-09-28',minute:840,value:4},
+    {date:'2026-09-28',minute:1140,value:4.5}
+  );
+  const contextual=context.analysisStandoutDayContext(insight,{points},'2026-09-30');
+  assert.ok(contextual.answer.includes('went up Monday afternoon and stayed higher that evening'));
+  assert.ok(contextual.answer.includes('Sunday evening and Monday morning'));
+  assert.ok(contextual.answer.includes('what was different?'));
+  assert.ok(contextual.detail.includes('not a proven cause'));
+})();
+
 (function placesTheLongTermScoreChartInHistory(){
   const pageSource=fs.readFileSync(__dirname+'/index.html','utf8');
   const historyCanvas=pageSource.indexOf('id="card-fuel"');
@@ -374,7 +392,8 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   const insight=context.analysisStallInsight(scores,history,'2026-09-30');
   assert.equal(insight.question,'Could I be stalled?');
   assert.ok(insight.answer.includes('If you’re trying to reduce body fat'));
-  assert.ok(insight.answer.includes('Fat Zone still goes up and down'));
+  assert.ok(insight.answer.includes('daily results have stayed about the same'));
+  assert.ok(insight.detail.includes('Fat Zone still goes up and down'));
   assert.ok(insight.detail.includes('Days without a saved score were left out'));
   assert.ok(!insight.detail.includes('averaged'));
 
@@ -510,7 +529,8 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   const tim=context.analysisRecentProgressInsight(timRecent,timPrior,[],[]);
   assert.equal(tim.tier,'balanced');
   assert.ok(tim.headline.includes('steady, balanced fuel pattern'));
-  assert.ok(tim.answer.includes('maintenance is your goal'));
+  assert.ok(tim.answer.includes('using fat regularly'));
+  assert.ok(tim.answer.split(/[.!?]+/).filter(Boolean).length<=2);
   assert.ok(!/\b91\b|\b120\b/.test(tim.headline+' '+tim.answer));
 
   const maggieRecent=[103,119,128,135,104,114].map((score,index)=>({date:'2026-08-'+String(12+index).padStart(2,'0'),score}));

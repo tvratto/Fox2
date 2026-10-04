@@ -63,8 +63,11 @@ FOX2 should sound like a thoughtful coach—not like a report.
 - Say “Fat Zone” when discussing a reading and “Daily Fuel Score” when discussing a day. Do not call both of them “your numbers.”
 - Use `drawing on fat for energy` in progress messages. It is short, conversational, and appropriately qualified with `may` or `your results suggest`.
 - Do not use Fat Zone or Daily Fuel Score as the main progress message. Use them only under “Why FOX2 says this.”
-- Keep the main answer to two or three short sentences.
+- Keep the main answer to one or two short sentences. Each sentence should do one job.
 - Keep most exact numbers, thresholds, averages, and methods under “Why FOX2 says this.”
+- Keep the complete evidence under “Why FOX2 says this.” Shortening the visible answer must never remove the calculation, timeframe, exclusions, or supporting visual.
+- Never say only “repeat what worked.” Name the day and the part of the day that changed. Point the person toward the two earlier dayparts that may be worth remembering.
+- A daypart is a time to investigate, not a proven cause. Use “may have helped” and “what was different?” rather than “caused.”
 - Use contractions where they sound natural: “We’re not seeing…” and “That hasn’t shown up in your weekly average yet.”
 - Read every customer-facing sentence aloud. If it would sound unnatural in a supportive conversation, rewrite it.
 

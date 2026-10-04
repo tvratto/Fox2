@@ -326,7 +326,7 @@ function analysisRecentProgressInsight(recentScores,previousScores,recentMeasure
   if(recentAverage<=60){
     return {
       tier:'low',headline:scoreDelta!==null&&scoreDelta>=5?'You’re beginning to move toward balanced fuel use.':'You’re building toward balanced fuel use.',
-      answer:(scoreDelta!==null&&scoreDelta>=5?'Your recent results are moving in an encouraging direction. ':'Your body appears to be using relatively little fat for energy across the day. ')+'Choose one small change you can repeat and tag it so FOX2 can see what helps.',
+      answer:scoreDelta!==null&&scoreDelta>=5?'Your recent results are going up.':'Your body appears to be using relatively little fat for energy across the day.',
       detail:scoreEvidence,tone:'is-change',icon:scoreDelta!==null&&scoreDelta>=5?'↑':'→'
     };
   }
@@ -335,8 +335,7 @@ function analysisRecentProgressInsight(recentScores,previousScores,recentMeasure
     if(closeToHigher){
       return {
         tier:'balanced-near-higher',headline:'You’re getting close to a higher fat-use range.',
-        answer:(recentHigher?'You’re already reaching it on some days. ':'Your recent results are moving toward it. ')
-          +'One small, repeatable change may help you spend more days there.',
+        answer:recentHigher?'You’re already reaching it on some days.':'Your recent results are moving toward it.',
         detail:scoreEvidence,tone:'is-change',icon:'↑'
       };
     }
@@ -345,20 +344,20 @@ function analysisRecentProgressInsight(recentScores,previousScores,recentMeasure
       :'';
     return {
       tier:'balanced',headline:'You’ve built a steady, balanced fuel pattern.',
-      answer:'Your body appears to be using fat regularly for part of its energy needs.'+balancedDirection+' If maintenance is your goal, this may be a useful pattern to protect. If reducing body fat is your goal, your stronger days can show what may help you move higher.',
+      answer:'Your body appears to be using fat regularly for part of its energy needs.'+balancedDirection,
       detail:scoreEvidence,tone:balancedDirection?'is-change':'',icon:balancedDirection?'↑':'✓'
     };
   }
   if(recentAverage<=180){
     return {
       tier:'higher',headline:'You’re spending more time in a higher fat-use range.',
-      answer:'This is the range where FOX2 data suggests body-fat loss may become more likely. Focus on the parts of your routine that feel safe and sustainable.',
+      answer:'This is the range where FOX2 data suggests body-fat loss may become more likely.',
       detail:scoreEvidence,tone:'',icon:'✓'
     };
   }
   return {
     tier:'strong',headline:'Your fat-use pattern is staying very high.',
-    answer:'More is not always better. Focus on eating enough, getting enough protein, and keeping your routine sustainable rather than trying to push higher.',
+    answer:'More is not always better. Make sure your routine includes enough food and protein.',
     detail:scoreEvidence,tone:'is-watch',icon:'!'
   };
 }
@@ -1200,8 +1199,8 @@ function analysisStallInsight(scoreDays,history,referenceDate){
   var direction=threeDown||delta<=-8?'gone down':'stayed about the same';
   return {
     question:'Could I be stalled?',headline:direction==='gone down'?'Your recent progress may have slowed.':'Your recent progress may have leveled off.',tone:'is-watch',icon:'?',
-    answer:'If you’re trying to reduce body fat, your recent results may help explain why progress feels stalled. Your Daily Fuel Scores have '+direction+' and remain below the range where body-fat loss becomes more likely. '+analysisWithinDayContext(history,recent,referenceDate),
-    detail:'FOX2 compared the '+recent.length+' days with saved scores from your latest week. Your later results '+(direction==='gone down'?'were lower than your earlier results':'stayed close to your earlier results')+'. Days without a saved score were left out.'
+    answer:'If you’re trying to reduce body fat, this may explain why progress feels stalled. Your daily results have '+direction+'.',
+    detail:'FOX2 compared the '+recent.length+' days with saved scores from your latest week. Your later results '+(direction==='gone down'?'were lower than your earlier results':'stayed close to your earlier results')+' and remained below the range where body-fat loss becomes more likely. Days without a saved score were left out. '+analysisWithinDayContext(history,recent,referenceDate)
   };
 }
 
@@ -1272,11 +1271,66 @@ function analysisStandoutQuestion(scoreDays,referenceDate){
   var label=analysisRelativeDay(best.date,referenceDate);
   var visualDays=(scoreDays||[]).filter(function(day){return day.date>=addIsoDays(best.date,-3)&&day.date<=addIsoDays(best.date,3);});
   return {
-    question:'Did I have an unusually strong day?',headline:label+' was an unusually strong day.',tone:'is-change',icon:'↑',priority:50,
-    answer:'Your results suggest your body may have drawn on fat for energy for more of that day. Think about what was different the night before and that morning.',
+    date:best.date,question:'Did I have an unusually strong day?',headline:label+' was an unusually strong day.',tone:'is-change',icon:'↑',priority:50,
+    answer:'Your body may have used fat for energy for more of that day. Think about what was different the night before and that morning.',
     detail:'The Daily Fuel Score on '+analysisWeekday(best.date)+', '+analysisShortDate(best.date)+' was '+best.score+'. That was higher than at least 90% of your earlier saved days.',
     visual:dailyScoreEvidenceSvg(visualDays,'Daily Fuel Scores around '+analysisShortDate(best.date))
   };
+}
+
+function analysisStandoutDayContext(insight,history,referenceDate){
+  if(!insight||!insight.date||!history||!Array.isArray(history.points)) return insight;
+  var bestDate=insight.date;
+  var recentStart=addIsoDays(bestDate,-28);
+  var parts=['morning','afternoon','evening'];
+  function mean(values){return values.length?values.reduce(function(sum,value){return sum+value;},0)/values.length:null;}
+  function partMeans(points){
+    var grouped={morning:[],afternoon:[],evening:[]};
+    (points||[]).forEach(function(point){
+      var value=Number(point.value),minute=Number(point.minute);
+      if(isFinite(value)&&isFinite(minute)) grouped[analysisDayPart(minute)].push(value);
+    });
+    var result={};
+    parts.forEach(function(part){result[part]=mean(grouped[part]);});
+    return result;
+  }
+  var dayPoints=history.points.filter(function(point){return point.date===bestDate;});
+  if(dayPoints.length<2) return insight;
+  var dayMeans=partMeans(dayPoints);
+  var baseline={};
+  parts.forEach(function(part){
+    var daily={};
+    history.points.forEach(function(point){
+      if(point.date<recentStart||point.date>=bestDate||analysisDayPart(point.minute)!==part) return;
+      if(!daily[point.date]) daily[point.date]=[];
+      daily[point.date].push(Number(point.value));
+    });
+    var values=Object.keys(daily).map(function(date){return mean(daily[date]);}).filter(function(value){return value!==null;});
+    baseline[part]=values.length>=3?analysisMedian(values):null;
+  });
+  var elevated=parts.filter(function(part){
+    return dayMeans[part]!==null&&baseline[part]!==null&&dayMeans[part]>=baseline[part]+.75;
+  });
+  var focus=elevated[0]||parts.filter(function(part){return dayMeans[part]!==null;}).sort(function(a,b){return dayMeans[b]-dayMeans[a];})[0];
+  if(!focus) return insight;
+  var weekday=analysisWeekday(bestDate);
+  var previousWeekday=analysisWeekday(addIsoDays(bestDate,-1));
+  var change='Your results stood out most '+weekday+' '+focus+'.';
+  if(elevated.indexOf('afternoon')>=0&&elevated.indexOf('evening')>=0){
+    focus='afternoon';
+    change='Your results went up '+weekday+' afternoon and stayed higher that evening.';
+  }else if(elevated.indexOf('morning')>=0&&(elevated.indexOf('afternoon')>=0||elevated.indexOf('evening')>=0)){
+    focus='morning';
+    change='Your results started higher '+weekday+' morning and stayed higher later in the day.';
+  }
+  var lookback=focus==='morning'
+    ?previousWeekday+' afternoon and evening'
+    :focus==='afternoon'
+      ?previousWeekday+' evening and '+weekday+' morning'
+      :weekday+' morning and afternoon';
+  insight.answer=change+' Think back to '+lookback+': what was different?';
+  insight.detail+=' FOX2 compared the morning, afternoon, and evening measurements from that day with the same parts of your earlier days. This points to a time to investigate, not a proven cause.';
+  return insight;
 }
 
 function analysisSelectQuestions(candidates,limit){
@@ -1418,19 +1472,19 @@ function analysisDaypartOpportunity(history,referenceDate){
   var recurringEveningRise=afternoonEvening.length>=5&&eveningRiseCount>=Math.ceil(afternoonEvening.length*.6);
   var answer='';
   if(!clearGap&&recurringEveningRise){
-    answer='Your Fat Zone often goes up from afternoon to evening. If you want to increase your Daily Fuel Score, try one small, sustainable change that morning or afternoon and see whether the evening rise begins sooner or lasts longer.';
+    answer='Your Fat Zone often goes up from afternoon to evening. Try one small change that morning or afternoon and see whether the rise starts sooner.';
   }else if(!clearGap){
-    answer='No single time of day stands out yet. Try one small, sustainable change, then watch what happens over the next two parts of the day. Fat Zone changes may reflect choices made hours earlier.';
+    answer='No single time of day stands out yet. Change one thing, then watch the next two parts of the day.';
   }else if(lowest==='morning'){
     answer=(highest==='evening'
-        ?'Your Fat Zone often goes up in the evening, showing that your metabolism can reach a higher fat-use pattern. Try one small, sustainable change the afternoon or evening before and see whether your morning Fat Zone starts higher.'
-        :'Your Fat Zone often goes up by the afternoon. Try one small, sustainable change the afternoon or evening before and see whether your morning Fat Zone starts higher.');
+        ?'Your Fat Zone often goes up in the evening. Try one small change the afternoon or evening before and see whether your morning starts higher.'
+        :'Your Fat Zone often goes up by the afternoon. Try one small change the afternoon or evening before and see whether your morning starts higher.');
   }else if(lowest==='afternoon'){
     answer='Your Fat Zone tends to dip in the middle of the day'
       +(highest==='evening'?' before going back up in the evening.':'.')
-      +' Try one small, sustainable change the night before or that morning and see whether the midday dip becomes smaller.';
+      +' Try one small change the night before or that morning.';
   }else{
-    answer='Your Fat Zone is higher earlier and often falls by evening. Try one small, sustainable change that morning or afternoon and see whether the earlier pattern carries farther into the day.';
+    answer='Your Fat Zone is higher earlier and often falls by evening. Try one small change that morning or afternoon.';
   }
   var partName=lowest==='afternoon'?'the middle of the day':lowest==='evening'?'the later part of the day':'the morning';
   var outcome=clearGap?lowest:recurringEveningRise?'evening':null;
@@ -1590,7 +1644,7 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   var overextendedInsight=analysisOverextendedInsight(weekToDate,lastOfficial);
   var lastingInsight=analysisLastingChangeInsight(weeklyStates);
   var strongestInsight=lastingInsight?null:analysisStrongestPeriodInsight(weeklyStates);
-  var standoutInsight=analysisStandoutQuestion(scoreDays,history.activeDate);
+  var standoutInsight=analysisStandoutDayContext(analysisStandoutQuestion(scoreDays,history.activeDate),history,history.activeDate);
   var prioritizedStall=stallInsight?Object.assign({},stallInsight,{priority:90}):null;
   var nextStepInsight=!stallInsight&&!overextendedInsight&&daypartOpportunity?{
     question:daypartOpportunity.question,headline:actionHeadline,answer:daypartOpportunity.answer,detail:daypartOpportunity.detail,
