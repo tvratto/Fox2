@@ -1634,8 +1634,8 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   }
   var helpingBlock=helpingInsight?'<div class="analysis-experiment"><h3>'+analysisEscape(helpingInsight.headline||helpingInsight.question)+'</h3><p>'+helpingInsight.answer+'</p>'+analysisWhyHtml(helpingInsight.detail,tagEvidenceHtml(helpingInsight))+'</div>':'';
   var openingHtml='<section class="analysis-card">'
-    +'<h2 class="analysis-major-title">'+analysisEscape(progressInsight.headline)+'</h2>'
-    +'<p class="analysis-summary">'+weekCopy.title+' '+progressInsight.answer+'</p>'
+    +'<h2 class="analysis-major-title">'+analysisEscape(weekCopy.title)+'</h2>'
+    +'<p class="analysis-summary">'+weekCopy.summary+'</p>'
     +analysisWhyHtml(progressExplanation||progressInsight.detail,recentScoreVisual)
     +helpingBlock
     +'</section>';
