@@ -1968,7 +1968,7 @@ html, body {
     <div class="info-toggle-row">
       <div>
         <div class="info-toggle-label">Join leaderboard</div>
-        <div class="info-toggle-sub">Daily Fuel Scores · your scores vs the community</div>
+        <div class="info-toggle-sub">Recent pattern · your results vs the community</div>
         <div class="info-toggle-sub" style="margin-top:4px;color:rgba(255,255,255,.22);">Only people who opt in are included</div>
       </div>
       <label class="tog"><input type="checkbox" id="lb-optin"><span class="tog-slider"></span></label>
@@ -7570,6 +7570,48 @@ function animateLeaderboardSelfRow(row) {
   }, 250);
 }
 
+// Match the number at the top of Analysis: the mean of saved Daily Fuel
+// Scores from the 14 completed calendar days before the latest measurement.
+// The still-in-progress measurement day is deliberately excluded.
+function leaderboardRecentPatterns(allScores, devices) {
+  function addDays(isoDate, delta) {
+    var date = new Date(isoDate + 'T00:00:00Z');
+    if (!Number.isFinite(date.getTime())) return '';
+    date.setUTCDate(date.getUTCDate() + delta);
+    return date.toISOString().slice(0, 10);
+  }
+
+  var scoresByDevice = {};
+  (allScores || []).forEach(function(row) {
+    if (!row || !row.device_id || !/^\d{4}-\d{2}-\d{2}$/.test(String(row.day_date || ''))) return;
+    if (row.auc_score === null || row.auc_score === '' || !Number.isFinite(Number(row.auc_score))) return;
+    var scoreDate = String(row.day_date);
+    if (scoreDate < '2026-09-29') scoreDate = addDays(scoreDate, 1);
+    if (!scoresByDevice[row.device_id]) scoresByDevice[row.device_id] = {};
+    scoresByDevice[row.device_id][scoreDate] = Number(row.auc_score);
+  });
+
+  var patterns = {};
+  (devices || []).forEach(function(device) {
+    var byDate = scoresByDevice[device.device_id] || {};
+    var rows = Object.keys(byDate).sort().map(function(date) { return {date:date, score:byDate[date]}; });
+    var referenceDate = device._encodedLastMs
+      ? new Date(device._encodedLastMs).toISOString().slice(0, 10)
+      : (rows.length ? rows.reduce(function(latest, row) { return row.date > latest ? row.date : latest; }, '') : '');
+    var startDate = referenceDate ? addDays(referenceDate, -14) : '';
+    var endDate = referenceDate ? addDays(referenceDate, -1) : '';
+    var recent = rows.filter(function(row) { return row.date >= startDate && row.date <= endDate; });
+    var average = recent.length
+      ? recent.reduce(function(sum, row) { return sum + row.score; }, 0) / recent.length
+      : null;
+    patterns[device.device_id] = {
+      average:average, dayCount:recent.length,
+      referenceDate:referenceDate, startDate:startDate, endDate:endDate
+    };
+  });
+  return patterns;
+}
+
 function fetchLeaderboard(){
   var board = document.getElementById('lb-board');
   if(!board || !_sbUrl) return;
@@ -7594,16 +7636,6 @@ function fetchLeaderboard(){
   ]).then(function(results){
     var devList    = results[0] || [];
     var allScores  = results[1] || [];
-
-    // Current score = most recently written day per device (timezone-agnostic)
-    var latestDate = {};
-    var todayScore = {};
-    allScores.forEach(function(s){
-      if(!latestDate[s.device_id] || s.day_date > latestDate[s.device_id]){
-        latestDate[s.device_id] = s.day_date;
-        todayScore[s.device_id] = s.auc_score||0;
-      }
-    });
 
     function lbFromBase36(s){
       return parseInt(s, 36);
@@ -7651,23 +7683,19 @@ function fetchLeaderboard(){
       d._encodedLastMs = encodedLastMeasurementMs(d);
     });
 
-    // Rank by measurement calendar day first, then daily score.
-    // This avoids letting someone jump ahead just because they measured a few
-    // minutes more recently. Anyone measured today is ranked against others
-    // measured today by score; yesterday's group comes after today's group, etc.
+    var recentPatterns = leaderboardRecentPatterns(allScores, devList);
+
+    // The Squad is a recent-pattern leaderboard, not a contest based on one
+    // partial day. People without a usable recent pattern appear at the end.
     var ranked = devList.slice().sort(function(a,b){
-      var dayA = Math.floor((a._encodedLastMs || 0) / 86400000);
-      var dayB = Math.floor((b._encodedLastMs || 0) / 86400000);
+      var patternA = recentPatterns[a.device_id] || {};
+      var patternB = recentPatterns[b.device_id] || {};
+      var hasA = Number.isFinite(patternA.average);
+      var hasB = Number.isFinite(patternB.average);
+      if(hasA !== hasB) return hasB ? 1 : -1;
+      if(hasA && patternB.average !== patternA.average) return patternB.average - patternA.average;
 
-      // Newer measurement day first
-      if(dayB !== dayA) return dayB - dayA;
-
-      // Same measurement day: highest daily score first
-      var scoreA = todayScore[a.device_id] || 0;
-      var scoreB = todayScore[b.device_id] || 0;
-      if(scoreB !== scoreA) return scoreB - scoreA;
-
-      // Final tie-breaker only: most recent measurement time
+      // Use recency only as a tie-breaker.
       return (b._encodedLastMs || 0) - (a._encodedLastMs || 0);
     });
 
@@ -7700,7 +7728,8 @@ function fetchLeaderboard(){
       opts = opts || {};
       var isMe  = d.device_id === _sbDeviceId;
       var name  = d.patient_id ? String(d.patient_id).toUpperCase() : (d.device_id ? d.device_id.substring(0, 4).toUpperCase() : '????');
-      var score = Math.round(todayScore[d.device_id]||0);
+      var pattern = recentPatterns[d.device_id] || {};
+      var score = Number.isFinite(pattern.average) ? Math.round(pattern.average) : '—';
       var g = Math.round(d.pct_glucose||0);
       var m = Math.round(d.pct_mixed  ||0);
       var f = Math.round(d.pct_fat    ||0);
@@ -7725,7 +7754,7 @@ function fetchLeaderboard(){
         '</div>'+
         '<div class="lb-score-box">'+
           '<div class="lb-score">'+score+'</div>'+
-          '<div class="lb-score-sub">score</div>'+
+          '<div class="lb-score-sub">recent pattern</div>'+
         '</div>'+
       '</div>';
     }
@@ -7750,9 +7779,10 @@ function fetchLeaderboard(){
       }, 650);
     }, 120);
 
-    // Compute hash: ranked device IDs + today scores
+    // Compute hash from the values and order the user actually sees.
     _lbCurrentHash = ranked.map(function(d){
-      return d.device_id.slice(-4)+':'+(Math.round(todayScore[d.device_id]||0));
+      var pattern = recentPatterns[d.device_id] || {};
+      return d.device_id.slice(-4)+':'+(Number.isFinite(pattern.average)?Math.round(pattern.average):'x');
     }).join('|');
 
     // Show red dot if hash differs from stored
