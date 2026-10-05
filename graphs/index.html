@@ -1962,6 +1962,31 @@ var dParam    = params.get('d') || '';
 var aParam    = params.get('a') || '';
 var sParam    = params.get('s') || '';
 
+// Keep one reusable results tab per device. The NFC sync page uses this
+// channel to refresh an already-open results page instead of becoming another
+// full copy of it.
+(function setupSyncHandoff(){
+  if(window.top!==window.self) return;
+  var deviceId=params.get('id')||'';
+  if(!deviceId) return;
+  var safeId=deviceId.replace(/[^A-Za-z0-9_-]/g,'');
+  window.name='fox2-results-'+safeId;
+  if(typeof BroadcastChannel==='undefined') return;
+  var channel=new BroadcastChannel('fox2-sync-'+safeId);
+  window._fox2SyncChannel=channel;
+  channel.addEventListener('message',function(event){
+    var message=event.data||{};
+    if(message.deviceId!==deviceId) return;
+    if(message.type==='probe'){
+      channel.postMessage({type:'present',deviceId:deviceId,nonce:message.nonce||''});
+      return;
+    }
+    if(message.type==='updated'&&message.resultsUrl){
+      window.location.replace(message.resultsUrl);
+    }
+  });
+})();
+
 // ─── Restore the latest saved device payload ────────────────────────────────
 // Clinic links and short id-only links both rebuild the full results URL from
 // the device row. This lets a shared /graphs/?id=... link open real results.
@@ -2299,20 +2324,22 @@ var _isNewerPayload    = false;
     var historyScores   = results[3];
 
     // ── Now fire the writes (after we've captured pre-write state) ──
+    var writePromises=[];
+    function saved(response){ return !!(response&&response.ok); }
     if (readingRows.length > 0) {
-      fetch(SUPABASE_URL + '/rest/v1/readings?on_conflict=device_id,reading_ts', {
+      writePromises.push(fetch(SUPABASE_URL + '/rest/v1/readings?on_conflict=device_id,reading_ts', {
         method:  'POST',
         headers: Object.assign({}, headers, { 'Prefer': 'resolution=ignore-duplicates,return=minimal' }),
         body:    JSON.stringify(readingRows)
-      }).catch(function() {});
+      }).then(saved).catch(function(){ return false; }));
     }
 
     if (writeScoreRows.length > 0) {
-      fetch(SUPABASE_URL + '/rest/v1/daily_scores?on_conflict=device_id,day_date', {
+      writePromises.push(fetch(SUPABASE_URL + '/rest/v1/daily_scores?on_conflict=device_id,day_date', {
         method:  'POST',
         headers: Object.assign({}, headers, { 'Prefer': 'resolution=merge-duplicates,return=minimal' }),
         body:    JSON.stringify(writeScoreRows)
-      }).catch(function() {});
+      }).then(saved).catch(function(){ return false; }));
     }
 
     // Only write payload params if this page's dParam is different from what's
@@ -2354,11 +2381,11 @@ var _isNewerPayload    = false;
         last_ws_param:        params.get('ws') || null,
         last_tz_param:        params.get('tz') || null
       };
-      fetch(SUPABASE_URL + '/rest/v1/devices?on_conflict=device_id', {
+      writePromises.push(fetch(SUPABASE_URL + '/rest/v1/devices?on_conflict=device_id', {
         method:  'POST',
         headers: Object.assign({}, headers, { 'Prefer': 'resolution=merge-duplicates,return=minimal' }),
         body:    JSON.stringify(deviceWriteBody)
-      }).catch(function() {});
+      }).then(saved).catch(function(){ return false; }));
     }
 
     // ── Init Results page with loaded tags ────────────────────────
@@ -2368,6 +2395,16 @@ var _isNewerPayload    = false;
       historyReadings: historyReadings,
       historyScores: historyScores
     });
+
+    // The dedicated NFC sync page embeds this page only long enough to reuse
+    // the proven decoder and database writer. Report completion after every
+    // write has settled so the existing results tab never refreshes too soon.
+    if(params.get('sync')==='1'&&window.parent!==window){
+      Promise.all(writePromises).then(function(outcomes){
+        var ok=outcomes.every(function(outcome){return outcome!==false;});
+        window.parent.postMessage({type:'fox2-sync-complete',deviceId:deviceId,ok:ok},window.location.origin);
+      });
+    }
 
   }).catch(function() {
     // Read failed — still init the Results page with zeroed totals

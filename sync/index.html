@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <title>Syncing FOX2</title>
+  <style>
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;background:#050505;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    body{min-height:100dvh;display:grid;place-items:center;padding:28px}
+    main{width:min(100%,390px);text-align:center}
+    .mark{width:68px;height:68px;margin:0 auto 26px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#22d3ee,#4ade80);color:#031314;font-size:32px;font-weight:900}
+    .mark.syncing{color:transparent;position:relative}
+    .mark.syncing:after{content:"";position:absolute;width:25px;height:25px;border:3px solid rgba(0,0,0,.25);border-top-color:#061012;border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    h1{font-size:30px;line-height:1.08;margin:0 0 12px}
+    p{font-size:16px;line-height:1.5;color:rgba(255,255,255,.62);margin:0 auto;max-width:330px}
+    button{display:none;width:100%;margin-top:28px;border:0;border-radius:16px;padding:17px 20px;background:#fff;color:#050505;font:800 17px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;cursor:pointer}
+    .error .mark{background:#2a1515;color:#ff8f8f}
+    .error button{display:block}
+    iframe{position:fixed;width:1px;height:1px;left:-10px;top:-10px;opacity:0;pointer-events:none;border:0}
+  </style>
+</head>
+<body>
+  <main id="card" aria-live="polite">
+    <div class="mark syncing" id="mark">✓</div>
+    <h1 id="title">Syncing your FOX2…</h1>
+    <p id="message">Keep this page open for a moment while your newest measurements are saved.</p>
+    <button id="continue" type="button">Return to my results</button>
+  </main>
+  <script>
+    (function(){
+      var incoming=new URL(window.location.href);
+      var params=new URLSearchParams(incoming.search);
+      var deviceId=params.get('id')||'';
+      var safeId=deviceId.replace(/[^A-Za-z0-9_-]/g,'');
+      var card=document.getElementById('card');
+      var mark=document.getElementById('mark');
+      var title=document.getElementById('title');
+      var message=document.getElementById('message');
+      var button=document.getElementById('continue');
+      var existing=false,complete=false,channel=null,nonce=String(Date.now())+Math.random();
+
+      function resultsUrl(){
+        var url=new URL('/graphs/',window.location.origin);
+        params.forEach(function(value,key){ if(key!=='sync') url.searchParams.set(key,value); });
+        url.searchParams.set('src','nfc');
+        url.searchParams.set('sync_rev',String(Date.now()));
+        return url.toString();
+      }
+
+      function fail(text){
+        card.classList.add('error');
+        mark.classList.remove('syncing');mark.textContent='!';
+        title.textContent='Sync needs another try';
+        message.textContent=text||'Keep your phone near FOX2 and tap again.';
+        button.textContent='Open my FOX2 results';button.style.display='block';
+      }
+
+      function probe(){
+        if(channel) channel.postMessage({type:'probe',deviceId:deviceId,nonce:nonce});
+      }
+
+      function finish(){
+        if(!complete) return;
+        var url=resultsUrl();
+        if(channel) channel.postMessage({type:'updated',deviceId:deviceId,resultsUrl:url});
+        // Give an existing page a short window to answer the final probe. If
+        // none answers, this first sync page simply becomes the results page.
+        probe();
+        setTimeout(function(){
+          if(!existing){ window.location.replace(url); return; }
+          mark.classList.remove('syncing');mark.textContent='✓';
+          title.textContent='Your FOX2 is synced';
+          message.textContent='Your open results page has been updated.';
+          button.style.display='block';
+        },650);
+      }
+
+      if(!deviceId||!params.get('d')){
+        fail('FOX2 did not send a complete measurement payload. Please tap the device again.');
+        return;
+      }
+
+      if(typeof BroadcastChannel!=='undefined'){
+        channel=new BroadcastChannel('fox2-sync-'+safeId);
+        channel.addEventListener('message',function(event){
+          var data=event.data||{};
+          if(data.type==='present'&&data.deviceId===deviceId&&data.nonce===nonce) existing=true;
+        });
+        probe();
+      }
+
+      button.addEventListener('click',function(){
+        var target=window.open(resultsUrl(),'fox2-results-'+safeId);
+        if(target) target.focus();
+        setTimeout(function(){ window.close(); },120);
+      });
+
+      window.addEventListener('message',function(event){
+        if(event.origin!==window.location.origin) return;
+        var data=event.data||{};
+        if(data.type!=='fox2-sync-complete'||data.deviceId!==deviceId) return;
+        if(!data.ok){ fail('FOX2 could not finish saving this sync. Check your connection and tap again.'); return; }
+        complete=true;finish();
+      });
+
+      var graphUrl=new URL('/graphs/',window.location.origin);
+      params.forEach(function(value,key){graphUrl.searchParams.set(key,value);});
+      graphUrl.searchParams.set('src','nfc');
+      graphUrl.searchParams.set('sync','1');
+      var frame=document.createElement('iframe');
+      frame.title='FOX2 data sync';frame.src=graphUrl.toString();
+      document.body.appendChild(frame);
+      setTimeout(function(){ if(!complete) fail('The sync is taking longer than expected. Check your connection and try again.'); },20000);
+    })();
+  </script>
+</body>
+</html>
