@@ -490,6 +490,29 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(!opportunity.visual.includes('analysis-action-flow'));
 })();
 
+(function reevaluatesTheOpportunityWithTheNewestMeasurement(){
+  const points=[];
+  ['2026-09-27','2026-09-28','2026-09-29'].forEach(function(date){
+    points.push({date,minute:480,value:5});
+    points.push({date,minute:840,value:2});
+    points.push({date,minute:1140,value:5});
+  });
+  const before=context.analysisDaypartOpportunity({points},'2026-09-30');
+  assert.equal(before.headline,'Your midday dip is your clearest opportunity.');
+
+  const after=context.analysisDaypartOpportunity({points:points.concat([
+    {date:'2026-09-30',minute:840,value:20}
+  ])},'2026-09-30');
+  assert.equal(after.headline,'Your morning is your biggest opportunity.');
+  assert.ok(after.detail.includes('through your newest measurement'));
+
+  const repeated=context.analysisDaypartOpportunity({points:points.concat([
+    {date:'2026-09-30',minute:840,value:20}
+  ])},'2026-09-30');
+  assert.equal(repeated.headline,after.headline);
+  assert.equal(repeated.answer,after.answer);
+})();
+
 (function usesAnActualDayForTheDaypartEvidenceGraphic(){
   const points=[
     {date:'2026-09-25',minute:480,value:4},

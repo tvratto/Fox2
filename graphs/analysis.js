@@ -1558,10 +1558,13 @@ function analysisDaypartVisual(points,outcome,referenceDate,recurringEveningRise
 
 function analysisDaypartOpportunity(history,referenceDate){
   if(!history||!referenceDate) return null;
-  var start=addIsoDays(referenceDate,-14);
+  // Use the latest 14 calendar days through the newest measurement. This
+  // keeps the recommendation stable when the data is unchanged while letting
+  // every newly saved measurement take part in the next evaluation.
+  var start=addIsoDays(referenceDate,-13);
   var byDay={};
   (history.points||[]).forEach(function(point){
-    if(point.date<start||point.date>=referenceDate) return;
+    if(point.date<start||point.date>referenceDate) return;
     var minute=Number(point.minute);
     var value=Number(point.value);
     if(!isFinite(minute)||!isFinite(value)) return;
@@ -1623,12 +1626,12 @@ function analysisDaypartOpportunity(history,referenceDate){
   return {
     question:'What could I try?',headline:headline,
     answer:answer,
-    visual:outcome?analysisDaypartVisual((history.points||[]).filter(function(point){return point.date>=start&&point.date<referenceDate;}),outcome,referenceDate,recurringEveningRise):'',
+    visual:outcome?analysisDaypartVisual((history.points||[]).filter(function(point){return point.date>=start&&point.date<=referenceDate;}),outcome,referenceDate,recurringEveningRise):'',
     detail:clearGap
-      ?'FOX2 compared your morning, afternoon, and evening Fat Zones across recent completed days. '+partName.charAt(0).toUpperCase()+partName.slice(1)+' was the lowest part of your typical day, and '+highest+' was the highest.'
+      ?'FOX2 compared your morning, afternoon, and evening Fat Zones across your latest 14 calendar days, through your newest measurement. '+partName.charAt(0).toUpperCase()+partName.slice(1)+' was the lowest part of your typical day, and '+highest+' was the highest.'
       :recurringEveningRise
-        ?'FOX2 compared days with both afternoon and evening measurements. Your Fat Zone rose by at least half a level from afternoon to evening on '+eveningRiseCount+' of '+afternoonEvening.length+' comparable recent days.'
-      :'FOX2 compared your morning, afternoon, and evening Fat Zones across recent completed days. They were close enough that one part of the day did not clearly stand out.'
+        ?'FOX2 compared your latest 14 calendar days through your newest measurement, using days with both afternoon and evening readings. Your Fat Zone rose by at least half a level from afternoon to evening on '+eveningRiseCount+' of '+afternoonEvening.length+' comparable recent days.'
+      :'FOX2 compared your morning, afternoon, and evening Fat Zones across your latest 14 calendar days, through your newest measurement. They were close enough that one part of the day did not clearly stand out.'
   };
 }
 
