@@ -1969,7 +1969,7 @@ html, body {
       <div>
         <div class="info-toggle-label">Join leaderboard</div>
         <div class="info-toggle-sub">Recent pattern · your results vs the community</div>
-        <div class="info-toggle-sub" style="margin-top:4px;color:rgba(255,255,255,.22);">Only people who opt in are included</div>
+        <div class="info-toggle-sub" style="margin-top:4px;color:rgba(255,255,255,.22);">Only people who opt in and measured within the past 7 days are included</div>
       </div>
       <label class="tog"><input type="checkbox" id="lb-optin"><span class="tog-slider"></span></label>
     </div>
@@ -7612,6 +7612,17 @@ function leaderboardRecentPatterns(allScores, devices) {
   return patterns;
 }
 
+function leaderboardActiveWithinDays(devices, nowMs, maxAgeDays) {
+  var maxAgeMs = Math.max(0, Number(maxAgeDays) || 0) * 86400000;
+  return (devices || []).filter(function(device) {
+    var measuredMs = Number(device && device._encodedLastMs) || 0;
+    if (!measuredMs) return false;
+    var ageMs = Number(nowMs) - measuredMs;
+    // Allow a small clock/time-zone lead, but never an old entry.
+    return ageMs >= -86400000 && ageMs <= maxAgeMs;
+  });
+}
+
 function fetchLeaderboard(){
   var board = document.getElementById('lb-board');
   if(!board || !_sbUrl) return;
@@ -7683,6 +7694,11 @@ function fetchLeaderboard(){
       d._encodedLastMs = encodedLastMeasurementMs(d);
     });
 
+    // Use the same local-as-UTC frame as syncAge(). Old opted-in entries do
+    // not belong in a leaderboard that represents the active Squad.
+    var leaderboardNowMs = Date.now() + tzOffsetMin * 60 * 1000;
+    devList = leaderboardActiveWithinDays(devList, leaderboardNowMs, 7);
+
     var recentPatterns = leaderboardRecentPatterns(allScores, devList);
 
     // The Squad is a recent-pattern leaderboard, not a contest based on one
@@ -7700,7 +7716,7 @@ function fetchLeaderboard(){
     });
 
     if(ranked.length === 0){
-      board.innerHTML = '<div id="lb-board-loading">No entries yet — be the first!</div>';
+      board.innerHTML = '<div id="lb-board-loading">No one has measured in the past 7 days yet.</div>';
       return;
     }
 

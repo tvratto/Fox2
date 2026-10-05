@@ -40,8 +40,19 @@ assert.equal(patterns.C.dayCount,0);
 assert.equal(patterns.D.endDate,'2026-09-29');
 assert.equal(patterns.D.average,70);
 
+const now=Date.parse('2026-10-15T20:00:00Z');
+const active=context.leaderboardActiveWithinDays([
+  {_encodedLastMs:now-2*86400000},
+  {_encodedLastMs:now-7*86400000},
+  {_encodedLastMs:now-7*86400000-1},
+  {_encodedLastMs:now-132*86400000},
+  {_encodedLastMs:0}
+],now,7);
+assert.equal(active.length,2);
+
 assert.ok(source.includes("<div class=\"lb-score-sub\">recent pattern</div>"));
 assert.ok(source.includes('var recentPatterns = leaderboardRecentPatterns(allScores, devList)'));
+assert.ok(source.includes('leaderboardActiveWithinDays(devList, leaderboardNowMs, 7)'));
 assert.ok(!source.includes('var todayScore = {}'));
 
 console.log('leaderboard tests passed');
