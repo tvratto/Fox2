@@ -343,6 +343,7 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(source.indexOf('+helpingBlock')<source.indexOf('var prioritizedStall='));
   assert.ok(!source.includes('standaloneHelpingHtml'));
   assert.ok(source.includes('analysisSelectQuestions(['));
+  assert.ok(source.includes('analysisRecentScoreOpportunity(scoreDays,history.activeDate'));
   assert.ok(source.includes('analysisQuestionCardHtml(insight'));
   assert.ok(source.includes("document.getElementById('history-score-trend')"));
   assert.ok(source.includes('historyTrend.innerHTML=scoreDays.length'));
@@ -380,20 +381,6 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.equal(insight.question,'Could I be pushing too hard?');
   assert.ok(insight.answer.includes('eating enough'));
   assert.equal(insight.priority,100);
-})();
-
-(function recognizesAChangeThatLastedAcrossCompletedWeeks(){
-  function week(start,end,median){
-    return {startDate:start,endDate:end,coverage:'sufficient',metrics:{medianScore:median},historical:{}};
-  }
-  const insight=context.analysisLastingChangeInsight([
-    week('2026-09-07','2026-09-13',80),
-    week('2026-09-14','2026-09-20',92),
-    week('2026-09-21','2026-09-27',96)
-  ]);
-  assert.equal(insight.question,'Is the change lasting?');
-  assert.ok(insight.answer.includes('more than one completed week'));
-  assert.ok(insight.visual.includes('latest three completed weeks'));
 })();
 
 (function onlyCallsOutARecentDayWhenItIsUnusualForThatPerson(){
@@ -649,11 +636,13 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   const opportunity=context.analysisRecentScoreOpportunity(scores,'2026-08-26',[{
     day_date:'2026-08-22',events:[{icon:'🏃',name:'Run',minute:600}]
   }],111);
-  assert.ok(opportunity.title.includes('Last Saturday'));
+  assert.ok(opportunity.headline.includes('Last Saturday gives you something to build on'));
+  assert.equal(opportunity.question,'What can I build on?');
   assert.ok(opportunity.answer.includes('higher fat-use range'));
   assert.ok(opportunity.answer.includes('You tagged 🏃 Run'));
   assert.ok(opportunity.answer.includes('We don’t know yet if it helped'));
   assert.ok(!opportunity.answer.includes('150'));
+  assert.ok(opportunity.visual.includes('Daily Fuel Scores around'));
 })();
 
 (function showsTheTierWithoutLeadingWithNumbers(){
@@ -683,6 +672,8 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   const analysisSource=fs.readFileSync(__dirname+'/analysis.js','utf8');
   const pageSource=fs.readFileSync(__dirname+'/index.html','utf8');
   assert.ok(!analysisSource.includes('<h2 class="analysis-section-title">Fat Zone changes over time</h2>'));
+  assert.ok(!analysisSource.includes('This improvement has lasted for several weeks.'));
+  assert.ok(!analysisSource.includes('analysisLastingChangeInsight'));
   assert.ok(!pageSource.includes('>Fuel Pattern</button>'));
   assert.ok(!pageSource.includes('<div class="page pattern-page">'));
 })();

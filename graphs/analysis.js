@@ -418,17 +418,19 @@ function analysisRecentScoreOpportunity(scoreDays,referenceDate,tagRows,recentAv
   });
   var label=analysisRelativeDay(best.date,referenceDate);
   var answer=Number(best.score)>120
-    ?'Your result reached a higher fat-use range that day. '
-    :'Your result moved closer to a higher fat-use range that day. ';
+    ?'You reached a higher fat-use range that day. '
+    :'You moved closer to a higher fat-use range that day. ';
   if(tag){
     answer+='You tagged '+(tag.icon?tag.icon+' ':'')+tag.name+'. We don’t know yet if it helped. If it is safe to repeat, try it again and tag it.';
   }else{
     answer+='Think about what was different beforehand. Choose one safe part of that routine to repeat and tag it next time.';
   }
+  var visualDays=(scoreDays||[]).filter(function(day){return day.date>=addIsoDays(best.date,-3)&&day.date<=addIsoDays(best.date,3);});
   return {
-    date:best.date,title:label+' was one of your stronger days.',answer:answer,
+    date:best.date,question:'What can I build on?',headline:label+' gives you something to build on.',answer:answer,
     detail:'The Daily Fuel Score on '+analysisWeekday(best.date)+', '+analysisShortDate(best.date)+' was '+best.score+', compared with a recent average of '+recentAverage+'.',
-    tag:tag
+    visual:dailyScoreEvidenceSvg(visualDays,'Daily Fuel Scores around '+analysisShortDate(best.date)),
+    tag:tag,tone:'is-change',icon:'↑',priority:45
   };
 }
 
@@ -1346,25 +1348,6 @@ function analysisOverextendedInsight(weekToDate,lastOfficial){
   };
 }
 
-function analysisLastingChangeInsight(weeklyStates){
-  var usable=(weeklyStates||[]).filter(function(state){return state.coverage==='sufficient'&&state.metrics&&isFinite(Number(state.metrics.medianScore));});
-  if(usable.length<3) return null;
-  var recent=usable.slice(-3);
-  if(addIsoDays(recent[0].endDate,1)!==recent[1].startDate||addIsoDays(recent[1].endDate,1)!==recent[2].startDate) return null;
-  var starting=Number(recent[0].metrics.medianScore);
-  var later=[Number(recent[1].metrics.medianScore),Number(recent[2].metrics.medianScore)];
-  if(Math.min.apply(null,later)<starting+8||(later[0]+later[1])/2<starting+10) return null;
-  var visual=compactEvidenceLine(recent.map(function(state,index){
-    return {x:index,value:Number(state.metrics.medianScore),title:state.startDate+' to '+state.endDate+': typical score '+state.metrics.medianScore};
-  }),'Typical Daily Fuel Score across the latest three completed weeks',analysisShortDate(recent[0].startDate),analysisShortDate(recent[2].endDate));
-  return {
-    question:'Is the change lasting?',headline:'This improvement has lasted for several weeks.',tone:'is-change',icon:'✓',priority:70,
-    answer:'Your higher results have carried across more than one completed week. That suggests the shift toward fat for energy is lasting beyond one strong day.',
-    detail:'FOX2 compared your latest three completed weeks. Their typical Daily Fuel Scores were '+recent.map(function(state){return state.metrics.medianScore;}).join(', ')+'.',
-    visual:visual
-  };
-}
-
 function analysisStrongestPeriodInsight(weeklyStates){
   var usable=(weeklyStates||[]).filter(function(state){return state.coverage==='sufficient'&&state.metrics&&isFinite(Number(state.metrics.medianScore));});
   if(usable.length<3) return null;
@@ -1773,9 +1756,9 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   var actionHeadline=daypartOpportunity&&daypartOpportunity.headline;
   var actionBlock=daypartOpportunity?'<div class="analysis-experiment"><h3>'+analysisEscape(actionHeadline)+'</h3><p>'+daypartOpportunity.answer+'</p>'+analysisWhyHtml(daypartOpportunity.detail,daypartOpportunity.visual||'')+'</div>':'';
   var overextendedInsight=analysisOverextendedInsight(weekToDate,lastOfficial);
-  var lastingInsight=analysisLastingChangeInsight(weeklyStates);
-  var strongestInsight=lastingInsight?null:analysisStrongestPeriodInsight(weeklyStates);
+  var strongestInsight=analysisStrongestPeriodInsight(weeklyStates);
   var standoutInsight=analysisStandoutDayContext(analysisStandoutQuestion(scoreDays,history.activeDate),history,history.activeDate);
+  var recentOpportunityInsight=standoutInsight?null:analysisRecentScoreOpportunity(scoreDays,history.activeDate,tagRows||[],recentAverage);
   var prioritizedStall=stallInsight?Object.assign({},stallInsight,{priority:90}):null;
   var nextStepInsight=!stallInsight&&!overextendedInsight&&daypartOpportunity?{
     question:daypartOpportunity.question,headline:actionHeadline,answer:daypartOpportunity.answer,detail:daypartOpportunity.detail,
@@ -1784,9 +1767,9 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   var secondaryQuestions=analysisSelectQuestions([
     overextendedInsight,
     prioritizedStall,
-    lastingInsight,
     strongestInsight,
     standoutInsight,
+    recentOpportunityInsight,
     nextStepInsight
   ],2);
   var secondaryHtml=secondaryQuestions.map(function(insight){
