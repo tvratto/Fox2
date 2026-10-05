@@ -218,6 +218,33 @@ html, body {
   font-size: 16px; line-height: 1;
   padding: 0 0 0 4px;
 }
+#nfc-sync-handoff {
+  display: none; position: fixed; inset: 0; z-index: 1000;
+  background: #050505; align-items: center; justify-content: center;
+  padding: 28px; text-align: center;
+}
+#nfc-sync-handoff.visible { display: flex; }
+.nfc-sync-card { width: min(100%, 390px); }
+.nfc-sync-mark {
+  width: 68px; height: 68px; margin: 0 auto 26px; border-radius: 50%;
+  display: grid; place-items: center; position: relative;
+  background: linear-gradient(135deg,#22d3ee,#4ade80);
+  color: #031314; font-size: 32px; font-weight: 900;
+}
+.nfc-sync-mark.syncing { color: transparent; }
+.nfc-sync-mark.syncing::after {
+  content: ""; position: absolute; width: 25px; height: 25px;
+  border: 3px solid rgba(0,0,0,.25); border-top-color: #061012;
+  border-radius: 50%; animation: nfc-sync-spin .8s linear infinite;
+}
+@keyframes nfc-sync-spin { to { transform: rotate(360deg); } }
+.nfc-sync-title { margin: 0 0 12px; font-size: 30px; line-height: 1.08; }
+.nfc-sync-message { margin: 0 auto; max-width: 330px; color: rgba(255,255,255,.62); font-size: 16px; line-height: 1.5; }
+#nfc-sync-return {
+  display: none; width: 100%; margin-top: 28px; border: 0; border-radius: 16px;
+  padding: 17px 20px; background: #fff; color: #050505;
+  font: 800 17px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
 #info-modal-overlay,
 #export-modal-overlay {
   display: none;
@@ -1952,6 +1979,15 @@ html, body {
   <p style="margin-top:8px;font-size:12px">Scan the QR code on your FOX2 device to view your results.</p>
 </div>
 
+<div id="nfc-sync-handoff" aria-live="polite">
+  <div class="nfc-sync-card">
+    <div class="nfc-sync-mark syncing" id="nfc-sync-mark">✓</div>
+    <h1 class="nfc-sync-title" id="nfc-sync-title">Syncing your FOX2…</h1>
+    <p class="nfc-sync-message" id="nfc-sync-message">Keep this page open for a moment while your newest measurements are saved.</p>
+    <button id="nfc-sync-return" type="button">Return to my results</button>
+  </div>
+</div>
+
 <script src="data-fetch.js?v=20260930-11"></script>
 <script>
 
@@ -1962,28 +1998,90 @@ var dParam    = params.get('d') || '';
 var aParam    = params.get('a') || '';
 var sParam    = params.get('s') || '';
 
-// Keep one reusable results tab per device. The NFC sync page uses this
-// channel to refresh an already-open results page instead of becoming another
-// full copy of it.
+// Keep one reusable results tab per device. A full legacy NFC URL first asks
+// whether an established results page is already listening. When one answers,
+// this new page becomes a temporary sync handoff instead of another result.
 (function setupSyncHandoff(){
   if(window.top!==window.self) return;
   var deviceId=params.get('id')||'';
   if(!deviceId) return;
   var safeId=deviceId.replace(/[^A-Za-z0-9_-]/g,'');
-  window.name='fox2-results-'+safeId;
-  if(typeof BroadcastChannel==='undefined') return;
+  var overlay=document.getElementById('nfc-sync-handoff');
+  var mark=document.getElementById('nfc-sync-mark');
+  var title=document.getElementById('nfc-sync-title');
+  var message=document.getElementById('nfc-sync-message');
+  var returnButton=document.getElementById('nfc-sync-return');
+  var canProbe=!!dParam&&params.get('handoff')!=='1'&&typeof BroadcastChannel!=='undefined';
+  var state={deviceId:deviceId,safeId:safeId,established:false,existing:false,decided:!canProbe,writesDone:false,writesOk:false,finished:false};
+  window._fox2Handoff=state;
+
+  function establish(){
+    state.established=true;
+    window.name='fox2-results-'+safeId;
+    if(overlay) overlay.classList.remove('visible');
+  }
+  if(typeof BroadcastChannel==='undefined'){
+    establish();
+    return;
+  }
   var channel=new BroadcastChannel('fox2-sync-'+safeId);
   window._fox2SyncChannel=channel;
-  channel.addEventListener('message',function(event){
-    var message=event.data||{};
-    if(message.deviceId!==deviceId) return;
-    if(message.type==='probe'){
-      channel.postMessage({type:'present',deviceId:deviceId,nonce:message.nonce||''});
+  var nonce=String(Date.now())+Math.random();
+
+  function resultsUrl(){
+    var url=new URL(window.location.href);
+    url.searchParams.delete('sync');
+    url.searchParams.set('handoff','1');
+    url.searchParams.set('sync_rev',String(Date.now()));
+    return url.toString();
+  }
+  function maybeFinish(){
+    if(state.finished||!state.decided||!state.existing||!state.writesDone) return;
+    state.finished=true;
+    if(!state.writesOk){
+      if(mark){mark.classList.remove('syncing');mark.textContent='!';}
+      if(title) title.textContent='Sync needs another try';
+      if(message) message.textContent='FOX2 could not finish saving this sync. Check your connection and tap again.';
       return;
     }
-    if(message.type==='updated'&&message.resultsUrl){
-      window.location.replace(message.resultsUrl);
+    var url=resultsUrl();
+    channel.postMessage({type:'updated',deviceId:deviceId,resultsUrl:url});
+    if(mark){mark.classList.remove('syncing');mark.textContent='✓';}
+    if(title) title.textContent='Your FOX2 is synced';
+    if(message) message.textContent='Your open results page has been updated.';
+    if(returnButton) returnButton.style.display='block';
+  }
+  state.reportWrites=function(ok){state.writesDone=true;state.writesOk=!!ok;maybeFinish();};
+
+  channel.addEventListener('message',function(event){
+    var incoming=event.data||{};
+    if(incoming.deviceId!==deviceId) return;
+    if(incoming.type==='probe'&&state.established){
+      channel.postMessage({type:'present',deviceId:deviceId,nonce:incoming.nonce||''});
+      return;
     }
+    if(incoming.type==='present'&&!state.decided&&incoming.nonce===nonce){
+      state.existing=true;
+      return;
+    }
+    if(incoming.type==='updated'&&state.established&&incoming.resultsUrl){
+      window.location.replace(incoming.resultsUrl);
+    }
+  });
+
+  if(!canProbe){ establish(); return; }
+  if(overlay) overlay.classList.add('visible');
+  channel.postMessage({type:'probe',deviceId:deviceId,nonce:nonce});
+  setTimeout(function(){
+    state.decided=true;
+    if(!state.existing) establish();
+    else maybeFinish();
+  },500);
+
+  if(returnButton) returnButton.addEventListener('click',function(){
+    var target=window.open(resultsUrl(),'fox2-results-'+safeId);
+    if(target) target.focus();
+    setTimeout(function(){window.close();},120);
   });
 })();
 
@@ -2399,15 +2497,21 @@ var _isNewerPayload    = false;
     // The dedicated NFC sync page embeds this page only long enough to reuse
     // the proven decoder and database writer. Report completion after every
     // write has settled so the existing results tab never refreshes too soon.
-    if(params.get('sync')==='1'&&window.parent!==window){
-      Promise.all(writePromises).then(function(outcomes){
-        var ok=outcomes.every(function(outcome){return outcome!==false;});
+    Promise.all(writePromises).then(function(outcomes){
+      var ok=outcomes.every(function(outcome){return outcome!==false;});
+      if(window._fox2Handoff&&typeof window._fox2Handoff.reportWrites==='function'){
+        window._fox2Handoff.reportWrites(ok);
+      }
+      if(params.get('sync')==='1'&&window.parent!==window){
         window.parent.postMessage({type:'fox2-sync-complete',deviceId:deviceId,ok:ok},window.location.origin);
-      });
-    }
+      }
+    });
 
   }).catch(function() {
     // Read failed — still init the Results page with zeroed totals
+    if(window._fox2Handoff&&typeof window._fox2Handoff.reportWrites==='function'){
+      window._fox2Handoff.reportWrites(false);
+    }
     initResultsPage();
   });
 

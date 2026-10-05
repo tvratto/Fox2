@@ -46,6 +46,7 @@
         var url=new URL('/graphs/',window.location.origin);
         params.forEach(function(value,key){ if(key!=='sync') url.searchParams.set(key,value); });
         url.searchParams.set('src','nfc');
+        url.searchParams.set('handoff','1');
         url.searchParams.set('sync_rev',String(Date.now()));
         return url.toString();
       }
