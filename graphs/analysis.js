@@ -1475,9 +1475,11 @@ function analysisQuestionCardHtml(insight,extraHtml){
 
 function analysisDaypartVisual(points,outcome,referenceDate,recurringEveningRise){
   var byDate={};
+  var recentExampleStart=addIsoDays(referenceDate,-4);
   (points||[]).forEach(function(point){
     var minute=Number(point.minute),value=Number(point.value);
     if(!isFinite(minute)||!isFinite(value)) return;
+    if(point.date<recentExampleStart||point.date>referenceDate) return;
     if(!byDate[point.date]) byDate[point.date]=[];
     byDate[point.date].push({date:point.date,minute:minute,value:value});
   });
@@ -1495,8 +1497,8 @@ function analysisDaypartVisual(points,outcome,referenceDate,recurringEveningRise
     else if(outcome==='evening'&&evening!==null&&(morning!==null||afternoon!==null)){
       strength=recurringEveningRise&&afternoon!==null?evening-afternoon:Math.max(morning===null?-Infinity:morning,afternoon===null?-Infinity:afternoon)-evening;
     }
-    return strength===null||!isFinite(strength)?null:{date:date,points:day,strength:strength};
-  }).filter(Boolean).sort(function(a,b){return b.strength-a.strength||b.date.localeCompare(a.date);});
+    return strength===null||!isFinite(strength)||strength<.5?null:{date:date,points:day,strength:strength};
+  }).filter(Boolean).sort(function(a,b){return b.date.localeCompare(a.date)||b.strength-a.strength;});
   if(!candidates.length) return '';
   var chosen=candidates[0],day=chosen.points;
   var target=day.filter(function(point){return analysisDayPart(point.minute)===outcome;}).reduce(function(best,point){
@@ -1540,7 +1542,7 @@ function analysisDaypartVisual(points,outcome,referenceDate,recurringEveningRise
         :relative+', your Fat Zone was higher earlier and fell by evening.';
   var aria=caption+' The chart uses the actual measurements saved that day.';
   return '<div class="analysis-daypart-visual">'
-    +'<div class="analysis-daypart-label">A recent day that shows this pattern</div>'
+    +'<div class="analysis-daypart-label">The most recent day that shows this pattern</div>'
     +'<svg class="analysis-daypart-chart" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="'+analysisEscape(aria)+'">'
       +'<defs><marker id="'+arrowId+'" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#FFD23C"/></marker></defs>'
       +'<line x1="'+left+'" y1="'+(h-bottom)+'" x2="'+(w-right)+'" y2="'+(h-bottom)+'" stroke="rgba(255,255,255,.09)" stroke-width="1"/>'

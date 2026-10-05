@@ -485,7 +485,7 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.equal(opportunity.headline,'Your midday dip is your clearest opportunity.');
   assert.ok(opportunity.answer.includes('night before or that morning'));
   assert.ok(!opportunity.answer.includes('midday meal'));
-  assert.ok(opportunity.visual.includes('A recent day that shows this pattern'));
+  assert.ok(opportunity.visual.includes('The most recent day that shows this pattern'));
   assert.ok(opportunity.visual.includes('Midday dip'));
   assert.ok(opportunity.visual.includes('This is one real day from your measurements'));
   assert.ok(!opportunity.visual.includes('analysis-action-flow'));
@@ -524,10 +524,19 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
     {date:'2026-09-26',minute:1140,value:5}
   ];
   const visual=context.analysisDaypartVisual(points,'afternoon','2026-09-30',false);
-  assert.ok(visual.includes('Last Friday'));
-  assert.ok(visual.includes('Fat Zone 2'));
+  assert.ok(visual.includes('Last Saturday'));
+  assert.ok(visual.includes('Fat Zone 4'));
   assert.ok(visual.includes('8am'));
   assert.ok(visual.includes('7pm'));
+})();
+
+(function doesNotRecycleAnOldDaypartExample(){
+  const points=[
+    {date:'2026-09-20',minute:480,value:5},
+    {date:'2026-09-20',minute:780,value:2},
+    {date:'2026-09-20',minute:1140,value:5}
+  ];
+  assert.equal(context.analysisDaypartVisual(points,'afternoon','2026-09-30',false),'');
 })();
 
 (function keepsTheDaypartGraphicInsideWhyFox2SaysThis(){
@@ -548,8 +557,7 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(opportunity.answer.includes('often goes up from afternoon to evening'));
   assert.ok(!opportunity.answer.includes('no single part of the day has a much lower average'));
   assert.ok(opportunity.detail.includes('6 of 10 comparable recent days'));
-  assert.ok(opportunity.visual.includes('Evening rise'));
-  assert.ok(opportunity.visual.includes('This is one real day from your measurements'));
+  assert.equal(opportunity.visual,'');
 })();
 
 (function usesEightRecentWeeksAndOnlyResurfacesStrongOlderEvidence(){

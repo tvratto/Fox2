@@ -2696,6 +2696,28 @@ function lastMeasuredDayIdx(){
   return totalDays - 1;
 }
 
+function historyMondayWindowStart(todayIdx, startEpoch, weekCount) {
+  var todayEpoch = startEpoch + todayIdx * 86400;
+  var weekday = new Date(todayEpoch * 1000).getUTCDay();
+  var daysSinceMonday = (weekday + 6) % 7;
+  return todayIdx - daysSinceMonday - (Math.max(1, weekCount) - 1) * 7;
+}
+
+function historyCalendarWeekDays(dayOffset) {
+  var labels = ['s','m','t','w','t','f','s'];
+  var week = [];
+  for (var offset = 0; offset < 7; offset++) {
+    var dayIndex = dayOffset + offset;
+    var date = new Date((windowStart + dayIndex * 86400) * 1000);
+    var source = days[dayIndex];
+    week.push(source ? {
+      label:labels[date.getUTCDay()], epochs:source.epochs, vals:source.vals,
+      auc:source.auc, zoneTimes:source.zoneTimes
+    } : {label:labels[date.getUTCDay()], epochs:[], vals:[], auc:0, zoneTimes:null});
+  }
+  return week;
+}
+
 function drawWeekRow(ctx, weekDays, dayOffset, gLeft, gRight, gTop, gBottom, maxY, todayIdx, prevPt, nextPt, isLastWeek, zoneGrad, viewMode) {
   prevPt = prevPt || null;
   nextPt = nextPt || null;
@@ -3131,16 +3153,17 @@ function buildGraphCard(forcedView) {
 
   var DAYS_PER_WEEK = 7;
   var WEEKS   = 3;
-  var chunkStart = Math.max(0, totalDays - WEEKS * DAYS_PER_WEEK);
 
-  // Today = last day of payload
+  // Anchor the display to the Monday of the current measured week. The last
+  // row may be incomplete, but every row always reads Monday through Sunday.
   var todayIdx = lastMeasuredDayIdx();
+  var chunkStart = historyMondayWindowStart(todayIdx, windowStart, WEEKS);
 
   // ── Zone gradient stop fractions (for zones view fill) ───────
   var activeView = forcedView || summaryView;
   var zoneGrad = null;
   if (activeView === 'zones') {
-    var zt = calcZoneTimes(chunkStart);
+    var zt = calcZoneTimes(Math.max(0, chunkStart));
     var ztTotal = zt.glucose + zt.mixed + zt.fat || 1;
     var s3 = zt.glucose / ztTotal;           // end of cyan / start of green
     var s5 = s3 + zt.mixed / ztTotal;        // end of green / start of violet
@@ -3151,13 +3174,13 @@ function buildGraphCard(forcedView) {
   var rowTop = PAD + PILL_H + PILL_PAD;
   for (var w = 0; w < WEEKS; w++) {
     var dayOffset  = chunkStart + w * DAYS_PER_WEEK;
-    var weekDays   = days.slice(dayOffset, dayOffset + DAYS_PER_WEEK);
+    var weekDays   = historyCalendarWeekDays(dayOffset);
     var gTop       = rowTop;
     var gBottom    = gTop + GRAPH_H;
 
     // ── Per-week y scale ─────────────────────────────────────────
     var wRawMax = 0;
-    for (var d = dayOffset; d < dayOffset + DAYS_PER_WEEK && d < totalDays; d++) {
+    for (var d = Math.max(0, dayOffset); d < dayOffset + DAYS_PER_WEEK && d < totalDays; d++) {
       for (var i = 0; i < days[d].vals.length; i++) {
         if (days[d].vals[i] > wRawMax) wRawMax = days[d].vals[i];
       }
@@ -8405,7 +8428,7 @@ function initDayGraphPopup(){
 </div>
 
 <script src="state-engine.js?v=20260930-11"></script>
-<script src="analysis.js?v=20261005-02"></script>
+<script src="analysis.js?v=20261005-03"></script>
 
 </body>
 </html>
