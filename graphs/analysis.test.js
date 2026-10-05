@@ -189,13 +189,42 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(evidence.detail.includes('first two saved Daily Fuel Scores'));
   assert.ok(evidence.detail.includes('41 on the first two days'));
   assert.ok(evidence.detail.includes('78.5 on the latest two days'));
-  assert.ok(evidence.visual.includes('Daily Fuel Scores this week, comparing the first two days with the latest two days'));
-  assert.ok(evidence.visual.includes('First two days &rarr; Latest two days'));
-  assert.equal((evidence.visual.match(/<polygon /g)||[]).length,1);
-  assert.equal((evidence.visual.match(/<ellipse /g)||[]).length,0);
+  assert.ok(evidence.visual.includes('Daily Fuel Scores from the start of this week through the latest days'));
+  assert.ok(evidence.visual.includes('Start of week'));
+  assert.ok(evidence.visual.includes('Latest days'));
+  assert.ok(evidence.visual.includes('Mon'));
+  assert.ok(evidence.visual.includes('Sun'));
+  assert.ok(!evidence.visual.includes('<polygon'));
   assert.ok(!evidence.visual.includes('#FFD23C'));
-  assert.ok(evidence.visual.includes('stroke="rgba(255,255,255,.8)"'));
+  assert.ok(evidence.visual.includes('stroke="rgba(255,255,255,.48)"'));
   assert.ok(!evidence.visual.includes('last 14 days'));
+})();
+
+(function overlaysThisWeekAndLastWeekOnTheSameWeekdays(){
+  const sample=[
+    {date:'2026-01-05',score:92,movement:'steady',range:1,responseAmplitude:0},
+    {date:'2026-01-06',score:96,movement:'steady',range:1,responseAmplitude:0},
+    {date:'2026-01-07',score:101,movement:'steady',range:1,responseAmplitude:0},
+    {date:'2026-01-12',score:72,movement:'steady',range:1,responseAmplitude:0},
+    {date:'2026-01-13',score:76,movement:'steady',range:1,responseAmplitude:0}
+  ];
+  const week=engine.buildWeekToDate(sample,{referenceDate:'2026-01-13'});
+  const evidence=context.analysisWeekEvidence(week);
+  assert.ok(evidence.visual.includes('Daily Fuel Scores this week and the same days last week'));
+  assert.ok(evidence.visual.includes('This week'));
+  assert.ok(evidence.visual.includes('Same days last week'));
+  assert.ok(evidence.visual.includes('stroke-dasharray="5 4"'));
+  assert.ok(evidence.visual.includes('data-series="this-week"'));
+  assert.ok(evidence.visual.includes('data-series="last-week"'));
+  assert.ok(!evidence.visual.includes('Daily Fuel Score 101'));
+})();
+
+(function leavesAVisibleGapWhenAWeekHasNoSavedDailyScore(){
+  const visual=context.weeklyDailyScoreEvidenceSvg({current:{days:[
+    {date:'2026-01-05',score:70},{date:'2026-01-06',score:74},
+    {date:'2026-01-08',score:80},{date:'2026-01-09',score:84}
+  ]}},'recovery');
+  assert.equal((visual.match(/<path data-series="this-week"/g)||[]).length,2);
 })();
 
 (function buildsEightWeekTrendWithRangeAndResponsiveness(){

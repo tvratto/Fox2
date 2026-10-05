@@ -507,6 +507,69 @@ function dailyScoreRecoveryEvidenceSvg(days,label){
   }});
 }
 
+function weeklyDailyScoreEvidenceSvg(week,mode){
+  if(!week||!week.current) return '';
+  var current=(week.current.days||[]).filter(function(day){return isFinite(Number(day.score));}).slice().sort(function(a,b){return a.date.localeCompare(b.date);});
+  var previous=(week.previous&&week.previous.days||[]).filter(function(day){return isFinite(Number(day.score));}).slice().sort(function(a,b){return a.date.localeCompare(b.date);});
+  if(!current.length) return '';
+  function weekdayIndex(date){return (new Date(date+'T00:00:00Z').getUTCDay()+6)%7;}
+  var latestCurrentWeekday=Math.max.apply(null,current.map(function(day){return weekdayIndex(day.date);}));
+  previous=previous.filter(function(day){return weekdayIndex(day.date)<=latestCurrentWeekday;});
+  var compare=mode==='compare'&&previous.length;
+  var all=current.concat(compare?previous:[]);
+  var values=all.map(function(day){return Number(day.score);});
+  var min=Math.min.apply(null,values),max=Math.max.apply(null,values),pad=Math.max(8,(max-min)*.18);
+  var low=Math.max(0,min-pad),high=max+pad;
+  if(high===low) high=low+20;
+  var w=330,h=132,left=17,right=17,top=27,bottom=27;
+  function x(index){return left+index*(w-left-right)/6;}
+  function y(value){return top+(high-Number(value))*(h-top-bottom)/(high-low);}
+  function segments(days){
+    var sorted=days.map(function(day){return {day:day,index:weekdayIndex(day.date)};}).sort(function(a,b){return a.index-b.index;});
+    var groups=[];
+    sorted.forEach(function(item){
+      var group=groups[groups.length-1];
+      if(!group||item.index-group[group.length-1].index>1){group=[];groups.push(group);}
+      group.push(item);
+    });
+    return groups;
+  }
+  function paths(days,name,stroke,dash){
+    return segments(days).map(function(group){
+      if(group.length<2) return '';
+      var d=group.map(function(item,index){return (index?'L ':'M ')+x(item.index).toFixed(1)+' '+y(item.day.score).toFixed(1);}).join(' ');
+      return '<path data-series="'+name+'" d="'+d+'" fill="none" stroke="'+stroke+'" stroke-width="2.2" '+(dash?'stroke-dasharray="5 4" ':'')+'stroke-linecap="round" stroke-linejoin="round"/>';
+    }).join('');
+  }
+  var firstDates={};
+  var latestDates={};
+  current.slice(0,2).forEach(function(day){firstDates[day.date]=true;});
+  current.slice(-2).forEach(function(day){latestDates[day.date]=true;});
+  function dots(days,name,baseColor){
+    return days.map(function(day){
+      var index=weekdayIndex(day.date),isFirst=mode==='recovery'&&firstDates[day.date],isLatest=mode==='recovery'&&latestDates[day.date];
+      var color=isLatest?'rgba(255,255,255,.98)':isFirst?'rgba(255,255,255,.38)':baseColor;
+      var radius=isLatest?4.7:isFirst?4:3.4;
+      return '<circle data-series="'+name+'" cx="'+x(index).toFixed(1)+'" cy="'+y(day.score).toFixed(1)+'" r="'+radius+'" fill="'+color+'" stroke="#08090b" stroke-width="1.5"><title>'+analysisWeekday(day.date)+': Daily Fuel Score '+day.score+'</title></circle>'
+        +'<text x="'+x(index).toFixed(1)+'" y="'+Math.max(11,y(day.score)-7).toFixed(1)+'" text-anchor="middle" font-size="8.5" font-weight="800" fill="'+color+'">'+Math.round(Number(day.score))+'</text>';
+    }).join('');
+  }
+  var weekdays=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  var dayLabels=weekdays.map(function(label,index){return '<text x="'+x(index).toFixed(1)+'" y="'+(h-7)+'" text-anchor="middle" font-size="8.5" fill="rgba(255,255,255,.38)">'+label+'</text>';}).join('');
+  var key=compare
+    ?'<g><line x1="17" y1="10" x2="37" y2="10" stroke="rgba(255,255,255,.95)" stroke-width="2.2"/><text x="42" y="13" font-size="9" fill="rgba(255,255,255,.8)">This week</text><line x1="111" y1="10" x2="131" y2="10" stroke="rgba(255,255,255,.38)" stroke-width="2.2" stroke-dasharray="5 4"/><text x="136" y="13" font-size="9" fill="rgba(255,255,255,.55)">Same days last week</text></g>'
+    :'<g><circle cx="20" cy="10" r="3.5" fill="rgba(255,255,255,.38)"/><text x="28" y="13" font-size="9" fill="rgba(255,255,255,.55)">Start of week</text><circle cx="116" cy="10" r="4.3" fill="rgba(255,255,255,.98)"/><text x="125" y="13" font-size="9" fill="rgba(255,255,255,.8)">Latest days</text></g>';
+  var aria=compare?'Daily Fuel Scores this week and the same days last week':'Daily Fuel Scores from the start of this week through the latest days';
+  return '<div class="analysis-insight-visual"><svg class="analysis-mini-chart" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="'+aria+'">'
+    +key
+    +'<line x1="'+left+'" y1="'+(h-bottom)+'" x2="'+(w-right)+'" y2="'+(h-bottom)+'" stroke="rgba(255,255,255,.08)"/>'
+    +(compare?paths(previous,'last-week','rgba(255,255,255,.34)',true):'')
+    +paths(current,'this-week',compare?'rgba(255,255,255,.92)':'rgba(255,255,255,.48)',false)
+    +(compare?dots(previous,'last-week','rgba(255,255,255,.34)'):'')
+    +dots(current,'this-week','rgba(255,255,255,.62)')+dayLabels
+    +'</svg></div>';
+}
+
 function withinDayEvidenceSvg(days,points){
   var responsive=(days||[]).filter(function(day){return day.movement==='responsive';});
   var pool=responsive.slice().sort(function(a,b){return b.date.localeCompare(a.date);});
@@ -1039,7 +1102,7 @@ function analysisWeekEvidence(week){
     var latestTypical=Math.round(analysisMedian(latest.map(function(day){return Number(day.score);})) * 10) / 10;
     return {
       detail:'FOX2 compared your first two saved Daily Fuel Scores this week with the latest two. The typical result went from '+earlierTypical+' on the first two days to '+latestTypical+' on the latest two days. Days without a saved score were left out.',
-      visual:dailyScoreRecoveryEvidenceSvg(currentDays,'Daily Fuel Scores this week, comparing the first two days with the latest two days')
+      visual:weeklyDailyScoreEvidenceSvg(week,'recovery')
     };
   }
   var previous=week.previous;
@@ -1048,10 +1111,7 @@ function analysisWeekEvidence(week){
     var currentTypical=Number(week.current.metrics.medianScore);
     return {
       detail:'FOX2 compared your saved Daily Fuel Scores this week with the same weekdays last week. The typical result was '+previousTypical+' last week and '+currentTypical+' this week. Days without a saved score were left out.',
-      visual:compactEvidenceLine([
-        {x:0,value:previousTypical,title:'Same weekdays last week: typical Daily Fuel Score '+previousTypical},
-        {x:1,value:currentTypical,title:'This week: typical Daily Fuel Score '+currentTypical}
-      ],'Typical Daily Fuel Score this week compared with the same weekdays last week','Last week','This week')
+      visual:weeklyDailyScoreEvidenceSvg(week,'compare')
     };
   }
   return {
