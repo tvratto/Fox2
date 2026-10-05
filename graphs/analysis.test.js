@@ -339,7 +339,7 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(!source.includes('What stood out recently?'));
   assert.ok(source.includes('analysisStallInsight(scoreDays,history,history.activeDate)'));
   assert.ok(source.includes("shell.innerHTML=positionHtml+openingHtml"));
-  assert.ok(source.includes('<summary>Data this analysis is based on</summary>'));
+  assert.ok(source.includes('<summary>What this analysis is based on</summary>'));
   assert.ok(source.indexOf('+helpingBlock')<source.indexOf('var prioritizedStall='));
   assert.ok(!source.includes('standaloneHelpingHtml'));
   assert.ok(source.includes('analysisSelectQuestions(['));
