@@ -94,9 +94,18 @@
       }
 
       button.addEventListener('click',function(){
-        var target=window.open(resultsUrl(),'fox2-results-'+safeId);
-        if(target) target.focus();
-        setTimeout(function(){ window.close(); },120);
+        // The existing results page has already been updated. Do not call
+        // window.open here: mobile Safari may create yet another tab instead
+        // of finding the named results page.
+        if(channel) channel.postMessage({type:'focus',deviceId:deviceId});
+        window.close();
+        setTimeout(function(){
+          if(document.visibilityState==='visible'){
+            title.textContent='Your results are ready';
+            message.textContent='Close this sync tab to return to the FOX2 results page you already had open.';
+            button.textContent='Try closing this tab';
+          }
+        },250);
       });
 
       window.addEventListener('message',function(event){

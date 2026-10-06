@@ -16,12 +16,15 @@ assert.ok(syncSource.includes("url.searchParams.set('handoff','1')"));
 assert.ok(syncSource.includes("channel.postMessage({type:'probe'"));
 assert.ok(syncSource.includes("channel.postMessage({type:'updated'"));
 assert.ok(syncSource.includes("window.location.replace(url)"));
-assert.ok(syncSource.includes("window.open(resultsUrl(),'fox2-results-'"));
+assert.ok(!syncSource.includes("window.open(resultsUrl(),'fox2-results-'"));
+assert.ok(syncSource.includes("channel.postMessage({type:'focus'"));
+assert.ok(syncSource.includes('Close this sync tab to return'));
 
 assert.ok(graphSource.includes("window.name='fox2-results-'"));
 assert.ok(graphSource.includes("id=\"nfc-sync-handoff\""));
 assert.ok(graphSource.includes("var canProbe=!!dParam"));
 assert.ok(graphSource.includes("incoming.type==='probe'"));
+assert.ok(graphSource.includes("incoming.type==='focus'"));
 assert.ok(graphSource.includes("incoming.type==='updated'"));
 assert.ok(graphSource.includes('Promise.all(writePromises)'));
 assert.ok(graphSource.includes('window._fox2Handoff.reportWrites(ok)'));

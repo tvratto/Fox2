@@ -2073,6 +2073,10 @@ var sParam    = params.get('s') || '';
       channel.postMessage({type:'present',deviceId:deviceId,nonce:incoming.nonce||''});
       return;
     }
+    if(incoming.type==='focus'&&state.established){
+      window.focus();
+      return;
+    }
     if(incoming.type==='present'&&!state.decided&&incoming.nonce===nonce){
       state.existing=true;
       return;
@@ -2092,9 +2096,18 @@ var sParam    = params.get('s') || '';
   },500);
 
   if(returnButton) returnButton.addEventListener('click',function(){
-    var target=window.open(resultsUrl(),'fox2-results-'+safeId);
-    if(target) target.focus();
-    setTimeout(function(){window.close();},120);
+    // The established results page has already received the new URL above.
+    // Opening a named window here creates another tab in mobile Safari, so
+    // only ask the existing page to come forward and close this handoff tab.
+    channel.postMessage({type:'focus',deviceId:deviceId});
+    window.close();
+    setTimeout(function(){
+      if(document.visibilityState==='visible'){
+        if(title) title.textContent='Your results are ready';
+        if(message) message.textContent='Close this sync tab to return to the FOX2 results page you already had open.';
+        returnButton.textContent='Try closing this tab';
+      }
+    },250);
   });
 })();
 
