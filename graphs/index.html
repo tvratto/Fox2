@@ -5956,7 +5956,11 @@ function fox2CompletedScoresSince(start){
 function fox2PreviousBaselineDays(){
   if(!fox2Program.baselineStart||typeof DAYS==='undefined') return [];
   return DAYS.filter(function(day){
-    return day&&day.isoDate<fox2Program.baselineStart&&Number(day.score)>0&&day.pts&&day.pts.length>=2;
+    if(!day||day.isoDate>=fox2Program.baselineStart||Number(day.score)<=0) return false;
+    // A settled daily score remains valid when older raw readings are no
+    // longer carried in the current NFC payload. When readings are present,
+    // still require at least two of them for the day to qualify.
+    return !Array.isArray(day.pts)||day.pts.length>=2;
   }).map(function(day){return {date:day.isoDate,score:Number(day.score)};}).slice(-7);
 }
 
@@ -6054,14 +6058,14 @@ function fox2BaselineHtml(metrics){
       +fox2BaselineChart(metrics.baselineDays,metrics.baseline)
       +'<p class="program-default">'+(remaining?'Keep measuring. '+remaining+' more measured '+(remaining===1?'day':'days')+' will complete your baseline.':'Your baseline is complete.')+'</p>'
     : '<div class="program-eyebrow">Baseline</div><h1 class="program-title">Ready to begin.</h1><p class="program-copy">Your baseline will appear after your first completed day.</p><div class="program-baseline-empty">No baseline measurements yet</div>';
-  if(has||canUsePrevious){
-    content+='<button type="button" class="program-options-toggle" data-program-action="toggle-options" aria-expanded="'+fox2ProgramOptionsOpen+'">Baseline options '+(fox2ProgramOptionsOpen?'▴':'▾')+'</button>';
-    if(fox2ProgramOptionsOpen){
-      content+='<div class="program-options"><p>'+(has?'Use the baseline you have now, restart this step, or use your recent history.':'You already have seven valid measured days available from before the program started.')+'</p><div class="program-option-actions">';
-      if(has) content+='<button type="button" class="program-option-primary" data-program-action="use-baseline">Use current baseline</button><button type="button" class="program-option-secondary" data-program-action="restart-baseline">Restart baseline</button>';
-      if(canUsePrevious) content+='<button type="button" class="program-option-history" data-program-action="use-previous-baseline">Use previous 7 days · '+fox2Escape(fox2DateRange(previous))+'</button>';
-      content+='</div></div>';
-    }
+  content+='<button type="button" class="program-options-toggle" data-program-action="toggle-options" aria-expanded="'+fox2ProgramOptionsOpen+'">Baseline options '+(fox2ProgramOptionsOpen?'▴':'▾')+'</button>';
+  if(fox2ProgramOptionsOpen){
+    content+='<div class="program-options"><p>'+(has?'Use the baseline you have now, restart this step, or use your recent history.':'Use seven completed days from before the program started. This option becomes available when seven days are present.')+'</p><div class="program-option-actions">';
+    if(has) content+='<button type="button" class="program-option-primary" data-program-action="use-baseline">Use current baseline</button><button type="button" class="program-option-secondary" data-program-action="restart-baseline">Restart baseline</button>';
+    content+=canUsePrevious
+      ? '<button type="button" class="program-option-history" data-program-action="use-previous-baseline">Use previous 7 days · '+fox2Escape(fox2DateRange(previous))+'</button>'
+      : '<button type="button" class="program-option-history" disabled>'+previous.length+' of 7 previous days available</button>';
+    content+='</div></div>';
   }
   return '<section>'+content+'</section>';
 }

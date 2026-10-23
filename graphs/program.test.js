@@ -21,12 +21,20 @@ assert.ok(source.includes('Restart measuring'));
 assert.ok(source.includes('Start over with a new baseline'));
 assert.ok(source.includes('function fox2PreviousBaselineDays()'),
   'historical baseline helper should exist');
-assert.ok(source.includes("day.isoDate<fox2Program.baselineStart"),
+assert.ok(source.includes("day.isoDate>=fox2Program.baselineStart"),
   'historical baseline must only use days before the program baseline began');
+assert.ok(source.includes("!Array.isArray(day.pts)||day.pts.length>=2"),
+  'settled historical scores should qualify when old raw readings are no longer in the payload');
 assert.ok(source.includes("previous.length===7"),
   'historical shortcut should require seven valid measured days');
 assert.ok(source.includes('Use previous 7 days · '),
   'baseline options should expose the historical shortcut and date range');
+assert.ok(!source.includes('if(has||canUsePrevious){'),
+  'baseline options should remain discoverable before the first program day');
+assert.ok(source.includes("+' of 7 previous days available</button>'"),
+  'an unavailable historical shortcut should show how many days were found');
+assert.ok(source.includes('class="program-option-history" disabled'),
+  'the historical shortcut should be visibly disabled until seven days are available');
 assert.ok(source.includes("data-program-action=\"use-previous-baseline\""));
 assert.ok(source.includes('Maintain'));
 assert.ok(source.includes('Add or change actions'));
