@@ -19,12 +19,20 @@ assert.ok(source.includes('Use FOX2 without the program'),'intro should expose a
 assert.ok(source.includes('Finish measuring now'));
 assert.ok(source.includes('Restart measuring'));
 assert.ok(source.includes('Start over with a new baseline'));
+assert.ok(source.includes('function fox2SetProgramHistory(readingRows,scoreRows)'),
+  'the program should retain complete score history beyond the current NFC payload');
+assert.ok(source.includes("fox2SetProgramHistory(historyReadings,historyScores)"),
+  'server history should be supplied to the guided program');
+assert.ok(source.includes('function fox2AllCompletedScoreDays()'),
+  'guided program metrics should merge historical and current score days');
 assert.ok(source.includes('function fox2PreviousBaselineDays()'),
   'historical baseline helper should exist');
-assert.ok(source.includes("day.isoDate>=fox2Program.baselineStart"),
+assert.ok(source.includes("day.date<fox2Program.baselineStart"),
   'historical baseline must only use days before the program baseline began');
-assert.ok(source.includes("!Array.isArray(day.pts)||day.pts.length>=2"),
-  'settled historical scores should qualify when old raw readings are no longer in the payload');
+assert.ok(source.includes("readingCounts[date]!=null&&readingCounts[date]<2"),
+  'historical days with raw readings should still require at least two readings');
+assert.ok(source.includes("return fox2AllCompletedScoreDays().filter(function(day){return day.date>=start&&day.date<today;})"),
+  'the measurement result should use all completed program days');
 assert.ok(source.includes("canUsePrevious=previous.length>0"),
   'historical shortcut should become available with any completed historical day');
 assert.ok(source.includes('Use previous 7 days · '),
@@ -54,5 +62,21 @@ assert.ok(source.includes("' of '+FOX2_MEASURE_DAYS"),
   'the progress label should use the 30-day measurement duration');
 assert.ok(source.includes("fox2DaysBetween(fox2Program.measureStart,fox2TodayIso())>=FOX2_MEASURE_DAYS"),
   'the program should advance to results after the 30-day measurement segment');
+assert.ok(source.includes('Baseline ready'));
+assert.ok(source.includes('Begin action'));
+assert.ok(!source.includes("Yesterday's result"),
+  'the first measuring day should not show an empty yesterday result');
+assert.ok(source.includes('Your action so far'));
+assert.ok(source.includes('completed \' + (metrics.measureDays.length===1?\'day\':\'days\') + \' included')||source.includes("completed '+(metrics.measureDays.length===1?'day':'days')+' included"),
+  'the cumulative result should show how many completed days it includes');
+assert.ok(source.includes('Continue your actions.'));
+assert.ok(source.includes('function fox2SignedPercent(value)'));
+assert.ok(source.includes('(metrics.after-metrics.baseline)/metrics.baseline*100'),
+  'the primary reward should be the cumulative action average versus baseline');
+assert.ok(source.includes('function fox2AnimateMeasureResult()'));
+assert.ok(source.includes("prefers-reduced-motion: reduce"),
+  'the result animation should respect reduced-motion preferences');
+assert.ok(source.includes("if(screen==='measure') window.setTimeout(fox2AnimateMeasureResult,0)"),
+  'the cumulative result should animate after the measure page renders');
 
 console.log('program tests passed');
