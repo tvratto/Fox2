@@ -89,7 +89,7 @@ html, body {
   width:28px; height:28px; display:grid; place-items:center; border-radius:50%;
   background:rgba(255,140,0,.14); color:var(--program-orange); font-size:13px; font-weight:900;
 }
-.program-primary,.program-secondary,.program-choice,.program-option-primary,.program-option-secondary,.program-option-tertiary {
+.program-primary,.program-secondary,.program-choice,.program-option-primary,.program-option-secondary,.program-option-tertiary,.program-option-history {
   width:100%; min-height:50px; border-radius:15px; font:800 15px/1.2 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;
   cursor:pointer; -webkit-tap-highlight-color:transparent;
 }
@@ -124,6 +124,7 @@ html, body {
 .program-option-actions button:disabled { opacity:.34; cursor:default; }
 .program-option-secondary { border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.045); color:#fff; }
 .program-option-tertiary { grid-column:1/-1; border:0; background:transparent; color:rgba(255,255,255,.42); }
+.program-option-history { grid-column:1/-1; border:1px solid rgba(255,140,0,.32); background:rgba(255,140,0,.07); color:#fff; }
 .program-action-name { padding:16px 17px; border-radius:17px; background:rgba(255,255,255,.055); color:#fff; font-size:15px; line-height:1.4; font-weight:750; }
 .program-action-name span { display:block; margin-bottom:5px; color:rgba(255,255,255,.38); font-size:10px; font-weight:900; letter-spacing:.1em; text-transform:uppercase; }
 .program-comparison { margin-top:18px; }
@@ -5909,7 +5910,8 @@ function fox2ProgramStorageKey(){
 function fox2DefaultProgram(){
   return {
     screen:'intro', optedOut:false, setupMode:'new', action:'',
-    baselineStart:'', baselineValue:null, measureStart:'', resultHistory:[]
+    baselineStart:'', baselineValue:null, baselineSource:'', baselineRange:'',
+    measureStart:'', resultHistory:[]
   };
 }
 
@@ -5949,6 +5951,25 @@ function fox2CompletedScoresSince(start){
   return DAYS.filter(function(day){
     return day&&day.isoDate>=start&&day.isoDate<today&&Number(day.score)>0&&day.pts&&day.pts.length>=2;
   }).map(function(day){return {date:day.isoDate,score:Number(day.score)};});
+}
+
+function fox2PreviousBaselineDays(){
+  if(!fox2Program.baselineStart||typeof DAYS==='undefined') return [];
+  return DAYS.filter(function(day){
+    return day&&day.isoDate<fox2Program.baselineStart&&Number(day.score)>0&&day.pts&&day.pts.length>=2;
+  }).map(function(day){return {date:day.isoDate,score:Number(day.score)};}).slice(-7);
+}
+
+function fox2ShortDate(iso){
+  if(!iso) return '';
+  var parts=iso.split('-');
+  var date=new Date(Number(parts[0]),Number(parts[1])-1,Number(parts[2]));
+  return date.toLocaleDateString(undefined,{month:'short',day:'numeric'});
+}
+
+function fox2DateRange(days){
+  if(!days||!days.length) return '';
+  return fox2ShortDate(days[0].date)+'–'+fox2ShortDate(days[days.length-1].date);
 }
 
 function fox2Mean(values){
@@ -6027,14 +6048,20 @@ function fox2SetupHtml(){
 
 function fox2BaselineHtml(metrics){
   var count=metrics.baselineDays.length,remaining=Math.max(0,7-count),has=count>0;
+  var previous=fox2PreviousBaselineDays(),canUsePrevious=previous.length===7;
   var content=has
     ? '<div class="program-baseline-head"><div><div class="program-eyebrow">Your baseline so far</div><h2 class="program-section-title">'+count+' measured '+(count===1?'day':'days')+'</h2></div><div><div class="program-baseline-value">'+fox2Round(metrics.baseline)+'</div><div class="program-baseline-unit">Current estimate</div></div></div>'
       +fox2BaselineChart(metrics.baselineDays,metrics.baseline)
       +'<p class="program-default">'+(remaining?'Keep measuring. '+remaining+' more measured '+(remaining===1?'day':'days')+' will complete your baseline.':'Your baseline is complete.')+'</p>'
     : '<div class="program-eyebrow">Baseline</div><h1 class="program-title">Ready to begin.</h1><p class="program-copy">Your baseline will appear after your first completed day.</p><div class="program-baseline-empty">No baseline measurements yet</div>';
-  if(has){
+  if(has||canUsePrevious){
     content+='<button type="button" class="program-options-toggle" data-program-action="toggle-options" aria-expanded="'+fox2ProgramOptionsOpen+'">Baseline options '+(fox2ProgramOptionsOpen?'▴':'▾')+'</button>';
-    if(fox2ProgramOptionsOpen) content+='<div class="program-options"><p>Use the baseline you have now or restart this step.</p><div class="program-option-actions"><button type="button" class="program-option-primary" data-program-action="use-baseline">Use current baseline</button><button type="button" class="program-option-secondary" data-program-action="restart-baseline">Restart baseline</button></div></div>';
+    if(fox2ProgramOptionsOpen){
+      content+='<div class="program-options"><p>'+(has?'Use the baseline you have now, restart this step, or use your recent history.':'You already have seven valid measured days available from before the program started.')+'</p><div class="program-option-actions">';
+      if(has) content+='<button type="button" class="program-option-primary" data-program-action="use-baseline">Use current baseline</button><button type="button" class="program-option-secondary" data-program-action="restart-baseline">Restart baseline</button>';
+      if(canUsePrevious) content+='<button type="button" class="program-option-history" data-program-action="use-previous-baseline">Use previous 7 days · '+fox2Escape(fox2DateRange(previous))+'</button>';
+      content+='</div></div>';
+    }
   }
   return '<section>'+content+'</section>';
 }
@@ -6050,7 +6077,7 @@ function fox2MeasureHtml(metrics){
       +'<div class="program-comparison-column"><div class="program-comparison-value">'+baseline+'</div><div class="program-comparison-track"><div class="program-comparison-bar is-baseline" style="height:'+baselineH+'px"></div></div><div class="program-comparison-label">Baseline</div></div>'
       +'<div class="program-comparison-column"><div class="program-comparison-value">'+result+'</div><div class="program-comparison-track"><div class="program-comparison-bar is-current" style="height:'+resultH+'px"></div></div><div class="program-comparison-label">Yesterday</div></div></div></div>';
   }else{
-    content+='<div class="program-baseline-empty">Your first completed measurement day will appear here.</div>';
+    content+='<div class="program-baseline-head"><div><div class="program-eyebrow">Your baseline</div><h2 class="program-section-title">Ready to compare</h2></div><div><div class="program-baseline-value">'+(metrics.baseline?fox2Round(metrics.baseline):'—')+'</div><div class="program-baseline-unit">Baseline</div></div></div><div class="program-baseline-empty">Your first completed measurement day will appear here.</div>';
   }
   content+='<button type="button" class="program-options-toggle" data-program-action="toggle-options" aria-expanded="'+fox2ProgramOptionsOpen+'">Measure options '+(fox2ProgramOptionsOpen?'▴':'▾')+'</button>';
   if(fox2ProgramOptionsOpen) content+='<div class="program-options"><p>Finish with the data you have, restart this step, or begin again with a new baseline.</p><div class="program-option-actions">'
@@ -6122,15 +6149,18 @@ function fox2HandleProgramAction(action){
     if(fox2Program.setupMode==='change'){
       fox2Program.measureStart=fox2TodayIso(); fox2Program.screen='measure';
     }else{
-      fox2Program.baselineStart=fox2TodayIso(); fox2Program.baselineValue=null; fox2Program.measureStart=''; fox2Program.screen='baseline';
+      fox2Program.baselineStart=fox2TodayIso(); fox2Program.baselineValue=null; fox2Program.baselineSource=''; fox2Program.baselineRange=''; fox2Program.measureStart=''; fox2Program.screen='baseline';
     }
     fox2Program.setupMode='new'; fox2ProgramOptionsOpen=false;
   }else if(action==='toggle-options'){
     fox2ProgramOptionsOpen=!fox2ProgramOptionsOpen; fox2RenderProgram(); return;
   }else if(action==='use-baseline'){
-    if(metrics.baseline){fox2Program.baselineValue=metrics.baseline;fox2Program.measureStart=fox2TodayIso();fox2Program.screen='measure';fox2ProgramOptionsOpen=false;}
+    if(metrics.baseline){fox2Program.baselineValue=metrics.baseline;fox2Program.baselineSource='current';fox2Program.baselineRange=fox2DateRange(metrics.baselineDays);fox2Program.measureStart=fox2TodayIso();fox2Program.screen='measure';fox2ProgramOptionsOpen=false;}
+  }else if(action==='use-previous-baseline'){
+    var previous=fox2PreviousBaselineDays();
+    if(previous.length===7){fox2Program.baselineValue=fox2Mean(previous.map(function(day){return day.score;}));fox2Program.baselineSource='previous';fox2Program.baselineRange=fox2DateRange(previous);fox2Program.measureStart=fox2TodayIso();fox2Program.screen='measure';fox2ProgramOptionsOpen=false;}
   }else if(action==='restart-baseline'){
-    fox2Program.baselineStart=fox2TodayIso();fox2Program.baselineValue=null;fox2ProgramOptionsOpen=false;
+    fox2Program.baselineStart=fox2TodayIso();fox2Program.baselineValue=null;fox2Program.baselineSource='';fox2Program.baselineRange='';fox2ProgramOptionsOpen=false;
   }else if(action==='finish-measuring'){
     if(fox2FinalizeResult(metrics)){fox2Program.screen='results';fox2ProgramOptionsOpen=false;}
   }else if(action==='restart-measuring'){
