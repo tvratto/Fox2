@@ -46,5 +46,13 @@ assert.ok(source.includes('function fox2ConfirmPreviousBaseline()'),
 assert.ok(source.includes("data-program-action=\"use-previous-baseline\""));
 assert.ok(source.includes('Maintain'));
 assert.ok(source.includes('Add or change actions'));
+assert.ok(source.includes('var FOX2_MEASURE_DAYS=30;'),
+  'the measurement segment should last 30 days');
+assert.ok(source.includes('var FOX2_PROGRAM_DAYS=FOX2_BASELINE_DAYS+FOX2_MEASURE_DAYS;'),
+  'program progress should combine the seven-day baseline and 30-day measurement segment');
+assert.ok(source.includes("' of '+FOX2_MEASURE_DAYS"),
+  'the progress label should use the 30-day measurement duration');
+assert.ok(source.includes("fox2DaysBetween(fox2Program.measureStart,fox2TodayIso())>=FOX2_MEASURE_DAYS"),
+  'the program should advance to results after the 30-day measurement segment');
 
 console.log('program tests passed');
