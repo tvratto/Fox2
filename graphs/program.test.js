@@ -13,11 +13,11 @@ assert.ok(programTab>=0&&programTab<dataTab&&dataTab<historyTab&&historyTab<anal
 assert.ok(source.includes('id="program-shell"'),'program page should be mounted in the pager');
 assert.ok(source.includes("fox2Program.optedOut=true"),'the intro should persist an explicit opt-out');
 assert.ok(source.includes("window.fox2GoToPage(1,true)"),'opting out should route directly to Data');
-assert.ok(source.includes("fox2Program.optedOut||fox2Program.screen==='maintain'"),
+assert.ok(source.includes("var activeProgram=!fox2Program.optedOut&&fox2Program.screen!=='maintain'"),
   'opted-out and maintenance users should open on Data on later visits');
 assert.ok(source.includes('Use FOX2 without the program'),'intro should expose a clear non-program path');
-assert.ok(source.includes('Finish measuring now'));
-assert.ok(source.includes('Restart measuring'));
+assert.ok(source.includes('Finish measuring and view results'));
+assert.ok(source.includes('Restart the measuring period'));
 assert.ok(source.includes('Start over with a new baseline'));
 assert.ok(source.includes('function fox2SetProgramHistory(readingRows,scoreRows)'),
   'the program should retain complete score history beyond the current NFC payload');
@@ -71,6 +71,25 @@ assert.ok(source.includes('completed \' + (metrics.measureDays.length===1?\'day\
   'the cumulative result should show how many completed days it includes');
 assert.ok(source.includes('Continue your actions.'));
 assert.ok(source.includes('function fox2SignedPercent(value)'));
+assert.ok(source.includes('function fox2TodayScore()'),
+  'the measure page should use today\'s accumulating daily score');
+assert.ok(source.includes('todayScore:fox2TodayScore()'),
+  'today\'s score should be part of guided-program metrics');
+assert.ok(source.includes('function fox2TodayProgressHtml(metrics)'),
+  'the measure page should render today\'s progress toward baseline');
+assert.ok(source.includes("<h2>Today\\'s progress</h2>"));
+assert.ok(source.includes("<small>of baseline</small>"));
+assert.ok(source.includes("Your score builds as the day continues."));
+assert.ok(source.includes("if(metrics.measureDays.length) content+='<button type=\"button\" class=\"program-option-card is-primary\""),
+  'finish measuring should be hidden until it can be used, not shown disabled');
+assert.ok(!source.includes("data-program-action=\"finish-measuring\" '+(metrics.measureDays.length?'':'disabled')"),
+  'finish measuring should not appear as an unexplained disabled control');
+assert.ok(source.includes("options.scrollIntoView({behavior:'smooth',block:'start',inline:'nearest'})"),
+  'opening measure options should bring the controls into view');
+assert.ok(source.includes("var returningFromSync=params.has('sync_rev')||params.get('handoff')==='1'"),
+  'the page should recognize a completed device sync');
+assert.ok(source.includes("if(activeProgram&&returningFromSync) window.fox2GoToPage(0,false)"),
+  'a sync during an active program should land on Program');
 assert.ok(source.includes('(metrics.after-metrics.baseline)/metrics.baseline*100'),
   'the primary reward should be the cumulative action average versus baseline');
 assert.ok(source.includes('function fox2AnimateMeasureResult()'));
