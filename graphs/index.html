@@ -358,7 +358,8 @@ html, body {
   font: 800 17px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
 }
 #info-modal-overlay,
-#export-modal-overlay {
+#export-modal-overlay,
+#program-baseline-confirm-overlay {
   display: none;
   position: fixed; inset: 0; z-index: 200;
   background: rgba(0,0,0,0.7);
@@ -366,9 +367,11 @@ html, body {
   padding-bottom: calc(env(safe-area-inset-bottom) + 80px);
 }
 #info-modal-overlay.open,
-#export-modal-overlay.open { display: flex; }
+#export-modal-overlay.open,
+#program-baseline-confirm-overlay.open { display: flex; }
 #info-modal,
-#export-modal {
+#export-modal,
+#program-baseline-confirm {
   background: #111;
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 20px;
@@ -382,6 +385,12 @@ html, body {
 }
 .export-modal-title { color: #fff; font-size: 18px; font-weight: 850; }
 .export-modal-copy { color: rgba(255,255,255,.48); font-size: 13px; line-height: 1.45; margin-bottom: 3px; }
+.program-confirm-title { color:#fff; font-size:21px; line-height:1.15; font-weight:900; letter-spacing:-.02em; }
+.program-confirm-copy { margin-top:3px; color:rgba(255,255,255,.58); font-size:14px; line-height:1.45; }
+.program-confirm-actions { display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:10px; }
+.program-confirm-actions button { min-height:46px; border-radius:14px; font:800 14px/1.2 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; cursor:pointer; }
+.program-confirm-cancel { border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.05); color:#fff; }
+.program-confirm-use { border:0; background:#fff; color:#050505; }
 .export-choice {
   width: 100%; padding: 12px 13px; border-radius: 13px;
   border: 1px solid rgba(255,255,255,.10); background: rgba(255,255,255,.06);
@@ -2080,6 +2089,17 @@ html, body {
       <div id="lb-board-loading">Loading leaderboard…</div>
     </div>
     <button id="info-modal-close" onclick="closeInfoModal()">Close</button>
+  </div>
+</div>
+
+<div id="program-baseline-confirm-overlay" onclick="if(event.target===this)fox2ClosePreviousBaselineConfirm()">
+  <div id="program-baseline-confirm" role="dialog" aria-modal="true" aria-labelledby="program-baseline-confirm-title" aria-describedby="program-baseline-confirm-copy">
+    <div class="program-confirm-title" id="program-baseline-confirm-title">Use fewer than 7 days?</div>
+    <div class="program-confirm-copy" id="program-baseline-confirm-copy"></div>
+    <div class="program-confirm-actions">
+      <button type="button" class="program-confirm-cancel" onclick="fox2ClosePreviousBaselineConfirm()">Cancel</button>
+      <button type="button" class="program-confirm-use" id="program-baseline-confirm-use" onclick="fox2ConfirmPreviousBaseline()">Use these days</button>
+    </div>
   </div>
 </div>
 
@@ -6052,7 +6072,7 @@ function fox2SetupHtml(){
 
 function fox2BaselineHtml(metrics){
   var count=metrics.baselineDays.length,remaining=Math.max(0,7-count),has=count>0;
-  var previous=fox2PreviousBaselineDays(),canUsePrevious=previous.length===7;
+  var previous=fox2PreviousBaselineDays(),canUsePrevious=previous.length>0;
   var content=has
     ? '<div class="program-baseline-head"><div><div class="program-eyebrow">Your baseline so far</div><h2 class="program-section-title">'+count+' measured '+(count===1?'day':'days')+'</h2></div><div><div class="program-baseline-value">'+fox2Round(metrics.baseline)+'</div><div class="program-baseline-unit">Current estimate</div></div></div>'
       +fox2BaselineChart(metrics.baselineDays,metrics.baseline)
@@ -6060,11 +6080,11 @@ function fox2BaselineHtml(metrics){
     : '<div class="program-eyebrow">Baseline</div><h1 class="program-title">Ready to begin.</h1><p class="program-copy">Your baseline will appear after your first completed day.</p><div class="program-baseline-empty">No baseline measurements yet</div>';
   content+='<button type="button" class="program-options-toggle" data-program-action="toggle-options" aria-expanded="'+fox2ProgramOptionsOpen+'">Baseline options '+(fox2ProgramOptionsOpen?'▴':'▾')+'</button>';
   if(fox2ProgramOptionsOpen){
-    content+='<div class="program-options"><p>'+(has?'Use the baseline you have now, restart this step, or use your recent history.':'Use seven completed days from before the program started. This option becomes available when seven days are present.')+'</p><div class="program-option-actions">';
+    content+='<div class="program-options"><p>'+(has?'Use the baseline you have now, restart this step, or use your recent history.':'Use completed days from before the program started. Seven days is recommended, but you can choose fewer.')+'</p><div class="program-option-actions">';
     if(has) content+='<button type="button" class="program-option-primary" data-program-action="use-baseline">Use current baseline</button><button type="button" class="program-option-secondary" data-program-action="restart-baseline">Restart baseline</button>';
     content+=canUsePrevious
-      ? '<button type="button" class="program-option-history" data-program-action="use-previous-baseline">Use previous 7 days · '+fox2Escape(fox2DateRange(previous))+'</button>'
-      : '<button type="button" class="program-option-history" disabled>'+previous.length+' of 7 previous days available</button>';
+      ? '<button type="button" class="program-option-history" data-program-action="use-previous-baseline">'+(previous.length===7?'Use previous 7 days · '+fox2Escape(fox2DateRange(previous)):previous.length+' of 7 previous days available')+'</button>'
+      : '<button type="button" class="program-option-history" disabled>0 of 7 previous days available</button>';
     content+='</div></div>';
   }
   return '<section>'+content+'</section>';
@@ -6137,6 +6157,41 @@ function fox2RenderProgram(){
   });
 }
 
+function fox2UsePreviousBaseline(previous){
+  fox2Program.baselineValue=fox2Mean(previous.map(function(day){return day.score;}));
+  fox2Program.baselineSource='previous';
+  fox2Program.baselineRange=fox2DateRange(previous);
+  fox2Program.measureStart=fox2TodayIso();
+  fox2Program.screen='measure';
+  fox2ProgramOptionsOpen=false;
+}
+
+function fox2OpenPreviousBaselineConfirm(previous){
+  var overlay=document.getElementById('program-baseline-confirm-overlay');
+  var copy=document.getElementById('program-baseline-confirm-copy');
+  var use=document.getElementById('program-baseline-confirm-use');
+  if(!overlay||!copy||!use||!previous.length) return;
+  var count=previous.length,days=count===1?'day':'days';
+  copy.textContent='FOX2 recommends 7 days for a more representative baseline. This baseline will use only '+count+' completed '+days+' ('+fox2DateRange(previous)+'). Are you sure you want to continue?';
+  use.textContent='Use '+count+' '+days;
+  overlay.classList.add('open');
+  use.focus();
+}
+
+function fox2ClosePreviousBaselineConfirm(){
+  var overlay=document.getElementById('program-baseline-confirm-overlay');
+  if(overlay) overlay.classList.remove('open');
+}
+
+function fox2ConfirmPreviousBaseline(){
+  var previous=fox2PreviousBaselineDays();
+  if(!previous.length){fox2ClosePreviousBaselineConfirm();return;}
+  fox2UsePreviousBaseline(previous);
+  fox2ClosePreviousBaselineConfirm();
+  fox2SaveProgram();
+  fox2RenderProgram();
+}
+
 function fox2HandleProgramAction(action){
   var input=document.getElementById('program-action-input');
   if(input) fox2Program.action=input.value.trim();
@@ -6162,7 +6217,8 @@ function fox2HandleProgramAction(action){
     if(metrics.baseline){fox2Program.baselineValue=metrics.baseline;fox2Program.baselineSource='current';fox2Program.baselineRange=fox2DateRange(metrics.baselineDays);fox2Program.measureStart=fox2TodayIso();fox2Program.screen='measure';fox2ProgramOptionsOpen=false;}
   }else if(action==='use-previous-baseline'){
     var previous=fox2PreviousBaselineDays();
-    if(previous.length===7){fox2Program.baselineValue=fox2Mean(previous.map(function(day){return day.score;}));fox2Program.baselineSource='previous';fox2Program.baselineRange=fox2DateRange(previous);fox2Program.measureStart=fox2TodayIso();fox2Program.screen='measure';fox2ProgramOptionsOpen=false;}
+    if(previous.length===7) fox2UsePreviousBaseline(previous);
+    else if(previous.length){fox2OpenPreviousBaselineConfirm(previous);return;}
   }else if(action==='restart-baseline'){
     fox2Program.baselineStart=fox2TodayIso();fox2Program.baselineValue=null;fox2Program.baselineSource='';fox2Program.baselineRange='';fox2ProgramOptionsOpen=false;
   }else if(action==='finish-measuring'){
