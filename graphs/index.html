@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -54,6 +55,103 @@ html, body {
   overflow-y: auto; scrollbar-width: none;
 }
 .page::-webkit-scrollbar { display: none; }
+.program-page { align-items: center; }
+.program-shell {
+  --program-orange:#ff8c00;
+  --program-gold:#f5c842;
+  width:100%; max-width:420px; padding-bottom:32px;
+}
+.program-progress {
+  margin:0 0 26px; padding:17px 17px 15px;
+  border:1px solid rgba(255,140,0,.28); border-radius:19px;
+  background:linear-gradient(135deg,rgba(255,140,0,.12),rgba(255,255,255,.035));
+}
+.program-progress-head,.program-progress-meta { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.program-progress-title { font-size:15px; font-weight:850; }
+.program-day {
+  padding:6px 9px; border-radius:10px; background:rgba(255,255,255,.08);
+  color:rgba(255,255,255,.78); font-size:12px; font-weight:800; white-space:nowrap;
+}
+.program-bar { position:relative; height:10px; margin-top:15px; overflow:visible; border-radius:999px; background:rgba(255,255,255,.1); }
+.program-bar-fill { height:100%; border-radius:inherit; background:var(--program-orange); }
+.program-divider { position:absolute; inset-block:0; width:2px; background:rgba(0,0,0,.72); transform:translateX(-1px); }
+.program-phases { display:flex; justify-content:space-between; margin-top:7px; color:rgba(255,255,255,.38); font-size:9px; font-weight:800; letter-spacing:.03em; text-transform:uppercase; }
+.program-phases .is-current { color:#fff; }
+.program-progress-meta { margin-top:12px; color:rgba(255,255,255,.55); font-size:12px; font-weight:700; }
+.program-section { margin-top:26px; padding-top:24px; border-top:1px solid rgba(255,255,255,.1); }
+.program-eyebrow { margin-bottom:10px; color:var(--program-gold); font-size:12px; font-weight:900; letter-spacing:.14em; text-transform:uppercase; }
+.program-title { margin:0; font-size:clamp(28px,8vw,34px); line-height:1.04; letter-spacing:-.045em; font-weight:900; }
+.program-copy { margin:11px 0 0; color:rgba(255,255,255,.68); font-size:15px; line-height:1.5; }
+.program-intro-steps { display:grid; gap:13px; margin:25px 0 27px; padding:0; list-style:none; counter-reset:program-step; }
+.program-intro-steps li { position:relative; padding-left:40px; color:rgba(255,255,255,.76); font-size:15px; line-height:1.45; }
+.program-intro-steps li::before {
+  counter-increment:program-step; content:counter(program-step); position:absolute; left:0; top:-2px;
+  width:28px; height:28px; display:grid; place-items:center; border-radius:50%;
+  background:rgba(255,140,0,.14); color:var(--program-orange); font-size:13px; font-weight:900;
+}
+.program-primary,.program-secondary,.program-choice,.program-option-primary,.program-option-secondary,.program-option-tertiary {
+  width:100%; min-height:50px; border-radius:15px; font:800 15px/1.2 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  cursor:pointer; -webkit-tap-highlight-color:transparent;
+}
+.program-primary,.program-option-primary { border:0; background:#fff; color:#050505; }
+.program-secondary { margin-top:9px; border:0; background:transparent; color:rgba(255,255,255,.46); }
+.program-label { display:block; margin:23px 0 8px; color:rgba(255,255,255,.72); font-size:13px; font-weight:850; }
+.program-input {
+  width:100%; min-height:132px; resize:vertical; padding:15px 16px;
+  border:1px solid rgba(255,255,255,.14); border-radius:17px;
+  background:rgba(255,255,255,.055); color:#fff; font:500 16px/1.45 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+}
+.program-input:focus { outline:2px solid rgba(255,140,0,.7); outline-offset:2px; }
+.program-examples { margin:9px 0 20px; color:rgba(255,255,255,.4); font-size:12px; line-height:1.45; }
+.program-baseline-head { display:flex; justify-content:space-between; gap:18px; align-items:flex-start; }
+.program-section-title { margin:0; font-size:20px; line-height:1.15; font-weight:850; }
+.program-baseline-value { color:var(--program-orange); font-size:36px; line-height:.9; font-weight:950; text-align:right; }
+.program-baseline-unit { margin-top:6px; color:rgba(255,255,255,.38); font-size:10px; font-weight:800; text-align:right; text-transform:uppercase; }
+.program-baseline-chart { margin-top:20px; }
+.program-baseline-chart svg { display:block; width:100%; height:auto; overflow:visible; }
+.program-baseline-average { stroke:rgba(255,255,255,.23); stroke-width:1.5; stroke-dasharray:4 5; }
+.program-baseline-area { fill:rgba(255,140,0,.1); }
+.program-baseline-line { fill:none; stroke:var(--program-orange); stroke-width:4; stroke-linecap:round; stroke-linejoin:round; }
+.program-baseline-point { fill:#000; stroke:var(--program-orange); stroke-width:4; }
+.program-baseline-chart text { fill:rgba(255,255,255,.38); font:750 10px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; letter-spacing:.04em; text-transform:uppercase; }
+.program-baseline-empty { min-height:170px; display:grid; place-items:center; margin-top:19px; border-block:1px solid rgba(255,255,255,.08); color:rgba(255,255,255,.38); font-size:14px; text-align:center; }
+.program-default { margin:18px 0 0; color:rgba(255,255,255,.68); font-size:14px; line-height:1.4; text-align:center; }
+.program-options-toggle { display:block; min-height:42px; margin:12px auto 0; padding:0 8px; border:0; background:transparent; color:rgba(255,255,255,.38); font:800 13px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; cursor:pointer; }
+.program-options { margin-top:4px; padding:14px; border-radius:16px; background:rgba(255,255,255,.04); }
+.program-options p { margin:0; color:rgba(255,255,255,.5); font-size:13px; line-height:1.4; }
+.program-option-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px; }
+.program-option-actions button { min-height:44px; padding:8px; }
+.program-option-actions button:disabled { opacity:.34; cursor:default; }
+.program-option-secondary { border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.045); color:#fff; }
+.program-option-tertiary { grid-column:1/-1; border:0; background:transparent; color:rgba(255,255,255,.42); }
+.program-action-name { padding:16px 17px; border-radius:17px; background:rgba(255,255,255,.055); color:#fff; font-size:15px; line-height:1.4; font-weight:750; }
+.program-action-name span { display:block; margin-bottom:5px; color:rgba(255,255,255,.38); font-size:10px; font-weight:900; letter-spacing:.1em; text-transform:uppercase; }
+.program-comparison { margin-top:18px; }
+.program-comparison-delta { display:flex; align-items:baseline; justify-content:center; gap:7px; margin-bottom:19px; }
+.program-comparison-delta strong { color:var(--program-orange); font-size:36px; line-height:1; font-weight:950; }
+.program-comparison-delta span { color:rgba(255,255,255,.5); font-size:13px; font-weight:800; }
+.program-comparison-bars { height:190px; display:grid; grid-template-columns:1fr 1fr; gap:26px; align-items:end; padding:0 30px; }
+.program-comparison-column { height:100%; display:grid; grid-template-rows:auto 1fr auto; gap:8px; text-align:center; }
+.program-comparison-value { font-size:21px; font-weight:900; }
+.program-comparison-track { display:flex; align-items:end; justify-content:center; min-height:110px; }
+.program-comparison-bar { width:42px; min-height:18px; border-radius:21px; }
+.program-comparison-bar.is-baseline { background:rgba(255,255,255,.28); }
+.program-comparison-bar.is-current { background:var(--program-orange); }
+.program-comparison-label { color:rgba(255,255,255,.48); font-size:11px; font-weight:850; text-transform:uppercase; }
+.program-history { display:grid; gap:11px; margin-top:19px; }
+.program-history-item { padding:16px; border-radius:18px; background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.08); }
+.program-history-title { display:flex; gap:9px; margin:0 0 15px; font-size:15px; line-height:1.35; font-weight:850; }
+.program-history-bullet { flex:0 0 8px; width:8px; height:8px; margin-top:6px; border-radius:50%; background:var(--program-orange); }
+.program-result-table-head,.program-result-table-values { display:grid; grid-template-columns:repeat(3,1fr); text-align:center; }
+.program-result-table-head { padding-bottom:8px; color:rgba(255,255,255,.38); font-size:10px; font-weight:900; text-transform:uppercase; }
+.program-result-table-values { padding-top:10px; border-top:1px solid rgba(255,255,255,.09); font-size:20px; font-weight:900; }
+.program-result-table-values span:last-child { color:var(--program-orange); }
+.program-choice { margin-top:9px; padding:10px 14px; border:1px solid rgba(255,255,255,.13); background:rgba(255,255,255,.035); color:#fff; }
+.program-choice.is-primary { border:0; background:#fff; color:#050505; }
+.program-maintain-mark { width:82px; height:82px; display:grid; place-items:center; margin:22px auto 16px; border-radius:50%; background:rgba(255,140,0,.12); color:var(--program-orange); font-size:36px; font-weight:900; }
+.program-center { text-align:center; }
+.program-status { min-height:18px; margin-top:13px; color:rgba(255,255,255,.42); font-size:12px; line-height:1.4; text-align:center; }
+.program-hidden { display:none !important; }
 .card-wrap { width: 100%; max-width: 420px; margin: auto 0; }
 .card-wrap canvas { width: 100%; height: auto; display: block; }
 .history-score-trend { margin-top: 12px; }
@@ -1852,14 +1950,18 @@ html, body {
 
 <div class="top-header">
   <div class="top-header-inner">
-    <button class="nav-tab active" data-page="0">Results</button>
-    <button class="nav-tab" data-page="1">History</button>
-    <button class="nav-tab" data-page="2">Analysis</button>
+    <button class="nav-tab active" data-page="0">Program</button>
+    <button class="nav-tab" data-page="1">Data</button>
+    <button class="nav-tab" data-page="2">History</button>
+    <button class="nav-tab" data-page="3">Analysis</button>
   </div>
   <div id="debug-bar" style="display:none;">v1.1</div>
 </div>
 
 <div class="scroll-x" id="scroller">
+  <div class="page program-page">
+    <main class="program-shell" id="program-shell" aria-live="polite"></main>
+  </div>
   <div class="page">
 <div id="results-page" style="width:100%;height:100%;">
 <canvas id="particles"></canvas>
@@ -5795,6 +5897,261 @@ function shareStreaks() {
   doShare(streakCanvas);
 }
 
+// ── Guided program ───────────────────────────────────────────────
+var FOX2_PROGRAM_VERSION=1;
+var fox2ProgramOptionsOpen=false;
+
+function fox2ProgramStorageKey(){
+  var id=params.get('id')||params.get('p')||'local';
+  return 'fox2-program-v'+FOX2_PROGRAM_VERSION+':'+String(id).replace(/[^A-Za-z0-9_-]/g,'');
+}
+
+function fox2DefaultProgram(){
+  return {
+    screen:'intro', optedOut:false, setupMode:'new', action:'',
+    baselineStart:'', baselineValue:null, measureStart:'', resultHistory:[]
+  };
+}
+
+function fox2LoadProgram(){
+  var fallback=fox2DefaultProgram();
+  try{
+    var saved=JSON.parse(localStorage.getItem(fox2ProgramStorageKey())||'null');
+    if(!saved||typeof saved!=='object') return fallback;
+    return Object.assign(fallback,saved,{resultHistory:Array.isArray(saved.resultHistory)?saved.resultHistory:[]});
+  }catch(e){ return fallback; }
+}
+
+var fox2Program=fox2LoadProgram();
+
+function fox2SaveProgram(){
+  try{ localStorage.setItem(fox2ProgramStorageKey(),JSON.stringify(fox2Program)); }catch(e){}
+}
+
+function fox2Escape(value){
+  return String(value==null?'':value).replace(/[&<>'"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c];});
+}
+
+function fox2TodayIso(){
+  var now=new Date();
+  return now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+}
+
+function fox2DaysBetween(start,end){
+  if(!start||!end) return 0;
+  var a=new Date(start+'T00:00:00Z').getTime(),b=new Date(end+'T00:00:00Z').getTime();
+  return Math.max(0,Math.floor((b-a)/86400000));
+}
+
+function fox2CompletedScoresSince(start){
+  if(!start||typeof DAYS==='undefined') return [];
+  var today=fox2TodayIso();
+  return DAYS.filter(function(day){
+    return day&&day.isoDate>=start&&day.isoDate<today&&Number(day.score)>0&&day.pts&&day.pts.length>=2;
+  }).map(function(day){return {date:day.isoDate,score:Number(day.score)};});
+}
+
+function fox2Mean(values){
+  if(!values.length) return null;
+  return values.reduce(function(sum,value){return sum+Number(value||0);},0)/values.length;
+}
+
+function fox2Round(value){ return value==null?null:Math.round(value); }
+
+function fox2ProgramMetrics(){
+  var baselineDays=fox2CompletedScoresSince(fox2Program.baselineStart).slice(0,7);
+  var baseline=Number(fox2Program.baselineValue);
+  if(!isFinite(baseline)||baseline<=0) baseline=fox2Mean(baselineDays.map(function(day){return day.score;}));
+  var measureDays=fox2CompletedScoresSince(fox2Program.measureStart);
+  var after=fox2Mean(measureDays.map(function(day){return day.score;}));
+  return {baselineDays:baselineDays,baseline:baseline,measureDays:measureDays,after:after};
+}
+
+function fox2ProgressHtml(metrics){
+  var total=84,screen=fox2Program.screen,day=0,phase='Not started',current='';
+  if(screen==='setup'){phase='Ready to begin';}
+  else if(screen==='baseline'){
+    day=Math.min(7,metrics.baselineDays.length); phase='Baseline · '+metrics.baselineDays.length+' of 7 days'; current='baseline';
+  }else if(screen==='measure'){
+    var elapsed=Math.max(1,fox2DaysBetween(fox2Program.measureStart,fox2TodayIso())+1);
+    day=Math.min(77,7+elapsed); phase='Measure · Day '+Math.min(70,elapsed)+' of 70'; current='measure';
+  }else if(screen==='results'){day=84;phase='Results ready';current='results';}
+  else if(screen==='maintain'){day=84;phase='Maintenance';current='results';}
+  var pct=Math.max(0,Math.min(100,Math.round(day/total*100)));
+  return '<section class="program-progress" role="img" aria-label="Program progress: day '+day+' of '+total+', '+pct+' percent complete, '+phase+'">'
+    +'<div class="program-progress-head"><div class="program-progress-title">Program Progress</div><div class="program-day">Day '+day+' of '+total+'</div></div>'
+    +'<div class="program-bar"><div class="program-bar-fill" style="width:'+pct+'%"></div><i class="program-divider" style="left:8.3%"></i><i class="program-divider" style="left:91.7%"></i></div>'
+    +'<div class="program-phases"><span class="'+(current==='baseline'?'is-current':'')+'">Baseline</span><span class="'+(current==='measure'?'is-current':'')+'">Measure</span><span class="'+(current==='results'?'is-current':'')+'">Results</span></div>'
+    +'<div class="program-progress-meta"><span>'+phase+'</span><span>'+pct+'% Complete</span></div></section>';
+}
+
+function fox2BaselineChart(days,estimate){
+  if(!days.length) return '';
+  var values=days.map(function(day){return day.score;});
+  var min=Math.min.apply(null,values),max=Math.max.apply(null,values);
+  if(max===min){max+=5;min-=5;}
+  var points=values.map(function(value,index){
+    var x=18+(300*(values.length===1?0:index/(values.length-1)));
+    var y=118-((value-min)/(max-min))*86;
+    return {x:x,y:y,value:value};
+  });
+  var line=points.map(function(point){return point.x.toFixed(1)+' '+point.y.toFixed(1);}).join(' L');
+  var area='M'+points[0].x.toFixed(1)+' 132 L'+line+' L'+points[points.length-1].x.toFixed(1)+' 132 Z';
+  var circles=points.map(function(point){return '<circle class="program-baseline-point" cx="'+point.x.toFixed(1)+'" cy="'+point.y.toFixed(1)+'" r="5"></circle>';}).join('');
+  var avgY=118-((estimate-min)/(max-min))*86;
+  avgY=Math.max(26,Math.min(124,avgY));
+  return '<div class="program-baseline-chart"><svg viewBox="0 0 336 154" role="img" aria-label="Baseline daily results and current estimate '+fox2Round(estimate)+'">'
+    +'<line class="program-baseline-average" x1="14" y1="'+avgY.toFixed(1)+'" x2="322" y2="'+avgY.toFixed(1)+'"></line>'
+    +'<path class="program-baseline-area" d="'+area+'"></path><path class="program-baseline-line" d="M'+line+'"></path>'+circles
+    +'<text x="14" y="149">Day 1</text><text x="322" y="149" text-anchor="end">Latest</text><text x="322" y="'+Math.max(12,avgY-6).toFixed(1)+'" text-anchor="end">Estimate '+fox2Round(estimate)+'</text></svg></div>';
+}
+
+function fox2IntroHtml(){
+  return '<section><div class="program-eyebrow">Guided program</div><h1 class="program-title">See how actions affect your fat metabolism.</h1>'
+    +'<ol class="program-intro-steps"><li>First, use FOX2 for one week to set your baseline.</li><li>Next, make the changes you want to test—such as changing a GLP-1 dose, exercise, or diet.</li><li>Measure each day and sync FOX2 to see how your changes affect your fat metabolism.</li></ol>'
+    +'<button type="button" class="program-primary" data-program-action="start">Start program</button>'
+    +'<button type="button" class="program-secondary" data-program-action="opt-out">Use FOX2 without the program</button></section>';
+}
+
+function fox2SetupHtml(){
+  var mode=fox2Program.setupMode||'new',changing=mode==='change',restarting=mode==='restart';
+  return '<section><div class="program-eyebrow">'+(changing?'Change actions':restarting?'Start over':'Get started')+'</div>'
+    +'<h1 class="program-title">'+(changing?'What will you add or change?':restarting?'What will you try next?':'What are you changing?')+'</h1>'
+    +'<p class="program-copy">'+(changing?'Your original baseline will stay the same.':restarting?'You will establish a new baseline before testing these actions.':'Describe the action or actions you want to test.')+'</p>'
+    +'<label class="program-label" for="program-action-input">Action or actions</label>'
+    +'<textarea class="program-input" id="program-action-input" placeholder="Describe what you are changing or trying…">'+fox2Escape(changing||restarting?'':fox2Program.action)+'</textarea>'
+    +'<div class="program-examples">Write as much as you want. For example: change a GLP-1 dose, exercise more, change meal timing, or change your diet.</div>'
+    +'<button type="button" class="program-primary" data-program-action="begin">'+(changing?'Start measuring':restarting?'Begin new baseline':'Begin baseline')+'</button>'
+    +'<button type="button" class="program-secondary" data-program-action="back">Back</button></section>';
+}
+
+function fox2BaselineHtml(metrics){
+  var count=metrics.baselineDays.length,remaining=Math.max(0,7-count),has=count>0;
+  var content=has
+    ? '<div class="program-baseline-head"><div><div class="program-eyebrow">Your baseline so far</div><h2 class="program-section-title">'+count+' measured '+(count===1?'day':'days')+'</h2></div><div><div class="program-baseline-value">'+fox2Round(metrics.baseline)+'</div><div class="program-baseline-unit">Current estimate</div></div></div>'
+      +fox2BaselineChart(metrics.baselineDays,metrics.baseline)
+      +'<p class="program-default">'+(remaining?'Keep measuring. '+remaining+' more measured '+(remaining===1?'day':'days')+' will complete your baseline.':'Your baseline is complete.')+'</p>'
+    : '<div class="program-eyebrow">Baseline</div><h1 class="program-title">Ready to begin.</h1><p class="program-copy">Your baseline will appear after your first completed day.</p><div class="program-baseline-empty">No baseline measurements yet</div>';
+  if(has){
+    content+='<button type="button" class="program-options-toggle" data-program-action="toggle-options" aria-expanded="'+fox2ProgramOptionsOpen+'">Baseline options '+(fox2ProgramOptionsOpen?'▴':'▾')+'</button>';
+    if(fox2ProgramOptionsOpen) content+='<div class="program-options"><p>Use the baseline you have now or restart this step.</p><div class="program-option-actions"><button type="button" class="program-option-primary" data-program-action="use-baseline">Use current baseline</button><button type="button" class="program-option-secondary" data-program-action="restart-baseline">Restart baseline</button></div></div>';
+  }
+  return '<section>'+content+'</section>';
+}
+
+function fox2MeasureHtml(metrics){
+  var latest=metrics.measureDays.length?metrics.measureDays[metrics.measureDays.length-1]:null;
+  var content='<section><div class="program-action-name"><span>Your actions</span>'+fox2Escape(fox2Program.action||'No actions entered')+'</div></section>';
+  content+='<section class="program-section"><div class="program-eyebrow">Yesterday\'s result</div>';
+  if(latest&&metrics.baseline){
+    var baseline=fox2Round(metrics.baseline),result=fox2Round(latest.score),delta=result-baseline;
+    var scale=Math.max(baseline,result,1),baselineH=Math.max(18,Math.round(baseline/scale*135)),resultH=Math.max(18,Math.round(result/scale*135));
+    content+='<div class="program-comparison" role="img" aria-label="Yesterday '+result+', '+Math.abs(delta)+' '+(delta>=0?'above':'below')+' baseline '+baseline+'"><div class="program-comparison-delta"><strong>'+(delta>=0?'+':'')+delta+'</strong><span>'+(delta>=0?'above':'below')+' baseline</span></div><div class="program-comparison-bars">'
+      +'<div class="program-comparison-column"><div class="program-comparison-value">'+baseline+'</div><div class="program-comparison-track"><div class="program-comparison-bar is-baseline" style="height:'+baselineH+'px"></div></div><div class="program-comparison-label">Baseline</div></div>'
+      +'<div class="program-comparison-column"><div class="program-comparison-value">'+result+'</div><div class="program-comparison-track"><div class="program-comparison-bar is-current" style="height:'+resultH+'px"></div></div><div class="program-comparison-label">Yesterday</div></div></div></div>';
+  }else{
+    content+='<div class="program-baseline-empty">Your first completed measurement day will appear here.</div>';
+  }
+  content+='<button type="button" class="program-options-toggle" data-program-action="toggle-options" aria-expanded="'+fox2ProgramOptionsOpen+'">Measure options '+(fox2ProgramOptionsOpen?'▴':'▾')+'</button>';
+  if(fox2ProgramOptionsOpen) content+='<div class="program-options"><p>Finish with the data you have, restart this step, or begin again with a new baseline.</p><div class="program-option-actions">'
+    +'<button type="button" class="program-option-primary" data-program-action="finish-measuring" '+(metrics.measureDays.length?'':'disabled')+'>Finish measuring now</button>'
+    +'<button type="button" class="program-option-secondary" data-program-action="restart-measuring">Restart measuring</button>'
+    +'<button type="button" class="program-option-tertiary" data-program-action="start-over">Start over with a new baseline</button></div></div>';
+  return content+'</section>';
+}
+
+function fox2FinalizeResult(metrics){
+  if(!metrics.baseline||!metrics.after||!metrics.measureDays.length) return false;
+  var id=fox2Program.measureStart+'|'+fox2Program.action;
+  var exists=fox2Program.resultHistory.some(function(item){return item.id===id;});
+  if(!exists){
+    fox2Program.resultHistory.push({id:id,action:fox2Program.action,before:fox2Round(metrics.baseline),after:fox2Round(metrics.after),change:Math.round((metrics.after-metrics.baseline)/metrics.baseline*100),date:fox2TodayIso()});
+  }
+  return true;
+}
+
+function fox2ResultsHtml(metrics){
+  var items=fox2Program.resultHistory.slice().reverse();
+  if(!items.length&&metrics.baseline&&metrics.after){
+    items=[{action:fox2Program.action,before:fox2Round(metrics.baseline),after:fox2Round(metrics.after),change:Math.round((metrics.after-metrics.baseline)/metrics.baseline*100)}];
+  }
+  var history=items.length?items.map(function(item){
+    var change=Number(item.change)||0;
+    return '<article class="program-history-item"><h2 class="program-history-title"><span class="program-history-bullet"></span><span>'+fox2Escape(item.action||'Actions')+'</span></h2><div role="table" aria-label="Action result"><div class="program-result-table-head" role="row"><span>Before</span><span>After</span><span>Change</span></div><div class="program-result-table-values" role="row"><span>'+item.before+'</span><span>'+item.after+'</span><span>'+(change>=0?'+':'')+change+'%</span></div></div></article>';
+  }).join(''):'<div class="program-baseline-empty">No completed results yet</div>';
+  return '<section><div class="program-eyebrow">Results</div><h1 class="program-title">Action History</h1><div class="program-history">'+history+'</div></section>'
+    +'<section class="program-section"><h2 class="program-section-title">What do you want to do?</h2><button type="button" class="program-choice is-primary" data-program-action="maintain">Maintain</button><button type="button" class="program-choice" data-program-action="change-actions">Add or change actions</button><button type="button" class="program-choice" data-program-action="start-over">Start over</button></section>';
+}
+
+function fox2MaintainHtml(){
+  return '<section><div class="program-eyebrow">Maintenance</div><div class="program-maintain-mark">✓</div><h1 class="program-title program-center">Keep going</h1><p class="program-copy program-center">FOX2 will keep checking your fat metabolism.</p><div class="program-action-name" style="margin-top:22px"><span>Maintaining</span>'+fox2Escape(fox2Program.action||'Your current actions')+'</div></section>'
+    +'<section class="program-section"><h2 class="program-section-title">Next</h2><p class="program-copy">Keep measuring and syncing FOX2.</p><button type="button" class="program-choice" data-program-action="change-actions">Add or change actions</button><button type="button" class="program-choice" data-program-action="start-over">Start over</button></section>';
+}
+
+function fox2RenderProgram(){
+  var shell=document.getElementById('program-shell');
+  if(!shell) return;
+  var metrics=fox2ProgramMetrics(),screen=fox2Program.screen||'intro',body='';
+  if(screen==='setup') body=fox2SetupHtml();
+  else if(screen==='baseline') body=fox2BaselineHtml(metrics);
+  else if(screen==='measure') body=fox2MeasureHtml(metrics);
+  else if(screen==='results') body=fox2ResultsHtml(metrics);
+  else if(screen==='maintain') body=fox2MaintainHtml();
+  else body=fox2IntroHtml();
+  shell.innerHTML=fox2ProgressHtml(metrics)+body+'<div class="program-status" id="program-status"></div>';
+  var input=shell.querySelector('#program-action-input');
+  if(input) input.addEventListener('input',function(){fox2Program.action=input.value;});
+  shell.querySelectorAll('[data-program-action]').forEach(function(button){
+    button.addEventListener('click',function(){fox2HandleProgramAction(button.dataset.programAction);});
+  });
+}
+
+function fox2HandleProgramAction(action){
+  var input=document.getElementById('program-action-input');
+  if(input) fox2Program.action=input.value.trim();
+  var metrics=fox2ProgramMetrics();
+  if(action==='start'){
+    fox2Program.optedOut=false; fox2Program.setupMode='new'; fox2Program.screen='setup';
+  }else if(action==='opt-out'){
+    fox2Program.optedOut=true; fox2Program.screen='intro'; fox2SaveProgram(); fox2RenderProgram();
+    if(window.fox2GoToPage) window.fox2GoToPage(1,true);
+    return;
+  }else if(action==='back'){
+    fox2Program.screen=fox2Program.setupMode==='new'?'intro':'results';
+  }else if(action==='begin'){
+    if(fox2Program.setupMode==='change'){
+      fox2Program.measureStart=fox2TodayIso(); fox2Program.screen='measure';
+    }else{
+      fox2Program.baselineStart=fox2TodayIso(); fox2Program.baselineValue=null; fox2Program.measureStart=''; fox2Program.screen='baseline';
+    }
+    fox2Program.setupMode='new'; fox2ProgramOptionsOpen=false;
+  }else if(action==='toggle-options'){
+    fox2ProgramOptionsOpen=!fox2ProgramOptionsOpen; fox2RenderProgram(); return;
+  }else if(action==='use-baseline'){
+    if(metrics.baseline){fox2Program.baselineValue=metrics.baseline;fox2Program.measureStart=fox2TodayIso();fox2Program.screen='measure';fox2ProgramOptionsOpen=false;}
+  }else if(action==='restart-baseline'){
+    fox2Program.baselineStart=fox2TodayIso();fox2Program.baselineValue=null;fox2ProgramOptionsOpen=false;
+  }else if(action==='finish-measuring'){
+    if(fox2FinalizeResult(metrics)){fox2Program.screen='results';fox2ProgramOptionsOpen=false;}
+  }else if(action==='restart-measuring'){
+    fox2Program.measureStart=fox2TodayIso();fox2ProgramOptionsOpen=false;
+  }else if(action==='maintain'){
+    fox2Program.screen='maintain';
+  }else if(action==='change-actions'){
+    fox2Program.setupMode='change';fox2Program.screen='setup';
+  }else if(action==='start-over'){
+    fox2Program.setupMode='restart';fox2Program.screen='setup';
+  }
+  fox2SaveProgram(); fox2RenderProgram();
+}
+
+function fox2InitProgram(){
+  fox2RenderProgram();
+  if((fox2Program.optedOut||fox2Program.screen==='maintain')&&window.fox2GoToPage){
+    window.fox2GoToPage(1,false);
+  }
+}
+
 // ── Page navigation: tabs + share routing ──
 var currentPage = 0;
 
@@ -5825,6 +6182,12 @@ function handleBottomShare() {
     if (selectedDot) { selectedDot = null; renderCard(); }
   }
 
+  window.fox2GoToPage=function(idx,animate){
+    idx=Math.max(0,Math.min(tabs.length-1,Number(idx)||0));
+    scroller.scrollTo({left:idx*scroller.clientWidth,behavior:animate?'smooth':'auto'});
+    updatePage(idx);
+  };
+
   scroller.addEventListener('scroll', function() {
     var idx = Math.round(scroller.scrollLeft / scroller.clientWidth);
     updatePage(idx);
@@ -5833,7 +6196,7 @@ function handleBottomShare() {
   for (var i = 0; i < tabs.length; i++) {
     tabs[i].addEventListener('click', (function(idx) {
       return function() {
-        scroller.scrollTo({ left: idx * scroller.clientWidth, behavior: 'smooth' });
+        window.fox2GoToPage(idx,true);
       };
     })(i));
   }
@@ -5849,6 +6212,9 @@ function handleBottomShare() {
     popup.style.display = 'none';
   }, true);
 })();
+
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',fox2InitProgram);
+else setTimeout(fox2InitProgram,0);
 
 
 // ── Results Page JS ── 
