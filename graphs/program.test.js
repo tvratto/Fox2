@@ -86,9 +86,11 @@ assert.ok(!source.includes("data-program-action=\"finish-measuring\" '+(metrics.
   'finish measuring should not appear as an unexplained disabled control');
 assert.ok(source.includes("options.scrollIntoView({behavior:'smooth',block:'start',inline:'nearest'})"),
   'opening measure options should bring the controls into view');
-assert.ok(source.includes("var returningFromSync=params.has('sync_rev')||params.get('handoff')==='1'"),
+assert.ok(source.includes("var returningFromSync=params.get('program')==='1'||params.has('sync_rev')||params.get('handoff')==='1'"),
   'the page should recognize a completed device sync');
-assert.ok(source.includes("if(activeProgram&&returningFromSync) window.fox2GoToPage(0,false)"),
+assert.ok(source.includes("[0,100,500].forEach(function(delay)"),
+  'the page should override delayed browser scroll restoration after a sync');
+assert.ok(source.includes("window.setTimeout(function(){window.fox2GoToPage(0,false);},delay)"),
   'a sync during an active program should land on Program');
 assert.ok(source.includes('(metrics.after-metrics.baseline)/metrics.baseline*100'),
   'the primary reward should be the cumulative action average versus baseline');

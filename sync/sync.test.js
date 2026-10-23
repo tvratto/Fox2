@@ -13,6 +13,7 @@ assert.doesNotThrow(()=>new Function(inlineScripts[0]));
 assert.ok(syncSource.includes("new URL('/graphs/',window.location.origin)"));
 assert.ok(syncSource.includes("graphUrl.searchParams.set('sync','1')"));
 assert.ok(syncSource.includes("url.searchParams.set('handoff','1')"));
+assert.ok(syncSource.includes("url.searchParams.set('program','1')"));
 assert.ok(syncSource.includes("channel.postMessage({type:'probe'"));
 assert.ok(syncSource.includes("channel.postMessage({type:'updated'"));
 assert.ok(syncSource.includes("window.location.replace(url)"));
@@ -29,6 +30,7 @@ assert.ok(graphSource.includes("incoming.type==='updated'"));
 assert.ok(graphSource.includes('Promise.all(writePromises)'));
 assert.ok(graphSource.includes('window._fox2Handoff.reportWrites(ok)'));
 assert.ok(graphSource.includes("type:'fox2-sync-complete'"));
+assert.ok(graphSource.includes("url.searchParams.set('program','1')"));
 
 (function legacyGraphUrlHandsOffToAnEstablishedResult(){
   const start=graphSource.indexOf('(function setupSyncHandoff(){');

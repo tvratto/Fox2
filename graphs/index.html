@@ -2219,6 +2219,7 @@ var sParam    = params.get('s') || '';
     var url=new URL(window.location.href);
     url.searchParams.delete('sync');
     url.searchParams.set('handoff','1');
+    url.searchParams.set('program','1');
     url.searchParams.set('sync_rev',String(Date.now()));
     return url.toString();
   }
@@ -6406,8 +6407,13 @@ function fox2InitProgram(){
   fox2RenderProgram();
   if(window.fox2GoToPage){
     var activeProgram=!fox2Program.optedOut&&fox2Program.screen!=='maintain';
-    var returningFromSync=params.has('sync_rev')||params.get('handoff')==='1';
-    if(activeProgram&&returningFromSync) window.fox2GoToPage(0,false);
+    var returningFromSync=params.get('program')==='1'||params.has('sync_rev')||params.get('handoff')==='1';
+    if(activeProgram&&returningFromSync){
+      if('scrollRestoration' in history) history.scrollRestoration='manual';
+      [0,100,500].forEach(function(delay){
+        window.setTimeout(function(){window.fox2GoToPage(0,false);},delay);
+      });
+    }
     else if(!activeProgram) window.fox2GoToPage(1,false);
   }
 }
