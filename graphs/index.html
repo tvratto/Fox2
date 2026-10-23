@@ -151,9 +151,11 @@ html, body {
 .program-today-strip { display:flex; align-items:center; gap:11px; padding:14px 15px; border-radius:16px; background:rgba(255,140,0,.1); }
 .program-today-strip span { color:var(--program-orange); font-size:12px; font-weight:900; letter-spacing:.1em; text-transform:uppercase; }
 .program-today-strip strong { color:#fff; font-size:15px; line-height:1.3; }
-.program-today-progress { margin-top:22px; padding:24px 18px 20px; border-radius:22px; background:linear-gradient(155deg,rgba(255,140,0,.11),rgba(255,255,255,.035)); text-align:center; }
-.program-today-progress h2 { margin:0; font-size:22px; line-height:1.1; font-weight:900; letter-spacing:-.025em; }
-.program-progress-ring { position:relative; width:210px; height:210px; margin:18px auto 8px; }
+.program-measure-dashboard { display:grid; grid-template-columns:1fr 1fr; margin-top:22px; overflow:hidden; border-radius:22px; background:linear-gradient(155deg,rgba(255,140,0,.1),rgba(255,255,255,.035)); }
+.program-measure-panel { position:relative; min-width:0; min-height:242px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:18px 10px; text-align:center; overflow:hidden; }
+.program-today-panel { border-right:1px solid rgba(255,255,255,.1); }
+.program-measure-heading { margin:0 0 13px; color:#fff; font-size:18px; line-height:1.1; font-weight:900; letter-spacing:-.02em; }
+.program-progress-ring { position:relative; width:142px; height:142px; margin:0 auto 11px; }
 .program-progress-ring svg { display:block; width:100%; height:100%; overflow:visible; }
 .program-progress-ring circle { fill:none; }
 .program-progress-ring-track { stroke:rgba(255,255,255,.1); stroke-width:15; }
@@ -161,35 +163,18 @@ html, body {
 .program-progress-ring-over { stroke:#ffb14a; stroke-width:8; stroke-linecap:round; }
 .program-progress-ring-end { fill:#fff!important; stroke:#111; stroke-width:3; }
 .program-progress-ring-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-.program-progress-ring-center strong { color:#fff; font-size:55px; line-height:.9; font-weight:950; letter-spacing:-.065em; }
-.program-progress-ring-center strong span { margin-left:2px; color:var(--program-orange); font-size:25px; letter-spacing:-.02em; }
-.program-progress-ring-center small { margin-top:9px; color:rgba(255,255,255,.55); font-size:14px; font-weight:800; }
-.program-progress-values { display:flex; justify-content:center; align-items:center; gap:11px; color:rgba(255,255,255,.55); font-size:15px; font-weight:750; }
-.program-progress-values strong { color:#fff; font-size:19px; }
-.program-progress-values i { width:4px; height:4px; border-radius:50%; background:rgba(255,255,255,.28); }
-.program-today-progress p { margin:12px 0 0; color:rgba(255,255,255,.6); font-size:15px; line-height:1.4; }
-.program-action-result { position:relative; min-height:292px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:22px 14px 17px; text-align:center; overflow:hidden; }
-.program-result-join { display:flex; align-items:center; gap:8px; margin-bottom:20px; padding:7px 11px; border-radius:999px; background:rgba(255,255,255,.055); color:rgba(255,255,255,.48); font-size:11px; font-weight:750; }
-.program-result-join strong { color:#fff; font-size:13px; }
-.program-result-join i { width:7px; height:7px; border-radius:50%; background:var(--program-orange); }
-.program-action-change { position:relative; z-index:2; margin-top:8px; color:var(--program-orange); font-size:68px; line-height:.95; font-weight:950; letter-spacing:-.06em; }
-.program-action-average { position:relative; z-index:2; margin-top:12px; color:rgba(255,255,255,.58); font-size:15px; font-weight:700; }
-.program-action-average strong { color:#fff; font-size:19px; }
-.program-action-days { position:relative; z-index:2; margin-top:18px; color:rgba(255,255,255,.52); font-size:13px; font-weight:800; }
-.program-result-halo { position:absolute; z-index:1; width:158px; height:158px; top:82px; border-radius:50%; opacity:0; background:radial-gradient(circle,rgba(255,140,0,.2),rgba(255,140,0,.05) 48%,transparent 70%); pointer-events:none; }
-.program-result-sparks { position:absolute; z-index:3; width:190px; height:150px; top:79px; opacity:0; pointer-events:none; }
-.program-result-sparks i { position:absolute; left:50%; top:50%; width:5px; height:5px; margin:-2px; border-radius:50%; background:var(--program-orange); }
-.program-result-sparks i:nth-child(1){--spark-x:-80px;--spark-y:-40px}.program-result-sparks i:nth-child(2){--spark-x:-62px;--spark-y:54px}.program-result-sparks i:nth-child(3){--spark-x:0px;--spark-y:-68px}.program-result-sparks i:nth-child(4){--spark-x:72px;--spark-y:-42px}.program-result-sparks i:nth-child(5){--spark-x:79px;--spark-y:42px}.program-result-sparks i:nth-child(6){--spark-x:8px;--spark-y:65px}
-.program-action-result.is-animating .program-result-join { animation:program-result-join 1.15s ease both; }
+.program-progress-ring-center strong { color:#fff; font-size:42px; line-height:.9; font-weight:950; letter-spacing:-.065em; }
+.program-progress-ring-center strong span { margin-left:1px; color:var(--program-orange); font-size:20px; letter-spacing:-.02em; }
+.program-progress-ring-center small { margin-top:7px; color:rgba(255,255,255,.58); font-size:12px; font-weight:800; }
+.program-today-score { color:rgba(255,255,255,.58); font-size:13px; font-weight:750; white-space:nowrap; }
+.program-today-score strong { color:#fff; font-size:20px; }
+.program-action-change { position:relative; z-index:2; margin-top:8px; color:var(--program-orange); font-size:54px; line-height:.95; font-weight:950; letter-spacing:-.06em; }
+.program-action-average { position:relative; z-index:2; margin-top:16px; color:rgba(255,255,255,.6); font-size:14px; font-weight:750; line-height:1.45; }
+.program-action-average strong { display:block; color:#fff; font-size:20px; }
 .program-action-result.is-updated .program-action-change { animation:program-result-pulse .7s cubic-bezier(.2,.8,.2,1); }
-.program-action-result.is-improved .program-result-halo { animation:program-result-halo 1.2s ease-out; }
-.program-action-result.is-improved .program-result-sparks { opacity:1; }
-.program-action-result.is-improved .program-result-sparks i { animation:program-result-spark .8s ease-out both; }
-@keyframes program-result-join { 0%{opacity:0;transform:translateY(-12px) scale(.94)} 35%{opacity:1;transform:none} 75%{opacity:1;transform:none} 100%{opacity:.7;transform:translateY(4px) scale(.96)} }
 @keyframes program-result-pulse { 0%{transform:scale(.9);filter:brightness(1)} 48%{transform:scale(1.08);filter:brightness(1.35)} 100%{transform:none;filter:none} }
-@keyframes program-result-halo { 0%{opacity:0;transform:scale(.55)} 35%{opacity:1} 100%{opacity:0;transform:scale(1.25)} }
-@keyframes program-result-spark { 0%{opacity:0;transform:translate(0,0) scale(.4)} 30%{opacity:1} 100%{opacity:0;transform:translate(var(--spark-x),var(--spark-y)) scale(1)} }
-@media (prefers-reduced-motion:reduce){.program-action-result *{animation:none!important}.program-result-sparks,.program-result-halo{display:none!important}}
+@media (prefers-reduced-motion:reduce){.program-action-result *{animation:none!important}}
+@media (max-width:350px){.program-measure-panel{padding-inline:7px}.program-progress-ring{width:128px;height:128px}.program-measure-heading{font-size:16px}.program-action-change{font-size:48px}}
 .program-history { display:grid; gap:11px; margin-top:19px; }
 .program-history-item { padding:16px; border-radius:18px; background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.08); }
 .program-history-title { display:flex; gap:9px; margin:0 0 15px; font-size:15px; line-height:1.35; font-weight:850; }
@@ -6188,7 +6173,7 @@ function fox2SignedPercent(value){
   return (value>0?'+':'')+value+'%';
 }
 
-function fox2TodayProgressHtml(metrics){
+function fox2MeasureDashboardHtml(metrics){
   var baseline=Number(metrics.baseline)||0;
   var score=Math.max(0,Number(metrics.todayScore)||0);
   var percent=baseline>0?Math.round(score/baseline*100):0;
@@ -6198,39 +6183,32 @@ function fox2TodayProgressHtml(metrics){
   var outerOffset=(outerCircumference*(1-firstLap/100)).toFixed(2);
   var innerOffset=(innerCircumference*(1-extraLap/100)).toFixed(2);
   var extra=extraLap>0?'<circle class="program-progress-ring-over" cx="100" cy="100" r="62" transform="rotate(-90 100 100)" stroke-dasharray="'+innerCircumference+'" stroke-dashoffset="'+innerOffset+'"></circle>':'';
-  return '<section class="program-today-progress" role="group" aria-label="Today '+fox2Round(score)+', '+percent+' percent of baseline '+fox2Round(baseline)+'">'
-    +'<h2>Today\'s progress</h2><div class="program-progress-ring"><svg viewBox="0 0 200 200" aria-hidden="true">'
+  var latest=metrics.measureDays.length?metrics.measureDays[metrics.measureDays.length-1]:null;
+  var actionPanel='';
+  if(latest&&baseline){
+    var average=fox2Round(metrics.after),change=Math.round((metrics.after-baseline)/baseline*100);
+    var priorDays=metrics.measureDays.slice(0,-1),priorAverage=priorDays.length?fox2Mean(priorDays.map(function(day){return day.score;})):baseline;
+    var priorChange=Math.round((priorAverage-baseline)/baseline*100);
+    actionPanel='<div class="program-measure-panel program-action-result" data-latest-date="'+fox2Escape(latest.date)+'" data-from="'+priorChange+'" data-to="'+change+'" role="group" aria-label="Your action result so far is '+fox2SignedPercent(change)+', average '+average+', baseline '+fox2Round(baseline)+'">'
+      +'<h2 class="program-measure-heading">Your action<br>so far</h2><div class="program-action-change" id="program-action-change" aria-live="polite">'+fox2SignedPercent(change)+'</div>'
+      +'<div class="program-action-average"><strong>'+average+' average</strong>'+fox2Round(baseline)+' baseline</div></div>';
+  }else{
+    actionPanel='<div class="program-measure-panel program-action-result" role="group" aria-label="Your action result will appear after the first completed day">'
+      +'<h2 class="program-measure-heading">Your action<br>so far</h2><div class="program-action-change" id="program-action-change">—</div><div class="program-action-average">First result<br>tomorrow</div></div>';
+  }
+  return '<section class="program-measure-dashboard">'
+    +'<div class="program-measure-panel program-today-panel" role="group" aria-label="Today '+fox2Round(score)+', '+percent+' percent of baseline '+fox2Round(baseline)+'">'
+    +'<h2 class="program-measure-heading">Today</h2><div class="program-progress-ring"><svg viewBox="0 0 200 200" aria-hidden="true">'
     +'<circle class="program-progress-ring-track" cx="100" cy="100" r="74"></circle>'
     +'<circle class="program-progress-ring-fill" cx="100" cy="100" r="74" transform="rotate(-90 100 100)" stroke-dasharray="'+outerCircumference+'" stroke-dashoffset="'+outerOffset+'"></circle>'
     +extra+'<circle class="program-progress-ring-end" cx="100" cy="26" r="5"></circle></svg>'
     +'<div class="program-progress-ring-center"><strong>'+percent+'<span>%</span></strong><small>of baseline</small></div></div>'
-    +'<div class="program-progress-values"><span>Today <strong>'+fox2Round(score)+'</strong></span><i></i><span>Baseline <strong>'+fox2Round(baseline)+'</strong></span></div>'
-    +'<p>'+(score>0?'Your score builds as the day continues.':'Take a measurement to start today\'s progress.')+'</p></section>';
+    +'<div class="program-today-score"><strong>'+fox2Round(score)+'</strong> / '+fox2Round(baseline)+' baseline</div></div>'+actionPanel+'</section>';
 }
 
 function fox2MeasureHtml(metrics){
-  var latest=metrics.measureDays.length?metrics.measureDays[metrics.measureDays.length-1]:null;
-  var elapsed=Math.max(1,fox2DaysBetween(fox2Program.measureStart,fox2TodayIso())+1);
-  var programDay=Math.min(FOX2_MEASURE_DAYS,elapsed),daysLeft=Math.max(0,FOX2_MEASURE_DAYS-programDay+1);
   var content='<section><div class="program-action-name"><span>Your actions</span>'+fox2Escape(fox2Program.action||'No actions entered')+'</div></section>';
-  content+=fox2TodayProgressHtml(metrics);
-  if(latest&&metrics.baseline){
-    var baseline=fox2Round(metrics.baseline),result=fox2Round(latest.score),average=fox2Round(metrics.after);
-    var change=Math.round((metrics.after-metrics.baseline)/metrics.baseline*100);
-    var priorDays=metrics.measureDays.slice(0,-1),priorAverage=priorDays.length?fox2Mean(priorDays.map(function(day){return day.score;})):metrics.baseline;
-    var priorChange=Math.round((priorAverage-metrics.baseline)/metrics.baseline*100);
-    var latestLabel=latest.date===addIsoDays(fox2TodayIso(),-1)?'Yesterday':fox2ShortDate(latest.date);
-    var sparks='<div class="program-result-sparks" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>';
-    content+='<section class="program-section"><div class="program-action-result" data-latest-date="'+fox2Escape(latest.date)+'" data-from="'+priorChange+'" data-to="'+change+'" role="group" aria-label="Your action result so far is '+fox2SignedPercent(change)+', average '+average+', baseline '+baseline+'">'
-      +'<div class="program-result-join"><span>'+fox2Escape(latestLabel)+'</span><strong>'+result+'</strong><i></i><span>Added</span></div>'
-      +'<div class="program-eyebrow">Your action so far</div><div class="program-action-change" id="program-action-change" aria-live="polite">'+fox2SignedPercent(change)+'</div>'
-      +'<div class="program-action-average"><strong>'+average+'</strong> average&nbsp; · &nbsp;'+baseline+' baseline</div>'
-      +'<div class="program-action-days">'+Math.min(FOX2_MEASURE_DAYS,metrics.measureDays.length)+' completed '+(metrics.measureDays.length===1?'day':'days')+' included</div>'
-      +'<div class="program-result-halo" aria-hidden="true"></div>'+sparks+'</div></section>'
-      +'<section class="program-next-card"><div class="program-next-head"><div class="program-next-label">Today</div><div class="program-next-meta">'+daysLeft+' '+(daysLeft===1?'day':'days')+' left</div></div><div class="program-next-title">Continue your actions.</div><div class="program-next-copy">Measure as usual. Sync again tomorrow.</div></section>';
-  }else{
-    content+='<section class="program-today-strip"><span>Next</span><strong>Your first completed-day comparison will appear tomorrow.</strong></section>';
-  }
+  content+=fox2MeasureDashboardHtml(metrics);
   content+='<button type="button" class="program-options-toggle" data-program-action="toggle-options" aria-expanded="'+fox2ProgramOptionsOpen+'">Measure options '+(fox2ProgramOptionsOpen?'▴':'▾')+'</button>';
   if(fox2ProgramOptionsOpen){
     content+='<div class="program-options"><p>Change how the guided program is running.</p><div class="program-option-actions">';

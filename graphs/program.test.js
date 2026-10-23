@@ -66,20 +66,24 @@ assert.ok(source.includes('Baseline ready'));
 assert.ok(source.includes('Begin action'));
 assert.ok(!source.includes("Yesterday's result"),
   'the first measuring day should not show an empty yesterday result');
-assert.ok(source.includes('Your action so far'));
-assert.ok(source.includes('completed \' + (metrics.measureDays.length===1?\'day\':\'days\') + \' included')||source.includes("completed '+(metrics.measureDays.length===1?'day':'days')+' included"),
-  'the cumulative result should show how many completed days it includes');
-assert.ok(source.includes('Continue your actions.'));
+assert.ok(source.includes('Your action<br>so far'));
+assert.ok(!source.includes("completed '+(metrics.measureDays.length===1?'day':'days')+' included"),
+  'the compact measure page should not repeat the completed-day count');
+assert.ok(!source.includes('Continue your actions.'),
+  'the compact measure page should not repeat generic next-step messaging');
 assert.ok(source.includes('function fox2SignedPercent(value)'));
 assert.ok(source.includes('function fox2TodayScore()'),
   'the measure page should use today\'s accumulating daily score');
 assert.ok(source.includes('todayScore:fox2TodayScore()'),
   'today\'s score should be part of guided-program metrics');
-assert.ok(source.includes('function fox2TodayProgressHtml(metrics)'),
-  'the measure page should render today\'s progress toward baseline');
-assert.ok(source.includes("<h2>Today\\'s progress</h2>"));
+assert.ok(source.includes('function fox2MeasureDashboardHtml(metrics)'),
+  'the measure page should combine today and cumulative action progress');
+assert.ok(source.includes('<h2 class="program-measure-heading">Today</h2>'));
 assert.ok(source.includes("<small>of baseline</small>"));
-assert.ok(source.includes("Your score builds as the day continues."));
+assert.ok(source.includes('program-measure-dashboard'));
+assert.ok(source.includes('<h2 class="program-measure-heading">Your action<br>so far</h2>'));
+assert.ok(!source.includes("Your score builds as the day continues."));
+assert.ok(!source.includes('Measure as usual. Sync again tomorrow.'));
 assert.ok(source.includes("if(metrics.measureDays.length) content+='<button type=\"button\" class=\"program-option-card is-primary\""),
   'finish measuring should be hidden until it can be used, not shown disabled');
 assert.ok(!source.includes("data-program-action=\"finish-measuring\" '+(metrics.measureDays.length?'':'disabled')"),
