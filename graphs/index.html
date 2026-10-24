@@ -188,12 +188,16 @@ html, body {
 .program-score-trend-head { display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin:0 5px 7px; }
 .program-score-trend-head strong { color:#fff; font-size:14px; font-weight:900; }
 .program-score-trend-head span { color:rgba(255,255,255,.46); font-size:11px; font-weight:800; }
-.program-score-trend-chart { display:block; width:100%; height:auto; }
-.program-score-trend-baseline { stroke:rgba(255,255,255,.34); stroke-width:1.5; stroke-dasharray:5 5; }
-.program-score-trend-area { fill:rgba(255,140,0,.1); }
-.program-score-trend-line { fill:none; stroke:var(--program-orange); stroke-width:4; stroke-linecap:round; stroke-linejoin:round; }
-.program-score-trend-point { fill:#090909; stroke:var(--program-orange); stroke-width:3; }
-.program-score-trend-chart text { fill:rgba(255,255,255,.44); font:750 10px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; }
+.program-score-bars-scroll { width:100%; overflow-x:auto; overscroll-behavior-x:contain; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+.program-score-bars-scroll::-webkit-scrollbar { display:none; }
+.program-score-bars { position:relative; height:144px; min-width:100%; }
+.program-score-bars-baseline { position:absolute; z-index:1; left:12px; right:12px; border-top:1.5px dashed rgba(255,255,255,.38); pointer-events:none; }
+.program-score-bars-baseline span { position:absolute; right:0; bottom:4px; color:rgba(255,255,255,.5); font-size:10px; font-weight:800; }
+.program-score-bars-grid { position:absolute; z-index:2; inset:0 12px 0; display:grid; align-items:end; }
+.program-score-bar { min-width:0; height:144px; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:7px; padding:0 2px; border:0; background:transparent; color:rgba(255,255,255,.42); font:750 10px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; cursor:pointer; }
+.program-score-bar-fill { width:18px; max-width:100%; min-height:4px; border-radius:9px; background:var(--program-orange); box-shadow:0 0 12px rgba(255,140,0,.12); transition:filter .18s ease,box-shadow .18s ease,transform .18s ease; }
+.program-score-bar.is-selected .program-score-bar-fill { filter:brightness(1.2); box-shadow:0 0 0 2px rgba(255,255,255,.82),0 0 14px rgba(255,140,0,.42); transform:translateY(-1px); }
+.program-score-bar.is-selected { color:#fff; }
 @keyframes program-trend-open { from{opacity:0;transform:translateY(-7px)} to{opacity:1;transform:none} }
 .program-action-result.is-updated .program-action-change { animation:program-result-pulse .7s cubic-bezier(.2,.8,.2,1); }
 @keyframes program-result-pulse { 0%{transform:scale(.9);filter:brightness(1)} 48%{transform:scale(1.08);filter:brightness(1.35)} 100%{transform:none;filter:none} }
@@ -6262,24 +6266,22 @@ function fox2MeasureTrendHtml(metrics){
   var baseline=Number(metrics.baseline)||0;
   if(!fox2MeasureTrendOpen||!days.length||!baseline) return '';
   var values=days.map(function(day){return Math.max(0,Number(day.score)||0);});
-  var scaleValues=values.concat([baseline]);
-  var min=Math.min.apply(null,scaleValues),max=Math.max.apply(null,scaleValues);
-  var span=Math.max(12,max-min),pad=Math.max(6,span*.18);
-  min=Math.max(0,min-pad); max+=pad;
-  function xAt(index){return values.length===1?168:24+(288*index/(values.length-1));}
-  function yAt(value){return 104-((value-min)/(max-min))*74;}
-  var points=values.map(function(value,index){return {x:xAt(index),y:yAt(value),value:value,date:days[index].date};});
-  var line=points.map(function(point){return point.x.toFixed(1)+' '+point.y.toFixed(1);}).join(' L');
-  var area='M'+points[0].x.toFixed(1)+' 112 L'+line+' L'+points[points.length-1].x.toFixed(1)+' 112 Z';
-  var dots=points.map(function(point){return '<circle class="program-score-trend-point" cx="'+point.x.toFixed(1)+'" cy="'+point.y.toFixed(1)+'" r="4"><title>'+fox2Escape(fox2ShortDate(point.date))+': '+fox2Round(point.value)+'</title></circle>';}).join('');
-  var baselineY=yAt(baseline);
+  var scaleMax=Math.max.apply(null,values.concat([baseline]))*1.12;
+  var plotHeight=104;
+  var baselineHeight=Math.max(4,Math.round(baseline/scaleMax*plotHeight));
+  var chartWidth=Math.max(308,days.length*34);
+  var columns='repeat('+days.length+',minmax(30px,1fr))';
+  var bars=days.map(function(day,index){
+    var value=values[index],height=Math.max(4,Math.round(value/scaleMax*plotHeight));
+    var parts=day.date.split('-'),dayNumber=String(Number(parts[2]||index+1));
+    return '<button type="button" class="program-score-bar'+(index===days.length-1?' is-selected':'')+'" data-program-score-bar data-date="'+fox2Escape(fox2ShortDate(day.date))+'" data-score="'+fox2Round(value)+'" aria-label="'+fox2Escape(fox2ShortDate(day.date))+', Fat Use Score '+fox2Round(value)+'"><span class="program-score-bar-fill" style="height:'+height+'px"></span><span>'+dayNumber+'</span></button>';
+  }).join('');
+  var latest=days[days.length-1],latestValue=values[values.length-1];
   return '<div class="program-score-trend-popover" id="program-score-trend">'
-    +'<div class="program-score-trend-head"><strong>Fat Use Score</strong><span>'+days.length+' completed '+(days.length===1?'day':'days')+'</span></div>'
-    +'<svg class="program-score-trend-chart" viewBox="0 0 336 132" role="img" aria-label="Daily Fat Use Scores since your action began, compared with baseline '+fox2Round(baseline)+'">'
-    +'<line class="program-score-trend-baseline" x1="18" y1="'+baselineY.toFixed(1)+'" x2="318" y2="'+baselineY.toFixed(1)+'"></line>'
-    +'<text x="318" y="'+Math.max(11,baselineY-6).toFixed(1)+'" text-anchor="end">Baseline '+fox2Round(baseline)+'</text>'
-    +'<path class="program-score-trend-area" d="'+area+'"></path><path class="program-score-trend-line" d="M'+line+'"></path>'+dots
-    +'<text x="18" y="127">'+fox2Escape(fox2ShortDate(days[0].date))+'</text><text x="318" y="127" text-anchor="end">'+fox2Escape(fox2ShortDate(days[days.length-1].date))+'</text></svg></div>';
+    +'<div class="program-score-trend-head"><strong>Fat Use Score</strong><span id="program-score-bar-detail">'+fox2Escape(fox2ShortDate(latest.date))+' · '+fox2Round(latestValue)+'</span></div>'
+    +'<div class="program-score-bars-scroll" role="group" aria-label="Daily Fat Use Scores since your action began. Scroll horizontally for earlier days."><div class="program-score-bars" style="width:'+chartWidth+'px">'
+    +'<div class="program-score-bars-baseline" style="bottom:'+(17+baselineHeight)+'px"><span>Baseline '+fox2Round(baseline)+'</span></div>'
+    +'<div class="program-score-bars-grid" style="grid-template-columns:'+columns+'">'+bars+'</div></div></div></div>';
 }
 
 function fox2MeasureDashboardHtml(metrics){
@@ -6408,6 +6410,14 @@ function fox2RenderProgram(){
   shell.querySelectorAll('[data-program-action]').forEach(function(button){
     button.addEventListener('click',function(){fox2HandleProgramAction(button.dataset.programAction);});
   });
+  shell.querySelectorAll('[data-program-score-bar]').forEach(function(button){
+    button.addEventListener('click',function(){
+      shell.querySelectorAll('[data-program-score-bar]').forEach(function(bar){bar.classList.remove('is-selected');});
+      button.classList.add('is-selected');
+      var detail=shell.querySelector('#program-score-bar-detail');
+      if(detail) detail.textContent=button.dataset.date+' · '+button.dataset.score;
+    });
+  });
   if(screen==='measure') window.setTimeout(fox2AnimateMeasureResult,0);
   if(fox2ProgramOptionsOpen) window.setTimeout(function(){
     var options=shell.querySelector('.program-options');
@@ -6473,7 +6483,13 @@ function fox2HandleProgramAction(action){
     fox2ProgramOptionsOpen=!fox2ProgramOptionsOpen; fox2RenderProgram(); return;
   }else if(action==='toggle-results-chart'){
     fox2MeasureTrendOpen=!fox2MeasureTrendOpen; fox2RenderProgram();
-    if(fox2MeasureTrendOpen) window.setTimeout(function(){var chart=document.getElementById('program-score-trend');if(chart) chart.scrollIntoView({behavior:'smooth',block:'nearest',inline:'nearest'});},20);
+    if(fox2MeasureTrendOpen) window.setTimeout(function(){
+      var chart=document.getElementById('program-score-trend');
+      if(!chart) return;
+      var bars=chart.querySelector('.program-score-bars-scroll');
+      if(bars) bars.scrollLeft=bars.scrollWidth;
+      chart.scrollIntoView({behavior:'smooth',block:'nearest',inline:'nearest'});
+    },20);
     return;
   }else if(action==='use-baseline'){
     if(metrics.baseline){fox2Program.baselineValue=metrics.baseline;fox2Program.baselineSource='current';fox2Program.baselineRange=fox2DateRange(metrics.baselineDays);fox2Program.measureStart=fox2TodayIso();fox2Program.screen='measure';fox2ProgramOptionsOpen=false;}

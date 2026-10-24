@@ -88,8 +88,16 @@ assert.ok(source.includes('.program-results-caret[aria-expanded="true"] svg { tr
   'the sideways caret should turn downward when its data is open');
 assert.ok(source.includes('function fox2MeasureTrendHtml(metrics)'),
   'the expandable result should graph completed Fat Use Scores');
-assert.ok(source.includes('program-score-trend-baseline'),
-  'the result graph should retain baseline as a quiet comparison');
+assert.ok(source.includes('program-score-bars-baseline'),
+  'the result bar graph should retain baseline as a quiet comparison');
+assert.ok(source.includes("var chartWidth=Math.max(308,days.length*34)"),
+  'all completed days should remain in a horizontally scrollable chart');
+assert.ok(source.includes('data-program-score-bar'),
+  'individual day bars should expose their date and Fat Use Score');
+assert.ok(source.includes("if(bars) bars.scrollLeft=bars.scrollWidth"),
+  'the expanded graph should open on the latest completed days');
+assert.ok(!source.includes('program-score-trend-line'),
+  'completed daily results should use bars rather than a continuous line');
 assert.ok(source.includes("fox2MeasureTrendOpen=!fox2MeasureTrendOpen"),
   'the result graph caret should open and close the graph');
 assert.ok(source.includes("chart.scrollIntoView({behavior:'smooth',block:'nearest',inline:'nearest'})"),
