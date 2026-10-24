@@ -6,6 +6,9 @@
 // Daily scores written before this web fix were saved one calendar day early.
 // Keep this compatibility correction read-only; new rows are stored correctly.
 var SCORE_DATE_FIX_CUTOFF='2026-09-28';
+// Keep the unfinished analysis results available in code without exposing
+// them in the product until their presentation is ready.
+var FOX2_SHOW_EXTENDED_ANALYSIS=false;
 
 function addIsoDays(iso,amount){
   var d=new Date(iso+'T00:00:00Z');
@@ -1776,7 +1779,8 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
     return analysisQuestionCardHtml(insight,insight===prioritizedStall?actionBlock:'');
   }).join('');
   window._fox2SelectedQuestions=secondaryQuestions;
-  shell.innerHTML=positionHtml+openingHtml
+  var extendedAnalysisHtml=openingHtml
     +(secondaryHtml?'<section class="analysis-conclusion-list" aria-label="Questions answered">'+secondaryHtml+'</section>':'')
     +'<details class="analysis-footnote analysis-data-basis"><summary>What this analysis is based on</summary><p>Based on '+scoreDays.length+' completed days with scores, including '+all.length+' days with enough readings for within-day comparisons. A clear increase requires a rise at least two Fat Use Zone levels above your recent baseline and a return toward it within 72 hours. Days without enough readings are left out of within-day comparisons, but their saved Fat Use Scores still count in daily and weekly comparisons. Tags show patterns, not causes. FOX2 does not diagnose stalled metabolism, muscle loss, or under-fueling.</p></details>';
+  shell.innerHTML=positionHtml+(FOX2_SHOW_EXTENDED_ANALYSIS?extendedAnalysisHtml:'');
 }

@@ -338,16 +338,36 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(!source.includes('Am I making progress overall?'));
   assert.ok(!source.includes('What stood out recently?'));
   assert.ok(source.includes('analysisStallInsight(scoreDays,history,history.activeDate)'));
-  assert.ok(source.includes("shell.innerHTML=positionHtml+openingHtml"));
+  assert.ok(source.includes("shell.innerHTML=positionHtml+(FOX2_SHOW_EXTENDED_ANALYSIS?extendedAnalysisHtml:'')"),
+    'the Analysis tab should stop after Recent Pattern while preserving the unfinished result markup');
   assert.ok(source.includes('<summary>What this analysis is based on</summary>'));
   assert.ok(source.indexOf('+helpingBlock')<source.indexOf('var prioritizedStall='));
   assert.ok(!source.includes('standaloneHelpingHtml'));
   assert.ok(source.includes('analysisSelectQuestions(['));
   assert.ok(source.includes('analysisRecentScoreOpportunity(scoreDays,history.activeDate'));
   assert.ok(source.includes('analysisQuestionCardHtml(insight'));
+  assert.equal(context.FOX2_SHOW_EXTENDED_ANALYSIS,false);
   assert.ok(source.includes("document.getElementById('history-score-trend')"));
   assert.ok(source.includes('historyTrend.innerHTML=scoreDays.length'));
   assert.ok(source.indexOf('Fat Use Score over time')<source.indexOf('var helpingBlock='));
+})();
+
+(function showsOnlyTheRecentPatternCard(){
+  const shell={innerHTML:''};
+  context.document.getElementById=id=>id==='analysis-shell'?shell:null;
+  const dates=['2026-10-01','2026-10-02','2026-10-03','2026-10-04','2026-10-05','2026-10-06'];
+  const readings=dates.flatMap((date,index)=>[
+    {reading_ts:date+'T08:00:00Z',ppm:2+index*.1},
+    {reading_ts:date+'T14:00:00Z',ppm:3+index*.1},
+    {reading_ts:date+'T20:00:00Z',ppm:2.5+index*.1}
+  ]);
+  const scores=dates.slice(0,-1).map((date,index)=>({day_date:date,auc_score:70+index*8}));
+  context.renderHistoricalAnalysis(readings,scores,[]);
+  assert.ok(shell.innerHTML.includes('analysis-tier-card'));
+  assert.ok(shell.innerHTML.includes('Your recent pattern'));
+  assert.ok(!shell.innerHTML.includes('analysis-major-title'));
+  assert.ok(!shell.innerHTML.includes('Questions answered'));
+  assert.ok(!shell.innerHTML.includes('What this analysis is based on'));
 })();
 
 (function selectsOnlyTheTwoMostRelevantSupportedQuestions(){
