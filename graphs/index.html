@@ -221,6 +221,9 @@ html, body {
 .program-maintain-mark { width:82px; height:82px; display:grid; place-items:center; margin:22px auto 16px; border-radius:50%; background:rgba(255,140,0,.12); color:var(--program-orange); font-size:36px; font-weight:900; }
 .program-center { text-align:center; }
 .program-status { min-height:18px; margin-top:13px; color:rgba(255,255,255,.42); font-size:12px; line-height:1.4; text-align:center; }
+.program-shared-banner { margin:0 0 13px; padding:9px 12px; border:1px solid rgba(255,140,0,.28); border-radius:13px; background:rgba(255,140,0,.08); color:rgba(255,255,255,.66); font-size:12px; font-weight:850; letter-spacing:.04em; text-align:center; text-transform:uppercase; }
+.program-shell.is-shared [data-program-action]:not([data-program-action="toggle-results-chart"]) { display:none!important; }
+.program-shell.is-shared .program-input { pointer-events:none; }
 .program-hidden { display:none !important; }
 .card-wrap { width: 100%; max-width: 420px; margin: auto 0; }
 .card-wrap canvas { width: 100%; height: auto; display: block; }
@@ -6055,8 +6058,63 @@ var FOX2_MEASURE_DAYS=30;
 var FOX2_PROGRAM_DAYS=FOX2_BASELINE_DAYS+FOX2_MEASURE_DAYS;
 var fox2ProgramOptionsOpen=false;
 var fox2MeasureTrendOpen=false;
-var fox2ProgramHistoryDays=[];
 var fox2AnimatedMeasureDate='';
+var fox2SharedProgramSnapshot=null;
+var fox2ProgramReadOnly=false;
+var fox2ProgramHistoryDays=[];
+
+function fox2EncodeProgramSnapshot(snapshot){
+  try{
+    var json=JSON.stringify(snapshot),bytes=new TextEncoder().encode(json),binary='';
+    for(var i=0;i<bytes.length;i++) binary+=String.fromCharCode(bytes[i]);
+    return btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  }catch(e){return '';}
+}
+
+function fox2DecodeProgramSnapshot(encoded){
+  try{
+    if(!encoded||encoded.length>16000) return null;
+    var normalized=encoded.replace(/-/g,'+').replace(/_/g,'/');
+    while(normalized.length%4) normalized+='=';
+    var binary=atob(normalized),bytes=new Uint8Array(binary.length);
+    for(var i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
+    var snapshot=JSON.parse(new TextDecoder().decode(bytes));
+    return snapshot&&snapshot.v===1&&snapshot.program&&typeof snapshot.program==='object'?snapshot:null;
+  }catch(e){return null;}
+}
+
+function fox2IsoOrBlank(value){
+  value=String(value||'');
+  return /^\d{4}-\d{2}-\d{2}$/.test(value)?value:'';
+}
+
+function fox2NormalizeSharedProgram(snapshot){
+  var defaults=fox2DefaultProgram(),raw=snapshot&&snapshot.program||{};
+  var screens=['intro','setup','baseline','measure','results','maintain'];
+  defaults.screen=screens.indexOf(raw.screen)>=0?raw.screen:'intro';
+  defaults.optedOut=false;
+  defaults.setupMode='new';
+  defaults.action=String(raw.action||'').slice(0,2000);
+  defaults.baselineStart=fox2IsoOrBlank(raw.baselineStart);
+  defaults.baselineValue=isFinite(Number(raw.baselineValue))&&Number(raw.baselineValue)>0?Number(raw.baselineValue):null;
+  defaults.baselineSource=String(raw.baselineSource||'').slice(0,40);
+  defaults.baselineRange=String(raw.baselineRange||'').slice(0,80);
+  defaults.measureStart=fox2IsoOrBlank(raw.measureStart);
+  defaults.resultHistory=Array.isArray(raw.resultHistory)?raw.resultHistory.slice(-20).map(function(item){
+    return {id:String(item&&item.id||'').slice(0,220),action:String(item&&item.action||'').slice(0,2000),before:Number(item&&item.before)||0,after:Number(item&&item.after)||0,change:Number(item&&item.change)||0,date:fox2IsoOrBlank(item&&item.date)};
+  }):[];
+  return defaults;
+}
+
+fox2SharedProgramSnapshot=fox2DecodeProgramSnapshot(params.get('program_share')||'');
+fox2ProgramReadOnly=!!fox2SharedProgramSnapshot;
+if(fox2ProgramReadOnly&&Array.isArray(fox2SharedProgramSnapshot.days)){
+  fox2ProgramHistoryDays=fox2SharedProgramSnapshot.days.reduce(function(result,day){
+    var date=fox2IsoOrBlank(day&&day.date),score=Number(day&&day.score);
+    if(date&&isFinite(score)&&score>0) result.push({date:date,score:score});
+    return result;
+  },[]).sort(function(a,b){return a.date.localeCompare(b.date);}).slice(-60);
+}
 
 function fox2ProgramStorageKey(){
   var id=params.get('id')||params.get('p')||'local';
@@ -6073,6 +6131,7 @@ function fox2DefaultProgram(){
 
 function fox2LoadProgram(){
   var fallback=fox2DefaultProgram();
+  if(fox2ProgramReadOnly) return fox2NormalizeSharedProgram(fox2SharedProgramSnapshot);
   try{
     var saved=JSON.parse(localStorage.getItem(fox2ProgramStorageKey())||'null');
     if(!saved||typeof saved!=='object') return fallback;
@@ -6083,6 +6142,7 @@ function fox2LoadProgram(){
 var fox2Program=fox2LoadProgram();
 
 function fox2SaveProgram(){
+  if(fox2ProgramReadOnly) return;
   try{ localStorage.setItem(fox2ProgramStorageKey(),JSON.stringify(fox2Program)); }catch(e){}
 }
 
@@ -6102,6 +6162,7 @@ function fox2DaysBetween(start,end){
 }
 
 function fox2SetProgramHistory(readingRows,scoreRows){
+  if(fox2ProgramReadOnly) return;
   var readingCounts={};
   (readingRows||[]).forEach(function(row){
     if(!row||!row.reading_ts) return;
@@ -6128,6 +6189,37 @@ function fox2AllCompletedScoreDays(){
     byDate[day.isoDate]={date:day.isoDate,score:Number(day.score)};
   });
   return Object.keys(byDate).sort().map(function(date){return byDate[date];});
+}
+
+function fox2BuildProgramShareSnapshot(){
+  var sharedResults=(Array.isArray(fox2Program.resultHistory)?fox2Program.resultHistory:[]).slice(-10).map(function(item){
+    return {id:String(item&&item.id||'').slice(0,220),action:String(item&&item.action||'').slice(0,500),before:Number(item&&item.before)||0,after:Number(item&&item.after)||0,change:Number(item&&item.change)||0,date:fox2IsoOrBlank(item&&item.date)};
+  });
+  return {
+    v:1,
+    program:{
+      screen:fox2Program.screen,
+      action:fox2Program.action,
+      baselineStart:fox2Program.baselineStart,
+      baselineValue:fox2Program.baselineValue,
+      baselineSource:fox2Program.baselineSource,
+      baselineRange:fox2Program.baselineRange,
+      measureStart:fox2Program.measureStart,
+      resultHistory:sharedResults
+    },
+    days:fox2AllCompletedScoreDays().slice(-60)
+  };
+}
+
+function fox2ProgramShareUrl(){
+  var url=new URL(window.location.href);
+  var encoded=fox2EncodeProgramSnapshot(fox2BuildProgramShareSnapshot());
+  if(encoded) url.searchParams.set('program_share',encoded);
+  url.searchParams.delete('sync');
+  url.searchParams.delete('handoff');
+  url.searchParams.delete('sync_rev');
+  url.searchParams.delete('program');
+  return url.toString();
 }
 
 function fox2CompletedScoresSince(start){
@@ -6402,8 +6494,9 @@ function fox2MaintainHtml(){
 function fox2RenderProgram(){
   var shell=document.getElementById('program-shell');
   if(!shell) return;
+  shell.classList.toggle('is-shared',fox2ProgramReadOnly);
   var metrics=fox2ProgramMetrics(),screen=fox2Program.screen||'intro',body='';
-  if(screen==='measure'&&fox2Program.measureStart&&fox2DaysBetween(fox2Program.measureStart,fox2TodayIso())>=FOX2_MEASURE_DAYS&&fox2FinalizeResult(metrics)){
+  if(!fox2ProgramReadOnly&&screen==='measure'&&fox2Program.measureStart&&fox2DaysBetween(fox2Program.measureStart,fox2TodayIso())>=FOX2_MEASURE_DAYS&&fox2FinalizeResult(metrics)){
     fox2Program.screen='results'; screen='results'; fox2ProgramOptionsOpen=false; fox2SaveProgram();
   }
   if(screen==='setup') body=fox2SetupHtml();
@@ -6412,8 +6505,9 @@ function fox2RenderProgram(){
   else if(screen==='results') body=fox2ResultsHtml(metrics);
   else if(screen==='maintain') body=fox2MaintainHtml();
   else body=fox2IntroHtml();
-  shell.innerHTML=fox2ProgressHtml(metrics)+body+'<div class="program-status" id="program-status"></div>';
+  shell.innerHTML=(fox2ProgramReadOnly?'<div class="program-shared-banner">Shared FOX2 program</div>':'')+fox2ProgressHtml(metrics)+body+'<div class="program-status" id="program-status"></div>';
   var input=shell.querySelector('#program-action-input');
+  if(input&&fox2ProgramReadOnly) input.readOnly=true;
   if(input) input.addEventListener('input',function(){fox2Program.action=input.value;});
   shell.querySelectorAll('[data-program-action]').forEach(function(button){
     button.addEventListener('click',function(){fox2HandleProgramAction(button.dataset.programAction);});
@@ -6469,6 +6563,7 @@ function fox2ConfirmPreviousBaseline(){
 }
 
 function fox2HandleProgramAction(action){
+  if(fox2ProgramReadOnly&&action!=='toggle-results-chart') return;
   var input=document.getElementById('program-action-input');
   if(input) fox2Program.action=input.value.trim();
   var metrics=fox2ProgramMetrics();
@@ -6523,7 +6618,7 @@ function fox2HandleProgramAction(action){
 
 function fox2RouteInitialPage(){
   if(window.fox2SetInitialPage){
-    var activeProgram=!fox2Program.optedOut&&fox2Program.screen!=='maintain';
+    var activeProgram=fox2ProgramReadOnly||(!fox2Program.optedOut&&fox2Program.screen!=='maintain');
     window.fox2SetInitialPage(activeProgram?0:1);
   }
 }
@@ -6537,11 +6632,16 @@ function fox2InitProgram(){
 var currentPage = 0;
 
 function handleBottomShare() {
-  var url = window.location.href;
+  var sharingProgram=currentPage===0;
+  var url = sharingProgram?fox2ProgramShareUrl():window.location.href;
+  var title=sharingProgram?'FOX2 Program':'FOX2 Results';
   if (navigator.share) {
-    navigator.share({ title: 'FOX2 Results', url: url }).catch(function() {});
+    navigator.share({ title: title, url: url }).catch(function() {});
   } else {
-    navigator.clipboard && navigator.clipboard.writeText(url);
+    if(navigator.clipboard) navigator.clipboard.writeText(url).then(function(){
+      var status=document.getElementById('program-status');
+      if(status&&sharingProgram) status.textContent='Share link copied.';
+    }).catch(function(){});
   }
 }
 

@@ -13,7 +13,7 @@ assert.ok(programTab>=0&&programTab<dataTab&&dataTab<historyTab&&historyTab<anal
 assert.ok(source.includes('id="program-shell"'),'program page should be mounted in the pager');
 assert.ok(source.includes("fox2Program.optedOut=true"),'the intro should persist an explicit opt-out');
 assert.ok(source.includes("window.fox2GoToPage(1,true)"),'opting out should route directly to Data');
-assert.ok(source.includes("var activeProgram=!fox2Program.optedOut&&fox2Program.screen!=='maintain'"),
+assert.ok(source.includes("var activeProgram=fox2ProgramReadOnly||(!fox2Program.optedOut&&fox2Program.screen!=='maintain')"),
   'opted-out and maintenance users should open on Data on later visits');
 assert.ok(source.includes('Use FOX2 without the program'),'intro should expose a clear non-program path');
 assert.ok(source.includes('Finish measuring and view results'));
@@ -110,6 +110,10 @@ assert.ok(!source.includes('program-score-trend-line'),
   'completed daily results should use bars rather than a continuous line');
 assert.ok(source.includes("fox2MeasureTrendOpen=!fox2MeasureTrendOpen"),
   'the result graph caret should open and close the graph');
+assert.ok(source.includes("if(fox2ProgramReadOnly&&action!=='toggle-results-chart') return"),
+  'shared programs should retain the Data disclosure while blocking program mutations');
+assert.ok(source.includes("shell.querySelectorAll('[data-program-score-bar]')"),
+  'shared program bars should remain selectable');
 assert.ok(source.includes("chart.scrollIntoView({behavior:'smooth',block:'nearest',inline:'nearest'})"),
   'opening the graph should bring the newly revealed content into view');
 assert.ok(source.includes("percent>100?'+'+(percent-100):String(percent)"),
@@ -130,6 +134,16 @@ assert.ok(source.includes("options.scrollIntoView({behavior:'smooth',block:'star
   'opening measure options should bring the controls into view');
 assert.ok(source.includes('window.fox2SetInitialPage(activeProgram?0:1)'),
   'every load during an active program should route to Program');
+assert.ok(source.includes("params.get('program_share')||''"),
+  'a shared program snapshot should load from its URL');
+assert.ok(source.includes("url.searchParams.set('program_share',encoded)"),
+  'sharing from Program should add the read-only snapshot to the results URL');
+assert.ok(source.includes("var url = sharingProgram?fox2ProgramShareUrl():window.location.href"),
+  'the always-available Share button should use a program-aware link on Program');
+assert.ok(source.includes('Shared FOX2 program'),
+  'receivers should be told that they are viewing a shared program');
+assert.ok(source.includes('.program-shell.is-shared [data-program-action]:not([data-program-action="toggle-results-chart"])'),
+  'only mutation controls should be hidden in the shared view');
 assert.ok(!source.includes('activeProgram&&returningFromSync'),
   'active-program routing should not depend on a sync-return query parameter');
 assert.ok(source.includes("if('scrollRestoration' in history) history.scrollRestoration='manual'"),
