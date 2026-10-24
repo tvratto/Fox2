@@ -90,8 +90,12 @@ assert.ok(source.includes('function fox2MeasureTrendHtml(metrics)'),
   'the expandable result should graph completed Fat Use Scores');
 assert.ok(source.includes('program-score-bars-baseline'),
   'the result bar graph should retain baseline as a quiet comparison');
-assert.ok(source.includes("var chartWidth=Math.max(308,days.length*34)"),
+assert.ok(source.includes("var contentWidth=days.length*34"),
   'all completed days should remain in a horizontally scrollable chart');
+assert.ok(source.includes('program-score-bars-axis'),
+  'the daily bar chart should have a visible x axis');
+assert.ok(source.includes("var columns='repeat('+days.length+',34px)'"),
+  'fixed-width day columns should keep early results anchored to the left');
 assert.ok(source.includes('data-program-score-bar'),
   'individual day bars should expose their date and Fat Use Score');
 assert.ok(source.includes("if(bars) bars.scrollLeft=bars.scrollWidth"),

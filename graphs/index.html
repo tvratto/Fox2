@@ -193,7 +193,8 @@ html, body {
 .program-score-bars { position:relative; height:144px; min-width:100%; }
 .program-score-bars-baseline { position:absolute; z-index:1; left:12px; right:12px; border-top:1.5px dashed rgba(255,255,255,.38); pointer-events:none; }
 .program-score-bars-baseline span { position:absolute; right:0; bottom:4px; color:rgba(255,255,255,.5); font-size:10px; font-weight:800; }
-.program-score-bars-grid { position:absolute; z-index:2; inset:0 12px 0; display:grid; align-items:end; }
+.program-score-bars-axis { position:absolute; z-index:3; left:12px; right:12px; bottom:17px; border-top:1.5px solid rgba(255,255,255,.42); pointer-events:none; }
+.program-score-bars-grid { position:absolute; z-index:2; top:0; bottom:0; left:12px; display:grid; align-items:end; }
 .program-score-bar { min-width:0; height:144px; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:7px; padding:0 2px; border:0; background:transparent; color:rgba(255,255,255,.42); font:750 10px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; cursor:pointer; }
 .program-score-bar-fill { width:18px; max-width:100%; min-height:4px; border-radius:9px; background:var(--program-orange); box-shadow:0 0 12px rgba(255,140,0,.12); transition:filter .18s ease,box-shadow .18s ease,transform .18s ease; }
 .program-score-bar.is-selected .program-score-bar-fill { filter:brightness(1.2); box-shadow:0 0 0 2px rgba(255,255,255,.82),0 0 14px rgba(255,140,0,.42); transform:translateY(-1px); }
@@ -6269,8 +6270,9 @@ function fox2MeasureTrendHtml(metrics){
   var scaleMax=Math.max.apply(null,values.concat([baseline]))*1.12;
   var plotHeight=104;
   var baselineHeight=Math.max(4,Math.round(baseline/scaleMax*plotHeight));
-  var chartWidth=Math.max(308,days.length*34);
-  var columns='repeat('+days.length+',minmax(30px,1fr))';
+  var contentWidth=days.length*34;
+  var chartWidth=Math.max(308,contentWidth+24);
+  var columns='repeat('+days.length+',34px)';
   var bars=days.map(function(day,index){
     var value=values[index],height=Math.max(4,Math.round(value/scaleMax*plotHeight));
     var parts=day.date.split('-'),dayNumber=String(Number(parts[2]||index+1));
@@ -6281,7 +6283,7 @@ function fox2MeasureTrendHtml(metrics){
     +'<div class="program-score-trend-head"><strong>Fat Use Score</strong><span id="program-score-bar-detail">'+fox2Escape(fox2ShortDate(latest.date))+' · '+fox2Round(latestValue)+'</span></div>'
     +'<div class="program-score-bars-scroll" role="group" aria-label="Daily Fat Use Scores since your action began. Scroll horizontally for earlier days."><div class="program-score-bars" style="width:'+chartWidth+'px">'
     +'<div class="program-score-bars-baseline" style="bottom:'+(17+baselineHeight)+'px"><span>Baseline '+fox2Round(baseline)+'</span></div>'
-    +'<div class="program-score-bars-grid" style="grid-template-columns:'+columns+'">'+bars+'</div></div></div></div>';
+    +'<div class="program-score-bars-axis" aria-hidden="true"></div><div class="program-score-bars-grid" style="width:'+contentWidth+'px;grid-template-columns:'+columns+'">'+bars+'</div></div></div></div>';
 }
 
 function fox2MeasureDashboardHtml(metrics){
