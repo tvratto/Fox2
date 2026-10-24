@@ -37,14 +37,14 @@ Repeated-tag evidence belongs inside the question it helps answer. If FOX2 asks 
 
 | Internal concept | Customer-facing language |
 | --- | --- |
-| Individual breath-acetone reading | Fat Zone |
-| Daily AUC | Daily Fuel Score |
-| Higher breath-acetone signal | Your Fat Zone went up |
-| In-day variability / responsive day | Your Fat Zone went up and came back down |
+| Individual breath-acetone reading | Fat Use Zone |
+| Daily AUC | Fat Use Score |
+| Higher breath-acetone signal | Your Fat Use Zone went up |
+| In-day variability / responsive day | Your Fat Use Zone went up and came back down |
 | Week-to-week score increase | Your average score went up |
 | Narrower day-to-day range at a higher level | Your scores went up and stayed up more often |
 | Low, flat pattern | We are not seeing a clear increase yet |
-| High, flat pattern | Your Fat Zone has stayed high for a long time |
+| High, flat pattern | Your Fat Use Zone has stayed high for a long time |
 | Insufficient data | FOX2 is still building your starting point |
 
 Avoid customer-facing terms such as `classifiable`, `responsive`, `variability`, `state`, `quiet`, `inconsistent`, and `opened quietly` unless they are immediately translated into ordinary language.
@@ -60,9 +60,9 @@ FOX2 should sound like a thoughtful coach—not like a report.
 - Put the person or their results first: “Your scores went up,” not “An upward change was observed.”
 - Prefer ordinary verbs: `went up`, `came down`, `stayed about the same`, `went up and down`, and `happened more often`.
 - Avoid softened abstractions such as `moved higher`, `showed an upward trajectory`, `displayed responsiveness`, and `demonstrated improved repeatability`.
-- Say “Fat Zone” when discussing a reading and “Daily Fuel Score” when discussing a day. Do not call both of them “your numbers.”
+- Say “Fat Use Zone” when discussing a reading and “Fat Use Score” when discussing a day. Do not call both of them “your numbers.”
 - Use `drawing on fat for energy` in progress messages. It is short, conversational, and appropriately qualified with `may` or `your results suggest`.
-- Do not use Fat Zone or Daily Fuel Score as the main progress message. Use them only under “Why FOX2 says this.”
+- Do not use Fat Use Zone or Fat Use Score as the main progress message. Use them only under “Why FOX2 says this.”
 - Keep the main answer to one or two short sentences. Each sentence should do one job.
 - Keep most exact numbers, thresholds, averages, and methods under “Why FOX2 says this.”
 - Keep the complete evidence under “Why FOX2 says this.” Shortening the visible answer must never remove the calculation, timeframe, exclusions, or supporting visual.
@@ -73,12 +73,12 @@ FOX2 should sound like a thoughtful coach—not like a report.
 
 ### The two FOX2 measures
 
-- **Fat Zone** is the number from an individual measurement. It can range from 1 to 20, although most readings are between 1 and 10.
-- **Daily Fuel Score** is the area under the Fat Zone curve for the day. A higher Fat Zone, more time at a higher Fat Zone, or both will raise the Daily Fuel Score.
+- **Fat Use Zone** is the number from an individual measurement. It can range from 1 to 20, although most readings are between 1 and 10.
+- **Fat Use Score** is the area under the Fat Use Zone curve for the day. A higher Fat Use Zone, more time at a higher Fat Use Zone, or both will raise the Fat Use Score.
 
 The customer explanation is:
 
-> Your Fat Zone shows what FOX2 found in one breath measurement. Your Daily Fuel Score adds up how high your Fat Zone was and how long it stayed there during the day.
+> Your Fat Use Zone shows what FOX2 found in one breath measurement. Your Fat Use Score adds up how high your Fat Use Zone was and how long it stayed there during the day.
 
 The metabolic bridge is:
 
@@ -86,11 +86,11 @@ The metabolic bridge is:
 
 Use `suggests`, `may`, and `appears` for metabolic meaning. Breath acetone supports an inference about making ketone fuel from fat. It does not directly measure total fat burned, body-fat loss, or the exact share of energy coming from fat.
 
-### Daily Fuel Score tiers
+### Fat Use Score tiers
 
 The analysis uses four internal tiers to interpret a person's recent position:
 
-| Daily Fuel Score | Internal interpretation | Main customer meaning |
+| Fat Use Score | Internal interpretation | Main customer meaning |
 | --- | --- | --- |
 | 0–60 | Low fat use | Building toward balanced fuel use |
 | Above 60 through 120 | Balanced fuel use | A steady pattern that may be useful for maintenance; stronger days may show how to move higher if body-fat reduction is the goal |
@@ -105,31 +105,31 @@ Recent position and direction are separate. Someone holding steady in balanced f
 
 | Evidence | What it can answer | What it cannot answer by itself |
 | --- | --- | --- |
-| Fat Zones during one day | Whether the Fat Zone went up or came back down that day | Whether the person is making multi-week progress |
-| Daily Fuel Scores | Whether the Fat Zone was higher, lasted longer, or both across measured days | What happened inside any one day |
+| Fat Use Zones during one day | Whether the Fat Use Zone went up or came back down that day | Whether the person is making multi-week progress |
+| Fat Use Scores | Whether the Fat Use Zone was higher, lasted longer, or both across measured days | What happened inside any one day |
 | Monday-Sunday summaries | How one week compares with another | What caused the difference |
 | Repeated tags | Whether a repeated choice is associated with later measurements or scores | Whether the choice caused the result |
 | Complete personal history | Personal highs, lows, streaks, and whether a change has lasted | Clinical outcomes such as fat loss, muscle loss, A1C change, or resting metabolic rate |
 
-The requirement for at least three measurements spanning six hours applies only to conclusions about change within a day. It must never remove a valid saved Daily Fuel Score from daily or weekly score comparisons.
+The requirement for at least three measurements spanning six hours applies only to conclusions about change within a day. It must never remove a valid saved Fat Use Score from daily or weekly score comparisons.
 
 ## Question inventory
 
 | Priority | User question | Underlying concern | Primary timeframe | Minimum evidence | Possible answer families | Supporting visual |
 | --- | --- | --- | --- | --- | --- | --- |
 | 1 | Am I making progress? | Is my body drawing on fat for energy more often, for longer, or across more days? | Several timescales, from the latest well-measured day through completed calendar weeks | Depends on the sign of progress; each answer must state its timeframe and evidence strength | Happening more often; lasting longer; showing up across more days; not clear yet | One small visual for each sign of progress being described |
-| 2 | Could I be stalled? | If I am trying to reduce body fat, do my recent results help explain why progress feels stalled? | Latest seven calendar days, with longer history for context | At least four saved Daily Fuel Scores; recent average below 120; later scores roughly level or lower | Possibly stalled with an encouraging sign; possibly stalled with a tagged experiment; not currently supported | Seven-day score direction plus only the within-day evidence used in the answer |
-| 3 | Is my body drawing on fat for energy more often? | Does the Fat Zone go higher than it used to? | Recent measured days, with history for context | At least two Daily Fuel Scores or one well-measured day | Not seen yet; seen briefly; happening more often; lasting longer | Highlighted higher days or a specifically named day curve |
-| 4 | Does my Fat Zone change during the day? | Does the pattern suggest that fat use changes as the day changes? | Several individual days | At least three readings spanning six hours on each included day | Not enough coverage; little change; changes on some days; changes often | Small multiples: one clearly labeled curve per date |
-| 5 | Is this shift showing up on more days? | Is the change happening often, not just once in a while? | Completed weeks | At least four Daily Fuel Scores in each compared week | Too early; promising but occasional; happening across more days; continuing | Weekly average with day-to-day range |
+| 2 | Could I be stalled? | If I am trying to reduce body fat, do my recent results help explain why progress feels stalled? | Latest seven calendar days, with longer history for context | At least four saved Fat Use Scores; recent average below 120; later scores roughly level or lower | Possibly stalled with an encouraging sign; possibly stalled with a tagged experiment; not currently supported | Seven-day score direction plus only the within-day evidence used in the answer |
+| 3 | Is my body drawing on fat for energy more often? | Does the Fat Use Zone go higher than it used to? | Recent measured days, with history for context | At least two Fat Use Scores or one well-measured day | Not seen yet; seen briefly; happening more often; lasting longer | Highlighted higher days or a specifically named day curve |
+| 4 | Does my Fat Use Zone change during the day? | Does the pattern suggest that fat use changes as the day changes? | Several individual days | At least three readings spanning six hours on each included day | Not enough coverage; little change; changes on some days; changes often | Small multiples: one clearly labeled curve per date |
+| 5 | Is this shift showing up on more days? | Is the change happening often, not just once in a while? | Completed weeks | At least four Fat Use Scores in each compared week | Too early; promising but occasional; happening across more days; continuing | Weekly average with day-to-day range |
 | 6 | What stood out recently? | Did a recent day genuinely differ from my own history? | Latest five calendar days | A result that is unusual relative to enough personal history, not merely the latest qualifying rise | Unusually strong score; unusually large or long rise; repeated tag association; nothing worth showing | The named day or period only |
-| 7 | Could I be pushing too hard? | Has my Fat Zone stayed very high without coming back down? | Recent weeks | Repeated high Daily Fuel Scores plus enough Fat Zone readings across the day | No such pattern; check that you are eating enough; the pattern has continued and may be worth discussing with a professional | Weekly trend plus clearly labeled high, steady days |
+| 7 | Could I be pushing too hard? | Has my Fat Use Zone stayed very high without coming back down? | Recent weeks | Repeated high Fat Use Scores plus enough Fat Use Zone readings across the day | No such pattern; check that you are eating enough; the pattern has continued and may be worth discussing with a professional | Weekly trend plus clearly labeled high, steady days |
 | 8 | What appears to be helping? | Which repeated choices are followed by a more favorable pattern? | Repeated tagged occasions | Threshold depends on comparison type; see tag contract | Still gathering; same-day association; later-reading association; next-day association | Tagged versus comparison occasions |
-| 9 | How is this week going? | Is the current week supporting progress, holding steady, or offering time to recover? This is supporting evidence for “Am I making progress?”, not a separate headline card. | Current Monday through last measured day | One or more Daily Fuel Scores this week | Early start; ahead of the same point last week; similar; behind with time to act; recovering | Current week versus the same weekdays last week |
+| 9 | How is this week going? | Is the current week supporting progress, holding steady, or offering time to recover? This is supporting evidence for “Am I making progress?”, not a separate headline card. | Current Monday through last measured day | One or more Fat Use Scores this week | Early start; ahead of the same point last week; similar; behind with time to act; recovering | Current week versus the same weekdays last week |
 | 10 | What should I try next? | What is the smallest useful experiment based on my evidence gap? | Current evidence state | Any amount of data | Measure across more of the day; repeat a promising choice; try one sustainable change; protect adequate food/protein intake | Usually no chart; link to the evidence that motivated the suggestion |
 | 11 | Is this my strongest period so far? | How does the current period compare with my own history? | Complete history | At least three usable completed weeks | New personal high; among stronger periods; within usual range | Current week highlighted against personal history |
 | 12 | Is the change lasting? | Has the better pattern lasted beyond one good day or week? | Several completed weeks | At least three weeks that can be fairly compared | Too early; starting; lasting; eased recently | Weekly summaries in date order |
-| 13 | What happened on this day? | How did my Fat Zone change that day? | One named date | Readings from that date | Went up; came down; went up and came back down; changed little; not enough readings | One curve titled with the exact date |
+| 13 | What happened on this day? | How did my Fat Use Zone change that day? | One named date | Readings from that date | Went up; came down; went up and came back down; changed little; not enough readings | One curve titled with the exact date |
 
 ## Contract 1: Am I making progress?
 
@@ -156,14 +156,14 @@ These steps do not always happen in order. FOX2 should say what is changing now 
 
 ### Signs of progress
 
-Daily Fuel Scores use every day with a saved score. A missing day is never counted as zero. FOX2 only talks about changes within a day when there are at least three measurements spread across six hours.
+Fat Use Scores use every day with a saved score. A missing day is never counted as zero. FOX2 only talks about changes within a day when there are at least three measurements spread across six hours.
 
 | Sign of progress | Question it answers | Comparison | Minimum evidence | Main answer and direction | Matching visual |
 | --- | --- | --- | --- | --- | --- |
-| Fat Zone goes higher than usual | “Is my body starting to change?” | Latest well-measured day or two versus the person's recent pattern | One well-measured recent day plus enough earlier measurements to know what is usual | “Your body may be drawing on fat for energy, but only briefly. [Day and time] stood out. Look back at what was different before then and choose one safe part to try again.” | The named day's curve over a light band showing the usual range |
-| Fat Zone goes up more often | “Is this happening again?” | Recent well-measured days versus an earlier group | Several well-measured days in each period | “Your results suggest your body is drawing on fat for energy more often. Look at what happened before these times and choose one thing to test again.” | Two simple counts with the exact numbers in the detail view |
-| Daily Fuel Scores go up | “Is the change lasting longer?” | Daily Fuel Scores within the current week or most recent measured days | At least three Daily Fuel Scores, without filling missing days | “Your body may be drawing on fat for energy for more of the day. Look at what your stronger days had in common and repeat one part.” | Dated score markers connected only where dates are consecutive |
-| One stronger day | “Did I have a strong day?” | Latest Daily Fuel Score versus the person's recent scores | One completed score plus enough earlier score days to know what is usual | “Your body may have spent more time drawing on fat for energy yesterday. Think about what was different the night before and that morning. Choose one safe part to try again.” | Latest day highlighted against the recent range |
+| Fat Use Zone goes higher than usual | “Is my body starting to change?” | Latest well-measured day or two versus the person's recent pattern | One well-measured recent day plus enough earlier measurements to know what is usual | “Your body may be drawing on fat for energy, but only briefly. [Day and time] stood out. Look back at what was different before then and choose one safe part to try again.” | The named day's curve over a light band showing the usual range |
+| Fat Use Zone goes up more often | “Is this happening again?” | Recent well-measured days versus an earlier group | Several well-measured days in each period | “Your results suggest your body is drawing on fat for energy more often. Look at what happened before these times and choose one thing to test again.” | Two simple counts with the exact numbers in the detail view |
+| Fat Use Scores go up | “Is the change lasting longer?” | Fat Use Scores within the current week or most recent measured days | At least three Fat Use Scores, without filling missing days | “Your body may be drawing on fat for energy for more of the day. Look at what your stronger days had in common and repeat one part.” | Dated score markers connected only where dates are consecutive |
+| One stronger day | “Did I have a strong day?” | Latest Fat Use Score versus the person's recent scores | One completed score plus enough earlier score days to know what is usual | “Your body may have spent more time drawing on fat for energy yesterday. Think about what was different the night before and that morning. Choose one safe part to try again.” | Latest day highlighted against the recent range |
 | More higher-scoring days | “Is this happening across more days?” | Current or latest complete week versus an earlier week | Enough score days in both periods for a fair comparison | “This shift toward fat for energy is showing up on more days. Look for one routine your stronger days shared and test it again.” | The useful band count, with exact thresholds in the detail view |
 | Weekly average goes up | “Is this becoming a wider change?” | Completed Monday-Sunday weeks | At least two completed weeks with enough score days | “This shift toward fat for energy is showing up across the week. Compare your stronger week with the week before and choose one change to keep.” | Weekly average and daily range, up to eight completed weeks |
 | Higher scores happen more often | “Can I repeat this?” | Latest completed week versus earlier weeks | Enough score days in each week | “This shift is happening more often. Keep the routine that appears most often before your stronger days.” | Weekly average with a stable or smaller daily range |
@@ -177,7 +177,7 @@ The signs of progress are not separate, competing states. FOX2 may report severa
 
 Put the supporting data under **Why FOX2 says this**:
 
-> Your Fat Zone went above its usual range on several recent days. Your Daily Fuel Scores also went up. Your weekly average has not gone up yet.
+> Your Fat Use Zone went above its usual range on several recent days. Your Fat Use Scores also went up. Your weekly average has not gone up yet.
 
 The answer should contain:
 
@@ -228,8 +228,8 @@ Start with the strongest sign FOX2 can support:
 3. Higher scores happening more often.
 4. More higher-scoring days.
 5. Daily scores going up.
-6. Fat Zone going up more often during the day.
-7. One recent strong day or higher Fat Zone.
+6. Fat Use Zone going up more often during the day.
+7. One recent strong day or higher Fat Use Zone.
 
 An early change still matters. FOX2 should call it a promising start, not proof of a lasting change.
 
@@ -253,20 +253,20 @@ There is no single progress chart. Each claim gets a small visual using the same
 
 - A weekly claim uses a completed-week chart.
 - A current-week daily-score claim uses dated daily score markers.
-- A claim that the Fat Zone goes up more often uses two clearly named periods.
-- A claim about one strong day uses that day's Fat Zone curve and the person's usual range.
+- A claim that the Fat Use Zone goes up more often uses two clearly named periods.
+- A claim about one strong day uses that day's Fat Use Zone curve and the person's usual range.
 - A one-day curve must never be presented as proof of a weekly trend.
 
-Every visual needs a short title that says what time it covers, such as “Your completed weeks,” “Your Daily Fuel Scores this week,” or “Your Fat Zone on September 29.”
+Every visual needs a short title that says what time it covers, such as “Your completed weeks,” “Your Fat Use Scores this week,” or “Your Fat Use Zone on September 29.”
 
 ### Internal thresholds to test
 
 These numbers drive the analysis. They do not belong in the main customer message.
 
-- A weekly or multi-day Daily Fuel Score change of 10 points or more is provisionally meaningful.
+- A weekly or multi-day Fat Use Score change of 10 points or more is provisionally meaningful.
 - A change of 20 percentage points or more in days above a threshold or days with clear within-day movement is provisionally meaningful.
 - “Becoming easier to repeat” provisionally requires the mean to rise by at least 10 while the day-to-day range does not widen materially; the earlier proposal requiring the range to narrow by 10 may be too restrictive.
-- A trend within the current week must use at least three saved Daily Fuel Scores and must disclose the exact number of measured days.
+- A trend within the current week must use at least three saved Fat Use Scores and must disclose the exact number of measured days.
 
 These are product hypotheses, not validated biological cutoffs. We should test them against Tim's and Maggie's histories and additional users.
 
@@ -274,7 +274,7 @@ These are product hypotheses, not validated biological cutoffs. We should test t
 
 The expanded explanation may say:
 
-> FOX2 looks for change in three places: your Fat Zone during the day, your Daily Fuel Scores across days, and your weekly pattern. Each answer tells you which period it covers.
+> FOX2 looks for change in three places: your Fat Use Zone during the day, your Fat Use Scores across days, and your weekly pattern. Each answer tells you which period it covers.
 
 ### Claim boundary
 
@@ -292,7 +292,7 @@ FOX2 does not know the person's goal and does not measure weight loss directly. 
 
 The Analysis page shows this question when all of these are true:
 
-1. The latest seven calendar days contain at least four saved Daily Fuel Scores.
+1. The latest seven calendar days contain at least four saved Fat Use Scores.
 2. Missing days are ignored, never filled with zero.
 3. The seven-day average is below 120, FOX2's internal boundary for the range where body-fat loss becomes more likely.
 4. Either the latest three scored days have gone down by at least five points overall, or the later half of the seven-day window averages no more than five points above the earlier half.
@@ -306,12 +306,12 @@ The Analysis page must continue to answer this question whenever the evidence su
 The main answer has three parts:
 
 1. **Possibly stalled:** explain that the recent scores remain below the higher range and have stayed about the same or gone down.
-2. **Encouraging evidence:** call out higher-range days, recurring Fat Zone changes, or another real sign that the person can build on. Describe a recurring pattern as recurring; never present an ordinary day as a unique event.
+2. **Encouraging evidence:** call out higher-range days, recurring Fat Use Zone changes, or another real sign that the person can build on. Describe a recurring pattern as recurring; never present an ordinary day as a unique event.
 3. **Helpful association, when supported:** include a positive repeated tag result. Keep inconclusive and negative tag findings silent.
 
 Example:
 
-> Possibly. If you’re trying to reduce body fat, your recent results may help explain why progress feels stalled. Your Daily Fuel Scores have stayed about the same and remain below the range where body-fat loss becomes more likely. The encouraging part is that you already reach the higher range on some days.
+> Possibly. If you’re trying to reduce body fat, your recent results may help explain why progress feels stalled. Your Fat Use Scores have stayed about the same and remain below the range where body-fat loss becomes more likely. The encouraging part is that you already reach the higher range on some days.
 
 ### Tag analysis
 
@@ -325,7 +325,7 @@ For normal coaching, FOX2 analyzes the most-used tags from the latest eight week
 | Across the tagged day | At least five tagged score days and five comparison days; tagged median at least five points higher | “On days you walk, your results suggest your body may use fat for energy for more of the day.” |
 | The following day | Enough tagged follow-up and comparison days; next-day median at least ten points higher | “Your results suggest walking may support more fat use into the following day.” |
 
-Exact qualifying counts belong under `Why FOX2 says this`, phrased as “This pattern appeared after 6 of 9 recent tagged walks.” The main answer must describe the metabolic meaning, not announce a Fat Zone calculation.
+Exact qualifying counts belong under `Why FOX2 says this`, phrased as “This pattern appeared after 6 of 9 recent tagged walks.” The main answer must describe the metabolic meaning, not announce a Fat Use Zone calculation.
 
 Inconclusive tags, unused tags, and tags without a positive association remain silent. FOX2 must never tell someone that walking, running, or another choice is “not working.” A breath-acetone result cannot measure every benefit of that behavior.
 
@@ -333,7 +333,7 @@ Inconclusive tags, unused tags, and tags without a positive association remain s
 
 The deeper historical search activates only when all of these are true:
 
-1. The latest 21 calendar days contain at least 12 saved Daily Fuel Scores.
+1. The latest 21 calendar days contain at least 12 saved Fat Use Scores.
 2. The average remains below 120.
 3. The later half of the period averages no more than five points above the earlier half.
 4. No positive association is available among the most-used tags from the latest eight weeks.
@@ -344,7 +344,7 @@ The message must clearly describe the result as earlier evidence:
 
 > Earlier in your history, walking may have helped your metabolism shift toward using more fat for energy afterward. If walking still works for you, it may be worth trying again and using the same tag so FOX2 can see whether the pattern returns.
 
-Timed tags may be compared with measurements before and after the event. Day-level tags may be compared with same-day and next-day Daily Fuel Scores. A tag can show an association, never causation.
+Timed tags may be compared with measurements before and after the event. Day-level tags may be compared with same-day and next-day Fat Use Scores. A tag can show an association, never causation.
 
 ### Claim boundary
 
@@ -358,7 +358,7 @@ For each remaining question, we should settle the decisions below before changin
 | --- | --- |
 | How is this week going? | Whether comparison is always the same weekdays last week, the previous full-week average, or both in a strict hierarchy |
 | Is my body drawing on fat for energy more often? | Whether one well-measured day is enough for an early “yes,” and how to explain the difference between a brief rise and a change that lasts |
-| Does my Fat Zone change during the day? | Whether a return must happen before midnight or may happen within the current 72-hour rule |
+| Does my Fat Use Zone change during the day? | Whether a return must happen before midnight or may happen within the current 72-hour rule |
 | Is this shift showing up on more days? | Whether this requires a smaller score range, more days above a threshold, or both |
 | Could I be pushing too hard? | The duration and thresholds that justify a careful protective prompt without implying a diagnosis |
 | What appears to be helping? | Exact minimum repeats for later-reading, same-day, and next-day tag comparisons |
@@ -371,8 +371,8 @@ For each remaining question, we should settle the decisions below before changin
 
 These are specification gaps, not necessarily software defects:
 
-1. “Am I making progress?” is currently treated as one selected conclusion. The intended contract joins all useful signs of progress, from one higher Fat Zone through a change that lasts for weeks. Each statement needs its own matching evidence.
-2. Weekly score comparisons and Fat Zone changes within a day are not always separated in visible language.
+1. “Am I making progress?” is currently treated as one selected conclusion. The intended contract joins all useful signs of progress, from one higher Fat Use Zone through a change that lasts for weeks. Each statement needs its own matching evidence.
+2. Weekly score comparisons and Fat Use Zone changes within a day are not always separated in visible language.
 3. The current response-return rule may extend as far as 72 hours, although the interface describes the result as change “during the day.”
 4. Several useful historical signals already calculated by the state engine—personal highs, threshold streaks, and first higher-use weeks—are not yet translated into customer questions.
 5. The interface now ranks a first set of evidence-backed secondary questions—stall, sustained high results, a change lasting across completed weeks, a personal-best period, a genuinely unusual recent day, and a data-based next step—and shows no more than two. The remaining inventory still needs agreed contracts before it joins the router.

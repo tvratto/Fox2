@@ -78,7 +78,7 @@ function analysisLookbackWindow(days,tagRows,referenceDate,maxAgeDays){
   }else{
     guidance+='Think back to what was different from '+lookbackPhrase+'. Choose one safe part of that routine to repeat and tag it next time.';
   }
-  var evidence='On '+analysisShortDate(day.date)+', your Fat Zone rose from a usual level near '
+  var evidence='On '+analysisShortDate(day.date)+', your Fat Use Zone rose from a usual level near '
     +Math.round(Number(episode.baseline)*10)/10+' to '+Math.round(Number(episode.peak)*10)/10+'.';
   return {date:day.date,eventLabel:eventLabel,displayEventLabel:displayEventLabel,datedEventLabel:datedEventLabel,guidance:guidance,evidence:evidence,day:day,tag:tagged[0]||null};
 }
@@ -275,7 +275,7 @@ function dayToDayScoreInsight(current,previous){
     return {
       question:'Is the change lasting longer?',
       answer:'Your body may be drawing on fat for energy for more of the day. Look at what your stronger days had in common and choose one safe part to keep.',
-      evidence:'Your average Daily Fuel Score went up from '+previous.mean+' to '+current.mean+', and your scores landed in a closer range.',
+      evidence:'Your average Fat Use Score went up from '+previous.mean+' to '+current.mean+', and your scores landed in a closer range.',
       tone:'is-change',icon:'↑'
     };
   }
@@ -283,7 +283,7 @@ function dayToDayScoreInsight(current,previous){
     return {
       question:'Is this shift showing up on more days?',
       answer:'Some days suggest your body draws on fat for energy more often than others. Look at what happened before your stronger days and choose one safe part to test again.',
-      evidence:'This week, your Daily Fuel Scores ranged from '+current.low+' to '+current.high+'.',
+      evidence:'This week, your Fat Use Scores ranged from '+current.low+' to '+current.high+'.',
       tone:'is-change',icon:'↑'
     };
   }
@@ -291,7 +291,7 @@ function dayToDayScoreInsight(current,previous){
     return {
       question:'What can I learn from this week?',
       answer:'We’re not seeing a clear shift toward fat for energy yet. Choose one small change you can repeat and tag it each time you try it.',
-      evidence:'Your Daily Fuel Scores stayed within a similar range this week.',
+      evidence:'Your Fat Use Scores stayed within a similar range this week.',
       tone:'is-change',icon:'→'
     };
   }
@@ -317,7 +317,7 @@ function analysisRecentProgressInsight(recentScores,previousScores,recentMeasure
     :'Your overall fat-use pattern has stayed fairly steady over the last two weeks.';
   if(recentHigher>0) scoreEvidence+=' Some recent days reached the range where body-fat loss may become more likely.';
   if(recentMeasured&&recentMeasured.length&&recentResponses>previousResponses){
-    scoreEvidence+=' Your Fat Zone is also rising during more well-measured days than it did before.';
+    scoreEvidence+=' Your Fat Use Zone is also rising during more well-measured days than it did before.';
   }
 
   if(recentAverage===null){
@@ -389,11 +389,11 @@ function analysisProgressExplanation(currentWeek,previousWeek,recentMeasured,pre
   var recentRate=recentMeasured&&recentMeasured.length?recentResponses/recentMeasured.length:0;
   var previousRate=previousMeasured&&previousMeasured.length?previousResponses/previousMeasured.length:0;
   if(recentResponses&&recentRate>previousRate+.15){
-    sentences.push('The encouraging part is that your Fat Zone is rising during more days than before. That suggests your metabolism is responding to something in your routine.');
+    sentences.push('The encouraging part is that your Fat Use Zone is rising during more days than before. That suggests your metabolism is responding to something in your routine.');
   }else if(recentResponses){
-    sentences.push('The encouraging part is that your Fat Zone still rises during the day. That shows your metabolism can respond, even if the higher results are not lasting as long yet.');
+    sentences.push('The encouraging part is that your Fat Use Zone still rises during the day. That shows your metabolism can respond, even if the higher results are not lasting as long yet.');
   }else if(sentences.length){
-    sentences.push('The next sign of progress would be higher Fat Zones showing up more often or lasting longer.');
+    sentences.push('The next sign of progress would be higher Fat Use Zones showing up more often or lasting longer.');
   }
   return sentences.join(' ');
 }
@@ -428,8 +428,8 @@ function analysisRecentScoreOpportunity(scoreDays,referenceDate,tagRows,recentAv
   var visualDays=(scoreDays||[]).filter(function(day){return day.date>=addIsoDays(best.date,-3)&&day.date<=addIsoDays(best.date,3);});
   return {
     date:best.date,question:'What can I build on?',headline:label+' gives you something to build on.',answer:answer,
-    detail:'The Daily Fuel Score on '+analysisWeekday(best.date)+', '+analysisShortDate(best.date)+' was '+best.score+', compared with a recent average of '+recentAverage+'.',
-    visual:dailyScoreEvidenceSvg(visualDays,'Daily Fuel Scores around '+analysisShortDate(best.date)),
+    detail:'The Fat Use Score on '+analysisWeekday(best.date)+', '+analysisShortDate(best.date)+' was '+best.score+', compared with a recent average of '+recentAverage+'.',
+    visual:dailyScoreEvidenceSvg(visualDays,'Fat Use Scores around '+analysisShortDate(best.date)),
     tag:tag,tone:'is-change',icon:'↑',priority:45
   };
 }
@@ -493,18 +493,18 @@ function dailyScoreEvidenceSvg(days,label){
   var recent=(days||[]).slice(-7);
   if(recent.length<2) return '';
   var items=recent.map(function(day,index){
-    return {x:index,value:Number(day.score),title:day.date+': Daily Fuel Score '+day.score};
+    return {x:index,value:Number(day.score),title:day.date+': Fat Use Score '+day.score};
   });
-  return compactEvidenceLine(items,label||'Recent Daily Fuel Scores',recent[0].date.slice(5),recent[recent.length-1].date.slice(5));
+  return compactEvidenceLine(items,label||'Recent Fat Use Scores',recent[0].date.slice(5),recent[recent.length-1].date.slice(5));
 }
 
 function dailyScoreRecoveryEvidenceSvg(days,label){
   var recent=(days||[]).slice(-7);
   if(recent.length<4) return dailyScoreEvidenceSvg(recent,label);
   var items=recent.map(function(day,index){
-    return {x:index,value:Number(day.score),title:day.date+': Daily Fuel Score '+day.score};
+    return {x:index,value:Number(day.score),title:day.date+': Fat Use Score '+day.score};
   });
-  return compactEvidenceLine(items,label||'Daily Fuel Scores this week','First two days','Latest two days',{comparisonArrow:{
+  return compactEvidenceLine(items,label||'Fat Use Scores this week','First two days','Latest two days',{comparisonArrow:{
     from:[0,1],to:[recent.length-2,recent.length-1]
   }});
 }
@@ -552,7 +552,7 @@ function weeklyDailyScoreEvidenceSvg(week,mode){
       var index=weekdayIndex(day.date),isFirst=mode==='recovery'&&firstDates[day.date],isLatest=mode==='recovery'&&latestDates[day.date];
       var color=isLatest?'rgba(255,255,255,.98)':isFirst?'rgba(255,255,255,.38)':baseColor;
       var radius=isLatest?4.7:isFirst?4:3.4;
-      return '<circle data-series="'+name+'" cx="'+x(index).toFixed(1)+'" cy="'+y(day.score).toFixed(1)+'" r="'+radius+'" fill="'+color+'" stroke="#08090b" stroke-width="1.5"><title>'+analysisWeekday(day.date)+': Daily Fuel Score '+day.score+'</title></circle>'
+      return '<circle data-series="'+name+'" cx="'+x(index).toFixed(1)+'" cy="'+y(day.score).toFixed(1)+'" r="'+radius+'" fill="'+color+'" stroke="#08090b" stroke-width="1.5"><title>'+analysisWeekday(day.date)+': Fat Use Score '+day.score+'</title></circle>'
         +'<text x="'+x(index).toFixed(1)+'" y="'+Math.max(11,y(day.score)-7).toFixed(1)+'" text-anchor="middle" font-size="8.5" font-weight="800" fill="'+color+'">'+Math.round(Number(day.score))+'</text>';
     }).join('');
   }
@@ -561,7 +561,7 @@ function weeklyDailyScoreEvidenceSvg(week,mode){
   var key=compare
     ?'<g><line x1="17" y1="10" x2="37" y2="10" stroke="rgba(255,255,255,.95)" stroke-width="2.2"/><text x="42" y="13" font-size="9" fill="rgba(255,255,255,.8)">This week</text><line x1="111" y1="10" x2="131" y2="10" stroke="rgba(255,255,255,.38)" stroke-width="2.2" stroke-dasharray="5 4"/><text x="136" y="13" font-size="9" fill="rgba(255,255,255,.55)">Same days last week</text></g>'
     :'<g><circle cx="20" cy="10" r="3.5" fill="rgba(255,255,255,.38)"/><text x="28" y="13" font-size="9" fill="rgba(255,255,255,.55)">Start of week</text><circle cx="116" cy="10" r="4.3" fill="rgba(255,255,255,.98)"/><text x="125" y="13" font-size="9" fill="rgba(255,255,255,.8)">Latest days</text></g>';
-  var aria=compare?'Daily Fuel Scores this week and the same days last week':'Daily Fuel Scores from the start of this week through the latest days';
+  var aria=compare?'Fat Use Scores this week and the same days last week':'Fat Use Scores from the start of this week through the latest days';
   return '<div class="analysis-insight-visual"><svg class="analysis-mini-chart" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="'+aria+'">'
     +key
     +'<line x1="'+left+'" y1="'+(h-bottom)+'" x2="'+(w-right)+'" y2="'+(h-bottom)+'" stroke="rgba(255,255,255,.08)"/>'
@@ -626,7 +626,7 @@ function withinDayEvidenceSvg(days,points){
   }).join('');
   var peakX=x(peak.minute),peakY=y(peak.value);
   var calloutX=Math.max(72,Math.min(w-72,peakX));
-  var aria='Fat Zone measurements across '+chosen.date+' rose from a usual level of '+baseline+' to '+peak.value;
+  var aria='Fat Use Zone measurements across '+chosen.date+' rose from a usual level of '+baseline+' to '+peak.value;
   return '<div class="analysis-insight-visual"><svg class="analysis-mini-chart" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="'+analysisEscape(aria)+'">'
     +'<defs><clipPath id="'+clipId+'"><rect x="0" y="0" width="'+w+'" height="'+Math.max(0,baselineY)+'"/></clipPath></defs>'
     +'<rect x="'+left+'" y="'+top+'" width="'+(w-left-right)+'" height="'+Math.max(0,baselineY-top)+'" rx="10" fill="rgba(255,210,60,.045)"/>'
@@ -636,7 +636,7 @@ function withinDayEvidenceSvg(days,points){
     +'<path d="'+path+'" fill="none" stroke="#FFD23C" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" clip-path="url(#'+clipId+')"/>'
     +'<line x1="'+calloutX.toFixed(1)+'" y1="18" x2="'+peakX.toFixed(1)+'" y2="'+Math.max(22,peakY-6).toFixed(1)+'" stroke="rgba(255,210,60,.55)" stroke-width="1.2"/>'
     +'<rect x="'+(calloutX-68).toFixed(1)+'" y="2" width="136" height="20" rx="10" fill="rgba(255,210,60,.14)" stroke="rgba(255,210,60,.38)"/>'
-    +'<text x="'+calloutX.toFixed(1)+'" y="15.5" text-anchor="middle" font-size="10.5" font-weight="900" fill="#FFD23C">Your Fat Zone went up</text>'
+    +'<text x="'+calloutX.toFixed(1)+'" y="15.5" text-anchor="middle" font-size="10.5" font-weight="900" fill="#FFD23C">Your Fat Use Zone went up</text>'
     +dots
     +'<text x="'+left+'" y="'+(h-4)+'" font-size="10.5" fill="rgba(255,255,255,.4)">'+timeLabel(sameDay[0].minute)+'</text>'
     +'<text x="'+(w-right)+'" y="'+(h-4)+'" text-anchor="end" font-size="10.5" fill="rgba(255,255,255,.4)">'+timeLabel(sameDay[sameDay.length-1].minute)+'</text>'
@@ -703,13 +703,13 @@ function analysisTierGuideHtml(insight,recentAverage,timeframe){
     +(timeframe?'<div class="analysis-eyebrow">'+analysisEscape(timeframe)+'</div>':'')
     +'<h1 class="analysis-title">'+tierHeadline+'</h1>'
     +'<p class="analysis-section-copy">'+positionCopy+'</p>'
-    +'<div class="analysis-tier-scale" role="img" aria-label="Your recent Daily Fuel Score is in the '+analysisEscape(activeTier)+' fuel-use range">'
+    +'<div class="analysis-tier-scale" role="img" aria-label="Your recent Fat Use Score is in the '+analysisEscape(activeTier)+' fuel-use range">'
       +'<div class="analysis-tier-marker" style="left:'+markerPct.toFixed(1)+'%"><span>'+(insight.tier==='balanced-near-higher'?'Close to higher':'You are here')+'</span></div>'
       +'<div class="analysis-tier-segment is-low"></div><div class="analysis-tier-segment is-balanced"></div><div class="analysis-tier-segment is-higher"></div><div class="analysis-tier-segment is-strong"></div>'
     +'</div>'
     +'<div class="analysis-tier-names"><span>Low</span><span>Balanced</span><span>Higher</span><span>Strong</span></div>'
     +'<details class="analysis-why"><summary>How FOX2 defines these ranges</summary>'
-      +'<p>FOX2 places you here using the average of your saved Daily Fuel Scores from the 14 completed calendar days before your latest measurement. Days without a saved score are left out.</p>'
+      +'<p>FOX2 places you here using the average of your saved Fat Use Scores from the 14 completed calendar days before your latest measurement. Days without a saved score are left out.</p>'
       +'<div class="analysis-tier-definitions">'+definitions+'</div>'
       +'<p>Low is 0–60. Balanced is above 60 through 120. Higher is above 120 through 180. Strong is above 180. These are FOX2 probability ranges, not clinical cutoffs or guarantees.</p>'
     +'</details>'
@@ -847,7 +847,7 @@ function scoreTrendSvg(days,recentStartDate){
     var fill=level==='low'?'#22D3EE':level==='medium'?'#4ADE80':'#C084FC';
     return '<circle cx="'+x(i).toFixed(1)+'" cy="'+y(d.score).toFixed(1)+'" r="'+(i===days.length-1?3.8:2.2)+'" fill="'+fill+'"><title>'+d.date+': '+d.score+'</title></circle>';
   }).join('');
-  return '<svg class="analysis-chart" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="Daily Fuel Score across complete saved history">'
+  return '<svg class="analysis-chart" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="Fat Use Score across complete saved history">'
     +'<rect x="'+left+'" y="'+y(60)+'" width="'+pw+'" height="'+(y(0)-y(60))+'" fill="rgba(34,211,238,.07)"/>'
     +'<rect x="'+left+'" y="'+y(120)+'" width="'+pw+'" height="'+(y(60)-y(120))+'" fill="rgba(74,222,128,.08)"/>'
     +'<rect x="'+left+'" y="'+top+'" width="'+pw+'" height="'+(y(120)-top)+'" fill="rgba(168,85,247,.08)"/>'
@@ -908,8 +908,8 @@ function weeklyTrendSummary(weeks){
     return 'This week’s average is '+current.mean+' so far—'+comparison+'.';
   }
   if(current.mean!==null) return 'This week’s average is '+current.mean+' so far. More weeks will make the trend clearer.';
-  if(previous) return 'This week does not yet have a completed Daily Fuel Score. The latest completed week averaged '+previous.mean+'.';
-  return 'More completed Daily Fuel Scores are needed to show a weekly trend.';
+  if(previous) return 'This week does not yet have a completed Fat Use Score. The latest completed week averaged '+previous.mean+'.';
+  return 'More completed Fat Use Scores are needed to show a weekly trend.';
 }
 
 function weeklyTrendHtml(scoreDays,classifiableDays,week){
@@ -955,8 +955,8 @@ function weeklyTrendHtml(scoreDays,classifiableDays,week){
       +'<text x="'+cx.toFixed(1)+'" y="'+Math.max(10,cy-9).toFixed(1)+'" text-anchor="middle" font-size="9" font-weight="800" fill="rgba(255,255,255,.82)">'+item.mean+'</text>'+dateLabel;
   }).join('');
   return '<section class="analysis-card"><h2 class="analysis-section-title">Your last 8 weeks</h2>'
-    +'<p class="analysis-section-copy">'+weeklyTrendSummary(weeks)+' Each point is a weekly average. The lines show the lowest and highest day. Color shows how often your Fat Zone clearly went up and came back down during a day.</p>'
-    +'<svg class="analysis-chart" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="Eight-week Daily Fuel Score trend with weekly ranges and within-day changes">'
+    +'<p class="analysis-section-copy">'+weeklyTrendSummary(weeks)+' Each point is a weekly average. The lines show the lowest and highest day. Color shows how often your Fat Use Zone clearly went up and came back down during a day.</p>'
+    +'<svg class="analysis-chart" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="Eight-week Fat Use Score trend with weekly ranges and within-day changes">'
       +'<rect x="'+left+'" y="'+y(60)+'" width="'+pw+'" height="'+(y(0)-y(60))+'" fill="rgba(34,211,238,.05)"/>'
       +'<rect x="'+left+'" y="'+y(120)+'" width="'+pw+'" height="'+(y(60)-y(120))+'" fill="rgba(74,222,128,.055)"/>'
       +'<rect x="'+left+'" y="'+top+'" width="'+pw+'" height="'+(y(120)-top)+'" fill="rgba(168,85,247,.055)"/>'
@@ -1002,7 +1002,7 @@ function weeklyStateHistoryHtml(states,week,scoreDays){
   var completed=states.filter(function(state){return state.classifiableDays>0;}).slice().reverse();
   var current=week&&week.current?week.current:null;
   if(!completed.length&&(!current||!current.classifiableDays)) return '';
-  var labels={low:'Lower Daily Fuel Scores',moderate:'Balanced Daily Fuel Scores',higher:'Higher Daily Fuel Scores',strong:'Strong Daily Fuel Scores',quiet:'few clear increases',intermittent:'some clear increases',active:'frequent increases'};
+  var labels={low:'Lower Fat Use Scores',moderate:'Balanced Fat Use Scores',higher:'Higher Fat Use Scores',strong:'Strong Fat Use Scores',quiet:'few clear increases',intermittent:'some clear increases',active:'frequent increases'};
   function bandsFor(state){
     var bands=state.metrics.bandDays;
     return bands.low+' low · '+bands.moderate+' balanced · '+bands.higher+' higher · '+bands.strong+' strong';
@@ -1011,8 +1011,8 @@ function weeklyStateHistoryHtml(states,week,scoreDays){
   function completedRow(state){
     var scoreSummary=scoreWindowSummary(scoreDays,state.startDate,state.endDate);
     var transition=state.transition||{};
-    var changeLabel=transition.scoreDirection==='rising'?'higher Daily Fuel Scores than the prior week'
-      :transition.scoreDirection==='falling'?'lower Daily Fuel Scores than the prior week'
+    var changeLabel=transition.scoreDirection==='rising'?'higher Fat Use Scores than the prior week'
+      :transition.scoreDirection==='falling'?'lower Fat Use Scores than the prior week'
       :transition.responseDirection==='rising'?'more days with clear increases'
       :transition.responseDirection==='falling'?'fewer days with clear increases'
       :transition.kind==='same_state'?'similar to the prior week':'starting reference';
@@ -1103,7 +1103,7 @@ function analysisWeekEvidence(week){
     var earlierTypical=Math.round(analysisMedian(earlier.map(function(day){return Number(day.score);})) * 10) / 10;
     var latestTypical=Math.round(analysisMedian(latest.map(function(day){return Number(day.score);})) * 10) / 10;
     return {
-      detail:'FOX2 compared your first two saved Daily Fuel Scores this week with the latest two. The typical result went from '+earlierTypical+' on the first two days to '+latestTypical+' on the latest two days. Days without a saved score were left out.',
+      detail:'FOX2 compared your first two saved Fat Use Scores this week with the latest two. The typical result went from '+earlierTypical+' on the first two days to '+latestTypical+' on the latest two days. Days without a saved score were left out.',
       visual:weeklyDailyScoreEvidenceSvg(week,'recovery')
     };
   }
@@ -1112,13 +1112,13 @@ function analysisWeekEvidence(week){
     var previousTypical=Number(previous.metrics.medianScore);
     var currentTypical=Number(week.current.metrics.medianScore);
     return {
-      detail:'FOX2 compared your saved Daily Fuel Scores this week with the same weekdays last week. The typical result was '+previousTypical+' last week and '+currentTypical+' this week. Days without a saved score were left out.',
+      detail:'FOX2 compared your saved Fat Use Scores this week with the same weekdays last week. The typical result was '+previousTypical+' last week and '+currentTypical+' this week. Days without a saved score were left out.',
       visual:weeklyDailyScoreEvidenceSvg(week,'compare')
     };
   }
   return {
-    detail:'FOX2 used the saved Daily Fuel Scores from this week. Days without a saved score were left out.',
-    visual:dailyScoreEvidenceSvg(currentDays,'Daily Fuel Scores this week')
+    detail:'FOX2 used the saved Fat Use Scores from this week. Days without a saved score were left out.',
+    visual:dailyScoreEvidenceSvg(currentDays,'Fat Use Scores this week')
   };
 }
 
@@ -1136,7 +1136,7 @@ function weekToDateEvidenceHtml(week,lastOfficial,allDays,previousCalendarWeek,c
     return '<section class="analysis-card"><h2 class="analysis-section-title">Yesterday in context</h2>'
       +'<p class="analysis-section-copy">One day is shown as a daily result, not as a typical weekly score. Missing days are not included.</p>'
       +'<div class="analysis-kpis">'
-        +'<div class="analysis-kpi"><div class="analysis-kpi-label">Daily Fuel Score range</div><div class="analysis-kpi-value">'+onlyDayLevel+'</div></div>'
+        +'<div class="analysis-kpi"><div class="analysis-kpi-label">Fat Use Score range</div><div class="analysis-kpi-value">'+onlyDayLevel+'</div></div>'
         +'<div class="analysis-kpi"><div class="analysis-kpi-label">Yesterday’s score</div><div class="analysis-kpi-value">'+onlyDay.score+'</div></div>'
         +'<div class="analysis-kpi"><div class="analysis-kpi-label">Day before</div><div class="analysis-kpi-value">'+(previousDay?previousDay.score:'No comparable day')+'</div></div>'
         +'<div class="analysis-kpi"><div class="analysis-kpi-label">Previous week average</div><div class="analysis-kpi-value">'+(fullWeek?fullWeek.metrics.meanScore+' · '+fullWeek.classifiableDays+' days':'Not enough data')+'</div></div>'
@@ -1147,7 +1147,7 @@ function weekToDateEvidenceHtml(week,lastOfficial,allDays,previousCalendarWeek,c
   return '<section class="analysis-card"><h2 class="analysis-section-title">This week so far</h2>'
     +'<p class="analysis-section-copy">Daily-score averages use every day with a saved score. Changes within a day are checked separately when there are enough measurements across that day.</p>'
     +'<div class="analysis-kpis">'
-      +'<div class="analysis-kpi"><div class="analysis-kpi-label">Daily Fuel Score range</div><div class="analysis-kpi-value">'+levelLabels[current.level]+'</div></div>'
+      +'<div class="analysis-kpi"><div class="analysis-kpi-label">Fat Use Score range</div><div class="analysis-kpi-value">'+levelLabels[current.level]+'</div></div>'
       +'<div class="analysis-kpi"><div class="analysis-kpi-label">Average daily score</div><div class="analysis-kpi-value">'+(scoreWeek?scoreWeek.metrics.meanScore:'Not enough data')+'</div></div>'
       +'<div class="analysis-kpi"><div class="analysis-kpi-label">Previous week average</div><div class="analysis-kpi-value">'+(previousCalendarWeek&&previousCalendarWeek.classifiableDays?previousCalendarWeek.metrics.meanScore:'Not enough data')+'</div></div>'
       +'<div class="analysis-kpi"><div class="analysis-kpi-label">Days with enough readings</div><div class="analysis-kpi-value">'+current.classifiableDays+' of '+(scoreWeek?scoreWeek.classifiableDays:0)+' score days</div></div>'
@@ -1282,7 +1282,7 @@ function analysisWithinDayContext(history,scoreDays,referenceDate){
   var measured=(history.days||[]).filter(function(day){return day.date>=start&&day.date<referenceDate;});
   var changing=measured.filter(function(day){return day.movement==='responsive'||Number(day.range)>=2;}).length;
   if(measured.length>=3&&changing>=Math.ceil(measured.length/2)){
-    return 'The encouraging part is that your Fat Zone still goes up and down on several days. There are times when your results can move higher, even though the daily total has not gone up yet.';
+    return 'The encouraging part is that your Fat Use Zone still goes up and down on several days. There are times when your results can move higher, even though the daily total has not gone up yet.';
   }
 
   var byDate={};
@@ -1298,15 +1298,15 @@ function analysisWithinDayContext(history,scoreDays,referenceDate){
   });
   var rebound=days.filter(function(day){return day.morning!==null&&day.afternoon!==null&&day.evening!==null&&day.morning-day.afternoon>=1&&day.evening-day.afternoon>=1;});
   if(rebound.length>=2&&rebound.length>=Math.ceil(days.length/2)){
-    return 'The encouraging part is that your Fat Zone often comes back up later in the day. This is a recurring pattern for you—not one unusual day—and it gives you something specific to build on.';
+    return 'The encouraging part is that your Fat Use Zone often comes back up later in the day. This is a recurring pattern for you—not one unusual day—and it gives you something specific to build on.';
   }
   var later=days.filter(function(day){return day.morning!==null&&day.evening!==null&&day.evening-day.morning>=1.5;});
   if(later.length>=2&&later.length>=Math.ceil(days.length/2)){
-    return 'The encouraging part is that your Fat Zone often goes up later in the day. The increase is not yet lasting long enough to lift your daily results, but it gives you something specific to build on.';
+    return 'The encouraging part is that your Fat Use Zone often goes up later in the day. The increase is not yet lasting long enough to lift your daily results, but it gives you something specific to build on.';
   }
   var morning=days.filter(function(day){return day.morning!==null&&day.afternoon!==null&&day.morning-day.afternoon>=1.5;});
   if(morning.length>=2&&morning.length>=Math.ceil(days.length/2)){
-    return 'You often begin the day with a higher Fat Zone, but it comes down later. Your body can reach the higher signal; the next step is learning what may help it last longer.';
+    return 'You often begin the day with a higher Fat Use Zone, but it comes down later. Your body can reach a higher zone; the next step is learning what may help it last longer.';
   }
   return 'We are not seeing a clear increase in your daily results yet. That gives FOX2 a useful starting point for testing one repeatable change.';
 }
@@ -1341,10 +1341,10 @@ function analysisOverextendedInsight(weekToDate,lastOfficial){
   var state=currentFlag?current:lastOfficial;
   var period=currentFlag?'this week':'your latest completed week';
   return {
-    question:'Could I be pushing too hard?',headline:'Your Fat Zone has stayed high for a long time.',tone:'is-watch',icon:'!',priority:100,
+    question:'Could I be pushing too hard?',headline:'Your Fat Use Zone has stayed high for a long time.',tone:'is-watch',icon:'!',priority:100,
     answer:'More is not always better. Rather than trying to push higher, focus on a routine you can sustain and make sure you’re eating enough, including protein.',
-    detail:'Across '+state.classifiableDays+' measured day'+(state.classifiableDays===1?'':'s')+' in '+period+', your Daily Fuel Scores stayed in a higher range while your well-measured days showed little movement back down.',
-    visual:dailyScoreEvidenceSvg(state.days||[],'Daily Fuel Scores during '+period)
+    detail:'Across '+state.classifiableDays+' measured day'+(state.classifiableDays===1?'':'s')+' in '+period+', your Fat Use Scores stayed in a higher range while your well-measured days showed little movement back down.',
+    visual:dailyScoreEvidenceSvg(state.days||[],'Fat Use Scores during '+period)
   };
 }
 
@@ -1360,7 +1360,7 @@ function analysisStrongestPeriodInsight(weeklyStates){
   return {
     question:'Is this one of my strongest periods?',headline:'This is one of your strongest periods so far.',tone:'is-change',icon:'↑',priority:60,
     answer:'Your latest completed week was your strongest so far in FOX2. The higher pattern showed up across several days, not just once.',
-    detail:'FOX2 compared the typical Daily Fuel Score from your latest completed week with '+(usable.length-1)+' earlier completed week'+(usable.length===2?'':'s')+'.',
+    detail:'FOX2 compared the typical Fat Use Score from your latest completed week with '+(usable.length-1)+' earlier completed week'+(usable.length===2?'':'s')+'.',
     visual:visual
   };
 }
@@ -1383,8 +1383,8 @@ function analysisStandoutQuestion(scoreDays,referenceDate){
   return {
     date:best.date,question:'Did I have an unusually strong day?',headline:label+' was an unusually strong day.',tone:'is-change',icon:'↑',priority:50,
     answer:'Your body may have used fat for energy for more of that day. Think about what was different the night before and that morning.',
-    detail:'The Daily Fuel Score on '+analysisWeekday(best.date)+', '+analysisShortDate(best.date)+' was '+best.score+'. That was higher than at least 90% of your earlier saved days.',
-    visual:dailyScoreEvidenceSvg(visualDays,'Daily Fuel Scores around '+analysisShortDate(best.date))
+    detail:'The Fat Use Score on '+analysisWeekday(best.date)+', '+analysisShortDate(best.date)+' was '+best.score+'. That was higher than at least 90% of your earlier saved days.',
+    visual:dailyScoreEvidenceSvg(visualDays,'Fat Use Scores around '+analysisShortDate(best.date))
   };
 }
 
@@ -1513,16 +1513,16 @@ function analysisDaypartVisual(points,outcome,referenceDate,recurringEveningRise
   var labelX=Math.max(67,Math.min(w-67,targetX)),labelY=10;
   var dots=coords.map(function(coord){
     var active=coord.point===target;
-    return '<circle cx="'+coord.x.toFixed(1)+'" cy="'+coord.y.toFixed(1)+'" r="'+(active?5:3.8)+'" fill="'+(active?'#FFD23C':'#22D3EE')+'" stroke="#08090b" stroke-width="2"><title>'+timeLabel(coord.point.minute)+': Fat Zone '+coord.point.value+'</title></circle>';
+    return '<circle cx="'+coord.x.toFixed(1)+'" cy="'+coord.y.toFixed(1)+'" r="'+(active?5:3.8)+'" fill="'+(active?'#FFD23C':'#22D3EE')+'" stroke="#08090b" stroke-width="2"><title>'+timeLabel(coord.point.minute)+': Fat Use Zone '+coord.point.value+'</title></circle>';
   }).join('');
   var relative=analysisRelativeDay(chosen.date,referenceDate);
   var caption=outcome==='afternoon'
-    ?relative+', your Fat Zone fell around midday and then came back up later.'
+    ?relative+', your Fat Use Zone fell around midday and then came back up later.'
     :outcome==='morning'
-      ?relative+', your Fat Zone started lower and went up later in the day.'
+      ?relative+', your Fat Use Zone started lower and went up later in the day.'
       :recurringEveningRise
-        ?relative+', your Fat Zone went up from afternoon into the evening.'
-        :relative+', your Fat Zone was higher earlier and fell by evening.';
+        ?relative+', your Fat Use Zone went up from afternoon into the evening.'
+        :relative+', your Fat Use Zone was higher earlier and fell by evening.';
   var aria=caption+' The chart uses the actual measurements saved that day.';
   return '<div class="analysis-daypart-visual">'
     +'<div class="analysis-daypart-label">The most recent day that shows this pattern</div>'
@@ -1587,19 +1587,19 @@ function analysisDaypartOpportunity(history,referenceDate){
   var recurringEveningRise=afternoonEvening.length>=5&&eveningRiseCount>=Math.ceil(afternoonEvening.length*.6);
   var answer='';
   if(!clearGap&&recurringEveningRise){
-    answer='Your Fat Zone often goes up from afternoon to evening. Try one small change that morning or afternoon and see whether the rise starts sooner.';
+    answer='Your Fat Use Zone often goes up from afternoon to evening. Try one small change that morning or afternoon and see whether the rise starts sooner.';
   }else if(!clearGap){
     answer='No single time of day stands out yet. Change one thing, then watch the next two parts of the day.';
   }else if(lowest==='morning'){
     answer=(highest==='evening'
-        ?'Your Fat Zone often goes up in the evening. Try one small change the afternoon or evening before and see whether your morning starts higher.'
-        :'Your Fat Zone often goes up by the afternoon. Try one small change the afternoon or evening before and see whether your morning starts higher.');
+        ?'Your Fat Use Zone often goes up in the evening. Try one small change the afternoon or evening before and see whether your morning starts higher.'
+        :'Your Fat Use Zone often goes up by the afternoon. Try one small change the afternoon or evening before and see whether your morning starts higher.');
   }else if(lowest==='afternoon'){
-    answer='Your Fat Zone tends to dip in the middle of the day'
+    answer='Your Fat Use Zone tends to dip in the middle of the day'
       +(highest==='evening'?' before going back up in the evening.':'.')
       +' Try one small change the night before or that morning.';
   }else{
-    answer='Your Fat Zone is higher earlier and often falls by evening. Try one small change that morning or afternoon.';
+    answer='Your Fat Use Zone is higher earlier and often falls by evening. Try one small change that morning or afternoon.';
   }
   var partName=lowest==='afternoon'?'the middle of the day':lowest==='evening'?'the later part of the day':'the morning';
   var outcome=clearGap?lowest:recurringEveningRise?'evening':null;
@@ -1613,10 +1613,10 @@ function analysisDaypartOpportunity(history,referenceDate){
     answer:answer,
     visual:outcome?analysisDaypartVisual((history.points||[]).filter(function(point){return point.date>=start&&point.date<=referenceDate;}),outcome,referenceDate,recurringEveningRise):'',
     detail:clearGap
-      ?'FOX2 compared your morning, afternoon, and evening Fat Zones across your latest 14 calendar days, through your newest measurement. '+partName.charAt(0).toUpperCase()+partName.slice(1)+' was the lowest part of your typical day, and '+highest+' was the highest.'
+      ?'FOX2 compared your morning, afternoon, and evening Fat Use Zones across your latest 14 calendar days, through your newest measurement. '+partName.charAt(0).toUpperCase()+partName.slice(1)+' was the lowest part of your typical day, and '+highest+' was the highest.'
       :recurringEveningRise
-        ?'FOX2 compared your latest 14 calendar days through your newest measurement, using days with both afternoon and evening readings. Your Fat Zone rose by at least half a level from afternoon to evening on '+eveningRiseCount+' of '+afternoonEvening.length+' comparable recent days.'
-      :'FOX2 compared your morning, afternoon, and evening Fat Zones across your latest 14 calendar days, through your newest measurement. They were close enough that one part of the day did not clearly stand out.'
+        ?'FOX2 compared your latest 14 calendar days through your newest measurement, using days with both afternoon and evening readings. Your Fat Use Zone rose by at least half a level from afternoon to evening on '+eveningRiseCount+' of '+afternoonEvening.length+' comparable recent days.'
+      :'FOX2 compared your morning, afternoon, and evening Fat Use Zones across your latest 14 calendar days, through your newest measurement. They were close enough that one part of the day did not clearly stand out.'
   };
 }
 
@@ -1742,7 +1742,7 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   var positionHtml=analysisTierGuideHtml(progressInsight,recentAverage,recentTimeframe);
   var historyTrend=document.getElementById('history-score-trend');
   if(historyTrend){
-    historyTrend.innerHTML=scoreDays.length?'<section class="analysis-card"><h2 class="analysis-section-title">Daily Fuel Score over time</h2>'
+    historyTrend.innerHTML=scoreDays.length?'<section class="analysis-card"><h2 class="analysis-section-title">Fat Use Score over time</h2>'
       +'<p class="analysis-section-copy">Every saved day from the beginning. The highlighted area is the latest 14 calendar days.</p>'
       +scoreTrendSvg(scoreDays,recentStart)+'</section>':'';
   }
@@ -1778,5 +1778,5 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   window._fox2SelectedQuestions=secondaryQuestions;
   shell.innerHTML=positionHtml+openingHtml
     +(secondaryHtml?'<section class="analysis-conclusion-list" aria-label="Questions answered">'+secondaryHtml+'</section>':'')
-    +'<details class="analysis-footnote analysis-data-basis"><summary>What this analysis is based on</summary><p>Based on '+scoreDays.length+' completed days with scores, including '+all.length+' days with enough readings for within-day comparisons. A clear increase requires a rise at least two Fat Zone levels above your recent baseline and a return toward it within 72 hours. Days without enough readings are left out of within-day comparisons, but their saved Daily Fuel Scores still count in daily and weekly comparisons. Tags show patterns, not causes. FOX2 does not diagnose stalled metabolism, muscle loss, or under-fueling.</p></details>';
+    +'<details class="analysis-footnote analysis-data-basis"><summary>What this analysis is based on</summary><p>Based on '+scoreDays.length+' completed days with scores, including '+all.length+' days with enough readings for within-day comparisons. A clear increase requires a rise at least two Fat Use Zone levels above your recent baseline and a return toward it within 72 hours. Days without enough readings are left out of within-day comparisons, but their saved Fat Use Scores still count in daily and weekly comparisons. Tags show patterns, not causes. FOX2 does not diagnose stalled metabolism, muscle loss, or under-fueling.</p></details>';
 }

@@ -44,7 +44,7 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(insight.answer.includes('several recent times you tagged Walk'));
   assert.ok(insight.detail.includes('5 of 5'));
   assert.ok(insight.detail.includes('your results suggested your body was using more fat for energy afterward'));
-  assert.ok(!insight.detail.includes('Fat Zone'));
+  assert.ok(!insight.detail.includes('Fat Use Zone'));
 })();
 
 (function separatesImmediateFromSustainedEffects(){
@@ -123,7 +123,7 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(copy.summary.includes('steady result to build on'));
   assert.ok(!copy.summary.includes('94'));
   assert.ok(evidence.includes('Yesterday’s score'));
-  assert.ok(evidence.includes('Daily Fuel Score range</div><div class="analysis-kpi-value">Balanced'));
+  assert.ok(evidence.includes('Fat Use Score range</div><div class="analysis-kpi-value">Balanced'));
   assert.ok(evidence.includes('No comparable day'));
   assert.ok(evidence.includes('95 · 6 days'));
   assert.ok(!evidence.includes('Typical daily score'));
@@ -186,10 +186,10 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.equal(copy.title,'This week got stronger after a slower start.');
   assert.ok(!/starting to turn around/i.test(copy.title+' '+copy.summary+' '+copy.answer));
   const evidence=context.analysisWeekEvidence(week);
-  assert.ok(evidence.detail.includes('first two saved Daily Fuel Scores'));
+  assert.ok(evidence.detail.includes('first two saved Fat Use Scores'));
   assert.ok(evidence.detail.includes('41 on the first two days'));
   assert.ok(evidence.detail.includes('78.5 on the latest two days'));
-  assert.ok(evidence.visual.includes('Daily Fuel Scores from the start of this week through the latest days'));
+  assert.ok(evidence.visual.includes('Fat Use Scores from the start of this week through the latest days'));
   assert.ok(evidence.visual.includes('Start of week'));
   assert.ok(evidence.visual.includes('Latest days'));
   assert.ok(evidence.visual.includes('Mon'));
@@ -210,13 +210,13 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   ];
   const week=engine.buildWeekToDate(sample,{referenceDate:'2026-01-13'});
   const evidence=context.analysisWeekEvidence(week);
-  assert.ok(evidence.visual.includes('Daily Fuel Scores this week and the same days last week'));
+  assert.ok(evidence.visual.includes('Fat Use Scores this week and the same days last week'));
   assert.ok(evidence.visual.includes('This week'));
   assert.ok(evidence.visual.includes('Same days last week'));
   assert.ok(evidence.visual.includes('stroke-dasharray="5 4"'));
   assert.ok(evidence.visual.includes('data-series="this-week"'));
   assert.ok(evidence.visual.includes('data-series="last-week"'));
-  assert.ok(!evidence.visual.includes('Daily Fuel Score 101'));
+  assert.ok(!evidence.visual.includes('Fat Use Score 101'));
 })();
 
 (function leavesAVisibleGapWhenAWeekHasNoSavedDailyScore(){
@@ -251,7 +251,7 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   const html=context.weeklyTrendHtml(scores,classified,week);
   assert.ok(html.includes('Your last 8 weeks'));
   assert.ok(html.includes('This week’s average is 80 so far'));
-  assert.ok(html.includes('Color shows how often your Fat Zone clearly went up'));
+  assert.ok(html.includes('Color shows how often your Fat Use Zone clearly went up'));
   assert.ok(html.includes('average 80, range 60–100, typical day-to-day change 30, 1 of 2 well-measured days had a clear rise and return · incomplete week'));
   assert.ok(html.includes('no completed scores'));
 })();
@@ -295,11 +295,11 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
     {date:'2026-09-29',minute:780,value:5},
     {date:'2026-09-29',minute:1140,value:2.5}
   ]);
-  assert.ok(withinDay.includes('Fat Zone measurements across 2026-09-29'));
+  assert.ok(withinDay.includes('Fat Use Zone measurements across 2026-09-29'));
   assert.ok(withinDay.includes('8:00am'));
   assert.ok(withinDay.includes('7:00pm'));
   assert.ok(withinDay.includes('Your usual level'));
-  assert.ok(withinDay.includes('Your Fat Zone went up'));
+  assert.ok(withinDay.includes('Your Fat Use Zone went up'));
   assert.ok(withinDay.includes('rose above your usual level'));
   assert.ok(withinDay.includes('One-day example · Sep 29'));
   assert.ok(withinDay.includes('<path'));
@@ -307,9 +307,9 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
 
   const daily=context.dailyScoreEvidenceSvg([
     {date:'2026-09-28',score:70},{date:'2026-09-29',score:93}
-  ],'Daily Fuel Scores this week');
-  assert.ok(daily.includes('Daily Fuel Score 70'));
-  assert.ok(daily.includes('Daily Fuel Score 93'));
+  ],'Fat Use Scores this week');
+  assert.ok(daily.includes('Fat Use Score 70'));
+  assert.ok(daily.includes('Fat Use Score 93'));
 
   const tagged=context.tagEvidenceHtml({evidence:{
     kind:'immediate',rate:.6,stat:{name:'Run',rises:3,eligible:5}
@@ -347,7 +347,7 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(source.includes('analysisQuestionCardHtml(insight'));
   assert.ok(source.includes("document.getElementById('history-score-trend')"));
   assert.ok(source.includes('historyTrend.innerHTML=scoreDays.length'));
-  assert.ok(source.indexOf('Daily Fuel Score over time')<source.indexOf('var helpingBlock='));
+  assert.ok(source.indexOf('Fat Use Score over time')<source.indexOf('var helpingBlock='));
 })();
 
 (function selectsOnlyTheTwoMostRelevantSupportedQuestions(){
@@ -434,7 +434,7 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.equal(insight.question,'Could I be stalled?');
   assert.ok(insight.answer.includes('If you’re trying to reduce body fat'));
   assert.ok(insight.answer.includes('daily results have stayed about the same'));
-  assert.ok(insight.detail.includes('Fat Zone still goes up and down'));
+  assert.ok(insight.detail.includes('Fat Use Zone still goes up and down'));
   assert.ok(insight.detail.includes('Days without a saved score were left out'));
   assert.ok(!insight.detail.includes('averaged'));
 
@@ -455,7 +455,7 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.equal(opportunity.question,'What could I try?');
   assert.equal(opportunity.headline,'Your morning is your biggest opportunity.');
   assert.equal(opportunity.headline,'Your morning is your biggest opportunity.');
-  assert.ok(opportunity.answer.includes('Fat Zone often goes up in the evening'));
+  assert.ok(opportunity.answer.includes('Fat Use Zone often goes up in the evening'));
   assert.ok(opportunity.answer.includes('afternoon or evening before'));
   assert.ok(opportunity.detail.includes('The morning was the lowest part'));
   assert.ok(opportunity.detail.includes('evening was the highest'));
@@ -512,7 +512,7 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   ];
   const visual=context.analysisDaypartVisual(points,'afternoon','2026-09-30',false);
   assert.ok(visual.includes('Last Saturday'));
-  assert.ok(visual.includes('Fat Zone 4'));
+  assert.ok(visual.includes('Fat Use Zone 4'));
   assert.ok(visual.includes('8am'));
   assert.ok(visual.includes('7pm'));
 })();
@@ -583,7 +583,7 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(noTag.guidance.includes('Yesterday afternoon stood out'));
   assert.ok(noTag.guidance.includes('Tuesday evening through Wednesday morning'));
   assert.ok(noTag.guidance.includes('Choose one safe part'));
-  assert.ok(noTag.evidence.includes('Fat Zone rose from a usual level near 2 to 5'));
+  assert.ok(noTag.evidence.includes('Fat Use Zone rose from a usual level near 2 to 5'));
 
   const withTag=context.analysisLookbackWindow(days,[{
     day_date:'2026-09-30',events:[{icon:'🚶',name:'Walk',minute:600}]
@@ -625,7 +625,7 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(explanation.includes('using less fat for energy across the day than last week'));
   assert.ok(explanation.includes('encouraging part'));
   assert.ok(explanation.includes('metabolism is responding'));
-  assert.ok(!/82\.3|95\.7|four|seven|average|saved Daily Fuel Score/i.test(explanation));
+  assert.ok(!/82\.3|95\.7|four|seven|average|saved Fat Use Score/i.test(explanation));
 })();
 
 (function callsOutARecentStrongerDayWithoutClaimingCause(){
@@ -642,7 +642,7 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(opportunity.answer.includes('You tagged 🏃 Run'));
   assert.ok(opportunity.answer.includes('We don’t know yet if it helped'));
   assert.ok(!opportunity.answer.includes('150'));
-  assert.ok(opportunity.visual.includes('Daily Fuel Scores around'));
+  assert.ok(opportunity.visual.includes('Fat Use Scores around'));
 })();
 
 (function showsTheTierWithoutLeadingWithNumbers(){
@@ -671,7 +671,7 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
 (function removesRetiredAnalysisAndPatternUi(){
   const analysisSource=fs.readFileSync(__dirname+'/analysis.js','utf8');
   const pageSource=fs.readFileSync(__dirname+'/index.html','utf8');
-  assert.ok(!analysisSource.includes('<h2 class="analysis-section-title">Fat Zone changes over time</h2>'));
+  assert.ok(!analysisSource.includes('<h2 class="analysis-section-title">Fat Use Zone changes over time</h2>'));
   assert.ok(!analysisSource.includes('This improvement has lasted for several weeks.'));
   assert.ok(!analysisSource.includes('analysisLastingChangeInsight'));
   assert.ok(!pageSource.includes('>Fuel Pattern</button>'));
@@ -681,7 +681,7 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
 (function keepsHistoryColorsAlignedWithFatZoneRanges(){
   const pageSource=fs.readFileSync(__dirname+'/index.html','utf8');
   assert.ok(pageSource.includes("var rounded = Math.round(ppm); return rounded <= 2 ? 0 : rounded <= 4 ? 1 : rounded <= 7 ? 2 : 3;"));
-  assert.ok(pageSource.includes("var tabLabel = forcedView === 'zones' ? 'Fat Zones' : 'Summary';"));
+  assert.ok(pageSource.includes("var tabLabel = forcedView === 'zones' ? 'Fat Use Zones' : 'Summary';"));
   assert.ok(pageSource.includes("{ label: 'Low', value: Math.round(zt.glucose / total * 100) + '%', color: '#22D3EE'"));
   assert.ok(pageSource.includes("{ label: 'Balanced', value: Math.round(zt.mixed / total * 100) + '%', color: '#4ADE80'"));
   assert.ok(pageSource.includes("{ label: 'Higher +', value: Math.round(zt.fat / total * 100) + '%', color: '#A855F7'"));

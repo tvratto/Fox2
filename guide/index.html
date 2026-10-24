@@ -1380,7 +1380,7 @@ function render() {
 '</div>' +
 
         '</div>' +
-        '<div class="welcome-body"><strong style="color:#00ffff;">Get daily feedback from your body.</strong><br>Build your Daily Fuel Score.</div>' +
+        '<div class="welcome-body"><strong style="color:#00ffff;">Get daily feedback from your body.</strong><br>Build your Fat Use Score.</div>' +
         '<div class="disclaimer">FOX2 provides informational insight and is not a medical diagnostic device.</div>' +
       '</div>';
 	buttons =
@@ -1392,7 +1392,7 @@ function render() {
     titleText = 'See your fuel shift';
     content =
       '<div class="content-area">' +
-        '<div class="info-box"><div class="info-box-text">Your body gets most of its energy from two main fuels: carbohydrates and fat. When your metabolism shifts toward greater fat use, your liver produces acetone that leaves in your breath.<br><span style="text-indent:1.5em;display:block;">FOX2 reads this breath clue and turns it into a <strong>Fuel Signal</strong>. Repeated readings build your Daily Fuel Score and help you see the shift over time.</span></div></div>' +
+        '<div class="info-box"><div class="info-box-text">Your body gets most of its energy from two main fuels: carbohydrates and fat. When your metabolism shifts toward greater fat use, your liver produces acetone that leaves in your breath.<br><span style="text-indent:1.5em;display:block;">FOX2 reads this breath clue and turns it into a <strong>Fat Use Zone</strong>. Repeated readings build your Fat Use Score and help you see the shift over time.</span></div></div>' +
         '<div class="arc-wrap" style="margin-top:-12px;"><canvas id="arcCanvas" width="320" height="210" style="width:100%;display:block;"></canvas></div>' +
       '</div>';
     buttons =
@@ -1401,10 +1401,10 @@ function render() {
 
   } else if (state === 2) {
     // How FOX2 Works
-    titleText = 'Build your Daily Score';
+    titleText = 'Build your Fat Use Score';
     content =
       '<div class="content-area" style="gap:4px;">' +
-        '<div class="info-box"><div class="info-box-text">FOX2 doesn\'t ask you to overinterpret one moment. Each reading builds your <strong style="color:#ff9800;">Daily Fuel Score</strong>, giving you one accumulated result for the day.</div></div>' +
+        '<div class="info-box"><div class="info-box-text">FOX2 doesn\'t ask you to overinterpret one moment. Each reading builds your <strong style="color:#ff9800;">Fat Use Score</strong>, giving you one accumulated result for the day.</div></div>' +
         '<div style="flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden;">' +
           getTodaySchematicSVG() +
         '</div>' +
@@ -1415,10 +1415,10 @@ function render() {
 
   } else if (state === 3) {
     // Track your week
-    titleText = 'Find your Fuel Pattern';
+    titleText = 'Find your Fat Use Pattern';
     content =
       '<div class="content-area" style="gap:4px;">' +
-        '<div class="info-box"><div class="info-box-text">Completed <strong style="color:#ff9800;">Daily Fuel Scores</strong> become your history. Compare whole days and use the <strong style="color:#9C27B0;">7 DAY AVERAGE</strong> to see the pattern taking shape.</div></div>' +
+        '<div class="info-box"><div class="info-box-text">Completed <strong style="color:#ff9800;">Fat Use Scores</strong> become your history. Compare whole days and use the <strong style="color:#9C27B0;">7 DAY AVERAGE</strong> to see the pattern taking shape.</div></div>' +
         '<div style="flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden;">' +
           '<canvas id="progressSchematicCanvas" width="480" height="240" style="width:100%;max-height:100%;display:block;"></canvas>' +
         '</div>' +
@@ -1436,7 +1436,7 @@ function render() {
           '<li>A measurement takes around a minute.</li>' +
           '<li>Measure at repeatable times so your completed days are easier to compare.</li>' +
           '<li>Let today build. A partial score is progress, not a finished result.</li>' +
-          '<li>Look for patterns across completed <strong style="color:#ff9800;">Daily Fuel Scores</strong>, rather than assigning one rise or fall to a single action.</li>' +
+          '<li>Look for patterns across completed <strong style="color:#ff9800;">Fat Use Scores</strong>, rather than assigning one rise or fall to a single action.</li>' +
         '</ul>' +
         '<div style="flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden;">' +
           '<div style="width:75%;aspect-ratio:1/1;">' +
@@ -1515,7 +1515,7 @@ function render() {
         '<div style="display:flex;gap:12px;align-items:center;">' +
           '<canvas id="resultIconCanvas" width="80" height="80" style="width:53px;height:53px;border-radius:50%;flex-shrink:0;"></canvas>' +
           '<div style="font-size:18px;line-height:1.4;color:#aaa;">' +
-            '<strong style="color:#4CAF50;">Result</strong> &#8212; FOX2 shows your current Fuel Signal, updates your Daily Fuel Score, and then shows the day\'s graph before returning to Today.' +
+            '<strong style="color:#4CAF50;">Result</strong> &#8212; FOX2 shows your current Fat Use Zone, updates your Fat Use Score, and then shows the day\'s graph before returning to Today.' +
           '</div>' +
         '</div>' +
 
