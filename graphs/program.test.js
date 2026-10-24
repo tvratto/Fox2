@@ -96,18 +96,20 @@ assert.ok(!source.includes("data-program-action=\"finish-measuring\" '+(metrics.
   'finish measuring should not appear as an unexplained disabled control');
 assert.ok(source.includes("options.scrollIntoView({behavior:'smooth',block:'start',inline:'nearest'})"),
   'opening measure options should bring the controls into view');
-assert.ok(source.includes('if(activeProgram){'),
+assert.ok(source.includes('window.fox2SetInitialPage(activeProgram?0:1)'),
   'every load during an active program should route to Program');
 assert.ok(!source.includes('activeProgram&&returningFromSync'),
   'active-program routing should not depend on a sync-return query parameter');
 assert.ok(source.includes("if('scrollRestoration' in history) history.scrollRestoration='manual'"),
   'browser scroll restoration should be disabled before the horizontal pager is laid out');
-assert.ok(source.includes("[0,100,500,1200].forEach(function(delay)"),
-  'the page should override delayed browser scroll restoration during an active program');
-assert.ok(source.includes("window.setTimeout(function(){window.fox2GoToPage(0,false);},delay)"),
-  'an active program should land on Program');
-assert.ok(source.includes("window.addEventListener('pageshow',fox2RouteInitialPage,{once:true})"),
-  'the initial route should be reasserted after Safari restores the page');
+assert.ok(source.includes('<div class="scroll-x is-initializing" id="scroller">'),
+  'the pager should remain hidden until its initial page is fixed');
+assert.ok(source.includes("scroller.classList.remove('is-initializing')"),
+  'the pager should be revealed only after its final scroll position is set');
+assert.ok(source.includes("if(scroller.classList.contains('is-initializing')) return"),
+  'restoration scroll events should be ignored while the initial page is settling');
+assert.ok(!source.includes('[0,100,500,1200].forEach'),
+  'initial routing should not use competing timed scroll corrections');
 assert.ok(source.includes('(metrics.after-metrics.baseline)/metrics.baseline*100'),
   'the primary reward should be the cumulative action average versus baseline');
 assert.ok(source.includes('function fox2AnimateMeasureResult()'));

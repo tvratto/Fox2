@@ -46,6 +46,11 @@ html, body {
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
+.scroll-x.is-initializing {
+  visibility: hidden;
+  scroll-snap-type: none;
+  -webkit-overflow-scrolling: auto;
+}
 .scroll-x::-webkit-scrollbar { display: none; }
 .page {
   flex: 0 0 100vw; width: 100vw; height: 100svh;
@@ -2007,7 +2012,7 @@ html, body {
   <div id="debug-bar" style="display:none;">v1.1</div>
 </div>
 
-<div class="scroll-x" id="scroller">
+<div class="scroll-x is-initializing" id="scroller">
   <div class="page program-page">
     <main class="program-shell" id="program-shell" aria-live="polite"></main>
   </div>
@@ -6446,21 +6451,15 @@ function fox2HandleProgramAction(action){
 }
 
 function fox2RouteInitialPage(){
-  if(window.fox2GoToPage){
+  if(window.fox2SetInitialPage){
     var activeProgram=!fox2Program.optedOut&&fox2Program.screen!=='maintain';
-    if(activeProgram){
-      [0,100,500,1200].forEach(function(delay){
-        window.setTimeout(function(){window.fox2GoToPage(0,false);},delay);
-      });
-    }
-    else if(!activeProgram) window.fox2GoToPage(1,false);
+    window.fox2SetInitialPage(activeProgram?0:1);
   }
 }
 
 function fox2InitProgram(){
   fox2RenderProgram();
   fox2RouteInitialPage();
-  window.addEventListener('pageshow',fox2RouteInitialPage,{once:true});
 }
 
 // ── Page navigation: tabs + share routing ──
@@ -6499,7 +6498,26 @@ function handleBottomShare() {
     updatePage(idx);
   };
 
+  window.fox2SetInitialPage=function(idx){
+    idx=Math.max(0,Math.min(tabs.length-1,Number(idx)||0));
+    function place(){
+      var left=idx*scroller.clientWidth;
+      scroller.scrollLeft=left;
+      updatePage(idx);
+      window.requestAnimationFrame(function(){
+        scroller.scrollLeft=left;
+        window.requestAnimationFrame(function(){
+          scroller.scrollLeft=left;
+          scroller.classList.remove('is-initializing');
+        });
+      });
+    }
+    if(document.readyState==='complete') place();
+    else window.addEventListener('pageshow',place,{once:true});
+  };
+
   scroller.addEventListener('scroll', function() {
+    if(scroller.classList.contains('is-initializing')) return;
     var idx = Math.round(scroller.scrollLeft / scroller.clientWidth);
     updatePage(idx);
   }, { passive: true });
