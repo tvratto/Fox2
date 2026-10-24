@@ -152,7 +152,7 @@ html, body {
 .program-today-strip span { color:var(--program-orange); font-size:12px; font-weight:900; letter-spacing:.1em; text-transform:uppercase; }
 .program-today-strip strong { color:#fff; font-size:15px; line-height:1.3; }
 .program-measure-dashboard { display:grid; grid-template-columns:1fr 1fr; margin-top:22px; overflow:hidden; border-radius:22px; background:linear-gradient(155deg,rgba(255,140,0,.1),rgba(255,255,255,.035)); }
-.program-measure-panel { position:relative; min-width:0; min-height:242px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:18px 10px; text-align:center; overflow:hidden; }
+.program-measure-panel { position:relative; min-width:0; min-height:242px; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding:18px 10px; text-align:center; overflow:hidden; }
 .program-today-panel { border-right:1px solid rgba(255,255,255,.1); }
 .program-measure-heading { margin:0 0 13px; color:#fff; font-size:18px; line-height:1.1; font-weight:900; letter-spacing:-.02em; }
 .program-progress-ring { position:relative; width:142px; height:142px; margin:0 auto 11px; }
@@ -168,13 +168,13 @@ html, body {
 .program-progress-ring-center small { margin-top:7px; color:rgba(255,255,255,.58); font-size:12px; font-weight:800; }
 .program-today-score { color:rgba(255,255,255,.58); font-size:13px; font-weight:750; white-space:nowrap; }
 .program-today-score strong { color:#fff; font-size:20px; }
-.program-action-title { max-width:100%; margin:0 0 13px; color:#fff; font-size:18px; line-height:1.16; font-weight:900; letter-spacing:-.02em; overflow-wrap:anywhere; }
-.program-action-change { position:relative; z-index:2; margin-top:8px; color:var(--program-orange); font-size:54px; line-height:.95; font-weight:950; letter-spacing:-.06em; }
+.program-measure-action-name { max-width:100%; min-height:33px; margin:-5px 0 5px; color:rgba(255,255,255,.6); font-size:13px; line-height:1.25; font-weight:750; overflow-wrap:anywhere; }
+.program-action-change { position:relative; z-index:2; margin-top:11px; color:var(--program-orange); font-size:54px; line-height:.95; font-weight:950; letter-spacing:-.06em; }
 .program-action-context { position:relative; z-index:2; margin-top:14px; color:rgba(255,255,255,.62); font-size:14px; font-weight:800; line-height:1.3; }
 .program-action-result.is-updated .program-action-change { animation:program-result-pulse .7s cubic-bezier(.2,.8,.2,1); }
 @keyframes program-result-pulse { 0%{transform:scale(.9);filter:brightness(1)} 48%{transform:scale(1.08);filter:brightness(1.35)} 100%{transform:none;filter:none} }
 @media (prefers-reduced-motion:reduce){.program-action-result *{animation:none!important}}
-@media (max-width:350px){.program-measure-panel{padding-inline:7px}.program-progress-ring{width:128px;height:128px}.program-measure-heading,.program-action-title{font-size:16px}.program-action-change{font-size:48px}}
+@media (max-width:350px){.program-measure-panel{padding-inline:7px}.program-progress-ring{width:128px;height:128px}.program-measure-heading{font-size:16px}.program-measure-action-name{font-size:12px}.program-action-change{font-size:48px}}
 .program-history { display:grid; gap:11px; margin-top:19px; }
 .program-history-item { padding:16px; border-radius:18px; background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.08); }
 .program-history-title { display:flex; gap:9px; margin:0 0 15px; font-size:15px; line-height:1.35; font-weight:850; }
@@ -6086,13 +6086,13 @@ function fox2ProgramMetrics(){
 }
 
 function fox2ProgressHtml(metrics){
-  var total=FOX2_PROGRAM_DAYS,screen=fox2Program.screen,day=0,phase='Not started',current='';
+  var total=FOX2_PROGRAM_DAYS,screen=fox2Program.screen,day=0,phase='Not started',current='',showPhase=true;
   if(screen==='setup'){phase='Ready to begin';}
   else if(screen==='baseline'){
     day=Math.min(FOX2_BASELINE_DAYS,metrics.baselineDays.length); phase='Baseline · '+metrics.baselineDays.length+' of '+FOX2_BASELINE_DAYS+' days'; current='baseline';
   }else if(screen==='measure'){
     var elapsed=Math.max(1,fox2DaysBetween(fox2Program.measureStart,fox2TodayIso())+1);
-    day=Math.min(total,FOX2_BASELINE_DAYS+elapsed); phase='Measure · Day '+Math.min(FOX2_MEASURE_DAYS,elapsed)+' of '+FOX2_MEASURE_DAYS; current='measure';
+    day=Math.min(total,FOX2_BASELINE_DAYS+elapsed); phase='Measuring'; current='measure'; showPhase=false;
   }else if(screen==='results'){day=total;phase='Results ready';current='results';}
   else if(screen==='maintain'){day=total;phase='Maintenance';current='results';}
   var pct=Math.max(0,Math.min(100,Math.round(day/total*100)));
@@ -6101,7 +6101,7 @@ function fox2ProgressHtml(metrics){
     +'<div class="program-progress-head"><div class="program-progress-title">Program Progress</div><div class="program-day">Day '+day+' of '+total+'</div></div>'
     +'<div class="program-bar"><div class="program-bar-fill" style="width:'+pct+'%"></div><i class="program-divider" style="left:'+baselineDivider+'%"></i></div>'
     +'<div class="program-phases"><span class="'+(current==='baseline'?'is-current':'')+'">Baseline</span><span class="'+(current==='measure'?'is-current':'')+'">Measure</span><span class="'+(current==='results'?'is-current':'')+'">Results</span></div>'
-    +'<div class="program-progress-meta"><span>'+phase+'</span><span>'+pct+'% Complete</span></div></section>';
+    +'<div class="program-progress-meta"'+(showPhase?'':' style="justify-content:flex-end"')+'>'+(showPhase?'<span>'+phase+'</span>':'')+'<span>'+pct+'% Complete</span></div></section>';
 }
 
 function fox2BaselineChart(days,estimate){
@@ -6177,6 +6177,8 @@ function fox2MeasureDashboardHtml(metrics){
   var baseline=Number(metrics.baseline)||0;
   var score=Math.max(0,Number(metrics.todayScore)||0);
   var percent=baseline>0?Math.round(score/baseline*100):0;
+  var todayPercentText=percent>100?'+'+(percent-100):String(percent);
+  var todayPercentContext=percent>100?'above baseline':'of baseline';
   var firstLap=Math.max(0,Math.min(100,percent));
   var extraLap=Math.max(0,Math.min(100,percent-100));
   var outerCircumference=464.96,innerCircumference=389.56;
@@ -6191,19 +6193,19 @@ function fox2MeasureDashboardHtml(metrics){
     var priorDays=metrics.measureDays.slice(0,-1),priorAverage=priorDays.length?fox2Mean(priorDays.map(function(day){return day.score;})):baseline;
     var priorChange=Math.round((priorAverage-baseline)/baseline*100);
     actionPanel='<div class="program-measure-panel program-action-result" data-latest-date="'+fox2Escape(latest.date)+'" data-from="'+priorChange+'" data-to="'+change+'" role="group" aria-label="'+fox2Escape(action)+': '+fox2SignedPercent(change)+' Fat Use Score versus baseline">'
-      +'<h2 class="program-action-title">'+fox2Escape(action)+'</h2><div class="program-action-change" id="program-action-change" aria-live="polite">'+fox2SignedPercent(change)+'</div>'
+      +'<h2 class="program-measure-heading">Results So Far</h2><div class="program-measure-action-name">'+fox2Escape(action)+'</div><div class="program-action-change" id="program-action-change" aria-live="polite">'+fox2SignedPercent(change)+'</div>'
       +'<div class="program-action-context">Fat Use Score<br>vs baseline</div></div>';
   }else{
     actionPanel='<div class="program-measure-panel program-action-result" role="group" aria-label="'+fox2Escape(action)+': Fat Use Score comparison pending">'
-      +'<h2 class="program-action-title">'+fox2Escape(action)+'</h2><div class="program-action-change" id="program-action-change">—</div><div class="program-action-context">Fat Use Score<br>vs baseline</div></div>';
+      +'<h2 class="program-measure-heading">Results So Far</h2><div class="program-measure-action-name">'+fox2Escape(action)+'</div><div class="program-action-change" id="program-action-change">—</div><div class="program-action-context">Fat Use Score<br>vs baseline</div></div>';
   }
   return '<section class="program-measure-dashboard">'
-    +'<div class="program-measure-panel program-today-panel" role="group" aria-label="Today '+fox2Round(score)+', '+percent+' percent of baseline '+fox2Round(baseline)+'">'
+    +'<div class="program-measure-panel program-today-panel" role="group" aria-label="Today '+fox2Round(score)+', '+(percent>100?(percent-100)+' percent above baseline':percent+' percent of baseline')+' '+fox2Round(baseline)+'">'
     +'<h2 class="program-measure-heading">Today So Far</h2><div class="program-progress-ring"><svg viewBox="0 0 200 200" aria-hidden="true">'
     +'<circle class="program-progress-ring-track" cx="100" cy="100" r="74"></circle>'
     +'<circle class="program-progress-ring-fill" cx="100" cy="100" r="74" transform="rotate(-90 100 100)" stroke-dasharray="'+outerCircumference+'" stroke-dashoffset="'+outerOffset+'"></circle>'
     +extra+'<circle class="program-progress-ring-end" cx="100" cy="26" r="5"></circle></svg>'
-    +'<div class="program-progress-ring-center"><strong>'+percent+'<span>%</span></strong><small>of baseline</small></div></div>'
+    +'<div class="program-progress-ring-center"><strong>'+todayPercentText+'<span>%</span></strong><small>'+todayPercentContext+'</small></div></div>'
     +'<div class="program-today-score"><strong>'+fox2Round(score)+'</strong> / '+fox2Round(baseline)+' baseline</div></div>'+actionPanel+'</section>';
 }
 
@@ -6385,8 +6387,7 @@ function fox2InitProgram(){
   fox2RenderProgram();
   if(window.fox2GoToPage){
     var activeProgram=!fox2Program.optedOut&&fox2Program.screen!=='maintain';
-    var returningFromSync=params.get('program')==='1'||params.has('sync_rev')||params.get('handoff')==='1';
-    if(activeProgram&&returningFromSync){
+    if(activeProgram){
       if('scrollRestoration' in history) history.scrollRestoration='manual';
       [0,100,500].forEach(function(delay){
         window.setTimeout(function(){window.fox2GoToPage(0,false);},delay);

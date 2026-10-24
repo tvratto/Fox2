@@ -58,8 +58,8 @@ assert.ok(source.includes('var FOX2_MEASURE_DAYS=30;'),
   'the measurement segment should last 30 days');
 assert.ok(source.includes('var FOX2_PROGRAM_DAYS=FOX2_BASELINE_DAYS+FOX2_MEASURE_DAYS;'),
   'program progress should combine the seven-day baseline and 30-day measurement segment');
-assert.ok(source.includes("' of '+FOX2_MEASURE_DAYS"),
-  'the progress label should use the 30-day measurement duration');
+assert.ok(!source.includes("phase='Measure · Day '"),
+  'the progress block should not repeat the current measuring day');
 assert.ok(source.includes("fox2DaysBetween(fox2Program.measureStart,fox2TodayIso())>=FOX2_MEASURE_DAYS"),
   'the program should advance to results after the 30-day measurement segment');
 assert.ok(source.includes('Baseline ready'));
@@ -79,9 +79,13 @@ assert.ok(source.includes('todayScore:fox2TodayScore()'),
 assert.ok(source.includes('function fox2MeasureDashboardHtml(metrics)'),
   'the measure page should combine today and cumulative action progress');
 assert.ok(source.includes('<h2 class="program-measure-heading">Today So Far</h2>'));
-assert.ok(source.includes("<small>of baseline</small>"));
+assert.ok(source.includes('<h2 class="program-measure-heading">Results So Far</h2>'));
+assert.ok(source.includes("percent>100?'+'+(percent-100):String(percent)"),
+  'today should show only the excess after passing 100 percent of baseline');
+assert.ok(source.includes("percent>100?'above baseline':'of baseline'"),
+  'today should explain whether the displayed percentage is of or above baseline');
 assert.ok(source.includes('program-measure-dashboard'));
-assert.ok(source.includes('<h2 class="program-action-title">\'+fox2Escape(action)+\'</h2>'));
+assert.ok(source.includes('<div class="program-measure-action-name">\'+fox2Escape(action)+\'</div>'));
 assert.ok(source.includes('Fat Use Score<br>vs baseline'));
 assert.ok(!source.includes('<div class="program-action-name"><span>Your actions</span>'));
 assert.ok(!source.includes("Your score builds as the day continues."));
@@ -92,12 +96,14 @@ assert.ok(!source.includes("data-program-action=\"finish-measuring\" '+(metrics.
   'finish measuring should not appear as an unexplained disabled control');
 assert.ok(source.includes("options.scrollIntoView({behavior:'smooth',block:'start',inline:'nearest'})"),
   'opening measure options should bring the controls into view');
-assert.ok(source.includes("var returningFromSync=params.get('program')==='1'||params.has('sync_rev')||params.get('handoff')==='1'"),
-  'the page should recognize a completed device sync');
+assert.ok(source.includes('if(activeProgram){'),
+  'every load during an active program should route to Program');
+assert.ok(!source.includes('activeProgram&&returningFromSync'),
+  'active-program routing should not depend on a sync-return query parameter');
 assert.ok(source.includes("[0,100,500].forEach(function(delay)"),
-  'the page should override delayed browser scroll restoration after a sync');
+  'the page should override delayed browser scroll restoration during an active program');
 assert.ok(source.includes("window.setTimeout(function(){window.fox2GoToPage(0,false);},delay)"),
-  'a sync during an active program should land on Program');
+  'an active program should land on Program');
 assert.ok(source.includes('(metrics.after-metrics.baseline)/metrics.baseline*100'),
   'the primary reward should be the cumulative action average versus baseline');
 assert.ok(source.includes('function fox2AnimateMeasureResult()'));
