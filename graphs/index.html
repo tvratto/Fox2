@@ -195,7 +195,9 @@ html, body {
 .program-score-bars-baseline span { position:absolute; right:0; bottom:4px; color:rgba(255,255,255,.5); font-size:10px; font-weight:800; }
 .program-score-bars-axis { position:absolute; z-index:3; left:12px; right:12px; bottom:17px; border-top:1.5px solid rgba(255,255,255,.42); pointer-events:none; }
 .program-score-bars-grid { position:absolute; z-index:2; top:0; bottom:0; left:12px; display:grid; align-items:end; }
-.program-score-bar { min-width:0; height:144px; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:7px; padding:0 2px; border:0; background:transparent; color:rgba(255,255,255,.42); font:750 10px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; cursor:pointer; }
+.program-score-bar { position:relative; min-width:0; height:144px; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:7px; padding:0 2px; border:0; background:transparent; color:rgba(255,255,255,.42); font:750 10px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; cursor:pointer; }
+.program-score-bar-value { position:absolute; left:0; right:0; color:rgba(255,255,255,.72); font-size:10px; font-weight:850; line-height:1; text-align:center; }
+.program-score-bar-day { line-height:10px; }
 .program-score-bar-fill { width:18px; max-width:100%; min-height:4px; border-radius:9px; background:var(--program-orange); box-shadow:0 0 12px rgba(255,140,0,.12); transition:filter .18s ease,box-shadow .18s ease,transform .18s ease; }
 .program-score-bar.is-selected .program-score-bar-fill { filter:brightness(1.2); box-shadow:0 0 0 2px rgba(255,255,255,.82),0 0 14px rgba(255,140,0,.42); transform:translateY(-1px); }
 .program-score-bar.is-selected { color:#fff; }
@@ -6276,7 +6278,7 @@ function fox2MeasureTrendHtml(metrics){
   var bars=days.map(function(day,index){
     var value=values[index],height=Math.max(4,Math.round(value/scaleMax*plotHeight));
     var parts=day.date.split('-'),dayNumber=String(Number(parts[2]||index+1));
-    return '<button type="button" class="program-score-bar'+(index===days.length-1?' is-selected':'')+'" data-program-score-bar data-date="'+fox2Escape(fox2ShortDate(day.date))+'" data-score="'+fox2Round(value)+'" aria-label="'+fox2Escape(fox2ShortDate(day.date))+', Fat Use Score '+fox2Round(value)+'"><span class="program-score-bar-fill" style="height:'+height+'px"></span><span>'+dayNumber+'</span></button>';
+    return '<button type="button" class="program-score-bar'+(index===days.length-1?' is-selected':'')+'" data-program-score-bar data-date="'+fox2Escape(fox2ShortDate(day.date))+'" data-score="'+fox2Round(value)+'" aria-label="'+fox2Escape(fox2ShortDate(day.date))+', Fat Use Score '+fox2Round(value)+'"><span class="program-score-bar-value" style="bottom:'+(21+height)+'px">'+fox2Round(value)+'</span><span class="program-score-bar-fill" style="height:'+height+'px"></span><span class="program-score-bar-day">'+dayNumber+'</span></button>';
   }).join('');
   var latest=days[days.length-1],latestValue=values[values.length-1];
   return '<div class="program-score-trend-popover" id="program-score-trend">'

@@ -98,6 +98,8 @@ assert.ok(source.includes("var columns='repeat('+days.length+',34px)'"),
   'fixed-width day columns should keep early results anchored to the left');
 assert.ok(source.includes('data-program-score-bar'),
   'individual day bars should expose their date and Fat Use Score');
+assert.ok(source.includes('class="program-score-bar-value"'),
+  'each bar should display its Fat Use Score directly above it');
 assert.ok(source.includes("if(bars) bars.scrollLeft=bars.scrollWidth"),
   'the expanded graph should open on the latest completed days');
 assert.ok(!source.includes('program-score-trend-line'),
