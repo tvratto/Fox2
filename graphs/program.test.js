@@ -108,6 +108,14 @@ assert.ok(source.includes("scroller.classList.remove('is-initializing')"),
   'the pager should be revealed only after its final scroll position is set');
 assert.ok(source.includes("if(scroller.classList.contains('is-initializing')) return"),
   'restoration scroll events should be ignored while the initial page is settling');
+assert.ok(source.includes('if(initialRouteLocked){'),
+  'late browser restoration must not replace the program-selected initial page');
+assert.ok(source.includes('if(initialRouteLocked) scroller.scrollLeft=initialPageIndex*scroller.clientWidth'),
+  'a late restoration scroll should be returned to the selected initial page');
+assert.ok(source.includes("scroller.addEventListener('touchstart',unlockInitialRoute"),
+  'the initial route lock should end when the user deliberately interacts with the pager');
+assert.ok(source.includes('initialRouteLocked=false;\n    scroller.scrollTo'),
+  'explicit tab navigation should end the initial route lock');
 assert.ok(!source.includes('[0,100,500,1200].forEach'),
   'initial routing should not use competing timed scroll corrections');
 assert.ok(source.includes('(metrics.after-metrics.baseline)/metrics.baseline*100'),

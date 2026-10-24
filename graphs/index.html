@@ -6477,6 +6477,8 @@ function handleBottomShare() {
 (function() {
   var scroller = document.getElementById('scroller');
   var tabs = document.querySelectorAll('.nav-tab');
+  var initialPageIndex = 0;
+  var initialRouteLocked = true;
 
   function updatePage(idx) {
     if (idx === currentPage) return;
@@ -6494,16 +6496,19 @@ function handleBottomShare() {
 
   window.fox2GoToPage=function(idx,animate){
     idx=Math.max(0,Math.min(tabs.length-1,Number(idx)||0));
+    initialRouteLocked=false;
     scroller.scrollTo({left:idx*scroller.clientWidth,behavior:animate?'smooth':'auto'});
     updatePage(idx);
   };
 
   window.fox2SetInitialPage=function(idx){
     idx=Math.max(0,Math.min(tabs.length-1,Number(idx)||0));
+    initialPageIndex=idx;
+    initialRouteLocked=true;
     function place(){
-      var left=idx*scroller.clientWidth;
+      var left=initialPageIndex*scroller.clientWidth;
       scroller.scrollLeft=left;
-      updatePage(idx);
+      updatePage(initialPageIndex);
       window.requestAnimationFrame(function(){
         scroller.scrollLeft=left;
         window.requestAnimationFrame(function(){
@@ -6518,9 +6523,24 @@ function handleBottomShare() {
 
   scroller.addEventListener('scroll', function() {
     if(scroller.classList.contains('is-initializing')) return;
+    if(initialRouteLocked){
+      var left=initialPageIndex*scroller.clientWidth;
+      if(Math.abs(scroller.scrollLeft-left)>1){
+        window.requestAnimationFrame(function(){
+          if(initialRouteLocked) scroller.scrollLeft=initialPageIndex*scroller.clientWidth;
+        });
+      }
+      return;
+    }
     var idx = Math.round(scroller.scrollLeft / scroller.clientWidth);
     updatePage(idx);
   }, { passive: true });
+
+  function unlockInitialRoute(){ initialRouteLocked=false; }
+  scroller.addEventListener('pointerdown',unlockInitialRoute,{passive:true});
+  scroller.addEventListener('touchstart',unlockInitialRoute,{passive:true});
+  scroller.addEventListener('wheel',unlockInitialRoute,{passive:true});
+  scroller.addEventListener('keydown',unlockInitialRoute);
 
   for (var i = 0; i < tabs.length; i++) {
     tabs[i].addEventListener('click', (function(idx) {
