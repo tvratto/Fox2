@@ -80,6 +80,16 @@ assert.ok(source.includes('function fox2MeasureDashboardHtml(metrics)'),
   'the measure page should combine today and cumulative action progress');
 assert.ok(source.includes('<h2 class="program-measure-heading">Today So Far</h2>'));
 assert.ok(source.includes('<h2 class="program-measure-heading">Results So Far</h2>'));
+assert.ok(source.includes('data-program-action="toggle-results-chart"'),
+  'results so far should expose its Fat Use Score history from a caret');
+assert.ok(source.includes('function fox2MeasureTrendHtml(metrics)'),
+  'the expandable result should graph completed Fat Use Scores');
+assert.ok(source.includes('program-score-trend-baseline'),
+  'the result graph should retain baseline as a quiet comparison');
+assert.ok(source.includes("fox2MeasureTrendOpen=!fox2MeasureTrendOpen"),
+  'the result graph caret should open and close the graph');
+assert.ok(source.includes("chart.scrollIntoView({behavior:'smooth',block:'nearest',inline:'nearest'})"),
+  'opening the graph should bring the newly revealed content into view');
 assert.ok(source.includes("percent>100?'+'+(percent-100):String(percent)"),
   'today should show only the excess after passing 100 percent of baseline');
 assert.ok(source.includes("percent>100?'above baseline':'of baseline'"),

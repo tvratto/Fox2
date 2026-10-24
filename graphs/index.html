@@ -179,9 +179,25 @@ html, body {
 .program-measure-action-name { max-width:100%; min-height:33px; margin:-5px 0 5px; color:rgba(255,255,255,.6); font-size:13px; line-height:1.25; font-weight:750; overflow-wrap:anywhere; }
 .program-action-change { position:relative; z-index:2; margin-top:11px; color:var(--program-orange); font-size:54px; line-height:.95; font-weight:950; letter-spacing:-.06em; }
 .program-action-context { position:relative; z-index:2; margin-top:14px; color:rgba(255,255,255,.62); font-size:14px; font-weight:800; line-height:1.3; }
+.program-results-caret { width:42px; height:30px; display:grid; place-items:center; margin:auto auto -8px; padding:0; border:0; background:transparent; color:rgba(255,255,255,.62); cursor:pointer; }
+.program-results-caret svg { width:21px; height:12px; overflow:visible; transition:transform .22s ease,color .22s ease; }
+.program-results-caret path { fill:none; stroke:currentColor; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
+.program-results-caret[aria-expanded="true"] svg { transform:rotate(180deg); color:var(--program-orange); }
+.program-visually-hidden { position:absolute!important; width:1px!important; height:1px!important; padding:0!important; margin:-1px!important; overflow:hidden!important; clip:rect(0,0,0,0)!important; white-space:nowrap!important; border:0!important; }
+.program-score-trend-popover { grid-column:1/-1; padding:14px 14px 12px; border-top:1px solid rgba(255,255,255,.1); background:rgba(0,0,0,.2); animation:program-trend-open .25s cubic-bezier(.2,.8,.2,1); }
+.program-score-trend-head { display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin:0 5px 7px; }
+.program-score-trend-head strong { color:#fff; font-size:14px; font-weight:900; }
+.program-score-trend-head span { color:rgba(255,255,255,.46); font-size:11px; font-weight:800; }
+.program-score-trend-chart { display:block; width:100%; height:auto; }
+.program-score-trend-baseline { stroke:rgba(255,255,255,.34); stroke-width:1.5; stroke-dasharray:5 5; }
+.program-score-trend-area { fill:rgba(255,140,0,.1); }
+.program-score-trend-line { fill:none; stroke:var(--program-orange); stroke-width:4; stroke-linecap:round; stroke-linejoin:round; }
+.program-score-trend-point { fill:#090909; stroke:var(--program-orange); stroke-width:3; }
+.program-score-trend-chart text { fill:rgba(255,255,255,.44); font:750 10px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; }
+@keyframes program-trend-open { from{opacity:0;transform:translateY(-7px)} to{opacity:1;transform:none} }
 .program-action-result.is-updated .program-action-change { animation:program-result-pulse .7s cubic-bezier(.2,.8,.2,1); }
 @keyframes program-result-pulse { 0%{transform:scale(.9);filter:brightness(1)} 48%{transform:scale(1.08);filter:brightness(1.35)} 100%{transform:none;filter:none} }
-@media (prefers-reduced-motion:reduce){.program-action-result *{animation:none!important}}
+@media (prefers-reduced-motion:reduce){.program-action-result *,.program-score-trend-popover{animation:none!important;transition:none!important}}
 @media (max-width:350px){.program-measure-panel{padding-inline:7px}.program-progress-ring{width:128px;height:128px}.program-measure-heading{font-size:16px}.program-measure-action-name{font-size:12px}.program-action-change{font-size:48px}}
 .program-history { display:grid; gap:11px; margin-top:19px; }
 .program-history-item { padding:16px; border-radius:18px; background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.08); }
@@ -6029,6 +6045,7 @@ var FOX2_BASELINE_DAYS=7;
 var FOX2_MEASURE_DAYS=30;
 var FOX2_PROGRAM_DAYS=FOX2_BASELINE_DAYS+FOX2_MEASURE_DAYS;
 var fox2ProgramOptionsOpen=false;
+var fox2MeasureTrendOpen=false;
 var fox2ProgramHistoryDays=[];
 var fox2AnimatedMeasureDate='';
 
@@ -6240,6 +6257,31 @@ function fox2SignedPercent(value){
   return (value>0?'+':'')+value+'%';
 }
 
+function fox2MeasureTrendHtml(metrics){
+  var days=metrics.measureDays||[];
+  var baseline=Number(metrics.baseline)||0;
+  if(!fox2MeasureTrendOpen||!days.length||!baseline) return '';
+  var values=days.map(function(day){return Math.max(0,Number(day.score)||0);});
+  var scaleValues=values.concat([baseline]);
+  var min=Math.min.apply(null,scaleValues),max=Math.max.apply(null,scaleValues);
+  var span=Math.max(12,max-min),pad=Math.max(6,span*.18);
+  min=Math.max(0,min-pad); max+=pad;
+  function xAt(index){return values.length===1?168:24+(288*index/(values.length-1));}
+  function yAt(value){return 104-((value-min)/(max-min))*74;}
+  var points=values.map(function(value,index){return {x:xAt(index),y:yAt(value),value:value,date:days[index].date};});
+  var line=points.map(function(point){return point.x.toFixed(1)+' '+point.y.toFixed(1);}).join(' L');
+  var area='M'+points[0].x.toFixed(1)+' 112 L'+line+' L'+points[points.length-1].x.toFixed(1)+' 112 Z';
+  var dots=points.map(function(point){return '<circle class="program-score-trend-point" cx="'+point.x.toFixed(1)+'" cy="'+point.y.toFixed(1)+'" r="4"><title>'+fox2Escape(fox2ShortDate(point.date))+': '+fox2Round(point.value)+'</title></circle>';}).join('');
+  var baselineY=yAt(baseline);
+  return '<div class="program-score-trend-popover" id="program-score-trend">'
+    +'<div class="program-score-trend-head"><strong>Fat Use Score</strong><span>'+days.length+' completed '+(days.length===1?'day':'days')+'</span></div>'
+    +'<svg class="program-score-trend-chart" viewBox="0 0 336 132" role="img" aria-label="Daily Fat Use Scores since your action began, compared with baseline '+fox2Round(baseline)+'">'
+    +'<line class="program-score-trend-baseline" x1="18" y1="'+baselineY.toFixed(1)+'" x2="318" y2="'+baselineY.toFixed(1)+'"></line>'
+    +'<text x="318" y="'+Math.max(11,baselineY-6).toFixed(1)+'" text-anchor="end">Baseline '+fox2Round(baseline)+'</text>'
+    +'<path class="program-score-trend-area" d="'+area+'"></path><path class="program-score-trend-line" d="M'+line+'"></path>'+dots
+    +'<text x="18" y="127">'+fox2Escape(fox2ShortDate(days[0].date))+'</text><text x="318" y="127" text-anchor="end">'+fox2Escape(fox2ShortDate(days[days.length-1].date))+'</text></svg></div>';
+}
+
 function fox2MeasureDashboardHtml(metrics){
   var baseline=Number(metrics.baseline)||0;
   var score=Math.max(0,Number(metrics.todayScore)||0);
@@ -6261,7 +6303,8 @@ function fox2MeasureDashboardHtml(metrics){
     var priorChange=Math.round((priorAverage-baseline)/baseline*100);
     actionPanel='<div class="program-measure-panel program-action-result" data-latest-date="'+fox2Escape(latest.date)+'" data-from="'+priorChange+'" data-to="'+change+'" role="group" aria-label="'+fox2Escape(action)+': '+fox2SignedPercent(change)+' Fat Use Score versus baseline">'
       +'<h2 class="program-measure-heading">Results So Far</h2><div class="program-measure-action-name">'+fox2Escape(action)+'</div><div class="program-action-change" id="program-action-change" aria-live="polite">'+fox2SignedPercent(change)+'</div>'
-      +'<div class="program-action-context">Fat Use Score<br>vs baseline</div></div>';
+      +'<div class="program-action-context">Fat Use Score<br>vs baseline</div>'
+      +'<button type="button" class="program-results-caret" data-program-action="toggle-results-chart" aria-expanded="'+fox2MeasureTrendOpen+'" aria-controls="program-score-trend"><svg viewBox="0 0 22 12" aria-hidden="true"><path d="M2 2l9 8 9-8"></path></svg><span class="program-visually-hidden">'+(fox2MeasureTrendOpen?'Hide':'Show')+' Fat Use Score graph</span></button></div>';
   }else{
     actionPanel='<div class="program-measure-panel program-action-result" role="group" aria-label="'+fox2Escape(action)+': Fat Use Score comparison pending">'
       +'<h2 class="program-measure-heading">Results So Far</h2><div class="program-measure-action-name">'+fox2Escape(action)+'</div><div class="program-action-change" id="program-action-change">—</div><div class="program-action-context">Fat Use Score<br>vs baseline</div></div>';
@@ -6273,7 +6316,7 @@ function fox2MeasureDashboardHtml(metrics){
     +'<circle class="program-progress-ring-fill" cx="100" cy="100" r="74" transform="rotate(-90 100 100)" stroke-dasharray="'+outerCircumference+'" stroke-dashoffset="'+outerOffset+'"></circle>'
     +extra+'<circle class="program-progress-ring-end" cx="100" cy="26" r="5"></circle></svg>'
     +'<div class="program-progress-ring-center"><strong>'+todayPercentText+'<span>%</span></strong><small>'+todayPercentContext+'</small></div></div>'
-    +'<div class="program-today-score"><strong>'+fox2Round(score)+'</strong> / '+fox2Round(baseline)+' baseline</div></div>'+actionPanel+'</section>';
+    +'<div class="program-today-score"><strong>'+fox2Round(score)+'</strong> / '+fox2Round(baseline)+' baseline</div></div>'+actionPanel+fox2MeasureTrendHtml(metrics)+'</section>';
 }
 
 function fox2MeasureHtml(metrics){
@@ -6428,6 +6471,10 @@ function fox2HandleProgramAction(action){
     fox2Program.setupMode='new'; fox2ProgramOptionsOpen=false;
   }else if(action==='toggle-options'){
     fox2ProgramOptionsOpen=!fox2ProgramOptionsOpen; fox2RenderProgram(); return;
+  }else if(action==='toggle-results-chart'){
+    fox2MeasureTrendOpen=!fox2MeasureTrendOpen; fox2RenderProgram();
+    if(fox2MeasureTrendOpen) window.setTimeout(function(){var chart=document.getElementById('program-score-trend');if(chart) chart.scrollIntoView({behavior:'smooth',block:'nearest',inline:'nearest'});},20);
+    return;
   }else if(action==='use-baseline'){
     if(metrics.baseline){fox2Program.baselineValue=metrics.baseline;fox2Program.baselineSource='current';fox2Program.baselineRange=fox2DateRange(metrics.baselineDays);fox2Program.measureStart=fox2TodayIso();fox2Program.screen='measure';fox2ProgramOptionsOpen=false;}
   }else if(action==='use-previous-baseline'){
