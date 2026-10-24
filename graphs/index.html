@@ -2032,7 +2032,7 @@ html, body {
 
 <div class="top-header">
   <div class="top-header-inner">
-    <button class="nav-tab active" data-page="0">Program</button>
+    <button class="nav-tab active" data-page="0">Progress</button>
     <button class="nav-tab" data-page="1">Data</button>
     <button class="nav-tab" data-page="2">History</button>
     <button class="nav-tab" data-page="3">Analysis</button>
@@ -6051,7 +6051,7 @@ function shareStreaks() {
   doShare(streakCanvas);
 }
 
-// ── Guided program ───────────────────────────────────────────────
+// ── Progress Tracking ────────────────────────────────────────────
 var FOX2_PROGRAM_VERSION=1;
 var FOX2_BASELINE_DAYS=7;
 var FOX2_MEASURE_DAYS=30;
@@ -6272,20 +6272,20 @@ function fox2ProgramMetrics(){
 
 function fox2ProgressHtml(metrics){
   var total=FOX2_PROGRAM_DAYS,screen=fox2Program.screen,day=0,phase='Not started',current='',showPhase=true;
-  if(screen==='setup'){phase='Ready to begin';}
+  if(screen==='setup'){phase='Ready to start';}
   else if(screen==='baseline'){
-    day=Math.min(FOX2_BASELINE_DAYS,metrics.baselineDays.length); phase='Baseline · '+metrics.baselineDays.length+' of '+FOX2_BASELINE_DAYS+' days'; current='baseline';
+    day=Math.min(FOX2_BASELINE_DAYS,metrics.baselineDays.length); phase='Starting point · '+metrics.baselineDays.length+' of '+FOX2_BASELINE_DAYS+' days'; current='baseline';
   }else if(screen==='measure'){
     var elapsed=Math.max(1,fox2DaysBetween(fox2Program.measureStart,fox2TodayIso())+1);
-    day=Math.min(total,FOX2_BASELINE_DAYS+elapsed); phase='Measuring'; current='measure'; showPhase=false;
-  }else if(screen==='results'){day=total;phase='Results ready';current='results';}
-  else if(screen==='maintain'){day=total;phase='Maintenance';current='results';}
+    day=Math.min(total,FOX2_BASELINE_DAYS+elapsed); phase='Tracking'; current='measure'; showPhase=false;
+  }else if(screen==='results'){day=total;phase='Result ready';current='results';}
+  else if(screen==='maintain'){day=total;phase='Tracking complete';current='results';}
   var pct=Math.max(0,Math.min(100,Math.round(day/total*100)));
   var baselineDivider=(FOX2_BASELINE_DAYS/total*100).toFixed(1);
-  return '<section class="program-progress" role="img" aria-label="Program progress: day '+day+' of '+total+', '+pct+' percent complete, '+phase+'">'
-    +'<div class="program-progress-head"><div class="program-progress-title">Program Progress</div><div class="program-day">Day '+day+' of '+total+'</div></div>'
+  return '<section class="program-progress" role="img" aria-label="Progress tracking: day '+day+' of '+total+', '+pct+' percent complete, '+phase+'">'
+    +'<div class="program-progress-head"><div class="program-progress-title">Your Progress</div><div class="program-day">Day '+day+' of '+total+'</div></div>'
     +'<div class="program-bar"><div class="program-bar-fill" style="width:'+pct+'%"></div><i class="program-divider" style="left:'+baselineDivider+'%"></i></div>'
-    +'<div class="program-phases"><span class="'+(current==='baseline'?'is-current':'')+'">Baseline</span><span class="'+(current==='measure'?'is-current':'')+'">Measure</span><span class="'+(current==='results'?'is-current':'')+'">Results</span></div>'
+    +'<div class="program-phases"><span class="'+(current==='baseline'?'is-current':'')+'">Starting Point</span><span class="'+(current==='measure'?'is-current':'')+'">Tracking</span><span class="'+(current==='results'?'is-current':'')+'">Result</span></div>'
     +'<div class="program-progress-meta"'+(showPhase?'':' style="justify-content:flex-end"')+'>'+(showPhase?'<span>'+phase+'</span>':'')+'<span>'+pct+'% Complete</span></div></section>';
 }
 
@@ -6304,28 +6304,28 @@ function fox2BaselineChart(days,estimate){
   var circles=points.map(function(point){return '<circle class="program-baseline-point" cx="'+point.x.toFixed(1)+'" cy="'+point.y.toFixed(1)+'" r="5"></circle>';}).join('');
   var avgY=118-((estimate-min)/(max-min))*86;
   avgY=Math.max(26,Math.min(124,avgY));
-  return '<div class="program-baseline-chart"><svg viewBox="0 0 336 154" role="img" aria-label="Baseline daily results and current estimate '+fox2Round(estimate)+'">'
+  return '<div class="program-baseline-chart"><svg viewBox="0 0 336 154" role="img" aria-label="Starting point daily results and current estimate '+fox2Round(estimate)+'">'
     +'<line class="program-baseline-average" x1="14" y1="'+avgY.toFixed(1)+'" x2="322" y2="'+avgY.toFixed(1)+'"></line>'
     +'<path class="program-baseline-area" d="'+area+'"></path><path class="program-baseline-line" d="M'+line+'"></path>'+circles
     +'<text x="14" y="149">Day 1</text><text x="322" y="149" text-anchor="end">Latest</text><text x="322" y="'+Math.max(12,avgY-6).toFixed(1)+'" text-anchor="end">Estimate '+fox2Round(estimate)+'</text></svg></div>';
 }
 
 function fox2IntroHtml(){
-  return '<section><div class="program-eyebrow">Guided program</div><h1 class="program-title">See how actions affect your fat metabolism.</h1>'
-    +'<ol class="program-intro-steps"><li>First, use FOX2 for one week to set your baseline.</li><li>Next, make the changes you want to test—such as changing a GLP-1 dose, exercise, or diet.</li><li>Measure each day and sync FOX2 to see how your changes affect your fat metabolism.</li></ol>'
-    +'<button type="button" class="program-primary" data-program-action="start">Start program</button>'
-    +'<button type="button" class="program-secondary" data-program-action="opt-out">Use FOX2 without the program</button></section>';
+  return '<section><div class="program-eyebrow">FOX2 Progress Tracking</div><h1 class="program-title">See how your actions affect your fat use.</h1>'
+    +'<ol class="program-intro-steps"><li>Use FOX2 for one week to establish your starting point.</li><li>Make the changes you want to track—such as changing a GLP-1 dose, exercise, or diet.</li><li>Measure and sync each day to see your result.</li></ol>'
+    +'<button type="button" class="program-primary" data-program-action="start">Start Tracking</button>'
+    +'<button type="button" class="program-secondary" data-program-action="opt-out">View data only</button></section>';
 }
 
 function fox2SetupHtml(){
   var mode=fox2Program.setupMode||'new',changing=mode==='change',restarting=mode==='restart';
   return '<section><div class="program-eyebrow">'+(changing?'Change actions':restarting?'Start over':'Get started')+'</div>'
     +'<h1 class="program-title">'+(changing?'What will you add or change?':restarting?'What will you try next?':'What are you changing?')+'</h1>'
-    +'<p class="program-copy">'+(changing?'Your original baseline will stay the same.':restarting?'You will establish a new baseline before testing these actions.':'Describe the action or actions you want to test.')+'</p>'
+    +'<p class="program-copy">'+(changing?'Your original starting point will stay the same.':restarting?'You will establish a new starting point before tracking these actions.':'Describe the action or actions you want to track.')+'</p>'
     +'<label class="program-label" for="program-action-input">Action or actions</label>'
     +'<textarea class="program-input" id="program-action-input" placeholder="Describe what you are changing or trying…">'+fox2Escape(changing||restarting?'':fox2Program.action)+'</textarea>'
     +'<div class="program-examples">Write as much as you want. For example: change a GLP-1 dose, exercise more, change meal timing, or change your diet.</div>'
-    +'<button type="button" class="program-primary" data-program-action="begin">'+(changing?'Start measuring':restarting?'Begin new baseline':'Begin baseline')+'</button>'
+    +'<button type="button" class="program-primary" data-program-action="begin">'+(changing?'Start tracking':restarting?'Begin new starting point':'Begin starting point')+'</button>'
     +'<button type="button" class="program-secondary" data-program-action="back">Back</button></section>';
 }
 
@@ -6333,18 +6333,18 @@ function fox2BaselineHtml(metrics){
   var count=metrics.baselineDays.length,remaining=Math.max(0,FOX2_BASELINE_DAYS-count),has=count>0,complete=count>=FOX2_BASELINE_DAYS&&metrics.baseline;
   var previous=fox2PreviousBaselineDays(),canUsePrevious=previous.length>0;
   var content=complete
-    ? '<div class="program-baseline-ready"><div class="program-eyebrow">Baseline ready</div><div class="program-baseline-ready-value">'+fox2Round(metrics.baseline)+'</div><div class="program-baseline-ready-unit">Daily score</div><div class="program-baseline-ready-support">Based on '+count+' measured days</div></div>'
-      +'<div class="program-next-card"><div class="program-next-label">Next</div><div class="program-next-title">'+fox2Escape(fox2Program.action||'Your planned action')+'</div><div class="program-next-copy">Start your action when you begin the measuring phase.</div><button type="button" class="program-primary" data-program-action="use-baseline">Begin action</button></div>'
+    ? '<div class="program-baseline-ready"><div class="program-eyebrow">Starting point ready</div><div class="program-baseline-ready-value">'+fox2Round(metrics.baseline)+'</div><div class="program-baseline-ready-unit">Daily score</div><div class="program-baseline-ready-support">Based on '+count+' measured days</div></div>'
+      +'<div class="program-next-card"><div class="program-next-label">Next</div><div class="program-next-title">'+fox2Escape(fox2Program.action||'Your planned action')+'</div><div class="program-next-copy">Begin your action when you start tracking.</div><button type="button" class="program-primary" data-program-action="use-baseline">Start tracking</button></div>'
     : has
-    ? '<div class="program-baseline-head"><div><div class="program-eyebrow">Your baseline so far</div><h2 class="program-section-title">'+count+' measured '+(count===1?'day':'days')+'</h2></div><div><div class="program-baseline-value">'+fox2Round(metrics.baseline)+'</div><div class="program-baseline-unit">Current estimate</div></div></div>'
+    ? '<div class="program-baseline-head"><div><div class="program-eyebrow">Your starting point so far</div><h2 class="program-section-title">'+count+' measured '+(count===1?'day':'days')+'</h2></div><div><div class="program-baseline-value">'+fox2Round(metrics.baseline)+'</div><div class="program-baseline-unit">Current estimate</div></div></div>'
       +fox2BaselineChart(metrics.baselineDays,metrics.baseline)
-      +'<p class="program-default">Keep measuring. '+remaining+' more measured '+(remaining===1?'day':'days')+' will complete your baseline.</p>'
-    : '<div class="program-eyebrow">Baseline</div><h1 class="program-title">Ready to begin.</h1><p class="program-copy">Your baseline will appear after your first completed day.</p><div class="program-baseline-empty">No baseline measurements yet</div>';
-  content+='<button type="button" class="program-options-toggle" data-program-action="toggle-options" aria-expanded="'+fox2ProgramOptionsOpen+'">Baseline options '+(fox2ProgramOptionsOpen?'▴':'▾')+'</button>';
+      +'<p class="program-default">Keep measuring. '+remaining+' more measured '+(remaining===1?'day':'days')+' will complete your starting point.</p>'
+    : '<div class="program-eyebrow">Starting Point</div><h1 class="program-title">Ready to begin.</h1><p class="program-copy">Your starting point will appear after your first completed day.</p><div class="program-baseline-empty">No completed days yet</div>';
+  content+='<button type="button" class="program-options-toggle" data-program-action="toggle-options" aria-expanded="'+fox2ProgramOptionsOpen+'">Starting point options '+(fox2ProgramOptionsOpen?'▴':'▾')+'</button>';
   if(fox2ProgramOptionsOpen){
-    content+='<div class="program-options"><p>'+(complete?'Restart your baseline or replace it with recent history.':has?'Use the baseline you have now, restart this step, or use your recent history.':'Use completed days from before the program started. Seven days is recommended, but you can choose fewer.')+'</p><div class="program-option-actions">';
-    if(has&&!complete) content+='<button type="button" class="program-option-primary" data-program-action="use-baseline">Use current baseline</button>';
-    if(has) content+='<button type="button" class="program-option-secondary" data-program-action="restart-baseline">Restart baseline</button>';
+    content+='<div class="program-options"><p>'+(complete?'Restart your starting point or replace it with recent history.':has?'Use the starting point you have now, restart this step, or use your recent history.':'Use completed days from before Progress Tracking started. Seven days is recommended, but you can choose fewer.')+'</p><div class="program-option-actions">';
+    if(has&&!complete) content+='<button type="button" class="program-option-primary" data-program-action="use-baseline">Use current starting point</button>';
+    if(has) content+='<button type="button" class="program-option-secondary" data-program-action="restart-baseline">Restart starting point</button>';
     content+=canUsePrevious
       ? '<button type="button" class="program-option-history" data-program-action="use-previous-baseline">'+(previous.length===7?'Use previous 7 days · '+fox2Escape(fox2DateRange(previous)):previous.length+' of 7 previous days available')+'</button>'
       : '<button type="button" class="program-option-history" disabled>0 of 7 previous days available</button>';
@@ -6380,7 +6380,7 @@ function fox2MeasureTrendHtml(metrics){
   return '<div class="program-score-trend-popover" id="program-score-trend">'
     +'<div class="program-score-trend-head"><strong>Fat Use Score</strong><span id="program-score-bar-detail">'+fox2Escape(fox2ShortDate(latest.date))+' · '+fox2Round(latestValue)+'</span></div>'
     +'<div class="program-score-bars-scroll" role="group" aria-label="Daily Fat Use Scores since your action began. Scroll horizontally for earlier days."><div class="program-score-bars" style="width:'+chartWidth+'px">'
-    +'<div class="program-score-bars-baseline" style="bottom:'+(17+baselineHeight)+'px"><span>Baseline '+fox2Round(baseline)+'</span></div>'
+    +'<div class="program-score-bars-baseline" style="bottom:'+(17+baselineHeight)+'px"><span>Starting point '+fox2Round(baseline)+'</span></div>'
     +'<div class="program-score-bars-axis" aria-hidden="true"></div><div class="program-score-bars-grid" style="width:'+contentWidth+'px;grid-template-columns:'+columns+'">'+bars+'</div></div></div></div>';
 }
 
@@ -6389,7 +6389,7 @@ function fox2MeasureDashboardHtml(metrics){
   var score=Math.max(0,Number(metrics.todayScore)||0);
   var percent=baseline>0?Math.round(score/baseline*100):0;
   var todayPercentText=percent>100?'+'+(percent-100):String(percent);
-  var todayPercentContext=percent>100?'above baseline':'of baseline';
+  var todayPercentContext=percent>100?'above starting point':'of starting point';
   var firstLap=Math.max(0,Math.min(100,percent));
   var extraLap=Math.max(0,Math.min(100,percent-100));
   var outerCircumference=464.96,innerCircumference=389.56;
@@ -6403,32 +6403,32 @@ function fox2MeasureDashboardHtml(metrics){
     var change=Math.round((metrics.after-baseline)/baseline*100);
     var priorDays=metrics.measureDays.slice(0,-1),priorAverage=priorDays.length?fox2Mean(priorDays.map(function(day){return day.score;})):baseline;
     var priorChange=Math.round((priorAverage-baseline)/baseline*100);
-    actionPanel='<div class="program-measure-panel program-action-result" data-latest-date="'+fox2Escape(latest.date)+'" data-from="'+priorChange+'" data-to="'+change+'" role="group" aria-label="'+fox2Escape(action)+': '+fox2SignedPercent(change)+' Fat Use Score versus baseline">'
+    actionPanel='<div class="program-measure-panel program-action-result" data-latest-date="'+fox2Escape(latest.date)+'" data-from="'+priorChange+'" data-to="'+change+'" role="group" aria-label="'+fox2Escape(action)+': '+fox2SignedPercent(change)+' Fat Use Score versus starting point">'
       +'<h2 class="program-measure-heading">Results So Far</h2><div class="program-measure-action-name">'+fox2Escape(action)+'</div><div class="program-action-change" id="program-action-change" aria-live="polite">'+fox2SignedPercent(change)+'</div>'
-      +'<div class="program-action-context">Fat Use Score<br>vs baseline</div>'
+      +'<div class="program-action-context">Fat Use Score<br>vs starting point</div>'
       +'<button type="button" class="program-results-caret" data-program-action="toggle-results-chart" aria-expanded="'+fox2MeasureTrendOpen+'" aria-controls="program-score-trend" aria-label="'+(fox2MeasureTrendOpen?'Hide':'Show')+' Fat Use Score data"><svg viewBox="0 0 12 22" aria-hidden="true"><path d="M2 2l8 9-8 9"></path></svg><span>Data</span></button></div>';
   }else{
     actionPanel='<div class="program-measure-panel program-action-result" role="group" aria-label="'+fox2Escape(action)+': Fat Use Score comparison pending">'
-      +'<h2 class="program-measure-heading">Results So Far</h2><div class="program-measure-action-name">'+fox2Escape(action)+'</div><div class="program-action-change" id="program-action-change">—</div><div class="program-action-context">Fat Use Score<br>vs baseline</div></div>';
+      +'<h2 class="program-measure-heading">Results So Far</h2><div class="program-measure-action-name">'+fox2Escape(action)+'</div><div class="program-action-change" id="program-action-change">—</div><div class="program-action-context">Fat Use Score<br>vs starting point</div></div>';
   }
   return '<section class="program-measure-dashboard">'
-    +'<div class="program-measure-panel program-today-panel" role="group" aria-label="Today '+fox2Round(score)+', '+(percent>100?(percent-100)+' percent above baseline':percent+' percent of baseline')+' '+fox2Round(baseline)+'">'
+    +'<div class="program-measure-panel program-today-panel" role="group" aria-label="Today '+fox2Round(score)+', '+(percent>100?(percent-100)+' percent above starting point':percent+' percent of starting point')+' '+fox2Round(baseline)+'">'
     +'<h2 class="program-measure-heading">Today So Far</h2><div class="program-progress-ring"><svg viewBox="0 0 200 200" aria-hidden="true">'
     +'<circle class="program-progress-ring-track" cx="100" cy="100" r="74"></circle>'
     +'<circle class="program-progress-ring-fill" cx="100" cy="100" r="74" transform="rotate(-90 100 100)" stroke-dasharray="'+outerCircumference+'" stroke-dashoffset="'+outerOffset+'"></circle>'
     +extra+'<circle class="program-progress-ring-end" cx="100" cy="26" r="5"></circle></svg>'
     +'<div class="program-progress-ring-center"><strong>'+todayPercentText+'<span>%</span></strong><small>'+todayPercentContext+'</small></div></div>'
-    +'<div class="program-today-score"><strong>'+fox2Round(score)+'</strong> / '+fox2Round(baseline)+' baseline</div></div>'+actionPanel+fox2MeasureTrendHtml(metrics)+'</section>';
+    +'<div class="program-today-score"><strong>'+fox2Round(score)+'</strong> / '+fox2Round(baseline)+' starting point</div></div>'+actionPanel+fox2MeasureTrendHtml(metrics)+'</section>';
 }
 
 function fox2MeasureHtml(metrics){
   var content=fox2MeasureDashboardHtml(metrics);
-  content+='<button type="button" class="program-options-toggle" data-program-action="toggle-options" aria-expanded="'+fox2ProgramOptionsOpen+'">Measure options '+(fox2ProgramOptionsOpen?'▴':'▾')+'</button>';
+  content+='<button type="button" class="program-options-toggle" data-program-action="toggle-options" aria-expanded="'+fox2ProgramOptionsOpen+'">Tracking options '+(fox2ProgramOptionsOpen?'▴':'▾')+'</button>';
   if(fox2ProgramOptionsOpen){
-    content+='<div class="program-options"><p>Change how the guided program is running.</p><div class="program-option-actions">';
-    if(metrics.measureDays.length) content+='<button type="button" class="program-option-card is-primary" data-program-action="finish-measuring"><strong>Finish measuring and view results</strong><span>End the 30-day measuring period early and save the result so far.</span></button>';
-    content+='<button type="button" class="program-option-card" data-program-action="restart-measuring"><strong>Restart the measuring period</strong><span>Keep your baseline and return to day 1 of measuring.</span></button>'
-      +'<button type="button" class="program-option-card" data-program-action="start-over"><strong>Start over with a new baseline</strong><span>Begin the entire guided program again.</span></button></div></div>';
+    content+='<div class="program-options"><p>Change how Progress Tracking is running.</p><div class="program-option-actions">';
+    if(metrics.measureDays.length) content+='<button type="button" class="program-option-card is-primary" data-program-action="finish-measuring"><strong>Finish tracking and view result</strong><span>End the 30-day tracking period early and save the result so far.</span></button>';
+    content+='<button type="button" class="program-option-card" data-program-action="restart-measuring"><strong>Restart the tracking period</strong><span>Keep your starting point and return to day 1 of tracking.</span></button>'
+      +'<button type="button" class="program-option-card" data-program-action="start-over"><strong>Start over with a new starting point</strong><span>Begin Progress Tracking again.</span></button></div></div>';
   }
   return content;
 }
@@ -6483,11 +6483,11 @@ function fox2ResultsHtml(metrics){
     return '<article class="program-history-item"><h2 class="program-history-title"><span class="program-history-bullet"></span><span>'+fox2Escape(item.action||'Actions')+'</span></h2><div role="table" aria-label="Action result"><div class="program-result-table-head" role="row"><span>Before</span><span>After</span><span>Change</span></div><div class="program-result-table-values" role="row"><span>'+item.before+'</span><span>'+item.after+'</span><span>'+(change>=0?'+':'')+change+'%</span></div></div></article>';
   }).join(''):'<div class="program-baseline-empty">No completed results yet</div>';
   return '<section><div class="program-eyebrow">Results</div><h1 class="program-title">Action History</h1><div class="program-history">'+history+'</div></section>'
-    +'<section class="program-section"><h2 class="program-section-title">What do you want to do?</h2><button type="button" class="program-choice is-primary" data-program-action="maintain">Maintain</button><button type="button" class="program-choice" data-program-action="change-actions">Add or change actions</button><button type="button" class="program-choice" data-program-action="start-over">Start over</button></section>';
+    +'<section class="program-section"><h2 class="program-section-title">What do you want to do?</h2><button type="button" class="program-choice is-primary" data-program-action="maintain">Keep tracking</button><button type="button" class="program-choice" data-program-action="change-actions">Add or change actions</button><button type="button" class="program-choice" data-program-action="start-over">Start over</button></section>';
 }
 
 function fox2MaintainHtml(){
-  return '<section><div class="program-eyebrow">Maintenance</div><div class="program-maintain-mark">✓</div><h1 class="program-title program-center">Keep going</h1><p class="program-copy program-center">FOX2 will keep checking your fat metabolism.</p><div class="program-action-name" style="margin-top:22px"><span>Maintaining</span>'+fox2Escape(fox2Program.action||'Your current actions')+'</div></section>'
+  return '<section><div class="program-eyebrow">Ongoing tracking</div><div class="program-maintain-mark">✓</div><h1 class="program-title program-center">Keep going</h1><p class="program-copy program-center">FOX2 will keep tracking your fat use.</p><div class="program-action-name" style="margin-top:22px"><span>Current actions</span>'+fox2Escape(fox2Program.action||'Your current actions')+'</div></section>'
     +'<section class="program-section"><h2 class="program-section-title">Next</h2><p class="program-copy">Keep measuring and syncing FOX2.</p><button type="button" class="program-choice" data-program-action="change-actions">Add or change actions</button><button type="button" class="program-choice" data-program-action="start-over">Start over</button></section>';
 }
 
@@ -6505,7 +6505,7 @@ function fox2RenderProgram(){
   else if(screen==='results') body=fox2ResultsHtml(metrics);
   else if(screen==='maintain') body=fox2MaintainHtml();
   else body=fox2IntroHtml();
-  shell.innerHTML=(fox2ProgramReadOnly?'<div class="program-shared-banner">Shared FOX2 program</div>':'')+fox2ProgressHtml(metrics)+body+'<div class="program-status" id="program-status"></div>';
+  shell.innerHTML=(fox2ProgramReadOnly?'<div class="program-shared-banner">Shared FOX2 progress</div>':'')+fox2ProgressHtml(metrics)+body+'<div class="program-status" id="program-status"></div>';
   var input=shell.querySelector('#program-action-input');
   if(input&&fox2ProgramReadOnly) input.readOnly=true;
   if(input) input.addEventListener('input',function(){fox2Program.action=input.value;});
@@ -6542,7 +6542,7 @@ function fox2OpenPreviousBaselineConfirm(previous){
   var use=document.getElementById('program-baseline-confirm-use');
   if(!overlay||!copy||!use||!previous.length) return;
   var count=previous.length,days=count===1?'day':'days';
-  copy.textContent='FOX2 recommends 7 days for a more representative baseline. This baseline will use only '+count+' completed '+days+' ('+fox2DateRange(previous)+'). Are you sure you want to continue?';
+  copy.textContent='FOX2 recommends 7 days for a more representative starting point. This starting point will use only '+count+' completed '+days+' ('+fox2DateRange(previous)+'). Are you sure you want to continue?';
   use.textContent='Use '+count+' '+days;
   overlay.classList.add('open');
   use.focus();
@@ -6634,7 +6634,7 @@ var currentPage = 0;
 function handleBottomShare() {
   var sharingProgram=currentPage===0;
   var url = sharingProgram?fox2ProgramShareUrl():window.location.href;
-  var title=sharingProgram?'FOX2 Program':'FOX2 Results';
+  var title=sharingProgram?'FOX2 Progress Tracking':'FOX2 Results';
   if (navigator.share) {
     navigator.share({ title: title, url: url }).catch(function() {});
   } else {

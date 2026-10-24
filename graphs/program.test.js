@@ -3,22 +3,24 @@ const fs=require('fs');
 
 const source=fs.readFileSync(__dirname+'/index.html','utf8');
 
-const programTab=source.indexOf('data-page="0">Program</button>');
+const programTab=source.indexOf('data-page="0">Progress</button>');
 const dataTab=source.indexOf('data-page="1">Data</button>');
 const historyTab=source.indexOf('data-page="2">History</button>');
 const analysisTab=source.indexOf('data-page="3">Analysis</button>');
 
 assert.ok(programTab>=0&&programTab<dataTab&&dataTab<historyTab&&historyTab<analysisTab,
-  'navigation should be Program, Data, History, Analysis');
+  'navigation should be Progress, Data, History, Analysis');
 assert.ok(source.includes('id="program-shell"'),'program page should be mounted in the pager');
 assert.ok(source.includes("fox2Program.optedOut=true"),'the intro should persist an explicit opt-out');
 assert.ok(source.includes("window.fox2GoToPage(1,true)"),'opting out should route directly to Data');
 assert.ok(source.includes("var activeProgram=fox2ProgramReadOnly||(!fox2Program.optedOut&&fox2Program.screen!=='maintain')"),
   'opted-out and maintenance users should open on Data on later visits');
-assert.ok(source.includes('Use FOX2 without the program'),'intro should expose a clear non-program path');
-assert.ok(source.includes('Finish measuring and view results'));
-assert.ok(source.includes('Restart the measuring period'));
-assert.ok(source.includes('Start over with a new baseline'));
+assert.ok(source.includes('FOX2 Progress Tracking'),'the primary experience should have a clear name');
+assert.ok(source.includes('View data only'),'intro should expose a clear path outside Progress Tracking');
+assert.ok(source.includes('Start Tracking'));
+assert.ok(source.includes('Finish tracking and view result'));
+assert.ok(source.includes('Restart the tracking period'));
+assert.ok(source.includes('Start over with a new starting point'));
 assert.ok(source.includes('function fox2SetProgramHistory(readingRows,scoreRows)'),
   'the program should retain complete score history beyond the current NFC payload');
 assert.ok(source.includes("fox2SetProgramHistory(historyReadings,historyScores)"),
@@ -45,14 +47,14 @@ assert.ok(source.includes('disabled>0 of 7 previous days available'),
   'the historical shortcut should only be disabled when no historical days exist');
 assert.ok(source.includes('function fox2OpenPreviousBaselineConfirm(previous)'),
   'using fewer than seven days should open a confirmation');
-assert.ok(source.includes('FOX2 recommends 7 days for a more representative baseline.'),
+assert.ok(source.includes('FOX2 recommends 7 days for a more representative starting point.'),
   'the confirmation should explain why seven days are recommended');
 assert.ok(source.includes("else if(previous.length){fox2OpenPreviousBaselineConfirm(previous);return;}"),
   'one to six historical days should be usable after confirmation');
 assert.ok(source.includes('function fox2ConfirmPreviousBaseline()'),
   'the confirmation should apply the available historical days');
 assert.ok(source.includes("data-program-action=\"use-previous-baseline\""));
-assert.ok(source.includes('Maintain'));
+assert.ok(source.includes('Keep tracking'));
 assert.ok(source.includes('Add or change actions'));
 assert.ok(source.includes('var FOX2_MEASURE_DAYS=30;'),
   'the measurement segment should last 30 days');
@@ -62,8 +64,8 @@ assert.ok(!source.includes("phase='Measure · Day '"),
   'the progress block should not repeat the current measuring day');
 assert.ok(source.includes("fox2DaysBetween(fox2Program.measureStart,fox2TodayIso())>=FOX2_MEASURE_DAYS"),
   'the program should advance to results after the 30-day measurement segment');
-assert.ok(source.includes('Baseline ready'));
-assert.ok(source.includes('Begin action'));
+assert.ok(source.includes('Starting point ready'));
+assert.ok(source.includes('Start tracking'));
 assert.ok(!source.includes("Yesterday's result"),
   'the first measuring day should not show an empty yesterday result');
 assert.ok(source.includes("var action=fox2Program.action||'Your action'"));
@@ -89,7 +91,7 @@ assert.ok(source.includes('.program-results-caret[aria-expanded="true"] svg { tr
 assert.ok(source.includes('function fox2MeasureTrendHtml(metrics)'),
   'the expandable result should graph completed Fat Use Scores');
 assert.ok(source.includes('program-score-bars-baseline'),
-  'the result bar graph should retain baseline as a quiet comparison');
+  'the result bar graph should retain the starting point as a quiet comparison');
 assert.ok(source.includes("var contentWidth=days.length*34"),
   'all completed days should remain in a horizontally scrollable chart');
 assert.ok(source.includes('program-score-bars-axis'),
@@ -117,12 +119,12 @@ assert.ok(source.includes("shell.querySelectorAll('[data-program-score-bar]')"),
 assert.ok(source.includes("chart.scrollIntoView({behavior:'smooth',block:'nearest',inline:'nearest'})"),
   'opening the graph should bring the newly revealed content into view');
 assert.ok(source.includes("percent>100?'+'+(percent-100):String(percent)"),
-  'today should show only the excess after passing 100 percent of baseline');
-assert.ok(source.includes("percent>100?'above baseline':'of baseline'"),
-  'today should explain whether the displayed percentage is of or above baseline');
+  'today should show only the excess after passing 100 percent of the starting point');
+assert.ok(source.includes("percent>100?'above starting point':'of starting point'"),
+  'today should explain whether the displayed percentage is of or above the starting point');
 assert.ok(source.includes('program-measure-dashboard'));
 assert.ok(source.includes('<div class="program-measure-action-name">\'+fox2Escape(action)+\'</div>'));
-assert.ok(source.includes('Fat Use Score<br>vs baseline'));
+assert.ok(source.includes('Fat Use Score<br>vs starting point'));
 assert.ok(!source.includes('<div class="program-action-name"><span>Your actions</span>'));
 assert.ok(!source.includes("Your score builds as the day continues."));
 assert.ok(!source.includes('Measure as usual. Sync again tomorrow.'));
@@ -133,15 +135,15 @@ assert.ok(!source.includes("data-program-action=\"finish-measuring\" '+(metrics.
 assert.ok(source.includes("options.scrollIntoView({behavior:'smooth',block:'start',inline:'nearest'})"),
   'opening measure options should bring the controls into view');
 assert.ok(source.includes('window.fox2SetInitialPage(activeProgram?0:1)'),
-  'every load during an active program should route to Program');
+  'every load during active Progress Tracking should route to Progress');
 assert.ok(source.includes("params.get('program_share')||''"),
   'a shared program snapshot should load from its URL');
 assert.ok(source.includes("url.searchParams.set('program_share',encoded)"),
-  'sharing from Program should add the read-only snapshot to the results URL');
+  'sharing from Progress should add the read-only snapshot to the results URL');
 assert.ok(source.includes("var url = sharingProgram?fox2ProgramShareUrl():window.location.href"),
-  'the always-available Share button should use a program-aware link on Program');
-assert.ok(source.includes('Shared FOX2 program'),
-  'receivers should be told that they are viewing a shared program');
+  'the always-available Share button should use a tracking-aware link on Progress');
+assert.ok(source.includes('Shared FOX2 progress'),
+  'receivers should be told that they are viewing shared progress');
 assert.ok(source.includes('.program-shell.is-shared [data-program-action]:not([data-program-action="toggle-results-chart"])'),
   'only mutation controls should be hidden in the shared view');
 assert.ok(!source.includes('activeProgram&&returningFromSync'),
