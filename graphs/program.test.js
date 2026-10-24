@@ -82,6 +82,10 @@ assert.ok(source.includes('<h2 class="program-measure-heading">Today So Far</h2>
 assert.ok(source.includes('<h2 class="program-measure-heading">Results So Far</h2>'));
 assert.ok(source.includes('data-program-action="toggle-results-chart"'),
   'results so far should expose its Fat Use Score history from a caret');
+assert.ok(source.includes('<path d="M2 2l8 9-8 9"></path></svg><span>Data</span>'),
+  'the disclosure should use a sideways caret with a visible Data label');
+assert.ok(source.includes('.program-results-caret[aria-expanded="true"] svg { transform:rotate(90deg); }'),
+  'the sideways caret should turn downward when its data is open');
 assert.ok(source.includes('function fox2MeasureTrendHtml(metrics)'),
   'the expandable result should graph completed Fat Use Scores');
 assert.ok(source.includes('program-score-trend-baseline'),

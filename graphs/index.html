@@ -179,11 +179,11 @@ html, body {
 .program-measure-action-name { max-width:100%; min-height:33px; margin:-5px 0 5px; color:rgba(255,255,255,.6); font-size:13px; line-height:1.25; font-weight:750; overflow-wrap:anywhere; }
 .program-action-change { position:relative; z-index:2; margin-top:11px; color:var(--program-orange); font-size:54px; line-height:.95; font-weight:950; letter-spacing:-.06em; }
 .program-action-context { position:relative; z-index:2; margin-top:14px; color:rgba(255,255,255,.62); font-size:14px; font-weight:800; line-height:1.3; }
-.program-results-caret { width:42px; height:30px; display:grid; place-items:center; margin:auto auto -8px; padding:0; border:0; background:transparent; color:rgba(255,255,255,.62); cursor:pointer; }
-.program-results-caret svg { width:21px; height:12px; overflow:visible; transition:transform .22s ease,color .22s ease; }
+.program-results-caret { width:auto; height:30px; display:flex; align-items:center; justify-content:center; gap:7px; margin:auto auto -8px; padding:0 8px; border:0; background:transparent; color:rgba(255,255,255,.62); font:850 13px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; cursor:pointer; }
+.program-results-caret svg { width:8px; height:14px; overflow:visible; transition:transform .22s ease,color .22s ease; }
 .program-results-caret path { fill:none; stroke:currentColor; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
-.program-results-caret[aria-expanded="true"] svg { transform:rotate(180deg); color:var(--program-orange); }
-.program-visually-hidden { position:absolute!important; width:1px!important; height:1px!important; padding:0!important; margin:-1px!important; overflow:hidden!important; clip:rect(0,0,0,0)!important; white-space:nowrap!important; border:0!important; }
+.program-results-caret[aria-expanded="true"] { color:var(--program-orange); }
+.program-results-caret[aria-expanded="true"] svg { transform:rotate(90deg); }
 .program-score-trend-popover { grid-column:1/-1; padding:14px 14px 12px; border-top:1px solid rgba(255,255,255,.1); background:rgba(0,0,0,.2); animation:program-trend-open .25s cubic-bezier(.2,.8,.2,1); }
 .program-score-trend-head { display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin:0 5px 7px; }
 .program-score-trend-head strong { color:#fff; font-size:14px; font-weight:900; }
@@ -6304,7 +6304,7 @@ function fox2MeasureDashboardHtml(metrics){
     actionPanel='<div class="program-measure-panel program-action-result" data-latest-date="'+fox2Escape(latest.date)+'" data-from="'+priorChange+'" data-to="'+change+'" role="group" aria-label="'+fox2Escape(action)+': '+fox2SignedPercent(change)+' Fat Use Score versus baseline">'
       +'<h2 class="program-measure-heading">Results So Far</h2><div class="program-measure-action-name">'+fox2Escape(action)+'</div><div class="program-action-change" id="program-action-change" aria-live="polite">'+fox2SignedPercent(change)+'</div>'
       +'<div class="program-action-context">Fat Use Score<br>vs baseline</div>'
-      +'<button type="button" class="program-results-caret" data-program-action="toggle-results-chart" aria-expanded="'+fox2MeasureTrendOpen+'" aria-controls="program-score-trend"><svg viewBox="0 0 22 12" aria-hidden="true"><path d="M2 2l9 8 9-8"></path></svg><span class="program-visually-hidden">'+(fox2MeasureTrendOpen?'Hide':'Show')+' Fat Use Score graph</span></button></div>';
+      +'<button type="button" class="program-results-caret" data-program-action="toggle-results-chart" aria-expanded="'+fox2MeasureTrendOpen+'" aria-controls="program-score-trend" aria-label="'+(fox2MeasureTrendOpen?'Hide':'Show')+' Fat Use Score data"><svg viewBox="0 0 12 22" aria-hidden="true"><path d="M2 2l8 9-8 9"></path></svg><span>Data</span></button></div>';
   }else{
     actionPanel='<div class="program-measure-panel program-action-result" role="group" aria-label="'+fox2Escape(action)+': Fat Use Score comparison pending">'
       +'<h2 class="program-measure-heading">Results So Far</h2><div class="program-measure-action-name">'+fox2Escape(action)+'</div><div class="program-action-change" id="program-action-change">—</div><div class="program-action-context">Fat Use Score<br>vs baseline</div></div>';
