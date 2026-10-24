@@ -40,7 +40,20 @@
       var title=document.getElementById('title');
       var message=document.getElementById('message');
       var button=document.getElementById('continue');
+      var presenceKey='fox2-results-presence:'+safeId;
+      var updateKey='fox2-sync-update:'+safeId;
       var existing=false,complete=false,channel=null,nonce=String(Date.now())+Math.random();
+
+      function readStored(key){
+        try{return JSON.parse(localStorage.getItem(key)||'null');}catch(e){return null;}
+      }
+      function hasRecentPresence(){
+        var presence=readStored(presenceKey);
+        return !!(presence&&presence.instanceId&&Date.now()-Number(presence.updatedAt||0)<120000);
+      }
+      function publishUpdate(url){
+        try{localStorage.setItem(updateKey,JSON.stringify({url:url,updatedAt:Date.now()}));}catch(e){}
+      }
 
       function resultsUrl(){
         var url=new URL('/graphs/',window.location.origin);
@@ -67,17 +80,20 @@
       function finish(){
         if(!complete) return;
         var url=resultsUrl();
+        publishUpdate(url);
         if(channel) channel.postMessage({type:'updated',deviceId:deviceId,resultsUrl:url});
         // Give an existing page a short window to answer the final probe. If
         // none answers, this first sync page simply becomes the results page.
         probe();
         setTimeout(function(){
           if(!existing){ window.location.replace(url); return; }
+          if(channel) channel.postMessage({type:'focus',deviceId:deviceId});
           mark.classList.remove('syncing');mark.textContent='✓';
           title.textContent='Your FOX2 is synced';
           message.textContent='Your open results page has been updated.';
           button.style.display='block';
-        },650);
+          window.close();
+        },900);
       }
 
       if(!deviceId||!params.get('d')){
@@ -85,6 +101,7 @@
         return;
       }
 
+      existing=hasRecentPresence();
       if(typeof BroadcastChannel!=='undefined'){
         channel=new BroadcastChannel('fox2-sync-'+safeId);
         channel.addEventListener('message',function(event){

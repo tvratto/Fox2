@@ -16,6 +16,10 @@ assert.ok(syncSource.includes("url.searchParams.set('handoff','1')"));
 assert.ok(syncSource.includes("url.searchParams.set('program','1')"));
 assert.ok(syncSource.includes("channel.postMessage({type:'probe'"));
 assert.ok(syncSource.includes("channel.postMessage({type:'updated'"));
+assert.ok(syncSource.includes("var presenceKey='fox2-results-presence:'"));
+assert.ok(syncSource.includes("var updateKey='fox2-sync-update:'"));
+assert.ok(syncSource.includes('publishUpdate(url)'));
+assert.ok(syncSource.includes('existing=hasRecentPresence()'));
 assert.ok(syncSource.includes("window.location.replace(url)"));
 assert.ok(!syncSource.includes("window.open(resultsUrl(),'fox2-results-'"));
 assert.ok(syncSource.includes("channel.postMessage({type:'focus'"));
@@ -27,6 +31,10 @@ assert.ok(graphSource.includes("var canProbe=!!dParam"));
 assert.ok(graphSource.includes("incoming.type==='probe'"));
 assert.ok(graphSource.includes("incoming.type==='focus'"));
 assert.ok(graphSource.includes("incoming.type==='updated'"));
+assert.ok(graphSource.includes("var presenceKey='fox2-results-presence:'"));
+assert.ok(graphSource.includes("var updateKey='fox2-sync-update:'"));
+assert.ok(graphSource.includes("document.addEventListener('visibilitychange'"));
+assert.ok(graphSource.includes('applyPendingUpdate()'));
 assert.ok(graphSource.includes('Promise.all(writePromises)'));
 assert.ok(graphSource.includes('window._fox2Handoff.reportWrites(ok)'));
 assert.ok(graphSource.includes("type:'fox2-sync-complete'"));
@@ -44,6 +52,12 @@ assert.ok(graphSource.includes("url.searchParams.set('program','1')"));
     addEventListener(type,listener){if(type==='message')this.listener=listener;}
     postMessage(data){(channels[this.name]||[]).forEach(peer=>{if(peer!==this&&peer.listener)peer.listener({data});});}
   }
+  const storage={};
+  const localStorage={
+    getItem(key){return Object.prototype.hasOwnProperty.call(storage,key)?storage[key]:null;},
+    setItem(key,value){storage[key]=String(value);},
+    removeItem(key){delete storage[key];}
+  };
   function page(search){
     const elements={};
     ['nfc-sync-handoff','nfc-sync-mark','nfc-sync-title','nfc-sync-message','nfc-sync-return'].forEach(id=>{
@@ -51,15 +65,19 @@ assert.ok(graphSource.includes("url.searchParams.set('program','1')"));
     });
     const timers=[];
     const location={href:'https://fox2.info/graphs/'+search,replaced:'',replace(url){this.replaced=url;}};
-    const window={location,name:'',open(){return {focus(){}}},close(){}};
+    const windowEvents={};
+    const documentEvents={};
+    const window={location,name:'',open(){return {focus(){}}},close(){},focus(){},addEventListener(type,listener){windowEvents[type]=listener;}};
     window.top=window;window.self=window;
     const context={
-      window,document:{getElementById(id){return elements[id]||null;}},
+      window,document:{visibilityState:'visible',getElementById(id){return elements[id]||null;},addEventListener(type,listener){documentEvents[type]=listener;}},
       params:new URLSearchParams(search),dParam:'s:0010',BroadcastChannel:MockBroadcastChannel,
-      URL,Math,Date,setTimeout(fn){timers.push(fn);return timers.length;}
+      localStorage,URL,Math,Date,
+      setTimeout(fn){timers.push(fn);return timers.length;},
+      setInterval(){return 1;},clearInterval(){}
     };
     vm.runInNewContext(handoffSource,context);
-    return {window,elements,timers};
+    return {window,elements,timers,windowEvents,documentEvents};
   }
 
   const established=page('?id=DEVICE1&d=s%3A0010&handoff=1');
@@ -72,6 +90,7 @@ assert.ok(graphSource.includes("url.searchParams.set('program','1')"));
   assert.ok(established.window.location.replaced.includes('handoff=1'));
   assert.equal(incoming.elements['nfc-sync-title'].textContent,'Your FOX2 is synced');
   assert.equal(incoming.elements['nfc-sync-return'].style.display,'block');
+  assert.ok(storage['fox2-sync-update:DEVICE1']);
 
   const firstPage=page('?id=DEVICE2&d=s%3A0010');
   assert.equal(firstPage.window._fox2Handoff.existing,false);

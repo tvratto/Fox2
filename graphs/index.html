@@ -7,6 +7,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="color-scheme" content="dark">
 <title>FOX2 Results</title>
+<script>
+if('scrollRestoration' in history) history.scrollRestoration='manual';
+</script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body {
@@ -2178,18 +2181,54 @@ var sParam    = params.get('s') || '';
   var deviceId=params.get('id')||'';
   if(!deviceId) return;
   var safeId=deviceId.replace(/[^A-Za-z0-9_-]/g,'');
+  var presenceKey='fox2-results-presence:'+safeId;
+  var updateKey='fox2-sync-update:'+safeId;
+  var instanceId=String(Date.now())+'-'+Math.random();
   var overlay=document.getElementById('nfc-sync-handoff');
   var mark=document.getElementById('nfc-sync-mark');
   var title=document.getElementById('nfc-sync-title');
   var message=document.getElementById('nfc-sync-message');
   var returnButton=document.getElementById('nfc-sync-return');
   var canProbe=!!dParam&&params.get('handoff')!=='1'&&typeof BroadcastChannel!=='undefined';
+  var presenceTimer=null;
+
+  function readStored(key){
+    try{return JSON.parse(localStorage.getItem(key)||'null');}catch(e){return null;}
+  }
+  function markPresent(){
+    try{localStorage.setItem(presenceKey,JSON.stringify({instanceId:instanceId,updatedAt:Date.now()}));}catch(e){}
+  }
+  function clearPresence(){
+    try{
+      var presence=readStored(presenceKey);
+      if(presence&&presence.instanceId===instanceId) localStorage.removeItem(presenceKey);
+    }catch(e){}
+  }
+  function savePendingUpdate(url){
+    try{localStorage.setItem(updateKey,JSON.stringify({url:url,updatedAt:Date.now()}));}catch(e){}
+  }
+  function applyPendingUpdate(){
+    var pending=readStored(updateKey);
+    if(!pending||!pending.url) return false;
+    try{
+      var nextUrl=new URL(pending.url,window.location.href);
+      var nextRevision=Number(nextUrl.searchParams.get('sync_rev')||pending.updatedAt||0);
+      var currentRevision=Number(params.get('sync_rev')||0);
+      if(nextRevision<=currentRevision) return false;
+      window.location.replace(nextUrl.toString());
+      return true;
+    }catch(e){return false;}
+  }
+
   var state={deviceId:deviceId,safeId:safeId,established:false,existing:false,decided:!canProbe,writesDone:false,writesOk:false,finished:false};
   window._fox2Handoff=state;
 
   function establish(){
+    if(state.established) return;
     state.established=true;
     window.name='fox2-results-'+safeId;
+    markPresent();
+    presenceTimer=setInterval(markPresent,15000);
     if(overlay) overlay.classList.remove('visible');
   }
   if(typeof BroadcastChannel==='undefined'){
@@ -2218,11 +2257,14 @@ var sParam    = params.get('s') || '';
       return;
     }
     var url=resultsUrl();
+    savePendingUpdate(url);
     channel.postMessage({type:'updated',deviceId:deviceId,resultsUrl:url});
+    channel.postMessage({type:'focus',deviceId:deviceId});
     if(mark){mark.classList.remove('syncing');mark.textContent='✓';}
     if(title) title.textContent='Your FOX2 is synced';
     if(message) message.textContent='Your open results page has been updated.';
     if(returnButton) returnButton.style.display='block';
+    window.close();
   }
   state.reportWrites=function(ok){state.writesDone=true;state.writesOk=!!ok;maybeFinish();};
 
@@ -2242,8 +2284,28 @@ var sParam    = params.get('s') || '';
       return;
     }
     if(incoming.type==='updated'&&state.established&&incoming.resultsUrl){
+      savePendingUpdate(incoming.resultsUrl);
       window.location.replace(incoming.resultsUrl);
     }
+  });
+
+  window.addEventListener('storage',function(event){
+    if(event.key===updateKey&&state.established) applyPendingUpdate();
+  });
+  window.addEventListener('pageshow',function(){
+    if(!state.established) return;
+    markPresent();
+    applyPendingUpdate();
+  });
+  window.addEventListener('pagehide',function(event){
+    if(event.persisted) return;
+    if(presenceTimer) clearInterval(presenceTimer);
+    clearPresence();
+  });
+  document.addEventListener('visibilitychange',function(){
+    if(!state.established) return;
+    markPresent();
+    if(document.visibilityState==='visible') applyPendingUpdate();
   });
 
   if(!canProbe){ establish(); return; }
@@ -6383,18 +6445,22 @@ function fox2HandleProgramAction(action){
   fox2SaveProgram(); fox2RenderProgram();
 }
 
-function fox2InitProgram(){
-  fox2RenderProgram();
+function fox2RouteInitialPage(){
   if(window.fox2GoToPage){
     var activeProgram=!fox2Program.optedOut&&fox2Program.screen!=='maintain';
     if(activeProgram){
-      if('scrollRestoration' in history) history.scrollRestoration='manual';
-      [0,100,500].forEach(function(delay){
+      [0,100,500,1200].forEach(function(delay){
         window.setTimeout(function(){window.fox2GoToPage(0,false);},delay);
       });
     }
     else if(!activeProgram) window.fox2GoToPage(1,false);
   }
+}
+
+function fox2InitProgram(){
+  fox2RenderProgram();
+  fox2RouteInitialPage();
+  window.addEventListener('pageshow',fox2RouteInitialPage,{once:true});
 }
 
 // ── Page navigation: tabs + share routing ──

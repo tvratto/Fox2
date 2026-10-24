@@ -100,10 +100,14 @@ assert.ok(source.includes('if(activeProgram){'),
   'every load during an active program should route to Program');
 assert.ok(!source.includes('activeProgram&&returningFromSync'),
   'active-program routing should not depend on a sync-return query parameter');
-assert.ok(source.includes("[0,100,500].forEach(function(delay)"),
+assert.ok(source.includes("if('scrollRestoration' in history) history.scrollRestoration='manual'"),
+  'browser scroll restoration should be disabled before the horizontal pager is laid out');
+assert.ok(source.includes("[0,100,500,1200].forEach(function(delay)"),
   'the page should override delayed browser scroll restoration during an active program');
 assert.ok(source.includes("window.setTimeout(function(){window.fox2GoToPage(0,false);},delay)"),
   'an active program should land on Program');
+assert.ok(source.includes("window.addEventListener('pageshow',fox2RouteInitialPage,{once:true})"),
+  'the initial route should be reasserted after Safari restores the page');
 assert.ok(source.includes('(metrics.after-metrics.baseline)/metrics.baseline*100'),
   'the primary reward should be the cumulative action average versus baseline');
 assert.ok(source.includes('function fox2AnimateMeasureResult()'));
