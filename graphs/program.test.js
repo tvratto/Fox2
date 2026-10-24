@@ -100,6 +100,10 @@ assert.ok(source.includes('data-program-score-bar'),
   'individual day bars should expose their date and Fat Use Score');
 assert.ok(source.includes('class="program-score-bar-value"'),
   'each bar should display its Fat Use Score directly above it');
+assert.ok(source.includes('var baseHeight=Math.min(height,baselineHeight),excessHeight=Math.max(0,height-baselineHeight)'),
+  'each bar should split precisely where it crosses baseline');
+assert.ok(source.includes('class="program-score-bar-excess"'),
+  'the portion above baseline should use a distinct highlight segment');
 assert.ok(source.includes("if(bars) bars.scrollLeft=bars.scrollWidth"),
   'the expanded graph should open on the latest completed days');
 assert.ok(!source.includes('program-score-trend-line'),
