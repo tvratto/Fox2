@@ -207,7 +207,7 @@ html, body {
 .program-recap-empty span { max-width:245px; margin-top:9px; color:rgba(255,255,255,.46); font-size:14px; line-height:1.45; }
 .program-recap-sequence.is-settled .program-recap-ring-track,.program-recap-sequence.is-settled .program-recap-score,.program-recap-sequence.is-settled .program-recap-kicker,.program-recap-sequence.is-settled .program-recap-date { opacity:0; }
 .program-recap-sequence.is-settled .program-recap-history-title,.program-recap-sequence.is-settled .program-recap-history-frame,.program-recap-sequence.is-settled .program-recap-history-mark { opacity:1; transform:none; }
-@media (prefers-reduced-motion:reduce){.program-recap-sequence *{animation:none!important;transition:none!important}}
+@media (prefers-reduced-motion:reduce){.program-recap-sequence:not(.is-replaying) *{animation:none!important;transition:none!important}}
 @media (max-width:350px){.program-recap-summary{margin-inline:10px;padding-inline:14px}.program-recap-change{font-size:40px}.program-recap-svg{margin-top:4px}.program-recap-sequence.is-settled .program-recap-summary{padding-inline:14px}}
 .program-history { display:grid; gap:11px; margin-top:19px; }
 .program-history-item { padding:16px; border-radius:18px; background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.08); }
@@ -6569,7 +6569,8 @@ function fox2AnimateMeasureRecap(){
   var latestDate=root.dataset.latestDate||'';
   if(!latestDate||fox2AnimatedMeasureDate===latestDate){fox2SettleMeasureRecap(root);return;}
   fox2AnimatedMeasureDate=latestDate;
-  if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches){fox2SettleMeasureRecap(root);return;}
+  var explicitReplay=root.classList.contains('is-replaying');
+  if(!explicitReplay&&window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches){fox2SettleMeasureRecap(root);return;}
   var path=root.querySelector('.program-recap-morph'),score=root.querySelector('#program-recap-score');
   var finalScore=Number(root.dataset.score)||0,fill=Number(root.dataset.fill)||.002;
   var x=Number(root.dataset.targetX),top=Number(root.dataset.targetTop),bottom=Number(root.dataset.targetBottom);

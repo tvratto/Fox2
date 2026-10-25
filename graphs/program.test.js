@@ -190,6 +190,12 @@ assert.ok(source.includes('(metrics.after-metrics.baseline)/metrics.baseline*100
 assert.ok(source.includes('function fox2AnimateMeasureRecap()'));
 assert.ok(source.includes("prefers-reduced-motion: reduce"),
   'the recap animation should respect reduced-motion preferences');
+assert.ok(source.includes("var explicitReplay=root.classList.contains('is-replaying')"),
+  'an explicit replay should be distinguishable from the automatic recap');
+assert.ok(source.includes("if(!explicitReplay&&window.matchMedia"),
+  'an explicit replay should run even when automatic motion is reduced');
+assert.ok(source.includes('.program-recap-sequence:not(.is-replaying) *'),
+  'reduced-motion CSS should not suppress an explicitly requested replay');
 assert.ok(source.includes("if(screen==='measure') window.setTimeout(fox2AnimateMeasureRecap,0)"),
   'the completed-day story should animate after the measure page renders');
 
