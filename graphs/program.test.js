@@ -79,10 +79,10 @@ assert.ok(source.includes('function fox2MeasureDashboardHtml(metrics)'),
 assert.ok(!source.includes('Today So Far'),
   'the progress page should not mix an unfinished current day into the completed-day story');
 assert.ok(source.includes('Morning Recap'));
-assert.ok(source.includes('Recent Fat Use Scores'));
+assert.ok(source.includes('30-Day Fat Use Scores'));
 assert.ok(source.includes('Results So Far'));
 assert.ok(source.includes('function fox2RingVisual(score)'),
-  'the recap ring and the history bars should share the firmware ring tiers');
+  'the recap ring should retain the firmware ring tiers');
 assert.ok(source.includes("bands=[60,120,180,240]"),
   'the web recap should use the same graduating score scales as the device');
 assert.ok(source.includes('function fox2RecapMorphPath(fillFraction,amount,targetX,targetTop,targetBottom)'),
@@ -90,11 +90,24 @@ assert.ok(source.includes('function fox2RecapMorphPath(fillFraction,amount,targe
 assert.ok(source.includes('totalTurn=sweep*(1-p)'),
   'the morph should remove curvature continuously rather than cross-fading shapes');
 assert.ok(source.includes('program-recap-baseline'),
-  'the recent-history view should retain the starting point as a quiet comparison');
+  'the 30-day view should retain the starting point as a quiet comparison');
 assert.ok(source.includes('fox2RecapHistorySvg(model)'),
-  'the ring should land in the same recent-history chart shown after the recap');
+  'the ring should land in the same 30-day chart shown after the recap');
+assert.ok(source.includes('for(var i=0;i<FOX2_MEASURE_DAYS;i++)'),
+  'the chart should always build all 30 tracking-day positions');
+assert.ok(source.includes("day.x=18+index*(300/(FOX2_MEASURE_DAYS-1))"),
+  'all 30 chart positions should fit into one fixed view');
+assert.ok(source.includes('class="program-recap-slot"'),
+  'unfinished tracking days should remain visibly open');
+assert.ok(source.includes('.program-recap-bar-base { stroke:#ff8c00;'),
+  'every completed day should use the same orange base');
+assert.ok(source.includes('.program-recap-bar-above { stroke:#ffb84d;'),
+  'only the portion above the starting point should use lighter orange');
+assert.ok(source.includes("index===model.completed-1"),
+  'the newest completed day should land immediately after the earlier completed bars');
 assert.ok(source.includes("root.classList.add('is-morphing')"));
 assert.ok(source.includes("root.classList.add('is-history-visible')"));
+assert.ok(source.includes("'is-bar-landed'"));
 assert.ok(source.includes("root.classList.add('is-settled')"));
 assert.ok(source.includes('function fox2ShouldAnimateRecap(model)'),
   'the completed-day animation should be guarded per synced result');
