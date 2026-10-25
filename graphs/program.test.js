@@ -117,6 +117,12 @@ assert.ok(source.includes('if(fox2ProgramDemoSnapshot) return true'),
   'the interactive prototype should remain easy to replay on a fresh load');
 assert.ok(source.includes('fox2MarkRecapSeen(latestDate)'),
   'the newly presented result should be recorded only after its story completes');
+assert.ok(source.includes('data-recap-replay'),
+  'the completed 30-day chart should expose a small recap replay control');
+assert.ok(source.includes('function fox2ReplayMeasureRecap()'),
+  'the replay control should restart the recap without changing program data');
+assert.ok(source.includes("root.classList.remove('is-morphing','is-history-visible','is-bar-landed','is-settled')"),
+  'replay should reset the visual sequence before starting again');
 assert.ok(source.includes('program-measure-dashboard'));
 assert.ok(source.includes('<div class="program-recap-action">\'+fox2Escape(action)+\'</div>'));
 assert.ok(source.includes('Fat Use Score versus starting point'));

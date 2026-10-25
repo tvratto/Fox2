@@ -165,8 +165,13 @@ html, body {
 .program-recap-head { position:absolute; z-index:3; inset:16px 18px auto; min-height:37px; text-align:center; pointer-events:none; }
 .program-recap-kicker { display:block; color:rgba(255,255,255,.42); font-size:10px; line-height:1; font-weight:900; letter-spacing:.14em; text-transform:uppercase; transition:opacity .28s ease,transform .45s cubic-bezier(.2,.8,.2,1); }
 .program-recap-date { display:block; margin-top:6px; color:#fff; font-size:17px; line-height:1; font-weight:900; transition:opacity .28s ease,transform .45s cubic-bezier(.2,.8,.2,1); }
-.program-recap-history-title { position:absolute; inset:0; opacity:0; transform:translateY(7px); transition:opacity .28s ease,transform .45s cubic-bezier(.2,.8,.2,1); }
+.program-recap-history-title { position:absolute; inset:0; opacity:0; transform:translateY(7px); pointer-events:none; transition:opacity .28s ease,transform .45s cubic-bezier(.2,.8,.2,1); }
+.program-recap-title-row { display:flex; align-items:center; justify-content:center; gap:7px; }
 .program-recap-history-title strong { display:block; color:#fff; font-size:17px; line-height:1.1; font-weight:900; }
+.program-recap-replay { display:inline-flex; flex:0 0 25px; width:25px; height:25px; align-items:center; justify-content:center; margin:-4px 0; padding:0; border:1px solid rgba(255,255,255,.14); border-radius:50%; background:rgba(255,255,255,.065); color:rgba(255,255,255,.68); font:800 18px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; cursor:pointer; pointer-events:auto; -webkit-tap-highlight-color:transparent; transition:color .18s ease,background .18s ease,border-color .18s ease,transform .18s ease; }
+.program-recap-replay:hover,.program-recap-replay:focus-visible { color:#fff; background:rgba(255,255,255,.12); border-color:rgba(255,255,255,.25); outline:none; }
+.program-recap-replay:active { transform:scale(.92); }
+.program-recap-replay:disabled { opacity:.34; cursor:default; }
 .program-recap-history-title span { display:block; margin-top:5px; color:rgba(255,255,255,.4); font-size:10px; line-height:1; font-weight:850; letter-spacing:.12em; text-transform:uppercase; }
 .program-recap-svg { display:block; width:100%; height:auto; overflow:visible; }
 .program-recap-ring-track { fill:none; stroke:var(--recap-color); stroke-width:14; opacity:.16; transition:opacity .4s ease; }
@@ -186,7 +191,7 @@ html, body {
 .program-recap-history-frame { opacity:0; transition:opacity .35s ease; }
 .program-recap-sequence.is-morphing .program-recap-ring-track { opacity:0; }
 .program-recap-sequence.is-morphing .program-recap-score,.program-recap-sequence.is-morphing .program-recap-kicker,.program-recap-sequence.is-morphing .program-recap-date { opacity:0; transform:translateY(-5px) scale(.96); }
-.program-recap-sequence.is-history-visible .program-recap-history-title { opacity:1; transform:none; }
+.program-recap-sequence.is-history-visible .program-recap-history-title { opacity:1; transform:none; pointer-events:auto; }
 .program-recap-sequence.is-history-visible .program-recap-history-frame { opacity:1; }
 .program-recap-sequence.is-history-visible .program-recap-history-mark:not(.is-latest),.program-recap-sequence.is-bar-landed .program-recap-history-mark.is-latest { opacity:1; transform:none; }
 .program-recap-sequence.is-bar-landed .program-recap-morph { opacity:0; }
@@ -6459,7 +6464,7 @@ function fox2MeasureDashboardHtml(metrics){
   var path=fox2RecapMorphPath(model.latestVisual.progress,animate?0:1,model.latestSlot.x,model.latestSlot.top,model.plotBottom);
   var scoreText=fox2Round(model.latest.score);
   return '<section class="program-measure-dashboard"><div class="program-recap-sequence'+settledClass+'" style="--recap-color:'+model.latestVisual.color+'" data-recap-animate="'+(animate?'1':'0')+'" data-latest-date="'+fox2Escape(model.latest.date)+'" data-score="'+scoreText+'" data-fill="'+model.latestVisual.progress+'" data-target-x="'+model.latestSlot.x+'" data-target-top="'+model.latestSlot.top.toFixed(1)+'" data-target-bottom="'+model.plotBottom+'" data-from="'+model.priorChange+'" data-to="'+model.change+'">'
-    +'<div class="program-recap-head"><span class="program-recap-kicker">Morning Recap</span><span class="program-recap-date">'+fox2Escape(latestDateLabel)+'</span><span class="program-recap-history-title"><strong>30-Day Fat Use Scores</strong><span>'+model.completed+' of 30 days · Starting point '+fox2Round(model.baseline)+'</span></span></div>'
+    +'<div class="program-recap-head"><span class="program-recap-kicker">Morning Recap</span><span class="program-recap-date">'+fox2Escape(latestDateLabel)+'</span><div class="program-recap-history-title"><div class="program-recap-title-row"><strong>30-Day Fat Use Scores</strong><button type="button" class="program-recap-replay" data-recap-replay aria-label="Replay morning recap" title="Replay morning recap">↻</button></div><span>'+model.completed+' of 30 days · Starting point '+fox2Round(model.baseline)+'</span></div></div>'
     +'<svg class="program-recap-svg" viewBox="0 0 336 236" role="img" aria-label="'+fox2Escape(latestDateLabel)+' Fat Use Score '+scoreText+', added to day '+model.completed+' of your 30-day history">'
     +'<circle class="program-recap-ring-track" cx="168" cy="112" r="54"></circle><path class="program-recap-morph" d="'+path+'"></path>'
     +'<g class="program-recap-score"><text class="program-recap-score-value" id="program-recap-score" x="168" y="116">'+scoreText+'</text><text class="program-recap-score-label" x="168" y="136">FAT USE SCORE</text></g>'
@@ -6499,7 +6504,22 @@ function fox2SettleMeasureRecap(root){
   var score=root.querySelector('#program-recap-score');
   if(score) score.textContent=root.dataset.score||'0';
   root.classList.add('is-morphing','is-history-visible','is-bar-landed','is-settled');
+  root.classList.remove('is-replaying');
+  var replay=root.querySelector('[data-recap-replay]');
+  if(replay) replay.disabled=false;
   fox2MarkRecapSeen(root.dataset.latestDate||'');
+}
+
+function fox2ReplayMeasureRecap(){
+  var root=document.querySelector('.program-recap-sequence[data-latest-date]');
+  if(!root||root.classList.contains('is-replaying')) return;
+  root.classList.add('is-replaying');
+  root.classList.remove('is-morphing','is-history-visible','is-bar-landed','is-settled');
+  root.dataset.recapAnimate='1';
+  fox2AnimatedMeasureDate='';
+  var replay=root.querySelector('[data-recap-replay]');
+  if(replay) replay.disabled=true;
+  window.setTimeout(fox2AnimateMeasureRecap,80);
 }
 
 function fox2AnimateMeasureRecap(){
@@ -6538,6 +6558,9 @@ function fox2AnimateMeasureRecap(){
               result.textContent=fox2SignedPercent(from);
               fox2AnimateValue(from,to,650,function(value){result.textContent=fox2SignedPercent(value);},function(){result.textContent=fox2SignedPercent(to);});
             }
+            root.classList.remove('is-replaying');
+            var replay=root.querySelector('[data-recap-replay]');
+            if(replay) replay.disabled=false;
             fox2MarkRecapSeen(latestDate);
           },620);
         });
@@ -6595,6 +6618,8 @@ function fox2RenderProgram(){
   shell.querySelectorAll('[data-program-action]').forEach(function(button){
     button.addEventListener('click',function(){fox2HandleProgramAction(button.dataset.programAction);});
   });
+  var replay=shell.querySelector('[data-recap-replay]');
+  if(replay) replay.addEventListener('click',fox2ReplayMeasureRecap);
   if(screen==='measure') window.setTimeout(fox2AnimateMeasureRecap,0);
   if(fox2ProgramOptionsOpen) window.setTimeout(function(){
     var options=shell.querySelector('.program-options');
