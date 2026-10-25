@@ -138,6 +138,14 @@ assert.ok(source.includes('window.fox2SetInitialPage(activeProgram?0:1)'),
   'every load during active Progress Tracking should route to Progress');
 assert.ok(source.includes("params.get('program_share')||''"),
   'a shared program snapshot should load from its URL');
+assert.ok(source.includes("params.get('program_demo')||''"),
+  'an interactive Progress Tracking demo should load from its URL');
+assert.ok(source.includes('fox2ProgramSnapshot=fox2SharedProgramSnapshot||fox2ProgramDemoSnapshot'),
+  'shared and demo snapshots should use the same representative program state');
+assert.ok(source.includes('fox2ProgramReadOnly=!!fox2SharedProgramSnapshot'),
+  'only shared snapshots should be read-only');
+assert.ok(source.includes("url.searchParams.delete('program_demo')"),
+  'sharing the interactive demo should produce an ordinary read-only share URL');
 assert.ok(source.includes("url.searchParams.set('program_share',encoded)"),
   'sharing from Progress should add the read-only snapshot to the results URL');
 assert.ok(source.includes("var url = sharingProgram?fox2ProgramShareUrl():window.location.href"),

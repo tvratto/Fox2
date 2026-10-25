@@ -6060,6 +6060,8 @@ var fox2ProgramOptionsOpen=false;
 var fox2MeasureTrendOpen=false;
 var fox2AnimatedMeasureDate='';
 var fox2SharedProgramSnapshot=null;
+var fox2ProgramDemoSnapshot=null;
+var fox2ProgramSnapshot=null;
 var fox2ProgramReadOnly=false;
 var fox2ProgramHistoryDays=[];
 
@@ -6107,9 +6109,11 @@ function fox2NormalizeSharedProgram(snapshot){
 }
 
 fox2SharedProgramSnapshot=fox2DecodeProgramSnapshot(params.get('program_share')||'');
+fox2ProgramDemoSnapshot=fox2DecodeProgramSnapshot(params.get('program_demo')||'');
+fox2ProgramSnapshot=fox2SharedProgramSnapshot||fox2ProgramDemoSnapshot;
 fox2ProgramReadOnly=!!fox2SharedProgramSnapshot;
-if(fox2ProgramReadOnly&&Array.isArray(fox2SharedProgramSnapshot.days)){
-  fox2ProgramHistoryDays=fox2SharedProgramSnapshot.days.reduce(function(result,day){
+if(fox2ProgramSnapshot&&Array.isArray(fox2ProgramSnapshot.days)){
+  fox2ProgramHistoryDays=fox2ProgramSnapshot.days.reduce(function(result,day){
     var date=fox2IsoOrBlank(day&&day.date),score=Number(day&&day.score);
     if(date&&isFinite(score)&&score>0) result.push({date:date,score:score});
     return result;
@@ -6131,7 +6135,7 @@ function fox2DefaultProgram(){
 
 function fox2LoadProgram(){
   var fallback=fox2DefaultProgram();
-  if(fox2ProgramReadOnly) return fox2NormalizeSharedProgram(fox2SharedProgramSnapshot);
+  if(fox2ProgramSnapshot) return fox2NormalizeSharedProgram(fox2ProgramSnapshot);
   try{
     var saved=JSON.parse(localStorage.getItem(fox2ProgramStorageKey())||'null');
     if(!saved||typeof saved!=='object') return fallback;
@@ -6162,7 +6166,7 @@ function fox2DaysBetween(start,end){
 }
 
 function fox2SetProgramHistory(readingRows,scoreRows){
-  if(fox2ProgramReadOnly) return;
+  if(fox2ProgramSnapshot) return;
   var readingCounts={};
   (readingRows||[]).forEach(function(row){
     if(!row||!row.reading_ts) return;
@@ -6219,6 +6223,7 @@ function fox2ProgramShareUrl(){
   url.searchParams.delete('handoff');
   url.searchParams.delete('sync_rev');
   url.searchParams.delete('program');
+  url.searchParams.delete('program_demo');
   return url.toString();
 }
 
