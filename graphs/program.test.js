@@ -15,9 +15,20 @@ assert.ok(source.includes("fox2Program.optedOut=true"),'the intro should persist
 assert.ok(source.includes("window.fox2GoToPage(1,true)"),'opting out should route directly to Data');
 assert.ok(source.includes("var activeProgram=fox2ProgramReadOnly||(!fox2Program.optedOut&&fox2Program.screen!=='maintain')"),
   'opted-out and maintenance users should open on Data on later visits');
-assert.ok(source.includes('FOX2 Progress Tracking'),'the primary experience should have a clear name');
+assert.ok(source.includes('FOX2 30-Day Evaluation'),'the primary experience should have a clear name');
 assert.ok(source.includes('View data only'),'intro should expose a clear path outside Progress Tracking');
-assert.ok(source.includes('Start Tracking'));
+assert.ok(source.includes('Get Started'));
+assert.ok(source.includes('function fox2MethodHtml()'),
+  'onboarding should offer a starting-point choice before action setup');
+assert.ok(source.includes('Measure my starting point'));
+assert.ok(source.includes('Use a standard starting point'));
+assert.ok(source.includes('var FOX2_STANDARD_BASELINE=120;'),
+  'the standard starting point should be explicit and centralized');
+assert.ok(source.includes("fox2Program.screen='first'"),
+  'both starting-point paths should lead into the first-measurement handoff');
+assert.ok(source.includes('function fox2FirstMeasurementHtml()'),
+  'onboarding should walk the user through the first measurement and sync');
+assert.ok(source.includes('Tap your phone to FOX2 again to sync it.'));
 assert.ok(source.includes('Finish tracking and view result'));
 assert.ok(source.includes('Restart the tracking period'));
 assert.ok(source.includes('Start over with a new starting point'));
@@ -58,8 +69,8 @@ assert.ok(source.includes('Keep tracking'));
 assert.ok(source.includes('Add or change actions'));
 assert.ok(source.includes('var FOX2_MEASURE_DAYS=30;'),
   'the measurement segment should last 30 days');
-assert.ok(source.includes('var FOX2_PROGRAM_DAYS=FOX2_BASELINE_DAYS+FOX2_MEASURE_DAYS;'),
-  'program progress should combine the seven-day baseline and 30-day measurement segment');
+assert.ok(source.includes('var FOX2_PROGRAM_DAYS=FOX2_MEASURE_DAYS;'),
+  'the visible 30-day evaluation should begin after starting-point preparation');
 assert.ok(!source.includes("phase='Measure · Day '"),
   'the progress block should not repeat the current measuring day');
 assert.ok(source.includes("fox2DaysBetween(fox2Program.measureStart,fox2TodayIso())>=FOX2_MEASURE_DAYS"),
