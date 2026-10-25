@@ -156,58 +156,51 @@ html, body {
 .program-first-day p { max-width:270px; margin-top:11px; color:rgba(255,255,255,.48); font-size:13px; line-height:1.4; }
 .program-reference { width:190px; display:flex; align-items:center; justify-content:space-between; margin-top:21px; padding:11px 14px; border-radius:14px; background:rgba(255,255,255,.06); color:rgba(255,255,255,.46); font-size:12px; font-weight:750; }
 .program-reference strong { color:#fff; font-size:18px; }
-.program-today-strip { display:flex; align-items:center; gap:11px; padding:14px 15px; border-radius:16px; background:rgba(255,140,0,.1); }
-.program-today-strip span { color:var(--program-orange); font-size:12px; font-weight:900; letter-spacing:.1em; text-transform:uppercase; }
-.program-today-strip strong { color:#fff; font-size:15px; line-height:1.3; }
-.program-measure-dashboard { display:grid; grid-template-columns:1fr 1fr; margin-top:22px; overflow:hidden; border-radius:22px; background:linear-gradient(155deg,rgba(255,140,0,.1),rgba(255,255,255,.035)); }
-.program-measure-panel { position:relative; min-width:0; min-height:242px; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding:18px 10px; text-align:center; overflow:hidden; }
-.program-today-panel { border-right:1px solid rgba(255,255,255,.1); }
-.program-measure-heading { margin:0 0 13px; color:#fff; font-size:18px; line-height:1.1; font-weight:900; letter-spacing:-.02em; }
-.program-progress-ring { position:relative; width:142px; height:142px; margin:0 auto 11px; }
-.program-progress-ring svg { display:block; width:100%; height:100%; overflow:visible; }
-.program-progress-ring circle { fill:none; }
-.program-progress-ring-track { stroke:rgba(255,255,255,.1); stroke-width:15; }
-.program-progress-ring-fill { stroke:var(--program-orange); stroke-width:15; stroke-linecap:round; transition:stroke-dashoffset .7s cubic-bezier(.2,.8,.2,1); }
-.program-progress-ring-over { stroke:#ffb14a; stroke-width:8; stroke-linecap:round; }
-.program-progress-ring-end { fill:#fff!important; stroke:#111; stroke-width:3; }
-.program-progress-ring-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-.program-progress-ring-center strong { color:#fff; font-size:42px; line-height:.9; font-weight:950; letter-spacing:-.065em; }
-.program-progress-ring-center strong span { margin-left:1px; color:var(--program-orange); font-size:20px; letter-spacing:-.02em; }
-.program-progress-ring-center small { margin-top:7px; color:rgba(255,255,255,.58); font-size:12px; font-weight:800; }
-.program-today-score { color:rgba(255,255,255,.58); font-size:13px; font-weight:750; white-space:nowrap; }
-.program-today-score strong { color:#fff; font-size:20px; }
-.program-measure-action-name { max-width:100%; min-height:33px; margin:-5px 0 5px; color:rgba(255,255,255,.6); font-size:13px; line-height:1.25; font-weight:750; overflow-wrap:anywhere; }
-.program-action-change { position:relative; z-index:2; margin-top:11px; color:var(--program-orange); font-size:54px; line-height:.95; font-weight:950; letter-spacing:-.06em; }
-.program-action-context { position:relative; z-index:2; margin-top:14px; color:rgba(255,255,255,.62); font-size:14px; font-weight:800; line-height:1.3; }
-.program-results-caret { width:auto; height:30px; display:flex; align-items:center; justify-content:center; gap:7px; margin:auto auto -8px; padding:0 8px; border:0; background:transparent; color:rgba(255,255,255,.62); font:850 13px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; cursor:pointer; }
-.program-results-caret svg { width:8px; height:14px; overflow:visible; transition:transform .22s ease,color .22s ease; }
-.program-results-caret path { fill:none; stroke:currentColor; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
-.program-results-caret[aria-expanded="true"] { color:var(--program-orange); }
-.program-results-caret[aria-expanded="true"] svg { transform:rotate(90deg); }
-.program-score-trend-popover { grid-column:1/-1; padding:14px 14px 12px; border-top:1px solid rgba(255,255,255,.1); background:rgba(0,0,0,.2); animation:program-trend-open .25s cubic-bezier(.2,.8,.2,1); }
-.program-score-trend-head { display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin:0 5px 7px; }
-.program-score-trend-head strong { color:#fff; font-size:14px; font-weight:900; }
-.program-score-trend-head span { color:rgba(255,255,255,.46); font-size:11px; font-weight:800; }
-.program-score-bars-scroll { width:100%; overflow-x:auto; overscroll-behavior-x:contain; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
-.program-score-bars-scroll::-webkit-scrollbar { display:none; }
-.program-score-bars { position:relative; height:144px; min-width:100%; }
-.program-score-bars-baseline { position:absolute; z-index:1; left:12px; right:12px; border-top:1.5px dashed rgba(255,255,255,.38); pointer-events:none; }
-.program-score-bars-baseline span { position:absolute; right:0; bottom:4px; color:rgba(255,255,255,.5); font-size:10px; font-weight:800; }
-.program-score-bars-axis { position:absolute; z-index:3; left:12px; right:12px; bottom:17px; border-top:1.5px solid rgba(255,255,255,.42); pointer-events:none; }
-.program-score-bars-grid { position:absolute; z-index:2; top:0; bottom:0; left:12px; display:grid; align-items:end; }
-.program-score-bar { position:relative; min-width:0; height:144px; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:7px; padding:0 2px; border:0; background:transparent; color:rgba(255,255,255,.42); font:750 10px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; cursor:pointer; }
-.program-score-bar-value { position:absolute; left:0; right:0; color:rgba(255,255,255,.72); font-size:10px; font-weight:850; line-height:1; text-align:center; }
-.program-score-bar-day { line-height:10px; }
-.program-score-bar-fill { width:18px; max-width:100%; min-height:4px; display:flex; flex-direction:column; justify-content:flex-end; overflow:hidden; border-radius:9px; box-shadow:0 0 12px rgba(255,140,0,.12); transition:filter .18s ease,box-shadow .18s ease,transform .18s ease; }
-.program-score-bar-base { flex:0 0 auto; background:var(--program-orange); }
-.program-score-bar-excess { flex:0 0 auto; background:#ffb84d; }
-.program-score-bar.is-selected .program-score-bar-fill { filter:brightness(1.2); box-shadow:0 0 0 2px rgba(255,255,255,.82),0 0 14px rgba(255,140,0,.42); transform:translateY(-1px); }
-.program-score-bar.is-selected { color:#fff; }
-@keyframes program-trend-open { from{opacity:0;transform:translateY(-7px)} to{opacity:1;transform:none} }
-.program-action-result.is-updated .program-action-change { animation:program-result-pulse .7s cubic-bezier(.2,.8,.2,1); }
-@keyframes program-result-pulse { 0%{transform:scale(.9);filter:brightness(1)} 48%{transform:scale(1.08);filter:brightness(1.35)} 100%{transform:none;filter:none} }
-@media (prefers-reduced-motion:reduce){.program-action-result *,.program-score-trend-popover{animation:none!important;transition:none!important}}
-@media (max-width:350px){.program-measure-panel{padding-inline:7px}.program-progress-ring{width:128px;height:128px}.program-measure-heading{font-size:16px}.program-measure-action-name{font-size:12px}.program-action-change{font-size:48px}}
+.program-measure-dashboard { margin-top:22px; }
+.program-recap-sequence {
+  position:relative; overflow:hidden; border-radius:24px;
+  border:1px solid rgba(255,255,255,.085);
+  background:radial-gradient(circle at 50% 22%,rgba(255,140,0,.09),transparent 48%),linear-gradient(160deg,rgba(255,255,255,.055),rgba(255,255,255,.018));
+}
+.program-recap-head { position:absolute; z-index:3; inset:16px 18px auto; min-height:37px; text-align:center; pointer-events:none; }
+.program-recap-kicker { display:block; color:rgba(255,255,255,.42); font-size:10px; line-height:1; font-weight:900; letter-spacing:.14em; text-transform:uppercase; transition:opacity .28s ease,transform .45s cubic-bezier(.2,.8,.2,1); }
+.program-recap-date { display:block; margin-top:6px; color:#fff; font-size:17px; line-height:1; font-weight:900; transition:opacity .28s ease,transform .45s cubic-bezier(.2,.8,.2,1); }
+.program-recap-history-title { position:absolute; inset:0; opacity:0; transform:translateY(7px); transition:opacity .28s ease,transform .45s cubic-bezier(.2,.8,.2,1); }
+.program-recap-history-title strong { display:block; color:#fff; font-size:17px; line-height:1.1; font-weight:900; }
+.program-recap-history-title span { display:block; margin-top:5px; color:rgba(255,255,255,.4); font-size:10px; line-height:1; font-weight:850; letter-spacing:.12em; text-transform:uppercase; }
+.program-recap-svg { display:block; width:100%; height:auto; overflow:visible; }
+.program-recap-ring-track { fill:none; stroke:var(--recap-color); stroke-width:14; opacity:.16; transition:opacity .4s ease; }
+.program-recap-morph { fill:none; stroke:var(--recap-color); stroke-width:14; stroke-linecap:round; stroke-linejoin:round; filter:drop-shadow(0 0 7px rgba(255,140,0,.22)); }
+.program-recap-score { text-anchor:middle; transition:opacity .28s ease,transform .45s cubic-bezier(.2,.8,.2,1); transform-origin:168px 100px; }
+.program-recap-score-value { fill:#fff; font:950 52px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; letter-spacing:-.06em; }
+.program-recap-score-label { fill:rgba(255,255,255,.46); font:850 9px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; letter-spacing:.1em; }
+.program-recap-axis { stroke:rgba(255,255,255,.24); stroke-width:1.5; }
+.program-recap-baseline { stroke:rgba(255,255,255,.29); stroke-width:1.5; stroke-dasharray:4 5; }
+.program-recap-day-label { fill:rgba(255,255,255,.43); font:800 10px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; text-anchor:middle; text-transform:uppercase; }
+.program-recap-history-mark { opacity:0; transform:translateY(5px); transition:opacity .28s ease,transform .4s cubic-bezier(.2,.8,.2,1); }
+.program-recap-history-mark line { stroke-linecap:round; }
+.program-recap-history-mark.is-missing line { stroke:rgba(255,255,255,.22); stroke-width:8; }
+.program-recap-latest-labels { opacity:0; transition:opacity .28s ease; }
+.program-recap-history-frame { opacity:0; transition:opacity .35s ease; }
+.program-recap-sequence.is-morphing .program-recap-ring-track { opacity:0; }
+.program-recap-sequence.is-morphing .program-recap-score,.program-recap-sequence.is-morphing .program-recap-kicker,.program-recap-sequence.is-morphing .program-recap-date { opacity:0; transform:translateY(-5px) scale(.96); }
+.program-recap-sequence.is-history-visible .program-recap-history-title { opacity:1; transform:none; }
+.program-recap-sequence.is-history-visible .program-recap-history-frame,.program-recap-sequence.is-history-visible .program-recap-latest-labels { opacity:1; }
+.program-recap-sequence.is-history-visible .program-recap-history-mark { opacity:1; transform:none; }
+.program-recap-summary { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px 18px; align-items:center; max-height:0; overflow:hidden; margin:0 15px; padding:0 18px; border-radius:18px; background:rgba(0,0,0,.27); border:1px solid transparent; opacity:0; transform:translateY(10px); transition:opacity .42s ease,transform .55s cubic-bezier(.2,.8,.2,1),max-height .55s ease,margin .55s ease,padding .55s ease,border-color .55s ease; }
+.program-recap-sequence.is-settled .program-recap-summary { max-height:150px; margin-bottom:15px; padding:17px 18px; border-color:rgba(255,255,255,.07); opacity:1; transform:none; }
+.program-recap-summary-copy { min-width:0; }
+.program-recap-summary h2 { margin:0; color:#fff; font-size:19px; line-height:1.1; font-weight:900; letter-spacing:-.02em; }
+.program-recap-action { margin-top:6px; color:rgba(255,255,255,.56); font-size:13px; line-height:1.3; font-weight:730; overflow-wrap:anywhere; }
+.program-recap-change { color:var(--program-orange); font-size:45px; line-height:.9; font-weight:950; letter-spacing:-.06em; text-align:right; }
+.program-recap-context { grid-column:1/-1; padding-top:11px; border-top:1px solid rgba(255,255,255,.08); color:rgba(255,255,255,.45); font-size:11px; line-height:1.25; font-weight:850; letter-spacing:.05em; text-transform:uppercase; text-align:right; }
+.program-recap-empty { min-height:235px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:28px; text-align:center; }
+.program-recap-empty strong { color:#fff; font-size:22px; }
+.program-recap-empty span { max-width:245px; margin-top:9px; color:rgba(255,255,255,.46); font-size:14px; line-height:1.45; }
+.program-recap-sequence.is-settled .program-recap-ring-track,.program-recap-sequence.is-settled .program-recap-score,.program-recap-sequence.is-settled .program-recap-kicker,.program-recap-sequence.is-settled .program-recap-date { opacity:0; }
+.program-recap-sequence.is-settled .program-recap-history-title,.program-recap-sequence.is-settled .program-recap-history-frame,.program-recap-sequence.is-settled .program-recap-history-mark,.program-recap-sequence.is-settled .program-recap-latest-labels { opacity:1; transform:none; }
+@media (prefers-reduced-motion:reduce){.program-recap-sequence *{animation:none!important;transition:none!important}}
+@media (max-width:350px){.program-recap-summary{margin-inline:10px;padding-inline:14px}.program-recap-change{font-size:40px}.program-recap-svg{margin-top:4px}.program-recap-sequence.is-settled .program-recap-summary{padding-inline:14px}}
 .program-history { display:grid; gap:11px; margin-top:19px; }
 .program-history-item { padding:16px; border-radius:18px; background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.08); }
 .program-history-title { display:flex; gap:9px; margin:0 0 15px; font-size:15px; line-height:1.35; font-weight:850; }
@@ -222,7 +215,7 @@ html, body {
 .program-center { text-align:center; }
 .program-status { min-height:18px; margin-top:13px; color:rgba(255,255,255,.42); font-size:12px; line-height:1.4; text-align:center; }
 .program-shared-banner { margin:0 0 13px; padding:9px 12px; border:1px solid rgba(255,140,0,.28); border-radius:13px; background:rgba(255,140,0,.08); color:rgba(255,255,255,.66); font-size:12px; font-weight:850; letter-spacing:.04em; text-align:center; text-transform:uppercase; }
-.program-shell.is-shared [data-program-action]:not([data-program-action="toggle-results-chart"]) { display:none!important; }
+.program-shell.is-shared [data-program-action] { display:none!important; }
 .program-shell.is-shared .program-input { pointer-events:none; }
 .program-hidden { display:none !important; }
 .card-wrap { width: 100%; max-width: 420px; margin: auto 0; }
@@ -6057,7 +6050,6 @@ var FOX2_BASELINE_DAYS=7;
 var FOX2_MEASURE_DAYS=30;
 var FOX2_PROGRAM_DAYS=FOX2_BASELINE_DAYS+FOX2_MEASURE_DAYS;
 var fox2ProgramOptionsOpen=false;
-var fox2MeasureTrendOpen=false;
 var fox2AnimatedMeasureDate='';
 var fox2SharedProgramSnapshot=null;
 var fox2ProgramDemoSnapshot=null;
@@ -6233,15 +6225,6 @@ function fox2CompletedScoresSince(start){
   return fox2AllCompletedScoreDays().filter(function(day){return day.date>=start&&day.date<today;});
 }
 
-function fox2TodayScore(){
-  if(typeof DAYS==='undefined') return 0;
-  var today=fox2TodayIso();
-  for(var i=DAYS.length-1;i>=0;i--){
-    if(DAYS[i]&&DAYS[i].isoDate===today) return Math.max(0,Number(DAYS[i].score)||0);
-  }
-  return 0;
-}
-
 function fox2PreviousBaselineDays(){
   if(!fox2Program.baselineStart) return [];
   return fox2AllCompletedScoreDays().filter(function(day){return day.date<fox2Program.baselineStart;}).slice(-FOX2_BASELINE_DAYS);
@@ -6272,7 +6255,7 @@ function fox2ProgramMetrics(){
   if(!isFinite(baseline)||baseline<=0) baseline=fox2Mean(baselineDays.map(function(day){return day.score;}));
   var measureDays=fox2CompletedScoresSince(fox2Program.measureStart);
   var after=fox2Mean(measureDays.map(function(day){return day.score;}));
-  return {baselineDays:baselineDays,baseline:baseline,measureDays:measureDays,after:after,todayScore:fox2TodayScore()};
+  return {baselineDays:baselineDays,baseline:baseline,measureDays:measureDays,after:after};
 }
 
 function fox2ProgressHtml(metrics){
@@ -6363,67 +6346,129 @@ function fox2SignedPercent(value){
   return (value>0?'+':'')+value+'%';
 }
 
-function fox2MeasureTrendHtml(metrics){
-  var days=metrics.measureDays||[];
-  var baseline=Number(metrics.baseline)||0;
-  if(!fox2MeasureTrendOpen||!days.length||!baseline) return '';
-  var values=days.map(function(day){return Math.max(0,Number(day.score)||0);});
-  var scaleMax=Math.max.apply(null,values.concat([baseline]))*1.12;
-  var plotHeight=104;
-  var baselineHeight=Math.max(4,Math.round(baseline/scaleMax*plotHeight));
-  var contentWidth=days.length*34;
-  var chartWidth=Math.max(308,contentWidth+24);
-  var columns='repeat('+days.length+',34px)';
-  var bars=days.map(function(day,index){
-    var value=values[index],height=Math.max(4,Math.round(value/scaleMax*plotHeight));
-    var baseHeight=Math.min(height,baselineHeight),excessHeight=Math.max(0,height-baselineHeight);
-    var excess=excessHeight?'<span class="program-score-bar-excess" style="height:'+excessHeight+'px"></span>':'';
-    var parts=day.date.split('-'),dayNumber=String(Number(parts[2]||index+1));
-    return '<button type="button" class="program-score-bar'+(index===days.length-1?' is-selected':'')+'" data-program-score-bar data-date="'+fox2Escape(fox2ShortDate(day.date))+'" data-score="'+fox2Round(value)+'" aria-label="'+fox2Escape(fox2ShortDate(day.date))+', Fat Use Score '+fox2Round(value)+'"><span class="program-score-bar-value" style="bottom:'+(21+height)+'px">'+fox2Round(value)+'</span><span class="program-score-bar-fill" style="height:'+height+'px">'+excess+'<span class="program-score-bar-base" style="height:'+baseHeight+'px"></span></span><span class="program-score-bar-day">'+dayNumber+'</span></button>';
+function fox2RingVisual(score){
+  var value=Math.max(0,fox2Round(score)||0);
+  var bands=[60,120,180,240],colors=['#22D3EE','#4ADE80','#A855F7','#FF8C00'],index=0;
+  while(index<bands.length-1&&value>bands[index]) index++;
+  return {value:value,max:bands[index],color:colors[index],progress:Math.max(.002,Math.min(1,value/bands[index]))};
+}
+
+function fox2RecapMorphPath(fillFraction,amount,targetX,targetTop,targetBottom){
+  var p=Math.max(0,Math.min(1,Number(amount)||0));
+  var fill=Math.max(.002,Math.min(1,Number(fillFraction)||0));
+  var sourceCx=168,sourceCy=112,sourceRadius=54;
+  var sweep=2*Math.PI*fill;
+  var sourceMidAngle=-Math.PI/2+sweep/2;
+  var sourceMidX=sourceCx+Math.cos(sourceMidAngle)*sourceRadius;
+  var sourceMidY=sourceCy+Math.sin(sourceMidAngle)*sourceRadius;
+  var targetHeight=Math.max(8,targetBottom-targetTop);
+  var targetMidY=targetTop+targetHeight/2;
+  var midX=sourceMidX+(targetX-sourceMidX)*p;
+  var midY=sourceMidY+(targetMidY-sourceMidY)*p;
+  var sourceLength=sourceRadius*sweep;
+  var curveLength=sourceLength+(targetHeight-sourceLength)*p;
+  var sourceMidTangent=sourceMidAngle+Math.PI/2;
+  var midTangent=sourceMidTangent+(Math.PI/2-sourceMidTangent)*p;
+  var totalTurn=sweep*(1-p);
+  var curvature=curveLength>.001?totalTurn/curveLength:0;
+  var points=[];
+  for(var i=0;i<=42;i++){
+    var unit=i/42,distance=(unit-.5)*curveLength,x,y;
+    if(Math.abs(curvature)<.00001){
+      x=midX+Math.cos(midTangent)*distance;
+      y=midY+Math.sin(midTangent)*distance;
+    }else{
+      var tangent=midTangent+curvature*distance;
+      x=midX+(Math.sin(tangent)-Math.sin(midTangent))/curvature;
+      y=midY-(Math.cos(tangent)-Math.cos(midTangent))/curvature;
+    }
+    points.push((i?'L':'M')+x.toFixed(2)+' '+y.toFixed(2));
+  }
+  return points.join(' ');
+}
+
+function fox2AddIsoDays(iso,amount){
+  var date=new Date(iso+'T00:00:00Z');
+  date.setUTCDate(date.getUTCDate()+amount);
+  return date.toISOString().slice(0,10);
+}
+
+function fox2DayInitial(iso){
+  return ['S','M','T','W','T','F','S'][new Date(iso+'T00:00:00Z').getUTCDay()];
+}
+
+function fox2RecapModel(metrics){
+  var measureDays=metrics.measureDays||[];
+  if(!measureDays.length) return null;
+  var latest=measureDays[measureDays.length-1],baseline=Math.max(1,Number(metrics.baseline)||1),byDate={};
+  measureDays.forEach(function(day){byDate[day.date]=Math.max(0,Number(day.score)||0);});
+  var slots=[];
+  for(var i=-6;i<=0;i++){
+    var date=fox2AddIsoDays(latest.date,i);
+    slots.push({date:date,score:byDate[date]||0});
+  }
+  var values=slots.map(function(day){return day.score;}).concat([baseline]);
+  var peak=Math.max.apply(null,values),scaleMax=Math.max(60,Math.ceil((peak*1.12)/30)*30);
+  var plotBottom=208,plotHeight=92;
+  slots.forEach(function(day,index){
+    day.x=36+index*44;
+    day.height=day.score?Math.max(8,day.score/scaleMax*plotHeight):0;
+    day.top=plotBottom-day.height;
+    day.visual=fox2RingVisual(day.score);
+  });
+  var baselineY=plotBottom-Math.min(plotHeight,baseline/scaleMax*plotHeight);
+  var latestSlot=slots[slots.length-1],latestVisual=fox2RingVisual(latest.score);
+  var after=fox2Mean(measureDays.map(function(day){return day.score;}));
+  var change=Math.round((after-baseline)/baseline*100);
+  var prior=measureDays.slice(0,-1),priorAverage=prior.length?fox2Mean(prior.map(function(day){return day.score;})):baseline;
+  var priorChange=Math.round((priorAverage-baseline)/baseline*100);
+  return {latest:latest,slots:slots,baseline:baseline,baselineY:baselineY,plotBottom:plotBottom,latestSlot:latestSlot,latestVisual:latestVisual,change:change,priorChange:priorChange};
+}
+
+function fox2RecapSeenKey(){ return fox2ProgramStorageKey()+':last-recap-day'; }
+
+function fox2ShouldAnimateRecap(model){
+  if(!model||fox2ProgramReadOnly||fox2AnimatedMeasureDate===model.latest.date) return false;
+  if(fox2ProgramDemoSnapshot) return true;
+  try{return localStorage.getItem(fox2RecapSeenKey())!==model.latest.date;}catch(e){return true;}
+}
+
+function fox2MarkRecapSeen(date){
+  if(!date||fox2ProgramDemoSnapshot||fox2ProgramReadOnly) return;
+  try{localStorage.setItem(fox2RecapSeenKey(),date);}catch(e){}
+}
+
+function fox2RecapHistorySvg(model){
+  var marks=model.slots.map(function(day,index){
+    var delay=Math.max(0,index)*75;
+    if(index===model.slots.length-1){
+      return '<g class="program-recap-latest-labels"><text class="program-recap-day-label" x="'+day.x+'" y="226">'+fox2DayInitial(day.date)+'</text></g>';
+    }
+    if(!day.score){
+      return '<g class="program-recap-history-mark is-missing" style="transition-delay:'+delay+'ms"><line x1="'+(day.x-4)+'" y1="204" x2="'+(day.x+4)+'" y2="204"></line><text class="program-recap-day-label" x="'+day.x+'" y="226">'+fox2DayInitial(day.date)+'</text></g>';
+    }
+    return '<g class="program-recap-history-mark" style="transition-delay:'+delay+'ms"><line x1="'+day.x+'" y1="'+day.top.toFixed(1)+'" x2="'+day.x+'" y2="'+model.plotBottom+'" stroke="'+day.visual.color+'" stroke-width="18"></line><text class="program-recap-day-label" x="'+day.x+'" y="226">'+fox2DayInitial(day.date)+'</text></g>';
   }).join('');
-  var latest=days[days.length-1],latestValue=values[values.length-1];
-  return '<div class="program-score-trend-popover" id="program-score-trend">'
-    +'<div class="program-score-trend-head"><strong>Fat Use Score</strong><span id="program-score-bar-detail">'+fox2Escape(fox2ShortDate(latest.date))+' · '+fox2Round(latestValue)+'</span></div>'
-    +'<div class="program-score-bars-scroll" role="group" aria-label="Daily Fat Use Scores since your action began. Scroll horizontally for earlier days."><div class="program-score-bars" style="width:'+chartWidth+'px">'
-    +'<div class="program-score-bars-baseline" style="bottom:'+(17+baselineHeight)+'px"><span>Starting point '+fox2Round(baseline)+'</span></div>'
-    +'<div class="program-score-bars-axis" aria-hidden="true"></div><div class="program-score-bars-grid" style="width:'+contentWidth+'px;grid-template-columns:'+columns+'">'+bars+'</div></div></div></div>';
+  return '<g class="program-recap-history-frame"><line class="program-recap-baseline" x1="18" y1="'+model.baselineY.toFixed(1)+'" x2="318" y2="'+model.baselineY.toFixed(1)+'"></line><line class="program-recap-axis" x1="18" y1="209" x2="318" y2="209"></line></g>'+marks;
 }
 
 function fox2MeasureDashboardHtml(metrics){
-  var baseline=Number(metrics.baseline)||0;
-  var score=Math.max(0,Number(metrics.todayScore)||0);
-  var percent=baseline>0?Math.round(score/baseline*100):0;
-  var todayPercentText=percent>100?'+'+(percent-100):String(percent);
-  var todayPercentContext=percent>100?'above starting point':'of starting point';
-  var firstLap=Math.max(0,Math.min(100,percent));
-  var extraLap=Math.max(0,Math.min(100,percent-100));
-  var outerCircumference=464.96,innerCircumference=389.56;
-  var outerOffset=(outerCircumference*(1-firstLap/100)).toFixed(2);
-  var innerOffset=(innerCircumference*(1-extraLap/100)).toFixed(2);
-  var extra=extraLap>0?'<circle class="program-progress-ring-over" cx="100" cy="100" r="62" transform="rotate(-90 100 100)" stroke-dasharray="'+innerCircumference+'" stroke-dashoffset="'+innerOffset+'"></circle>':'';
-  var latest=metrics.measureDays.length?metrics.measureDays[metrics.measureDays.length-1]:null;
-  var action=fox2Program.action||'Your action';
-  var actionPanel='';
-  if(latest&&baseline){
-    var change=Math.round((metrics.after-baseline)/baseline*100);
-    var priorDays=metrics.measureDays.slice(0,-1),priorAverage=priorDays.length?fox2Mean(priorDays.map(function(day){return day.score;})):baseline;
-    var priorChange=Math.round((priorAverage-baseline)/baseline*100);
-    actionPanel='<div class="program-measure-panel program-action-result" data-latest-date="'+fox2Escape(latest.date)+'" data-from="'+priorChange+'" data-to="'+change+'" role="group" aria-label="'+fox2Escape(action)+': '+fox2SignedPercent(change)+' Fat Use Score versus starting point">'
-      +'<h2 class="program-measure-heading">Results So Far</h2><div class="program-measure-action-name">'+fox2Escape(action)+'</div><div class="program-action-change" id="program-action-change" aria-live="polite">'+fox2SignedPercent(change)+'</div>'
-      +'<div class="program-action-context">Fat Use Score<br>vs starting point</div>'
-      +'<button type="button" class="program-results-caret" data-program-action="toggle-results-chart" aria-expanded="'+fox2MeasureTrendOpen+'" aria-controls="program-score-trend" aria-label="'+(fox2MeasureTrendOpen?'Hide':'Show')+' Fat Use Score data"><svg viewBox="0 0 12 22" aria-hidden="true"><path d="M2 2l8 9-8 9"></path></svg><span>Data</span></button></div>';
-  }else{
-    actionPanel='<div class="program-measure-panel program-action-result" role="group" aria-label="'+fox2Escape(action)+': Fat Use Score comparison pending">'
-      +'<h2 class="program-measure-heading">Results So Far</h2><div class="program-measure-action-name">'+fox2Escape(action)+'</div><div class="program-action-change" id="program-action-change">—</div><div class="program-action-context">Fat Use Score<br>vs starting point</div></div>';
+  var model=fox2RecapModel(metrics),action=fox2Program.action||'Your action';
+  if(!model){
+    return '<section class="program-measure-dashboard"><div class="program-recap-sequence is-settled"><div class="program-recap-empty"><strong>Results So Far</strong><span>Your first completed day will appear here after you sync.</span></div></div></section>';
   }
-  return '<section class="program-measure-dashboard">'
-    +'<div class="program-measure-panel program-today-panel" role="group" aria-label="Today '+fox2Round(score)+', '+(percent>100?(percent-100)+' percent above starting point':percent+' percent of starting point')+' '+fox2Round(baseline)+'">'
-    +'<h2 class="program-measure-heading">Today So Far</h2><div class="program-progress-ring"><svg viewBox="0 0 200 200" aria-hidden="true">'
-    +'<circle class="program-progress-ring-track" cx="100" cy="100" r="74"></circle>'
-    +'<circle class="program-progress-ring-fill" cx="100" cy="100" r="74" transform="rotate(-90 100 100)" stroke-dasharray="'+outerCircumference+'" stroke-dashoffset="'+outerOffset+'"></circle>'
-    +extra+'<circle class="program-progress-ring-end" cx="100" cy="26" r="5"></circle></svg>'
-    +'<div class="program-progress-ring-center"><strong>'+todayPercentText+'<span>%</span></strong><small>'+todayPercentContext+'</small></div></div>'
-    +'<div class="program-today-score"><strong>'+fox2Round(score)+'</strong> / '+fox2Round(baseline)+' starting point</div></div>'+actionPanel+fox2MeasureTrendHtml(metrics)+'</section>';
+  var animate=fox2ShouldAnimateRecap(model),settledClass=animate?'':' is-history-visible is-settled';
+  var latestDateLabel=fox2AddIsoDays(fox2TodayIso(),-1)===model.latest.date?'Yesterday':fox2ShortDate(model.latest.date);
+  var path=fox2RecapMorphPath(model.latestVisual.progress,animate?0:1,model.latestSlot.x,model.latestSlot.top,model.plotBottom);
+  var scoreText=fox2Round(model.latest.score);
+  return '<section class="program-measure-dashboard"><div class="program-recap-sequence'+settledClass+'" style="--recap-color:'+model.latestVisual.color+'" data-recap-animate="'+(animate?'1':'0')+'" data-latest-date="'+fox2Escape(model.latest.date)+'" data-score="'+scoreText+'" data-fill="'+model.latestVisual.progress+'" data-target-x="'+model.latestSlot.x+'" data-target-top="'+model.latestSlot.top.toFixed(1)+'" data-target-bottom="'+model.plotBottom+'" data-from="'+model.priorChange+'" data-to="'+model.change+'">'
+    +'<div class="program-recap-head"><span class="program-recap-kicker">Morning Recap</span><span class="program-recap-date">'+fox2Escape(latestDateLabel)+'</span><span class="program-recap-history-title"><strong>Recent Fat Use Scores</strong><span>Last 7 days · Starting point '+fox2Round(model.baseline)+'</span></span></div>'
+    +'<svg class="program-recap-svg" viewBox="0 0 336 236" role="img" aria-label="'+fox2Escape(latestDateLabel)+' Fat Use Score '+scoreText+', added to your recent history">'
+    +'<circle class="program-recap-ring-track" cx="168" cy="112" r="54"></circle><path class="program-recap-morph" d="'+path+'"></path>'
+    +'<g class="program-recap-score"><text class="program-recap-score-value" id="program-recap-score" x="168" y="116">'+scoreText+'</text><text class="program-recap-score-label" x="168" y="136">FAT USE SCORE</text></g>'
+    +fox2RecapHistorySvg(model)+'</svg>'
+    +'<div class="program-recap-summary" role="group" aria-label="'+fox2Escape(action)+': '+fox2SignedPercent(model.change)+' Fat Use Score versus starting point"><div class="program-recap-summary-copy"><h2>Results So Far</h2><div class="program-recap-action">'+fox2Escape(action)+'</div></div><div class="program-recap-change" id="program-action-change" aria-live="polite">'+fox2SignedPercent(model.change)+'</div><div class="program-recap-context">Fat Use Score versus starting point</div></div>'
+    +'</div></section>';
 }
 
 function fox2MeasureHtml(metrics){
@@ -6438,34 +6483,70 @@ function fox2MeasureHtml(metrics){
   return content;
 }
 
-function fox2AnimateMeasureResult(){
-  var card=document.querySelector('.program-action-result');
-  var value=document.getElementById('program-action-change');
-  if(!card||!value) return;
-  var latestDate=card.dataset.latestDate||'';
-  var from=Number(card.dataset.from),to=Number(card.dataset.to);
-  if(!isFinite(from)) from=0;
-  if(!isFinite(to)) to=0;
-  if(fox2AnimatedMeasureDate===latestDate) return;
+function fox2AnimateValue(from,to,duration,update,done){
+  var started=performance.now();
+  function frame(now){
+    var progress=Math.min(1,(now-started)/duration),eased=1-Math.pow(1-progress,3);
+    update(from+(to-from)*eased,progress);
+    if(progress<1) window.requestAnimationFrame(frame);
+    else if(done) done();
+  }
+  window.requestAnimationFrame(frame);
+}
+
+function fox2SettleMeasureRecap(root){
+  if(!root) return;
+  var path=root.querySelector('.program-recap-morph');
+  var fill=Number(root.dataset.fill),x=Number(root.dataset.targetX),top=Number(root.dataset.targetTop),bottom=Number(root.dataset.targetBottom);
+  if(path){path.setAttribute('d',fox2RecapMorphPath(fill,1,x,top,bottom));path.setAttribute('stroke-width','18');}
+  var score=root.querySelector('#program-recap-score');
+  if(score) score.textContent=root.dataset.score||'0';
+  root.classList.add('is-morphing','is-history-visible','is-settled');
+  fox2MarkRecapSeen(root.dataset.latestDate||'');
+}
+
+function fox2AnimateMeasureRecap(){
+  var root=document.querySelector('.program-recap-sequence[data-recap-animate="1"]');
+  if(!root) return;
+  var latestDate=root.dataset.latestDate||'';
+  if(!latestDate||fox2AnimatedMeasureDate===latestDate){fox2SettleMeasureRecap(root);return;}
   fox2AnimatedMeasureDate=latestDate;
-  if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  value.textContent=fox2SignedPercent(from);
-  card.classList.add('is-animating');
-  if(to>from&&to>0) card.classList.add('is-improved');
+  if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches){fox2SettleMeasureRecap(root);return;}
+  var path=root.querySelector('.program-recap-morph'),score=root.querySelector('#program-recap-score');
+  var finalScore=Number(root.dataset.score)||0,fill=Number(root.dataset.fill)||.002;
+  var x=Number(root.dataset.targetX),top=Number(root.dataset.targetTop),bottom=Number(root.dataset.targetBottom);
+  if(!path) return;
+  path.setAttribute('d',fox2RecapMorphPath(.002,0,x,top,bottom));
+  if(score) score.textContent='0';
   window.setTimeout(function(){
-    var started=performance.now(),duration=700;
-    function step(now){
-      var progress=Math.min(1,(now-started)/duration);
-      var eased=1-Math.pow(1-progress,3);
-      value.textContent=fox2SignedPercent(from+(to-from)*eased);
-      if(progress<1) window.requestAnimationFrame(step);
-      else{
-        value.textContent=fox2SignedPercent(to);
-        card.classList.add('is-updated');
-      }
-    }
-    window.requestAnimationFrame(step);
-  },900);
+    fox2AnimateValue(.002,fill,760,function(value,progress){
+      path.setAttribute('d',fox2RecapMorphPath(value,0,x,top,bottom));
+      if(score) score.textContent=String(Math.round(finalScore*progress));
+    },function(){
+      if(score) score.textContent=String(finalScore);
+      window.setTimeout(function(){
+        root.classList.add('is-morphing');
+        fox2AnimateValue(0,1,820,function(value){
+          var eased=value;
+          path.setAttribute('d',fox2RecapMorphPath(fill,eased,x,top,bottom));
+          path.setAttribute('stroke-width',String(14+4*eased));
+          if(eased>.32) root.classList.add('is-history-visible');
+        },function(){
+          root.classList.add('is-history-visible');
+          window.setTimeout(function(){
+            root.classList.add('is-settled');
+            var result=document.getElementById('program-action-change');
+            var from=Number(root.dataset.from)||0,to=Number(root.dataset.to)||0;
+            if(result){
+              result.textContent=fox2SignedPercent(from);
+              fox2AnimateValue(from,to,650,function(value){result.textContent=fox2SignedPercent(value);},function(){result.textContent=fox2SignedPercent(to);});
+            }
+            fox2MarkRecapSeen(latestDate);
+          },620);
+        });
+      },520);
+    });
+  },180);
 }
 
 function fox2FinalizeResult(metrics){
@@ -6517,15 +6598,7 @@ function fox2RenderProgram(){
   shell.querySelectorAll('[data-program-action]').forEach(function(button){
     button.addEventListener('click',function(){fox2HandleProgramAction(button.dataset.programAction);});
   });
-  shell.querySelectorAll('[data-program-score-bar]').forEach(function(button){
-    button.addEventListener('click',function(){
-      shell.querySelectorAll('[data-program-score-bar]').forEach(function(bar){bar.classList.remove('is-selected');});
-      button.classList.add('is-selected');
-      var detail=shell.querySelector('#program-score-bar-detail');
-      if(detail) detail.textContent=button.dataset.date+' · '+button.dataset.score;
-    });
-  });
-  if(screen==='measure') window.setTimeout(fox2AnimateMeasureResult,0);
+  if(screen==='measure') window.setTimeout(fox2AnimateMeasureRecap,0);
   if(fox2ProgramOptionsOpen) window.setTimeout(function(){
     var options=shell.querySelector('.program-options');
     if(options) options.scrollIntoView({behavior:'smooth',block:'start',inline:'nearest'});
@@ -6568,7 +6641,7 @@ function fox2ConfirmPreviousBaseline(){
 }
 
 function fox2HandleProgramAction(action){
-  if(fox2ProgramReadOnly&&action!=='toggle-results-chart') return;
+  if(fox2ProgramReadOnly) return;
   var input=document.getElementById('program-action-input');
   if(input) fox2Program.action=input.value.trim();
   var metrics=fox2ProgramMetrics();
@@ -6589,16 +6662,6 @@ function fox2HandleProgramAction(action){
     fox2Program.setupMode='new'; fox2ProgramOptionsOpen=false;
   }else if(action==='toggle-options'){
     fox2ProgramOptionsOpen=!fox2ProgramOptionsOpen; fox2RenderProgram(); return;
-  }else if(action==='toggle-results-chart'){
-    fox2MeasureTrendOpen=!fox2MeasureTrendOpen; fox2RenderProgram();
-    if(fox2MeasureTrendOpen) window.setTimeout(function(){
-      var chart=document.getElementById('program-score-trend');
-      if(!chart) return;
-      var bars=chart.querySelector('.program-score-bars-scroll');
-      if(bars) bars.scrollLeft=bars.scrollWidth;
-      chart.scrollIntoView({behavior:'smooth',block:'nearest',inline:'nearest'});
-    },20);
-    return;
   }else if(action==='use-baseline'){
     if(metrics.baseline){fox2Program.baselineValue=metrics.baseline;fox2Program.baselineSource='current';fox2Program.baselineRange=fox2DateRange(metrics.baselineDays);fox2Program.measureStart=fox2TodayIso();fox2Program.screen='measure';fox2ProgramOptionsOpen=false;}
   }else if(action==='use-previous-baseline'){

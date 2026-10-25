@@ -68,63 +68,45 @@ assert.ok(source.includes('Starting point ready'));
 assert.ok(source.includes('Start tracking'));
 assert.ok(!source.includes("Yesterday's result"),
   'the first measuring day should not show an empty yesterday result');
-assert.ok(source.includes("var action=fox2Program.action||'Your action'"));
+assert.ok(source.includes("action=fox2Program.action||'Your action'"));
 assert.ok(!source.includes("completed '+(metrics.measureDays.length===1?'day':'days')+' included"),
   'the compact measure page should not repeat the completed-day count');
 assert.ok(!source.includes('Continue your actions.'),
   'the compact measure page should not repeat generic next-step messaging');
 assert.ok(source.includes('function fox2SignedPercent(value)'));
-assert.ok(source.includes('function fox2TodayScore()'),
-  'the measure page should use today\'s accumulating daily score');
-assert.ok(source.includes('todayScore:fox2TodayScore()'),
-  'today\'s score should be part of guided-program metrics');
 assert.ok(source.includes('function fox2MeasureDashboardHtml(metrics)'),
-  'the measure page should combine today and cumulative action progress');
-assert.ok(source.includes('<h2 class="program-measure-heading">Today So Far</h2>'));
-assert.ok(source.includes('<h2 class="program-measure-heading">Results So Far</h2>'));
-assert.ok(source.includes('data-program-action="toggle-results-chart"'),
-  'results so far should expose its Fat Use Score history from a caret');
-assert.ok(source.includes('<path d="M2 2l8 9-8 9"></path></svg><span>Data</span>'),
-  'the disclosure should use a sideways caret with a visible Data label');
-assert.ok(source.includes('.program-results-caret[aria-expanded="true"] svg { transform:rotate(90deg); }'),
-  'the sideways caret should turn downward when its data is open');
-assert.ok(source.includes('function fox2MeasureTrendHtml(metrics)'),
-  'the expandable result should graph completed Fat Use Scores');
-assert.ok(source.includes('program-score-bars-baseline'),
-  'the result bar graph should retain the starting point as a quiet comparison');
-assert.ok(source.includes("var contentWidth=days.length*34"),
-  'all completed days should remain in a horizontally scrollable chart');
-assert.ok(source.includes('program-score-bars-axis'),
-  'the daily bar chart should have a visible x axis');
-assert.ok(source.includes("var columns='repeat('+days.length+',34px)'"),
-  'fixed-width day columns should keep early results anchored to the left');
-assert.ok(source.includes('data-program-score-bar'),
-  'individual day bars should expose their date and Fat Use Score');
-assert.ok(source.includes('class="program-score-bar-value"'),
-  'each bar should display its Fat Use Score directly above it');
-assert.ok(source.includes('var baseHeight=Math.min(height,baselineHeight),excessHeight=Math.max(0,height-baselineHeight)'),
-  'each bar should split precisely where it crosses baseline');
-assert.ok(source.includes('class="program-score-bar-excess"'),
-  'the portion above baseline should use a distinct highlight segment');
-assert.ok(source.includes("if(bars) bars.scrollLeft=bars.scrollWidth"),
-  'the expanded graph should open on the latest completed days');
-assert.ok(!source.includes('program-score-trend-line'),
-  'completed daily results should use bars rather than a continuous line');
-assert.ok(source.includes("fox2MeasureTrendOpen=!fox2MeasureTrendOpen"),
-  'the result graph caret should open and close the graph');
-assert.ok(source.includes("if(fox2ProgramReadOnly&&action!=='toggle-results-chart') return"),
-  'shared programs should retain the Data disclosure while blocking program mutations');
-assert.ok(source.includes("shell.querySelectorAll('[data-program-score-bar]')"),
-  'shared program bars should remain selectable');
-assert.ok(source.includes("chart.scrollIntoView({behavior:'smooth',block:'nearest',inline:'nearest'})"),
-  'opening the graph should bring the newly revealed content into view');
-assert.ok(source.includes("percent>100?'+'+(percent-100):String(percent)"),
-  'today should show only the excess after passing 100 percent of the starting point');
-assert.ok(source.includes("percent>100?'above starting point':'of starting point'"),
-  'today should explain whether the displayed percentage is of or above the starting point');
+  'the measure page should present the completed-day recap and cumulative action progress');
+assert.ok(!source.includes('Today So Far'),
+  'the progress page should not mix an unfinished current day into the completed-day story');
+assert.ok(source.includes('Morning Recap'));
+assert.ok(source.includes('Recent Fat Use Scores'));
+assert.ok(source.includes('Results So Far'));
+assert.ok(source.includes('function fox2RingVisual(score)'),
+  'the recap ring and the history bars should share the firmware ring tiers');
+assert.ok(source.includes("bands=[60,120,180,240]"),
+  'the web recap should use the same graduating score scales as the device');
+assert.ok(source.includes('function fox2RecapMorphPath(fillFraction,amount,targetX,targetTop,targetBottom)'),
+  'the completed ring should have a real path-straightening animation');
+assert.ok(source.includes('totalTurn=sweep*(1-p)'),
+  'the morph should remove curvature continuously rather than cross-fading shapes');
+assert.ok(source.includes('program-recap-baseline'),
+  'the recent-history view should retain the starting point as a quiet comparison');
+assert.ok(source.includes('fox2RecapHistorySvg(model)'),
+  'the ring should land in the same recent-history chart shown after the recap');
+assert.ok(source.includes("root.classList.add('is-morphing')"));
+assert.ok(source.includes("root.classList.add('is-history-visible')"));
+assert.ok(source.includes("root.classList.add('is-settled')"));
+assert.ok(source.includes('function fox2ShouldAnimateRecap(model)'),
+  'the completed-day animation should be guarded per synced result');
+assert.ok(source.includes("localStorage.getItem(fox2RecapSeenKey())!==model.latest.date"),
+  'a completed day should not replay on every ordinary reload');
+assert.ok(source.includes('if(fox2ProgramDemoSnapshot) return true'),
+  'the interactive prototype should remain easy to replay on a fresh load');
+assert.ok(source.includes('fox2MarkRecapSeen(latestDate)'),
+  'the newly presented result should be recorded only after its story completes');
 assert.ok(source.includes('program-measure-dashboard'));
-assert.ok(source.includes('<div class="program-measure-action-name">\'+fox2Escape(action)+\'</div>'));
-assert.ok(source.includes('Fat Use Score<br>vs starting point'));
+assert.ok(source.includes('<div class="program-recap-action">\'+fox2Escape(action)+\'</div>'));
+assert.ok(source.includes('Fat Use Score versus starting point'));
 assert.ok(!source.includes('<div class="program-action-name"><span>Your actions</span>'));
 assert.ok(!source.includes("Your score builds as the day continues."));
 assert.ok(!source.includes('Measure as usual. Sync again tomorrow.'));
@@ -152,8 +134,8 @@ assert.ok(source.includes("var url = sharingProgram?fox2ProgramShareUrl():window
   'the always-available Share button should use a tracking-aware link on Progress');
 assert.ok(source.includes('Shared FOX2 progress'),
   'receivers should be told that they are viewing shared progress');
-assert.ok(source.includes('.program-shell.is-shared [data-program-action]:not([data-program-action="toggle-results-chart"])'),
-  'only mutation controls should be hidden in the shared view');
+assert.ok(source.includes('.program-shell.is-shared [data-program-action]'),
+  'program mutation controls should be hidden in the shared view');
 assert.ok(!source.includes('activeProgram&&returningFromSync'),
   'active-program routing should not depend on a sync-return query parameter');
 assert.ok(source.includes("if('scrollRestoration' in history) history.scrollRestoration='manual'"),
@@ -176,10 +158,10 @@ assert.ok(!source.includes('[0,100,500,1200].forEach'),
   'initial routing should not use competing timed scroll corrections');
 assert.ok(source.includes('(metrics.after-metrics.baseline)/metrics.baseline*100'),
   'the primary reward should be the cumulative action average versus baseline');
-assert.ok(source.includes('function fox2AnimateMeasureResult()'));
+assert.ok(source.includes('function fox2AnimateMeasureRecap()'));
 assert.ok(source.includes("prefers-reduced-motion: reduce"),
-  'the result animation should respect reduced-motion preferences');
-assert.ok(source.includes("if(screen==='measure') window.setTimeout(fox2AnimateMeasureResult,0)"),
-  'the cumulative result should animate after the measure page renders');
+  'the recap animation should respect reduced-motion preferences');
+assert.ok(source.includes("if(screen==='measure') window.setTimeout(fox2AnimateMeasureRecap,0)"),
+  'the completed-day story should animate after the measure page renders');
 
 console.log('program tests passed');
