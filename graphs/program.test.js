@@ -123,6 +123,16 @@ assert.ok(source.includes('function fox2ReplayMeasureRecap()'),
   'the replay control should restart the recap without changing program data');
 assert.ok(source.includes("root.classList.remove('is-morphing','is-history-visible','is-bar-landed','is-settled')"),
   'replay should reset the visual sequence before starting again');
+assert.ok(source.includes("fox2AnimateValue(.002,fill,432"),
+  'the web recap should match the firmware ring-fill timing');
+assert.ok(source.includes("fox2AnimateValue(0,1,416"),
+  'the ring should straighten over the same sixteen-frame interval as firmware');
+assert.ok(source.includes("},1400);"),
+  'the completed ring should hold long enough to read before straightening');
+assert.ok(source.includes('function fox2RevealRecapHistory(root,done)'),
+  'older history bars should reveal only after the newest result lands');
+assert.ok(source.includes("path.setAttribute('stroke-width','6.5')"),
+  'the morph should land at the exact width of the settled chart bar');
 assert.ok(source.includes('program-measure-dashboard'));
 assert.ok(source.includes('<div class="program-recap-action">\'+fox2Escape(action)+\'</div>'));
 assert.ok(source.includes('Fat Use Score versus starting point'));

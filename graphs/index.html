@@ -193,7 +193,7 @@ html, body {
 .program-recap-sequence.is-morphing .program-recap-score,.program-recap-sequence.is-morphing .program-recap-kicker,.program-recap-sequence.is-morphing .program-recap-date { opacity:0; transform:translateY(-5px) scale(.96); }
 .program-recap-sequence.is-history-visible .program-recap-history-title { opacity:1; transform:none; pointer-events:auto; }
 .program-recap-sequence.is-history-visible .program-recap-history-frame { opacity:1; }
-.program-recap-sequence.is-history-visible .program-recap-history-mark:not(.is-latest),.program-recap-sequence.is-bar-landed .program-recap-history-mark.is-latest { opacity:1; transform:none; }
+.program-recap-sequence.is-history-visible .program-recap-history-mark.is-revealed,.program-recap-sequence.is-bar-landed .program-recap-history-mark.is-latest { opacity:1; transform:none; }
 .program-recap-sequence.is-bar-landed .program-recap-morph { opacity:0; }
 .program-recap-summary { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px 18px; align-items:center; max-height:0; overflow:hidden; margin:0 15px; padding:0 18px; border-radius:18px; background:rgba(0,0,0,.27); border:1px solid transparent; opacity:0; transform:translateY(10px); transition:opacity .42s ease,transform .55s cubic-bezier(.2,.8,.2,1),max-height .55s ease,margin .55s ease,padding .55s ease,border-color .55s ease; }
 .program-recap-sequence.is-settled .program-recap-summary { max-height:150px; margin-bottom:15px; padding:17px 18px; border-color:rgba(255,255,255,.07); opacity:1; transform:none; }
@@ -6447,9 +6447,9 @@ function fox2RecapHistorySvg(model){
   }).join('');
   var marks=model.slots.map(function(day,index){
     if(!day.complete) return '';
-    var delay=Math.max(0,index)*45,isLatest=index===model.completed-1;
+    var isLatest=index===model.completed-1;
     var above=day.top<model.baselineY?'<line class="program-recap-bar-above" x1="'+day.x.toFixed(1)+'" y1="'+day.top.toFixed(1)+'" x2="'+day.x.toFixed(1)+'" y2="'+model.baselineY.toFixed(1)+'"></line>':'';
-    return '<g class="program-recap-history-mark'+(isLatest?' is-latest':'')+'" style="transition-delay:'+delay+'ms" role="img" aria-label="'+fox2Escape(fox2ShortDate(day.date))+' Fat Use Score '+fox2Round(day.score)+'"><line class="program-recap-bar-base" x1="'+day.x.toFixed(1)+'" y1="'+day.baseTop.toFixed(1)+'" x2="'+day.x.toFixed(1)+'" y2="'+model.plotBottom+'"></line>'+above+'</g>';
+    return '<g class="program-recap-history-mark'+(isLatest?' is-latest':'')+'" data-recap-history-index="'+index+'" role="img" aria-label="'+fox2Escape(fox2ShortDate(day.date))+' Fat Use Score '+fox2Round(day.score)+'"><line class="program-recap-bar-base" x1="'+day.x.toFixed(1)+'" y1="'+day.baseTop.toFixed(1)+'" x2="'+day.x.toFixed(1)+'" y2="'+model.plotBottom+'"></line>'+above+'</g>';
   }).join('');
   return '<g class="program-recap-history-frame">'+slots+'<line class="program-recap-baseline" x1="14" y1="'+model.baselineY.toFixed(1)+'" x2="322" y2="'+model.baselineY.toFixed(1)+'"></line><line class="program-recap-axis" x1="14" y1="209" x2="322" y2="209"></line><text class="program-recap-day-label" x="14" y="226">DAY 1</text><text class="program-recap-day-label" x="322" y="226" text-anchor="end">DAY 30</text></g>'+marks;
 }
@@ -6500,7 +6500,7 @@ function fox2SettleMeasureRecap(root){
   if(!root) return;
   var path=root.querySelector('.program-recap-morph');
   var fill=Number(root.dataset.fill),x=Number(root.dataset.targetX),top=Number(root.dataset.targetTop),bottom=Number(root.dataset.targetBottom);
-  if(path){path.setAttribute('d',fox2RecapMorphPath(fill,1,x,top,bottom));path.setAttribute('stroke-width','18');}
+  if(path){path.setAttribute('d',fox2RecapMorphPath(fill,1,x,top,bottom));path.setAttribute('stroke-width','6.5');path.removeAttribute('transform');}
   var score=root.querySelector('#program-recap-score');
   if(score) score.textContent=root.dataset.score||'0';
   root.classList.add('is-morphing','is-history-visible','is-bar-landed','is-settled');
@@ -6522,6 +6522,47 @@ function fox2ReplayMeasureRecap(){
   window.setTimeout(fox2AnimateMeasureRecap,80);
 }
 
+function fox2RecapPop(path,kind,targetX,targetTop,targetBottom,done){
+  var isRing=kind==='ring',baseWidth=isRing?14:6.5,grow=isRing?3:2.5;
+  var originX=isRing?168:targetX,originY=isRing?112:(targetTop+targetBottom)/2;
+  fox2AnimateValue(0,1,180,function(value,progress){
+    var wave=Math.sin(progress*Math.PI);
+    path.setAttribute('stroke-width',String(baseWidth+grow*wave));
+    var scaleY=1+(isRing ? .055 : .045)*wave;
+    var scaleX=1+(isRing ? .055 : 0)*wave;
+    path.setAttribute('transform','translate('+originX+' '+originY+') scale('+scaleX+' '+scaleY+') translate('+(-originX)+' '+(-originY)+')');
+  },function(){
+    path.setAttribute('stroke-width',String(baseWidth));
+    path.removeAttribute('transform');
+    if(done) done();
+  });
+}
+
+function fox2RevealRecapHistory(root,done){
+  var marks=Array.prototype.slice.call(root.querySelectorAll('.program-recap-history-mark:not(.is-latest)'));
+  var index=0,interval=marks.length>12?55:110;
+  function revealNext(){
+    if(index>=marks.length){if(done) done();return;}
+    marks[index++].classList.add('is-revealed');
+    window.setTimeout(revealNext,interval);
+  }
+  revealNext();
+}
+
+function fox2FinishMeasureRecap(root,latestDate){
+  root.classList.add('is-settled');
+  var result=document.getElementById('program-action-change');
+  var from=Number(root.dataset.from)||0,to=Number(root.dataset.to)||0;
+  if(result){
+    result.textContent=fox2SignedPercent(from);
+    fox2AnimateValue(from,to,650,function(value){result.textContent=fox2SignedPercent(value);},function(){result.textContent=fox2SignedPercent(to);});
+  }
+  root.classList.remove('is-replaying');
+  var replay=root.querySelector('[data-recap-replay]');
+  if(replay) replay.disabled=false;
+  fox2MarkRecapSeen(latestDate);
+}
+
 function fox2AnimateMeasureRecap(){
   var root=document.querySelector('.program-recap-sequence[data-recap-animate="1"]');
   if(!root) return;
@@ -6534,37 +6575,40 @@ function fox2AnimateMeasureRecap(){
   var x=Number(root.dataset.targetX),top=Number(root.dataset.targetTop),bottom=Number(root.dataset.targetBottom);
   if(!path) return;
   path.setAttribute('d',fox2RecapMorphPath(.002,0,x,top,bottom));
-  if(score) score.textContent='0';
+  path.setAttribute('stroke-width','14');
+  path.removeAttribute('transform');
+  root.querySelectorAll('.program-recap-history-mark').forEach(function(mark){mark.classList.remove('is-revealed');});
+  if(score) score.textContent=String(finalScore);
   window.setTimeout(function(){
-    fox2AnimateValue(.002,fill,760,function(value,progress){
+    // Match the physical recap: 18 fill frames at roughly 24 ms each.
+    fox2AnimateValue(.002,fill,432,function(value){
       path.setAttribute('d',fox2RecapMorphPath(value,0,x,top,bottom));
-      if(score) score.textContent=String(Math.round(finalScore*progress));
     },function(){
-      if(score) score.textContent=String(finalScore);
-      window.setTimeout(function(){
-        root.classList.add('is-morphing');
-        fox2AnimateValue(0,1,820,function(value){
-          var eased=value;
-          path.setAttribute('d',fox2RecapMorphPath(fill,eased,x,top,bottom));
-          path.setAttribute('stroke-width',String(14+4*eased));
-          if(eased>.32) root.classList.add('is-history-visible');
-        },function(){
-          root.classList.add('is-history-visible','is-bar-landed');
-          window.setTimeout(function(){
-            root.classList.add('is-settled');
-            var result=document.getElementById('program-action-change');
-            var from=Number(root.dataset.from)||0,to=Number(root.dataset.to)||0;
-            if(result){
-              result.textContent=fox2SignedPercent(from);
-              fox2AnimateValue(from,to,650,function(value){result.textContent=fox2SignedPercent(value);},function(){result.textContent=fox2SignedPercent(to);});
-            }
-            root.classList.remove('is-replaying');
-            var replay=root.querySelector('[data-recap-replay]');
-            if(replay) replay.disabled=false;
-            fox2MarkRecapSeen(latestDate);
-          },620);
-        });
-      },520);
+      fox2RecapPop(path,'ring',x,top,bottom,function(){
+        // The firmware leaves yesterday's filled result on screen long enough
+        // to read before it becomes history.
+        window.setTimeout(function(){
+          root.classList.add('is-morphing');
+          root.classList.add('is-history-visible');
+          // Match the physical straightening pass: 16 frames at ~26 ms.
+          fox2AnimateValue(0,1,416,function(value){
+            path.setAttribute('d',fox2RecapMorphPath(fill,value,x,top,bottom));
+            path.setAttribute('stroke-width',String(14+(6.5-14)*value));
+          },function(){
+            path.setAttribute('stroke-width','6.5');
+            fox2RecapPop(path,'bar',x,top,bottom,function(){
+              root.classList.add('is-bar-landed');
+              window.setTimeout(function(){
+                // As on the device, yesterday stays fixed while the older
+                // context is revealed from left to right.
+                fox2RevealRecapHistory(root,function(){
+                  window.setTimeout(function(){fox2FinishMeasureRecap(root,latestDate);},160);
+                });
+              },160);
+            });
+          });
+        },1400);
+      });
     });
   },180);
 }
