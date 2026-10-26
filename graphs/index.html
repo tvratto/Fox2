@@ -282,20 +282,21 @@ html, body {
 .program-recap-sequence.is-history-visible .program-recap-history-frame { opacity:1; }
 .program-recap-sequence.is-history-visible .program-recap-history-mark.is-revealed,.program-recap-sequence.is-bar-landed .program-recap-history-mark.is-latest { opacity:1; transform:none; }
 .program-recap-sequence.is-bar-landed .program-recap-morph { opacity:0; }
-.program-recap-summary { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px 18px; align-items:center; max-height:0; overflow:hidden; margin:0 15px; padding:0 18px; border-radius:18px; background:rgba(0,0,0,.27); border:1px solid transparent; opacity:0; transform:translateY(10px); transition:opacity .42s ease,transform .55s cubic-bezier(.2,.8,.2,1),max-height .55s ease,margin .55s ease,padding .55s ease,border-color .55s ease; }
-.program-recap-sequence.is-settled .program-recap-summary { max-height:150px; margin-bottom:15px; padding:17px 18px; border-color:rgba(255,255,255,.07); opacity:1; transform:none; }
-.program-recap-summary-copy { min-width:0; }
+.program-recap-summary { display:block; max-height:0; overflow:hidden; margin:0 15px; padding:0 18px; border-radius:18px; background:rgba(0,0,0,.27); border:1px solid transparent; opacity:0; transform:translateY(10px); transition:opacity .42s ease,transform .55s cubic-bezier(.2,.8,.2,1),max-height .55s ease,margin .55s ease,padding .55s ease,border-color .55s ease; }
+.program-recap-sequence.is-settled .program-recap-summary { max-height:210px; margin-bottom:15px; padding:17px 18px; border-color:rgba(255,255,255,.07); opacity:1; transform:none; }
 .program-recap-summary h2 { margin:0; color:#fff; font-size:19px; line-height:1.1; font-weight:900; letter-spacing:-.02em; }
-.program-recap-action { margin-top:6px; color:rgba(255,255,255,.56); font-size:13px; line-height:1.3; font-weight:730; overflow-wrap:anywhere; }
-.program-recap-change { color:var(--program-orange); font-size:45px; line-height:.9; font-weight:950; letter-spacing:-.06em; text-align:right; }
-.program-recap-context { grid-column:1/-1; padding-top:11px; border-top:1px solid rgba(255,255,255,.08); color:rgba(255,255,255,.45); font-size:11px; line-height:1.25; font-weight:850; letter-spacing:.05em; text-transform:uppercase; text-align:right; }
+.program-recap-statement { margin:10px 0 0; color:rgba(255,255,255,.78); font-size:16px; line-height:1.42; font-weight:650; overflow-wrap:anywhere; }
+.program-recap-statement strong { color:#fff; font-weight:900; }
+.program-recap-change { color:#ffb84d; font-weight:950; white-space:nowrap; }
+.program-recap-yesterday { display:block; margin-top:7px; color:rgba(255,255,255,.47); font-size:13px; line-height:1.35; font-weight:730; }
+.program-recap-yesterday strong { color:#ffb84d; font-weight:900; }
 .program-recap-empty { min-height:235px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:28px; text-align:center; }
 .program-recap-empty strong { color:#fff; font-size:22px; }
 .program-recap-empty span { max-width:245px; margin-top:9px; color:rgba(255,255,255,.46); font-size:14px; line-height:1.45; }
 .program-recap-sequence.is-settled .program-recap-ring-track,.program-recap-sequence.is-settled .program-recap-score,.program-recap-sequence.is-settled .program-recap-kicker,.program-recap-sequence.is-settled .program-recap-date { opacity:0; }
 .program-recap-sequence.is-settled .program-recap-history-title,.program-recap-sequence.is-settled .program-recap-history-frame,.program-recap-sequence.is-settled .program-recap-history-mark { opacity:1; transform:none; }
 @media (prefers-reduced-motion:reduce){.program-recap-sequence:not(.is-replaying) *{animation:none!important;transition:none!important}}
-@media (max-width:350px){.program-recap-summary{margin-inline:10px;padding-inline:14px}.program-recap-change{font-size:40px}.program-recap-svg{margin-top:4px}.program-recap-sequence.is-settled .program-recap-summary{padding-inline:14px}}
+@media (max-width:350px){.program-recap-summary{margin-inline:10px;padding-inline:14px}.program-recap-statement{font-size:15px}.program-recap-svg{margin-top:4px}.program-recap-sequence.is-settled .program-recap-summary{padding-inline:14px}}
 .program-history { display:grid; gap:11px; margin-top:19px; }
 .program-history-item { padding:16px; border-radius:18px; background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.08); }
 .program-history-title { display:flex; gap:9px; margin:0 0 15px; font-size:15px; line-height:1.35; font-weight:850; }
@@ -6565,6 +6566,10 @@ function fox2SignedPercent(value){
   return (value>0?'+':'')+value+'%';
 }
 
+function fox2PercentMagnitude(value){
+  return Math.abs(Math.round(Number(value)||0))+'%';
+}
+
 function fox2RingVisual(score){
   var value=Math.max(0,fox2Round(score)||0);
   var bands=[60,120,180,240],colors=['#22D3EE','#4ADE80','#A855F7','#FF8C00'],index=0;
@@ -6674,13 +6679,23 @@ function fox2MeasureDashboardHtml(metrics){
   var latestDateLabel=fox2AddIsoDays(fox2TodayIso(),-1)===model.latest.date?'Yesterday':fox2ShortDate(model.latest.date);
   var path=fox2RecapMorphPath(model.latestVisual.progress,animate?0:1,model.latestSlot.x,model.latestSlot.top,model.plotBottom);
   var scoreText=fox2Round(model.latest.score);
+  var elapsedDay=Math.min(FOX2_MEASURE_DAYS,Math.max(1,fox2DaysBetween(fox2Program.measureStart,fox2TodayIso())+1));
+  var latestChange=Math.round((model.latest.score-model.baseline)/model.baseline*100);
+  var resultSentence=model.change>0
+    ? 'has increased your <strong>Fat Use Score</strong> <span class="program-recap-change" id="program-action-change" aria-live="polite">'+fox2PercentMagnitude(model.change)+'</span> over your baseline.'
+    : model.change<0
+      ? 'has decreased your <strong>Fat Use Score</strong> <span class="program-recap-change" id="program-action-change" aria-live="polite">'+fox2PercentMagnitude(model.change)+'</span> below your baseline.'
+      : 'has kept your <strong>Fat Use Score</strong> at your baseline.<span class="program-hidden" id="program-action-change">0%</span>';
+  var latestSentence=latestDateLabel==='Yesterday'
+    ? 'Yesterday was <strong>'+fox2SignedPercent(latestChange)+'</strong>.'
+    : 'Your latest completed day was <strong>'+fox2SignedPercent(latestChange)+'</strong>.';
   return '<section class="program-measure-dashboard"><div class="program-recap-sequence'+settledClass+'" style="--recap-color:'+model.latestVisual.color+'" data-recap-animate="'+(animate?'1':'0')+'" data-latest-date="'+fox2Escape(model.latest.date)+'" data-score="'+scoreText+'" data-fill="'+model.latestVisual.progress+'" data-target-x="'+model.latestSlot.x+'" data-target-top="'+model.latestSlot.top.toFixed(1)+'" data-target-bottom="'+model.plotBottom+'" data-from="'+model.priorChange+'" data-to="'+model.change+'">'
     +'<div class="program-recap-head"><span class="program-recap-kicker">Morning Recap</span><span class="program-recap-date">'+fox2Escape(latestDateLabel)+'</span><div class="program-recap-history-title"><div class="program-recap-title-row"><strong>30-Day Fat Use Scores</strong><button type="button" class="program-recap-replay" data-recap-replay aria-label="Replay morning recap" title="Replay morning recap">↻</button></div><span>'+model.completed+' of 30 days · Baseline '+fox2Round(model.baseline)+'</span></div></div>'
     +'<svg class="program-recap-svg" viewBox="0 0 336 236" role="img" aria-label="'+fox2Escape(latestDateLabel)+' Fat Use Score '+scoreText+', added to day '+model.completed+' of your 30-day history">'
     +'<circle class="program-recap-ring-track" cx="168" cy="112" r="54"></circle><path class="program-recap-morph" d="'+path+'"></path>'
     +'<g class="program-recap-score"><text class="program-recap-score-value" id="program-recap-score" x="168" y="116">'+scoreText+'</text><text class="program-recap-score-label" x="168" y="136">FAT USE SCORE</text></g>'
     +fox2RecapHistorySvg(model)+'</svg>'
-    +'<div class="program-recap-summary" role="group" aria-label="'+fox2Escape(action)+': '+fox2SignedPercent(model.change)+' Fat Use Score versus baseline"><div class="program-recap-summary-copy"><h2>Results So Far</h2><div class="program-recap-action">'+fox2Escape(action)+'</div></div><div class="program-recap-change" id="program-action-change" aria-live="polite">'+fox2SignedPercent(model.change)+'</div><div class="program-recap-context">Fat Use Score versus baseline</div></div>'
+    +'<div class="program-recap-summary" role="group" aria-label="By day '+elapsedDay+', '+fox2Escape(action)+' changed your Fat Use Score '+fox2SignedPercent(model.change)+' versus baseline. '+fox2Escape(latestSentence.replace(/<[^>]+>/g,''))+'"><h2>Results So Far</h2><p class="program-recap-statement">By day '+elapsedDay+', <strong>'+fox2Escape(action)+'</strong> '+resultSentence+'<span class="program-recap-yesterday">'+latestSentence+'</span></p></div>'
     +'</div></section>';
 }
 
@@ -6765,8 +6780,8 @@ function fox2FinishMeasureRecap(root,latestDate){
   var result=document.getElementById('program-action-change');
   var from=Number(root.dataset.from)||0,to=Number(root.dataset.to)||0;
   if(result){
-    result.textContent=fox2SignedPercent(from);
-    fox2AnimateValue(from,to,650,function(value){result.textContent=fox2SignedPercent(value);},function(){result.textContent=fox2SignedPercent(to);});
+    result.textContent=fox2PercentMagnitude(from);
+    fox2AnimateValue(from,to,650,function(value){result.textContent=fox2PercentMagnitude(value);},function(){result.textContent=fox2PercentMagnitude(to);});
   }
   root.classList.remove('is-replaying');
   var replay=root.querySelector('[data-recap-replay]');

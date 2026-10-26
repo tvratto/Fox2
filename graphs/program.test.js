@@ -234,8 +234,12 @@ assert.ok(source.includes('function fox2RevealRecapHistory(root,done)'),
 assert.ok(source.includes("path.setAttribute('stroke-width','6.5')"),
   'the morph should land at the exact width of the settled chart bar');
 assert.ok(source.includes('program-measure-dashboard'));
-assert.ok(source.includes('<div class="program-recap-action">\'+fox2Escape(action)+\'</div>'));
-assert.ok(source.includes('Fat Use Score versus baseline'));
+assert.ok(source.includes("By day '+elapsedDay+', <strong>'+fox2Escape(action)+'</strong>"),
+  'the result summary should explicitly connect elapsed time and the chosen action');
+assert.ok(source.includes('has increased your <strong>Fat Use Score</strong>'),
+  'a positive result should explain what increased');
+assert.ok(source.includes("Yesterday was <strong>'+fox2SignedPercent(latestChange)+'</strong>."),
+  'the result summary should put the latest completed day beside the running result');
 assert.ok(!source.includes('<div class="program-action-name"><span>Your actions</span>'));
 assert.ok(!source.includes("Your score builds as the day continues."));
 assert.ok(!source.includes('Measure as usual. Sync again tomorrow.'));
