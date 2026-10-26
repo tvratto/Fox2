@@ -109,6 +109,15 @@
     .use-step::before { content: "Step " counter(use); display: block; margin-bottom: 18px; color: var(--yellow); font-size: .74rem; font-weight: 850; letter-spacing: .14em; text-transform: uppercase; }
     .use-step h2 { margin-bottom: 10px; font-size: clamp(1.4rem, 2vw, 1.75rem); line-height: 1.1; letter-spacing: -.035em; }
     .use-step p { margin: 0; color: #a3a3a0; }
+    .connect-card { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 28px 48px; padding: 30px; border: 1px solid var(--line); border-radius: 24px; background: var(--panel); }
+    .connect-card .tag { display: block; margin-bottom: 14px; color: var(--yellow); font-size: .74rem; font-weight: 850; letter-spacing: .14em; text-transform: uppercase; }
+    .connect-card h2 { margin-bottom: 12px; font-size: clamp(1.4rem, 2vw, 1.75rem); line-height: 1.1; letter-spacing: -.035em; }
+    .connect-card p { margin: 0; color: #a3a3a0; }
+    .connect-steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 14px; counter-reset: connect; }
+    .connect-steps li { counter-increment: connect; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 12px; color: #c6c6c2; }
+    .connect-steps li::before { content: counter(connect); display: grid; width: 26px; height: 26px; place-items: center; border-radius: 50%; border: 1px solid #474842; color: var(--ink); font-size: .8rem; font-weight: 850; }
+    .connect-steps strong { color: var(--ink); font-weight: 750; }
+    .connect-fallback { grid-column: 2; color: #858580 !important; font-size: .92rem; }
     .use-note { grid-column: 1 / -1; max-width: 820px; margin: -28px 0 0; color: #858580; font-size: .92rem; }
     .button {
       display: inline-flex;
@@ -272,6 +281,8 @@
       .use-steps { grid-template-columns: 1fr; }
       .use-note { margin-top: -20px; }
       .score-stage { order: 2; }
+      .connect-card { order: 3; grid-template-columns: 1fr; padding: 26px; }
+      .connect-fallback { grid-column: 1; }
       .score-stage { min-height: 500px; }
       .section-header, .truth { grid-template-columns: 1fr; }
       .why-grid { grid-template-columns: 1fr; }
@@ -375,6 +386,20 @@
         </li>
       </ol>
       <p class="use-note">FOX2 shows what changed in your own readings. Food, sleep, and other factors also affect them, so it can’t prove what caused a change.</p>
+
+      <div class="connect-card" aria-labelledby="connect-title">
+        <div>
+          <span class="tag">Optional</span>
+          <h2 id="connect-title">Connect your phone</h2>
+          <p>Set FOX2’s clock and time zone, and add a User ID or Clinic ID from your care team.</p>
+        </div>
+        <ol class="connect-steps">
+          <li><span>On FOX2, open <strong>Settings › Device › Use phone</strong>. A new FOX2 may show <strong>SETUP</strong> when you turn it on; choose <strong>Use Phone</strong>.</span></li>
+          <li><span>FOX2 shows a QR code. Point your phone’s camera at it and tap <strong>Join</strong>.</span></li>
+          <li><span>The setup page opens by itself. Check the details and tap <strong>Confirm &amp; Save</strong>.</span></li>
+        </ol>
+        <p class="connect-fallback">If the setup page doesn’t open, join the <span style="white-space:nowrap">FOX2-PORTAL</span> Wi‑Fi network in your phone’s settings.</p>
+      </div>
     </section>
 
     <section class="section section-rule" id="what-you-get" aria-labelledby="biology-title">
