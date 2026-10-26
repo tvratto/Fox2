@@ -90,10 +90,12 @@ assert.ok(source.includes("}else if(action==='continue-day'){\n    fox2Program.s
 assert.ok(source.includes("if(programPage) programPage.scrollTop=0;"),
   'each onboarding card should begin at the top of the Progress page');
 assert.ok(source.includes('onclick="openGuideModal()"'),
-  'the persistent Guide control should open reusable guide choices');
+  'the persistent Help control should open reusable help choices');
+assert.ok(source.includes('FOX2 Help'));
 assert.ok(source.includes('How FOX2 Works<span>Replay the three-part introduction.</span>'));
+assert.ok(source.includes('How to Measure<span>Warmup, blowing, and measurement tips.</span>'));
 assert.ok(source.includes('href="/guide/"'),
-  'the complete FOX2 guide should remain available');
+  'measurement help should remain available');
 assert.ok(source.includes('data-guide-action="done">Done</button>'),
   'replay mode should end without entering Progress Tracking setup');
 const replaySource=source.slice(source.indexOf('function openGuideModal('),source.indexOf("var fox2ProgramEnterDirection="));
