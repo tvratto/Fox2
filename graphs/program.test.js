@@ -3,6 +3,12 @@ const fs=require('fs');
 
 const source=fs.readFileSync(__dirname+'/index.html','utf8');
 
+function functionSource(name,nextName){
+  const start=source.indexOf('function '+name+'()');
+  const end=source.indexOf('function '+nextName+'()',start+1);
+  return source.slice(start,end);
+}
+
 const programTab=source.indexOf('data-page="0">Progress</button>');
 const dataTab=source.indexOf('data-page="1">Data</button>');
 const historyTab=source.indexOf('data-page="2">History</button>');
@@ -15,15 +21,83 @@ assert.ok(source.includes("fox2Program.optedOut=true"),'the intro should persist
 assert.ok(source.includes("window.fox2GoToPage(1,true)"),'opting out should route directly to Data');
 assert.ok(source.includes("var activeProgram=fox2ProgramReadOnly||(!fox2Program.optedOut&&fox2Program.screen!=='maintain')"),
   'opted-out and maintenance users should open on Data on later visits');
-assert.ok(source.includes('FOX2 30-Day Evaluation'),'the primary experience should have a clear name');
-assert.ok(source.includes('View data only'),'intro should expose a clear path outside Progress Tracking');
-assert.ok(source.includes('Get Started'));
+assert.ok(source.includes('See when your body is using fat for energy.'),
+  'onboarding should begin with the metabolic meaning of the measurement');
+assert.ok(source.includes('When your body uses more fat, acetone in your breath rises.'),
+  'the product introduction should connect fat use to breath acetone');
+assert.ok(source.includes('FOX2 measures this acetone and shows your Fat Use Zone.'),
+  'the product introduction should connect breath acetone to the Fat Use Zone');
+assert.ok(source.includes('Use FOX2 without tracking'),
+  'intro should expose a clear path outside Progress Tracking');
+assert.ok(source.includes('Start Progress Tracking'));
+assert.ok(source.includes("aria-label=\"Introduction '+active+' of 3\""),
+  'the product story should use three focused cards');
+assert.ok(source.includes('program-onboarding-card'),
+  'the introduction should use card-based onboarding surfaces');
+assert.ok(source.includes('program-card-leave-left'),
+  'forward onboarding should slide the current card away');
+assert.ok(source.includes("'continue-intro':'forward'"),
+  'continuing from the FOX2 explanation should use the forward card transition');
+assert.ok(source.includes('data-program-action="continue-intro">Next</button>'));
+assert.ok(source.includes('data-program-action="continue-day">Next</button>'),
+  'onboarding cards should use concise Next navigation labels');
+assert.ok(source.includes('function fox2StartAcetoneAnimation()'),
+  'the product card should include an animated acetone molecule');
+assert.ok(source.includes('var FOX2_ONBOARDING_SPEED=1.5;'),
+  'the onboarding demonstrations should play at the approved 1.5x speed');
+assert.ok(source.includes('aspect-ratio:184 / 125;'),
+  'the Fat Use Zone canvas should preserve the intended NOW-screen proportions');
+assert.ok(source.includes('data-i="9"'),
+  'the acetone model should include all carbon, oxygen, and hydrogen atoms');
+assert.ok(source.includes('id="program-breath-zone-canvas"'),
+  'the acetone molecule should transform into the Fat Use Zone');
+assert.ok(source.includes('function fox2DayIntroHtml()'),
+  'onboarding should connect the daily graph to the Fat Use Score');
+assert.ok(source.includes("fox2Program.screen='day-intro'"));
+assert.ok(source.includes('Map how your fat use changes through the day.'),
+  'the combined daily card should explain the purpose of repeated readings');
+assert.ok(source.includes('Fat use rises and falls as your body’s needs change.'),
+  'the combined daily card should explain why fat use changes during the day');
+assert.ok(source.includes('Measure a few times a day, and FOX2 combines those readings into your daily Fat Use Score.'),
+  'the combined daily card should actively explain how readings become a daily score');
+assert.ok(source.includes('id="program-day-zone-source"'),
+  'the NOW result should collapse into a point in the daily graph');
+assert.ok(source.includes('id="program-day-ring-value"'),
+  'the daily graph animation should resolve into a score ring');
+assert.ok(source.includes('function fox2CompareIntroHtml()'),
+  'onboarding should explain the purpose of the Fat Use Baseline');
+assert.ok(source.includes('See what changes your fat use.'));
+assert.ok(source.includes('First, FOX2 learns your Fat Use Baseline.'),
+  'the comparison card should explain that the baseline comes first');
+assert.ok(source.includes('Then you can change your diet, exercise, medication, or routine.'),
+  'the comparison card should give concrete examples of changes');
+assert.ok(source.includes('FOX2 analyzes your daily scores to show how your fat use changed.'),
+  'FOX2, rather than the user, should be responsible for analyzing the comparison');
+[
+  ['fox2StartAcetoneAnimation','fox2StartDayIntroAnimation'],
+  ['fox2StartDayIntroAnimation','fox2StartCompareIntroAnimation'],
+  ['fox2StartCompareIntroAnimation','fox2RenderProgram']
+].forEach(function(pair){
+  assert.ok(!functionSource(pair[0],pair[1]).includes('prefers-reduced-motion'),
+    pair[0]+' should keep its instructional animation visible when card transitions are reduced');
+});
+assert.ok(source.includes("fox2Program.screen='compare-intro'"));
+assert.ok(source.includes("}else if(action==='continue-day'){\n    fox2Program.screen='compare-intro';"),
+  'the daily score card should lead directly to the before-and-after card');
+assert.ok(source.includes("if(programPage) programPage.scrollTop=0;"),
+  'each onboarding card should begin at the top of the Progress page');
+assert.ok(!source.includes('function fox2BaselineIntroHtml()'),
+  'the standalone starting-point explainer should not remain in the story');
+assert.ok(!source.includes('function fox2IntroHtml()'),
+  'the story should not repeat itself on a separate summary card');
 assert.ok(source.includes('function fox2MethodHtml()'),
-  'onboarding should offer a starting-point choice before action setup');
-assert.ok(source.includes('Measure my starting point'));
-assert.ok(source.includes('Use a standard starting point'));
-assert.ok(source.includes('var FOX2_STANDARD_BASELINE=120;'),
+  'onboarding should offer a Fat Use Baseline choice before action setup');
+assert.ok(source.includes('Measure my baseline'));
+assert.ok(source.includes('Use a standard baseline'));
+assert.ok(source.includes('var FOX2_STANDARD_BASELINE=75;'),
   'the standard starting point should be explicit and centralized');
+assert.ok(source.includes('(a low Fat Use Baseline) and begin the 30-day evaluation.'),
+  'the standard baseline option should explain what the reference value represents');
 assert.ok(source.includes("fox2Program.screen='first'"),
   'both starting-point paths should lead into the first-measurement handoff');
 assert.ok(source.includes('function fox2FirstMeasurementHtml()'),
@@ -31,7 +105,7 @@ assert.ok(source.includes('function fox2FirstMeasurementHtml()'),
 assert.ok(source.includes('Tap your phone to FOX2 again to sync it.'));
 assert.ok(source.includes('Finish tracking and view result'));
 assert.ok(source.includes('Restart the tracking period'));
-assert.ok(source.includes('Start over with a new starting point'));
+assert.ok(source.includes('Start over with a new baseline'));
 assert.ok(source.includes('function fox2SetProgramHistory(readingRows,scoreRows)'),
   'the program should retain complete score history beyond the current NFC payload');
 assert.ok(source.includes("fox2SetProgramHistory(historyReadings,historyScores)"),
@@ -58,7 +132,7 @@ assert.ok(source.includes('disabled>0 of 7 previous days available'),
   'the historical shortcut should only be disabled when no historical days exist');
 assert.ok(source.includes('function fox2OpenPreviousBaselineConfirm(previous)'),
   'using fewer than seven days should open a confirmation');
-assert.ok(source.includes('FOX2 recommends 7 days for a more representative starting point.'),
+assert.ok(source.includes('FOX2 recommends 7 days for a more representative Fat Use Baseline.'),
   'the confirmation should explain why seven days are recommended');
 assert.ok(source.includes("else if(previous.length){fox2OpenPreviousBaselineConfirm(previous);return;}"),
   'one to six historical days should be usable after confirmation');
@@ -70,12 +144,12 @@ assert.ok(source.includes('Add or change actions'));
 assert.ok(source.includes('var FOX2_MEASURE_DAYS=30;'),
   'the measurement segment should last 30 days');
 assert.ok(source.includes('var FOX2_PROGRAM_DAYS=FOX2_MEASURE_DAYS;'),
-  'the visible 30-day evaluation should begin after starting-point preparation');
+  'the visible 30-day evaluation should begin after baseline preparation');
 assert.ok(!source.includes("phase='Measure · Day '"),
   'the progress block should not repeat the current measuring day');
 assert.ok(source.includes("fox2DaysBetween(fox2Program.measureStart,fox2TodayIso())>=FOX2_MEASURE_DAYS"),
   'the program should advance to results after the 30-day measurement segment');
-assert.ok(source.includes('Starting point ready'));
+assert.ok(source.includes('Fat Use Baseline ready'));
 assert.ok(source.includes('Start tracking'));
 assert.ok(!source.includes("Yesterday's result"),
   'the first measuring day should not show an empty yesterday result');
@@ -146,7 +220,7 @@ assert.ok(source.includes("path.setAttribute('stroke-width','6.5')"),
   'the morph should land at the exact width of the settled chart bar');
 assert.ok(source.includes('program-measure-dashboard'));
 assert.ok(source.includes('<div class="program-recap-action">\'+fox2Escape(action)+\'</div>'));
-assert.ok(source.includes('Fat Use Score versus starting point'));
+assert.ok(source.includes('Fat Use Score versus baseline'));
 assert.ok(!source.includes('<div class="program-action-name"><span>Your actions</span>'));
 assert.ok(!source.includes("Your score builds as the day continues."));
 assert.ok(!source.includes('Measure as usual. Sync again tomorrow.'));
