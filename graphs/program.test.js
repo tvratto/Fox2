@@ -176,8 +176,12 @@ assert.ok(!source.includes('Continue your actions.'),
 assert.ok(source.includes('function fox2SignedPercent(value)'));
 assert.ok(source.includes('function fox2MeasureDashboardHtml(metrics)'),
   'the measure page should present the completed-day recap and cumulative action progress');
-assert.ok(!source.includes('Today So Far'),
-  'the progress page should not mix an unfinished current day into the completed-day story');
+assert.ok(source.includes('Today So Far'),
+  'the first synced measurement should produce a genuine same-day progress state');
+assert.ok(source.includes("today.readings+' '+(today.readings===1?'reading':'readings')+' · Day in progress"),
+  'the same-day state should say that the result is still in progress');
+assert.ok(source.includes('function fox2TodayProgramDay()'),
+  'the same-day state should use the actual current calendar day rather than the last available day');
 assert.ok(source.includes('Morning Recap'));
 assert.ok(source.includes('30-Day Fat Use Scores'));
 assert.ok(source.includes('Results So Far'));
@@ -203,8 +207,14 @@ assert.ok(source.includes('.program-recap-bar-base { stroke:#ff8c00;'),
   'every completed day should use the same orange base');
 assert.ok(source.includes('.program-recap-bar-above { stroke:#ffb84d;'),
   'only the portion above the starting point should use lighter orange');
-assert.ok(source.includes("index===model.completed-1"),
-  'the newest completed day should land immediately after the earlier completed bars');
+assert.ok(source.includes('day.date===model.latest.date'),
+  'the newest completed day should land in its calendar position even when days are missing');
+assert.ok(source.includes('missing:!completed&&i<completedBeforeToday'),
+  'elapsed days without completed results should remain explicit gaps');
+assert.ok(source.includes('program-recap-missing'),
+  'missing days should look different from future chart positions');
+assert.ok(source.includes("added to day '+model.latestDayNumber+' of your 30-day history"),
+  'the recap should report the newest result’s calendar-day position, not its compacted result count');
 assert.ok(source.includes("root.classList.add('is-morphing')"));
 assert.ok(source.includes("root.classList.add('is-history-visible')"));
 assert.ok(source.includes("'is-bar-landed'"));

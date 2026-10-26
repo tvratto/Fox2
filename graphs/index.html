@@ -85,6 +85,7 @@ html, body {
 .program-divider { position:absolute; inset-block:0; width:2px; background:rgba(0,0,0,.72); transform:translateX(-1px); }
 .program-phases { display:flex; justify-content:space-between; margin-top:7px; color:rgba(255,255,255,.38); font-size:9px; font-weight:800; letter-spacing:.03em; text-transform:uppercase; }
 .program-phases .is-current { color:#fff; }
+.program-phases .is-complete { color:var(--program-orange); }
 .program-progress-meta { margin-top:12px; color:rgba(255,255,255,.55); font-size:12px; font-weight:700; }
 .program-section { margin-top:26px; padding-top:24px; border-top:1px solid rgba(255,255,255,.1); }
 .program-eyebrow { margin-bottom:10px; color:var(--program-gold); font-size:12px; font-weight:900; letter-spacing:.14em; text-transform:uppercase; }
@@ -270,6 +271,7 @@ html, body {
 .program-recap-baseline { stroke:rgba(255,255,255,.29); stroke-width:1.5; stroke-dasharray:4 5; }
 .program-recap-day-label { fill:rgba(255,255,255,.43); font:800 9px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; text-transform:uppercase; }
 .program-recap-slot { stroke:rgba(255,255,255,.14); stroke-width:5; stroke-linecap:round; }
+.program-recap-missing { fill:transparent; stroke:rgba(255,255,255,.38); stroke-width:1.6; }
 .program-recap-history-mark { opacity:0; transform:translateY(5px); transition:opacity .28s ease,transform .4s cubic-bezier(.2,.8,.2,1); }
 .program-recap-history-mark line { stroke-linecap:round; }
 .program-recap-bar-base { stroke:#ff8c00; stroke-width:6.5; }
@@ -290,6 +292,18 @@ html, body {
 .program-recap-change { color:#ffb84d; font-weight:950; white-space:nowrap; }
 .program-recap-yesterday { display:block; margin-top:7px; color:rgba(255,255,255,.47); font-size:13px; line-height:1.35; font-weight:730; }
 .program-recap-yesterday strong { color:#ffb84d; font-weight:900; }
+.program-today-card { min-height:335px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px 18px 22px; text-align:center; }
+.program-today-title { margin:0; color:#fff; font-size:22px; line-height:1.1; font-weight:900; letter-spacing:-.025em; }
+.program-today-ring { display:block; width:220px; height:220px; margin:5px auto 0; overflow:visible; }
+.program-today-track,.program-today-value { fill:none; stroke-width:16; }
+.program-today-track { stroke:rgba(255,255,255,.11); }
+.program-today-value { stroke:var(--today-color); stroke-linecap:round; transform:rotate(-90deg); transform-origin:110px 110px; stroke-dasharray:339.292; stroke-dashoffset:var(--today-offset); animation:program-today-fill .72s cubic-bezier(.2,.8,.2,1) both; }
+.program-today-score { fill:#fff; font:950 54px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; letter-spacing:-.06em; text-anchor:middle; }
+.program-today-unit { fill:rgba(255,255,255,.46); font:850 9px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; letter-spacing:.11em; text-anchor:middle; }
+.program-today-status { margin-top:-2px; color:rgba(255,255,255,.5); font-size:14px; line-height:1.35; font-weight:730; }
+.program-today-baseline { margin-top:13px; padding:8px 12px; border-radius:12px; background:rgba(255,255,255,.055); color:rgba(255,255,255,.48); font-size:12px; font-weight:750; }
+.program-today-baseline strong { color:#fff; font-weight:900; }
+@keyframes program-today-fill { from{stroke-dashoffset:339.292} to{stroke-dashoffset:var(--today-offset)} }
 .program-recap-empty { min-height:235px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:28px; text-align:center; }
 .program-recap-empty strong { color:#fff; font-size:22px; }
 .program-recap-empty span { max-width:245px; margin-top:9px; color:rgba(255,255,255,.46); font-size:14px; line-height:1.45; }
@@ -6394,10 +6408,11 @@ function fox2ProgressHtml(metrics){
   else if(screen==='maintain'){day=total;phase='Tracking complete';current='results';}
   var pct=Math.max(0,Math.min(100,Math.round(day/total*100)));
   var dayLabel=current==='baseline'?'Fat Use Baseline':'Day '+day+' of '+total;
+  var baselineClass=current==='baseline'?'is-current':(current==='measure'||current==='results'?'is-complete':'');
   return '<section class="program-progress" role="img" aria-label="30-day evaluation: '+dayLabel+', '+pct+' percent complete, '+phase+'">'
     +'<div class="program-progress-head"><div class="program-progress-title">30-Day Evaluation</div><div class="program-day">'+dayLabel+'</div></div>'
     +'<div class="program-bar"><div class="program-bar-fill" style="width:'+pct+'%"></div></div>'
-    +'<div class="program-phases"><span class="'+(current==='baseline'?'is-current':'')+'">Baseline</span><span class="'+(current==='measure'?'is-current':'')+'">30 Days</span><span class="'+(current==='results'?'is-current':'')+'">Result</span></div>'
+    +'<div class="program-phases"><span class="'+baselineClass+'">'+(baselineClass==='is-complete'?'✓ ':'')+'Baseline</span><span class="'+(current==='measure'?'is-current':'')+'">30 Days</span><span class="'+(current==='results'?'is-current':'')+'">Result</span></div>'
     +'<div class="program-progress-meta"'+(showPhase?'':' style="justify-content:flex-end"')+'>'+(showPhase?'<span>'+phase+'</span>':'')+'<span>'+pct+'% Complete</span></div></section>';
 }
 
@@ -6521,10 +6536,18 @@ function fox2SetupHtml(){
     +'<button type="button" class="program-secondary" data-program-action="back">Back</button></section>';
 }
 
-function fox2HasTodayMeasurement(){
+function fox2TodayProgramDay(){
   try{
-    return typeof DAYS!=='undefined'&&typeof TODAY_IDX!=='undefined'&&DAYS[TODAY_IDX]&&Array.isArray(DAYS[TODAY_IDX].pts)&&DAYS[TODAY_IDX].pts.length>0;
-  }catch(e){return false;}
+    if(typeof DAYS==='undefined') return null;
+    var today=fox2TodayIso(),match=null;
+    DAYS.forEach(function(day){if(day&&day.isoDate===today) match=day;});
+    if(!match||!Array.isArray(match.pts)||!match.pts.length) return null;
+    return {score:Math.max(0,Number(match.score)||0),readings:match.pts.length,date:match.isoDate};
+  }catch(e){return null;}
+}
+
+function fox2HasTodayMeasurement(){
+  return !!fox2TodayProgramDay();
 }
 
 function fox2FirstMeasurementHtml(){
@@ -6621,10 +6644,12 @@ function fox2RecapModel(metrics){
   var measureDays=(metrics.measureDays||[]).slice(0,FOX2_MEASURE_DAYS);
   if(!measureDays.length) return null;
   var latest=measureDays[measureDays.length-1],baseline=Math.max(1,Number(metrics.baseline)||1);
-  var slots=[];
+  var start=fox2Program.measureStart||measureDays[0].date,byDate={},slots=[];
+  measureDays.forEach(function(day){byDate[day.date]=day;});
+  var completedBeforeToday=Math.min(FOX2_MEASURE_DAYS,fox2DaysBetween(start,fox2TodayIso()));
   for(var i=0;i<FOX2_MEASURE_DAYS;i++){
-    var completed=measureDays[i]||null;
-    slots.push({date:completed?completed.date:'',score:completed?Math.max(0,Number(completed.score)||0):0,complete:!!completed});
+    var slotDate=fox2AddIsoDays(start,i),completed=byDate[slotDate]||null;
+    slots.push({date:slotDate,score:completed?Math.max(0,Number(completed.score)||0):0,complete:!!completed,missing:!completed&&i<completedBeforeToday});
   }
   var values=slots.map(function(day){return day.score;}).concat([baseline]);
   var peak=Math.max.apply(null,values),scaleMax=Math.max(60,Math.ceil((peak*1.12)/30)*30);
@@ -6636,12 +6661,13 @@ function fox2RecapModel(metrics){
     day.baseTop=Math.max(day.top,plotBottom-Math.min(plotHeight,baseline/scaleMax*plotHeight));
   });
   var baselineY=plotBottom-Math.min(plotHeight,baseline/scaleMax*plotHeight);
-  var latestSlot=slots[measureDays.length-1],latestVisual=fox2RingVisual(latest.score);
+  var latestIndex=Math.max(0,Math.min(FOX2_MEASURE_DAYS-1,fox2DaysBetween(start,latest.date)));
+  var latestSlot=slots[latestIndex],latestVisual=fox2RingVisual(latest.score);
   var after=fox2Mean(measureDays.map(function(day){return day.score;}));
   var change=Math.round((after-baseline)/baseline*100);
   var prior=measureDays.slice(0,-1),priorAverage=prior.length?fox2Mean(prior.map(function(day){return day.score;})):baseline;
   var priorChange=Math.round((priorAverage-baseline)/baseline*100);
-  return {latest:latest,slots:slots,completed:measureDays.length,baseline:baseline,baselineY:baselineY,plotBottom:plotBottom,latestSlot:latestSlot,latestVisual:latestVisual,change:change,priorChange:priorChange};
+  return {latest:latest,slots:slots,completed:measureDays.length,latestDayNumber:latestIndex+1,baseline:baseline,baselineY:baselineY,plotBottom:plotBottom,latestSlot:latestSlot,latestVisual:latestVisual,change:change,priorChange:priorChange};
 }
 
 function fox2RecapSeenKey(){ return fox2ProgramStorageKey()+':last-recap-day'; }
@@ -6659,11 +6685,13 @@ function fox2MarkRecapSeen(date){
 
 function fox2RecapHistorySvg(model){
   var slots=model.slots.map(function(day){
-    return '<line class="program-recap-slot" x1="'+day.x.toFixed(1)+'" y1="204" x2="'+day.x.toFixed(1)+'" y2="208"></line>';
+    return day.missing
+      ? '<circle class="program-recap-missing" cx="'+day.x.toFixed(1)+'" cy="206" r="2.7"></circle>'
+      : '<line class="program-recap-slot" x1="'+day.x.toFixed(1)+'" y1="204" x2="'+day.x.toFixed(1)+'" y2="208"></line>';
   }).join('');
   var marks=model.slots.map(function(day,index){
     if(!day.complete) return '';
-    var isLatest=index===model.completed-1;
+    var isLatest=day.date===model.latest.date;
     var above=day.top<model.baselineY?'<line class="program-recap-bar-above" x1="'+day.x.toFixed(1)+'" y1="'+day.top.toFixed(1)+'" x2="'+day.x.toFixed(1)+'" y2="'+model.baselineY.toFixed(1)+'"></line>':'';
     return '<g class="program-recap-history-mark'+(isLatest?' is-latest':'')+'" data-recap-history-index="'+index+'" role="img" aria-label="'+fox2Escape(fox2ShortDate(day.date))+' Fat Use Score '+fox2Round(day.score)+'"><line class="program-recap-bar-base" x1="'+day.x.toFixed(1)+'" y1="'+day.baseTop.toFixed(1)+'" x2="'+day.x.toFixed(1)+'" y2="'+model.plotBottom+'"></line>'+above+'</g>';
   }).join('');
@@ -6673,6 +6701,12 @@ function fox2RecapHistorySvg(model){
 function fox2MeasureDashboardHtml(metrics){
   var model=fox2RecapModel(metrics),action=fox2Program.action||'Your action';
   if(!model){
+    var today=fox2TodayProgramDay();
+    if(today){
+      var todayVisual=fox2RingVisual(today.score),circumference=339.292;
+      var todayOffset=(circumference*(1-todayVisual.progress)).toFixed(3);
+      return '<section class="program-measure-dashboard"><div class="program-recap-sequence is-settled"><div class="program-today-card"><h2 class="program-today-title">Today So Far</h2><svg class="program-today-ring" viewBox="0 0 220 220" role="img" aria-label="Today Fat Use Score '+todayVisual.value+' from '+today.readings+' '+(today.readings===1?'reading':'readings')+'"><circle class="program-today-track" cx="110" cy="110" r="54"></circle><circle class="program-today-value" cx="110" cy="110" r="54" style="--today-color:'+todayVisual.color+';--today-offset:'+todayOffset+'"></circle><text class="program-today-score" x="110" y="116">'+todayVisual.value+'</text><text class="program-today-unit" x="110" y="138">FAT USE SCORE</text></svg><div class="program-today-status">'+today.readings+' '+(today.readings===1?'reading':'readings')+' · Day in progress</div><div class="program-today-baseline">Baseline <strong>'+fox2Round(metrics.baseline)+'</strong> set</div></div></div></section>';
+    }
     return '<section class="program-measure-dashboard"><div class="program-recap-sequence is-settled"><div class="program-recap-empty"><strong>Results So Far</strong><span>Your first completed day will appear here after you sync.</span></div></div></section>';
   }
   var animate=fox2ShouldAnimateRecap(model),settledClass=animate?'':' is-history-visible is-bar-landed is-settled';
@@ -6690,8 +6724,8 @@ function fox2MeasureDashboardHtml(metrics){
     ? 'Yesterday was <strong>'+fox2SignedPercent(latestChange)+'</strong>.'
     : 'Your latest completed day was <strong>'+fox2SignedPercent(latestChange)+'</strong>.';
   return '<section class="program-measure-dashboard"><div class="program-recap-sequence'+settledClass+'" style="--recap-color:'+model.latestVisual.color+'" data-recap-animate="'+(animate?'1':'0')+'" data-latest-date="'+fox2Escape(model.latest.date)+'" data-score="'+scoreText+'" data-fill="'+model.latestVisual.progress+'" data-target-x="'+model.latestSlot.x+'" data-target-top="'+model.latestSlot.top.toFixed(1)+'" data-target-bottom="'+model.plotBottom+'" data-from="'+model.priorChange+'" data-to="'+model.change+'">'
-    +'<div class="program-recap-head"><span class="program-recap-kicker">Morning Recap</span><span class="program-recap-date">'+fox2Escape(latestDateLabel)+'</span><div class="program-recap-history-title"><div class="program-recap-title-row"><strong>30-Day Fat Use Scores</strong><button type="button" class="program-recap-replay" data-recap-replay aria-label="Replay morning recap" title="Replay morning recap">↻</button></div><span>'+model.completed+' of 30 days · Baseline '+fox2Round(model.baseline)+'</span></div></div>'
-    +'<svg class="program-recap-svg" viewBox="0 0 336 236" role="img" aria-label="'+fox2Escape(latestDateLabel)+' Fat Use Score '+scoreText+', added to day '+model.completed+' of your 30-day history">'
+    +'<div class="program-recap-head"><span class="program-recap-kicker">Morning Recap</span><span class="program-recap-date">'+fox2Escape(latestDateLabel)+'</span><div class="program-recap-history-title"><div class="program-recap-title-row"><strong>30-Day Fat Use Scores</strong><button type="button" class="program-recap-replay" data-recap-replay aria-label="Replay morning recap" title="Replay morning recap">↻</button></div><span>'+model.completed+' completed '+(model.completed===1?'day':'days')+' · Baseline '+fox2Round(model.baseline)+'</span></div></div>'
+    +'<svg class="program-recap-svg" viewBox="0 0 336 236" role="img" aria-label="'+fox2Escape(latestDateLabel)+' Fat Use Score '+scoreText+', added to day '+model.latestDayNumber+' of your 30-day history">'
     +'<circle class="program-recap-ring-track" cx="168" cy="112" r="54"></circle><path class="program-recap-morph" d="'+path+'"></path>'
     +'<g class="program-recap-score"><text class="program-recap-score-value" id="program-recap-score" x="168" y="116">'+scoreText+'</text><text class="program-recap-score-label" x="168" y="136">FAT USE SCORE</text></g>'
     +fox2RecapHistorySvg(model)+'</svg>'
