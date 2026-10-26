@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="dark">
-  <meta name="description" content="FOX2 reads a sign of fat burning in your breath, so you can see if your diet, exercise, or medication helps you burn more fat.">
-  <title>FOX2 — See what helps you burn more fat</title>
+  <meta name="description" content="FOX2 shows your current Fat Use Zone, builds a whole-day Fat Use Score, and reveals how both change over time.">
+  <title>FOX2 — Is your metabolism responding?</title>
   <style>
     :root {
       color-scheme: dark;
@@ -71,12 +71,13 @@
     main { overflow: hidden; }
     .hero {
       width: var(--page);
+      min-height: calc(100svh - 69px);
       margin: 0 auto;
       display: grid;
       grid-template-columns: minmax(0, 1.08fr) minmax(380px, .92fr);
       align-items: center;
-      gap: 48px clamp(48px, 7vw, 104px);
-      padding: 64px 0 72px;
+      gap: clamp(48px, 7vw, 104px);
+      padding: 72px 0 86px;
     }
     .eyebrow {
       margin: 0 0 20px;
@@ -90,9 +91,9 @@
     h1 {
       max-width: 760px;
       margin-bottom: 28px;
-      font-size: clamp(2.6rem, 4.6vw, 4.4rem);
-      line-height: .98;
-      letter-spacing: -.045em;
+      font-size: clamp(3.5rem, 7.1vw, 6.7rem);
+      line-height: .93;
+      letter-spacing: -.07em;
       font-weight: 870;
     }
     .hero-copy {
@@ -103,22 +104,6 @@
       line-height: 1.55;
     }
     .actions { display: flex; flex-wrap: wrap; gap: 12px; }
-
-    .use-steps { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; counter-reset: use; }
-    .use-step { counter-increment: use; padding: 26px 26px 28px; border: 1px solid var(--line); border-radius: 24px; background: var(--panel); }
-    .use-step::before { content: "Step " counter(use); display: block; margin-bottom: 18px; color: var(--yellow); font-size: .74rem; font-weight: 850; letter-spacing: .14em; text-transform: uppercase; }
-    .use-step h2 { margin-bottom: 10px; font-size: clamp(1.4rem, 2vw, 1.75rem); line-height: 1.1; letter-spacing: -.035em; }
-    .use-step p { margin: 0; color: #a3a3a0; }
-    .connect-card { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 28px 48px; padding: 30px; border: 1px solid var(--line); border-radius: 24px; background: var(--panel); }
-    .connect-card .tag { display: block; margin-bottom: 14px; color: var(--yellow); font-size: .74rem; font-weight: 850; letter-spacing: .14em; text-transform: uppercase; }
-    .connect-card h2 { margin-bottom: 12px; font-size: clamp(1.4rem, 2vw, 1.75rem); line-height: 1.1; letter-spacing: -.035em; }
-    .connect-card p { margin: 0; color: #a3a3a0; }
-    .connect-steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 14px; counter-reset: connect; }
-    .connect-steps li { counter-increment: connect; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 12px; color: #c6c6c2; }
-    .connect-steps li::before { content: counter(connect); display: grid; width: 26px; height: 26px; place-items: center; border-radius: 50%; border: 1px solid #474842; color: var(--ink); font-size: .8rem; font-weight: 850; }
-    .connect-steps strong { color: var(--ink); font-weight: 750; }
-    .connect-fallback { grid-column: 2; color: #858580 !important; font-size: .92rem; }
-    .use-note { grid-column: 1 / -1; max-width: 820px; margin: -28px 0 0; color: #858580; font-size: .92rem; }
     .button {
       display: inline-flex;
       min-height: 48px;
@@ -277,12 +262,7 @@
     @media (max-width: 900px) {
       :root { --page: min(100% - 32px, 720px); }
       .nav-links a:not(.nav-action) { display: none; }
-      .hero { grid-template-columns: 1fr; padding-top: 72px; }
-      .use-steps { grid-template-columns: 1fr; }
-      .use-note { margin-top: -20px; }
-      .score-stage { order: 2; }
-      .connect-card { order: 3; grid-template-columns: 1fr; padding: 26px; }
-      .connect-fallback { grid-column: 1; }
+      .hero { min-height: auto; grid-template-columns: 1fr; padding-top: 82px; }
       .score-stage { min-height: 500px; }
       .section-header, .truth { grid-template-columns: 1fr; }
       .why-grid { grid-template-columns: 1fr; }
@@ -302,7 +282,7 @@
       .nav { min-height: 60px; }
       .nav-action { padding: 8px 12px; font-size: .85rem !important; }
       .hero { padding: 64px 0 72px; gap: 36px; }
-      h1 { font-size: clamp(2.5rem, 11vw, 3.4rem); }
+      h1 { font-size: clamp(3.25rem, 17vw, 5rem); }
       .score-stage { min-height: 440px; }
       .score-card { padding: 20px; border-radius: 28px; }
       .ring-wrap { width: 238px; height: 238px; }
@@ -340,12 +320,12 @@
   <main id="main">
     <section class="hero" aria-labelledby="hero-title">
       <div>
-        <p class="eyebrow">What FOX2 is for</p>
-        <h1 id="hero-title">See what helps you burn more fat.</h1>
-        <p class="hero-copy">FOX2 reads a sign of fat burning in your breath and tracks how it changes from day to day, so you can see whether a change to your diet, exercise, or medication shows up. It tells you when your body is running more on fat. It doesn’t measure fat lost.</p>
+        <p class="eyebrow">A daily view of your fuel pattern</p>
+        <h1 id="hero-title">Is your metabolism responding—or stuck in one gear?</h1>
+        <p class="hero-copy">FOX2 looks at two things: your Fat Use Zone at each measurement and your accumulated Fat Use Score across the day. Together, they can help you see when your metabolism appears responsive, when progress may have stalled, and when a persistent pattern deserves a closer look.</p>
         <div class="actions">
-          <a class="button button-primary" href="/guide/">Set up FOX2</a>
-          <a class="button button-secondary" href="#what-you-get">See what FOX2 tells you <span aria-hidden="true">↓</span></a>
+          <a class="button button-primary" href="#what-you-get">See what FOX2 tells you <span aria-hidden="true">↓</span></a>
+          <a class="button button-secondary" href="/guide/">I have a FOX2</a>
         </div>
       </div>
 
@@ -369,36 +349,6 @@
           <div class="score-note"><span>Minimal</span><span>Balanced</span><span>High</span><span>Strong</span></div>
           <div class="pattern-result"><span>Today’s pattern</span><strong>HIGH + RESPONSIVE</strong></div>
         </div>
-      </div>
-
-      <ol class="use-steps" aria-label="How FOX2 is used">
-        <li class="use-step">
-          <h2>Learn your starting point</h2>
-          <p>Measure 2 to 3 times a day for about a week. FOX2 uses those days to build your Fat Use Baseline.</p>
-        </li>
-        <li class="use-step">
-          <h2>Make one change</h2>
-          <p>Start the diet, exercise routine, or medication you want to check. Keep measuring 2 to 3 times a day.</p>
-        </li>
-        <li class="use-step">
-          <h2>See what changed</h2>
-          <p>Over 30 days, FOX2 compares each day’s Fat Use Score with your baseline and shows whether it went up, stayed about the same, or came down.</p>
-        </li>
-      </ol>
-      <p class="use-note">FOX2 shows what changed in your own readings. Food, sleep, and other factors also affect them, so it can’t prove what caused a change.</p>
-
-      <div class="connect-card" aria-labelledby="connect-title">
-        <div>
-          <span class="tag">Optional</span>
-          <h2 id="connect-title">Connect your phone</h2>
-          <p>Set FOX2’s clock and time zone, and add a User ID or Clinic ID from your care team.</p>
-        </div>
-        <ol class="connect-steps">
-          <li><span>On FOX2, open <strong>Settings › Device › Use phone</strong>. A new FOX2 may show <strong>SETUP</strong> when you turn it on; choose <strong>Use Phone</strong>.</span></li>
-          <li><span>FOX2 shows a QR code. Point your phone’s camera at it and tap <strong>Join</strong>.</span></li>
-          <li><span>The setup page opens by itself. Check the details and tap <strong>Confirm &amp; Save</strong>.</span></li>
-        </ol>
-        <p class="connect-fallback">If the setup page doesn’t open, join the <span style="white-space:nowrap">FOX2-PORTAL</span> Wi‑Fi network in your phone’s settings.</p>
       </div>
     </section>
 
@@ -493,7 +443,7 @@
         <div><h2 id="use-title">Use it like a tracker—not a test you can fail.</h2></div>
       </div>
       <div class="steps">
-        <article class="step"><span class="step-number">01</span><h3>Take 2 to 3 readings a day</h3><p>Measure whenever it fits your day. More than one reading lets FOX2 build your full daily Fat Use Score.</p></article>
+        <article class="step"><span class="step-number">01</span><h3>Take readings when they fit your day</h3><p>Every breath adds another point to the Fat Use Score. There is no rigid schedule to follow.</p></article>
         <article class="step"><span class="step-number">02</span><h3>Let the whole day accumulate</h3><p>Your live score shows progress toward a completed daily result; it is not meant to be judged one moment at a time.</p></article>
         <article class="step"><span class="step-number">03</span><h3>See your daily pattern</h3><p>FOX2 combines your overall level with the movement between readings: low, medium, or high—steady or responsive.</p></article>
         <article class="step"><span class="step-number">04</span><h3>Watch the direction over time</h3><p>Compare finished days to see whether your pattern is stalled, beginning to respond, or moving into a stronger range.</p></article>
