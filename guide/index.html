@@ -27,6 +27,15 @@ body {
   gap:8px;
 }
 
+.guide-return {
+  align-self:flex-start; flex-shrink:0; min-height:36px; padding:7px 12px;
+  border:1px solid rgba(255,255,255,.13); border-radius:999px;
+  background:rgba(255,255,255,.065); color:rgba(255,255,255,.82);
+  font:750 14px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  cursor:pointer;
+}
+.guide-return:active { background:rgba(255,255,255,.13); transform:scale(.97); }
+
 #screenContent {
   flex:1; min-height:0;
   overflow-y:auto;
@@ -294,6 +303,7 @@ body {
 </head>
 <body>
 <div class="container">
+  <button type="button" class="guide-return" onclick="returnToFox2()">&#8249; Back to FOX2</button>
   <div class="title" id="pageTitle" style="display:none;"></div>
   <div id="screenContent" style="flex:1;display:flex;flex-direction:column;min-height:0;"></div>
   <div class="dots" id="dots"></div>
@@ -301,6 +311,23 @@ body {
 </div>
 
 <script>
+function returnToFox2() {
+  try {
+    if (document.referrer) {
+      var previous = new URL(document.referrer);
+      if (previous.origin === window.location.origin && previous.pathname.indexOf('/graphs/') === 0) {
+        window.location.href = previous.href;
+        return;
+      }
+    }
+  } catch (e) {}
+  if (window.history.length > 1) {
+    window.history.back();
+    return;
+  }
+  window.location.href = '/graphs/';
+}
+
 // state: 0=welcome, 1=measures, 2=how-fox2-works, 3=track-week, 4=full-picture, 5=caveats, 6=done
 var state = 0;
 var TOTAL_SCREENS = 7;

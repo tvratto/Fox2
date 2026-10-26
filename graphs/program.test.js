@@ -4,8 +4,8 @@ const fs=require('fs');
 const source=fs.readFileSync(__dirname+'/index.html','utf8');
 
 function functionSource(name,nextName){
-  const start=source.indexOf('function '+name+'()');
-  const end=source.indexOf('function '+nextName+'()',start+1);
+  const start=source.indexOf('function '+name+'(');
+  const end=source.indexOf('function '+nextName+'(',start+1);
   return source.slice(start,end);
 }
 
@@ -25,8 +25,10 @@ assert.ok(source.includes('See when your body is using fat for energy.'),
   'onboarding should begin with the metabolic meaning of the measurement');
 assert.ok(source.includes('When your body uses more fat, acetone in your breath rises.'),
   'the product introduction should connect fat use to breath acetone');
-assert.ok(source.includes('FOX2 measures this acetone and shows your Fat Use Zone.'),
-  'the product introduction should connect breath acetone to the Fat Use Zone');
+assert.ok(source.includes('FOX2 measures that acetone and places your result on a Fat Use Zone scale from 1 to 10+.'),
+  'the product introduction should connect breath acetone to the displayed Fat Use Zone scale');
+assert.ok(source.includes('Higher zones mean more fat use.'),
+  'the product introduction should explain how to interpret the scale');
 assert.ok(source.includes('Use FOX2 without tracking'),
   'intro should expose a clear path outside Progress Tracking');
 assert.ok(source.includes('Start Progress Tracking'));
@@ -38,10 +40,11 @@ assert.ok(source.includes('program-card-leave-left'),
   'forward onboarding should slide the current card away');
 assert.ok(source.includes("'continue-intro':'forward'"),
   'continuing from the FOX2 explanation should use the forward card transition');
-assert.ok(source.includes('data-program-action="continue-intro">Next</button>'));
-assert.ok(source.includes('data-program-action="continue-day">Next</button>'),
+assert.ok(source.includes('data-program-action="continue-intro"'));
+assert.ok(source.includes('data-program-action="continue-day"'));
+assert.ok(source.includes("'>Next</button>"),
   'onboarding cards should use concise Next navigation labels');
-assert.ok(source.includes('function fox2StartAcetoneAnimation()'),
+assert.ok(source.includes('function fox2StartAcetoneAnimation('),
   'the product card should include an animated acetone molecule');
 assert.ok(source.includes('var FOX2_ONBOARDING_SPEED=1.5;'),
   'the onboarding demonstrations should play at the approved 1.5x speed');
@@ -51,7 +54,7 @@ assert.ok(source.includes('data-i="9"'),
   'the acetone model should include all carbon, oxygen, and hydrogen atoms');
 assert.ok(source.includes('id="program-breath-zone-canvas"'),
   'the acetone molecule should transform into the Fat Use Zone');
-assert.ok(source.includes('function fox2DayIntroHtml()'),
+assert.ok(source.includes('function fox2DayIntroHtml('),
   'onboarding should connect the daily graph to the Fat Use Score');
 assert.ok(source.includes("fox2Program.screen='day-intro'"));
 assert.ok(source.includes('Map how your fat use changes through the day.'),
@@ -64,7 +67,7 @@ assert.ok(source.includes('id="program-day-zone-source"'),
   'the NOW result should collapse into a point in the daily graph');
 assert.ok(source.includes('id="program-day-ring-value"'),
   'the daily graph animation should resolve into a score ring');
-assert.ok(source.includes('function fox2CompareIntroHtml()'),
+assert.ok(source.includes('function fox2CompareIntroHtml('),
   'onboarding should explain the purpose of the Fat Use Baseline');
 assert.ok(source.includes('See what changes your fat use.'));
 assert.ok(source.includes('First, FOX2 learns your Fat Use Baseline.'),
@@ -86,6 +89,16 @@ assert.ok(source.includes("}else if(action==='continue-day'){\n    fox2Program.s
   'the daily score card should lead directly to the before-and-after card');
 assert.ok(source.includes("if(programPage) programPage.scrollTop=0;"),
   'each onboarding card should begin at the top of the Progress page');
+assert.ok(source.includes('onclick="openGuideModal()"'),
+  'the persistent Guide control should open reusable guide choices');
+assert.ok(source.includes('How FOX2 Works<span>Replay the three-part introduction.</span>'));
+assert.ok(source.includes('href="/guide/"'),
+  'the complete FOX2 guide should remain available');
+assert.ok(source.includes('data-guide-action="done">Done</button>'),
+  'replay mode should end without entering Progress Tracking setup');
+const replaySource=source.slice(source.indexOf('function openGuideModal('),source.indexOf("var fox2ProgramEnterDirection="));
+assert.ok(!replaySource.includes('fox2Program.'),
+  'replaying How FOX2 Works must not mutate Progress Tracking state');
 assert.ok(!source.includes('function fox2BaselineIntroHtml()'),
   'the standalone starting-point explainer should not remain in the story');
 assert.ok(!source.includes('function fox2IntroHtml()'),

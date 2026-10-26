@@ -519,6 +519,7 @@ html, body {
 }
 #info-modal-overlay,
 #export-modal-overlay,
+#guide-modal-overlay,
 #program-baseline-confirm-overlay {
   display: none;
   position: fixed; inset: 0; z-index: 200;
@@ -528,9 +529,11 @@ html, body {
 }
 #info-modal-overlay.open,
 #export-modal-overlay.open,
+#guide-modal-overlay.open,
 #program-baseline-confirm-overlay.open { display: flex; }
 #info-modal,
 #export-modal,
+#guide-modal,
 #program-baseline-confirm {
   background: #111;
   border: 1px solid rgba(255,255,255,0.12);
@@ -545,6 +548,16 @@ html, body {
 }
 .export-modal-title { color: #fff; font-size: 18px; font-weight: 850; }
 .export-modal-copy { color: rgba(255,255,255,.48); font-size: 13px; line-height: 1.45; margin-bottom: 3px; }
+.guide-choice {
+  display:block; width:100%; padding:14px 15px; border-radius:15px;
+  border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.055);
+  color:#fff; text-align:left; text-decoration:none; font:800 15px/1.2 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; cursor:pointer;
+}
+.guide-choice span { display:block; margin-top:4px; color:rgba(255,255,255,.43); font-size:12px; line-height:1.35; font-weight:550; }
+.guide-choice:active { background:rgba(255,255,255,.11); }
+#guide-modal-overlay.is-viewer { align-items:flex-start; padding:calc(env(safe-area-inset-top) + 14px) 9px calc(env(safe-area-inset-bottom) + 74px); overflow:auto; background:#000; }
+#guide-modal-overlay.is-viewer #guide-modal { width:min(430px,100%); max-height:none; padding:0; border:0; background:transparent; }
+#guide-replay { width:100%; }
 .program-confirm-title { color:#fff; font-size:21px; line-height:1.15; font-weight:900; letter-spacing:-.02em; }
 .program-confirm-copy { margin-top:3px; color:rgba(255,255,255,.58); font-size:14px; line-height:1.45; }
 .program-confirm-actions { display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:10px; }
@@ -2210,14 +2223,14 @@ html, body {
     Squad
     <span id="squad-dot"></span>
   </button>
-  <a class="bar-btn" href="/guide/" target="_blank">
+  <button class="bar-btn" type="button" onclick="openGuideModal()">
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
       <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.8"/>
       <path d="M8 7v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
       <circle cx="8" cy="4.5" r="0.9" fill="currentColor"/>
     </svg>
     Guide
-  </a>
+  </button>
 </div>
 
 <div id="export-modal-overlay" onclick="if(event.target===this)closeExportModal()">
@@ -2249,6 +2262,19 @@ html, body {
       <div id="lb-board-loading">Loading leaderboard…</div>
     </div>
     <button id="info-modal-close" onclick="closeInfoModal()">Close</button>
+  </div>
+</div>
+
+<div id="guide-modal-overlay" onclick="if(event.target===this)closeGuideModal()">
+  <div id="guide-modal" role="dialog" aria-modal="true" aria-labelledby="guide-modal-title">
+    <div id="guide-menu">
+      <div class="export-modal-title" id="guide-modal-title">FOX2 Guide</div>
+      <div class="export-modal-copy">Learn how FOX2 works or open the complete guide.</div>
+      <button type="button" class="guide-choice" onclick="openFox2WorksGuide()">How FOX2 Works<span>Replay the three-part introduction.</span></button>
+      <a class="guide-choice" href="/guide/" target="_self">Full FOX2 Guide<span>Measurement instructions and detailed help.</span></a>
+      <button type="button" class="export-modal-close" onclick="closeGuideModal()">Close</button>
+    </div>
+    <div id="guide-replay" hidden></div>
   </div>
 </div>
 
@@ -6427,11 +6453,13 @@ function fox2CardSequenceHtml(active){
   return '<div class="program-card-sequence" aria-label="Introduction '+active+' of 3">'+dots+'</div>';
 }
 
-function fox2OverviewHtml(){
+function fox2OverviewHtml(mode){
+  var guide=mode==='guide';
   return '<section class="program-onboarding-card">'+fox2CardSequenceHtml(1)+'<div class="program-eyebrow">What FOX2 Measures</div><h1 class="program-title">See when your body is using fat for energy.</h1>'
     +fox2AcetoneMoleculeHtml()
-    +'<p class="program-copy">When your body uses more fat, acetone in your breath rises. FOX2 measures this acetone and shows your Fat Use Zone.</p>'
-    +'<button type="button" class="program-primary" data-program-action="continue-intro">Next</button></section>';
+    +'<p class="program-copy">When your body uses more fat, acetone in your breath rises. FOX2 measures that acetone and places your result on a Fat Use Zone scale from 1 to 10+. Higher zones mean more fat use.</p>'
+    +'<button type="button" class="program-primary" '+(guide?'data-guide-action="next"':'data-program-action="continue-intro"')+'>Next</button>'
+    +(guide?'<button type="button" class="program-secondary" data-guide-action="close">Close</button>':'')+'</section>';
 }
 
 function fox2IntroZoneGraphicHtml(){
@@ -6445,7 +6473,8 @@ function fox2IntroZoneGraphicHtml(){
   return '<g id="program-day-zone-source">'+paths+'<path d="M106 96 A54 54 0 0 1 214 96" fill="none" stroke="rgba(255,255,255,.58)" stroke-width="1.5"/><text x="160" y="91" fill="#d946c7" font-size="47" font-weight="950" text-anchor="middle">5</text><text x="101" y="120" fill="rgba(255,255,255,.46)" font-size="9" font-weight="850">1</text><text x="219" y="120" fill="rgba(255,255,255,.46)" font-size="9" font-weight="850" text-anchor="end">10+</text></g>';
 }
 
-function fox2DayIntroHtml(){
+function fox2DayIntroHtml(mode){
+  var guide=mode==='guide';
   return '<section class="program-onboarding-card">'+fox2CardSequenceHtml(2)+'<div class="program-eyebrow">Your Daily Pattern</div><h1 class="program-title">Map how your fat use changes through the day.</h1>'
     +'<div class="program-day-stage"><svg class="program-day-demo" viewBox="0 0 320 210" role="img" aria-label="Measurements building a daily graph and Fat Use Score">'
       +'<defs><linearGradient id="program-day-zone-gradient" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#22d3ee"/><stop offset=".38" stop-color="#4ade80"/><stop offset=".68" stop-color="#d946c7"/><stop offset="1" stop-color="#ff8c00"/></linearGradient></defs>'
@@ -6456,16 +6485,18 @@ function fox2DayIntroHtml(){
         +'<line x1="18" y1="140" x2="302" y2="140" stroke="rgba(255,255,255,.55)"/><g fill="rgba(255,255,255,.44)" font-size="10" font-weight="750"><text x="18" y="155">12a</text><text x="160" y="155" text-anchor="middle">12p</text><text x="302" y="155" text-anchor="end">12a</text></g><text x="18" y="190" fill="rgba(255,255,255,.48)" font-size="10" font-weight="850" letter-spacing="1.2">FAT USE SCORE</text><text id="program-day-running-score" x="301" y="195" fill="#ff8c00" font-size="40" font-weight="950" text-anchor="end">0</text></g>'
       +'<g id="program-day-ring-result" opacity="0"><circle cx="160" cy="98" r="62" fill="none" stroke="rgba(255,140,0,.16)" stroke-width="17"/><circle class="program-day-ring" id="program-day-ring-value" cx="160" cy="98" r="62" fill="none" stroke="#ff8c00" stroke-width="17" stroke-linecap="round" stroke-dasharray="389.56" stroke-dashoffset="389.56"/><text id="program-day-ring-score" x="160" y="104" fill="#fff" font-size="53" font-weight="950" text-anchor="middle">96</text><text x="160" y="126" fill="rgba(255,255,255,.5)" font-size="9" font-weight="850" letter-spacing="1.15" text-anchor="middle">FAT USE SCORE</text></g>'
     +'</svg></div><p class="program-copy">Fat use rises and falls as your body’s needs change. Measure a few times a day, and FOX2 combines those readings into your daily Fat Use Score.</p>'
-    +'<button type="button" class="program-primary" data-program-action="continue-day">Next</button><button type="button" class="program-secondary" data-program-action="back-overview">Back</button></section>';
+    +'<button type="button" class="program-primary" '+(guide?'data-guide-action="next"':'data-program-action="continue-day"')+'>Next</button><button type="button" class="program-secondary" '+(guide?'data-guide-action="back"':'data-program-action="back-overview"')+'>Back</button></section>';
 }
 
-function fox2CompareIntroHtml(){
+function fox2CompareIntroHtml(mode){
+  var guide=mode==='guide';
   return '<section class="program-onboarding-card">'+fox2CardSequenceHtml(3)+'<div class="program-eyebrow">Your Fat Use Baseline</div><h1 class="program-title">See what changes your fat use.</h1><div class="program-compare-intro-stage"><svg viewBox="0 0 320 190" role="img" aria-label="Fat Use Scores compared with a Fat Use Baseline">'
     +'<line x1="42" y1="142" x2="278" y2="142" stroke="rgba(255,255,255,.2)"/>'
     +'<g class="program-comparison-bar" data-compare-bar="0"><rect x="68" y="72" width="62" height="70" rx="20" fill="rgba(255,140,0,.42)"/><text x="99" y="165" fill="rgba(255,255,255,.48)" font-size="10" font-weight="850" text-anchor="middle">BASELINE</text><text x="99" y="63" fill="#fff" font-size="19" font-weight="950" text-anchor="middle">96</text></g>'
     +'<g class="program-comparison-bar" data-compare-bar="1"><rect x="190" y="44" width="62" height="98" rx="20" fill="#ff8c00"/><text x="221" y="165" fill="rgba(255,255,255,.48)" font-size="10" font-weight="850" text-anchor="middle">AFTER</text><text x="221" y="35" fill="#fff" font-size="19" font-weight="950" text-anchor="middle">108</text></g>'
     +'<g id="program-compare-result" opacity="0"><rect x="125" y="86" width="70" height="38" rx="19" fill="#090909" stroke="rgba(255,180,92,.55)"/><text x="160" y="111" fill="#ffad47" font-size="20" font-weight="950" text-anchor="middle">+12%</text></g>'
-    +'</svg></div><p class="program-copy">First, FOX2 learns your Fat Use Baseline. Then you can change your diet, exercise, medication, or routine. FOX2 analyzes your daily scores to show how your fat use changed.</p><button type="button" class="program-primary" data-program-action="start">Start Progress Tracking</button><button type="button" class="program-secondary" data-program-action="opt-out">Use FOX2 without tracking</button><button type="button" class="program-secondary" data-program-action="back-day">Back</button></section>';
+    +'</svg></div><p class="program-copy">First, FOX2 learns your Fat Use Baseline. Then you can change your diet, exercise, medication, or routine. FOX2 analyzes your daily scores to show how your fat use changed.</p>'
+    +(guide?'<button type="button" class="program-primary" data-guide-action="done">Done</button><button type="button" class="program-secondary" data-guide-action="back">Back</button>':'<button type="button" class="program-primary" data-program-action="start">Start Progress Tracking</button><button type="button" class="program-secondary" data-program-action="opt-out">Use FOX2 without tracking</button><button type="button" class="program-secondary" data-program-action="back-day">Back</button>')+'</section>';
 }
 
 function fox2MethodHtml(){
@@ -6846,9 +6877,10 @@ function fox2DrawZoneCanvas(canvas,value){
   ctx.fillStyle='rgba(255,255,255,.5)';ctx.font='800 10px -apple-system,BlinkMacSystemFont,system-ui,sans-serif';ctx.fillText('1',31,116);ctx.fillText('10+',153,116);
 }
 
-function fox2StartAcetoneAnimation(){
-  var svg=document.querySelector('.program-acetone-molecule');
-  var zone=document.getElementById('program-breath-zone-canvas');
+function fox2StartAcetoneAnimation(root){
+  root=root||document;
+  var svg=root.querySelector('.program-acetone-molecule');
+  var zone=root.querySelector('#program-breath-zone-canvas');
   if(!svg||!zone) return;
   var atomGroup=svg.querySelector('.program-molecule-atoms');
   var atoms=Array.from(svg.querySelectorAll('.program-molecule-atom')).map(function(el){
@@ -6899,12 +6931,13 @@ function fox2StartAcetoneAnimation(){
   window.requestAnimationFrame(draw);
 }
 
-function fox2StartDayIntroAnimation(){
-  var svg=document.querySelector('.program-day-demo'),graph=document.getElementById('program-day-graph');
-  var zone=document.getElementById('program-day-zone-source');
-  var reveal=document.getElementById('program-day-reveal-rect'),points=Array.from(document.querySelectorAll('#program-day-points circle'));
-  var running=document.getElementById('program-day-running-score'),ring=document.getElementById('program-day-ring-result');
-  var ringValue=document.getElementById('program-day-ring-value');
+function fox2StartDayIntroAnimation(root){
+  root=root||document;
+  var svg=root.querySelector('.program-day-demo'),graph=root.querySelector('#program-day-graph');
+  var zone=root.querySelector('#program-day-zone-source');
+  var reveal=root.querySelector('#program-day-reveal-rect'),points=Array.from(root.querySelectorAll('#program-day-points circle'));
+  var running=root.querySelector('#program-day-running-score'),ring=root.querySelector('#program-day-ring-result');
+  var ringValue=root.querySelector('#program-day-ring-value');
   if(!svg||!zone||!graph||!reveal||!running||!ring||!ringValue) return;
   var circumference=389.56,targetOffset=circumference*(1-.8);
   function render(phase){
@@ -6936,14 +6969,82 @@ function fox2StartDayIntroAnimation(){
   window.requestAnimationFrame(frame);
 }
 
-function fox2StartCompareIntroAnimation(){
-  var stage=document.querySelector('.program-compare-intro-stage'),bars=Array.from(document.querySelectorAll('.program-comparison-bar')),result=document.getElementById('program-compare-result');
+function fox2StartCompareIntroAnimation(root){
+  root=root||document;
+  var stage=root.querySelector('.program-compare-intro-stage'),bars=Array.from(root.querySelectorAll('.program-comparison-bar')),result=root.querySelector('#program-compare-result');
   if(!stage||!result) return;
   function render(phase){
     bars.forEach(function(bar,index){var p=Math.max(0,Math.min(1,(phase-fox2OnboardingTime(index*380))/fox2OnboardingTime(700)));bar.style.opacity=String(.18+.82*p);bar.style.transform='scaleY('+(0.08+.92*p)+')';});
     result.style.opacity=String(Math.max(0,Math.min(1,(phase-fox2OnboardingTime(2300))/fox2OnboardingTime(700))));
   }
   var started=performance.now();function frame(now){if(!stage.isConnected)return;render((now-started)%fox2OnboardingTime(6500));window.requestAnimationFrame(frame);}window.requestAnimationFrame(frame);
+}
+
+var fox2GuideReplayStep=1;
+var fox2GuideReplayTransitioning=false;
+
+function openGuideModal(){
+  var overlay=document.getElementById('guide-modal-overlay');
+  var menu=document.getElementById('guide-menu');
+  var replay=document.getElementById('guide-replay');
+  if(!overlay||!menu||!replay) return;
+  overlay.classList.remove('is-viewer');
+  menu.hidden=false;
+  replay.hidden=true;
+  replay.innerHTML='';
+  overlay.classList.add('open');
+}
+
+function closeGuideModal(){
+  var overlay=document.getElementById('guide-modal-overlay');
+  var replay=document.getElementById('guide-replay');
+  if(overlay) overlay.classList.remove('open','is-viewer');
+  if(replay){replay.hidden=true;replay.innerHTML='';}
+  fox2GuideReplayTransitioning=false;
+}
+
+function openFox2WorksGuide(){
+  var overlay=document.getElementById('guide-modal-overlay');
+  var menu=document.getElementById('guide-menu');
+  var replay=document.getElementById('guide-replay');
+  if(!overlay||!menu||!replay) return;
+  fox2GuideReplayStep=1;
+  menu.hidden=true;
+  replay.hidden=false;
+  overlay.classList.add('is-viewer');
+  fox2RenderWorksGuide('forward');
+}
+
+function fox2RenderWorksGuide(direction){
+  var replay=document.getElementById('guide-replay');
+  if(!replay) return;
+  replay.innerHTML=fox2GuideReplayStep===1?fox2OverviewHtml('guide'):fox2GuideReplayStep===2?fox2DayIntroHtml('guide'):fox2CompareIntroHtml('guide');
+  var card=replay.querySelector('.program-onboarding-card');
+  if(card&&direction) card.classList.add(direction==='back'?'is-entering-back':'is-entering-forward');
+  replay.querySelectorAll('[data-guide-action]').forEach(function(button){
+    button.addEventListener('click',function(){
+      var action=button.dataset.guideAction;
+      if(action==='close'||action==='done'){closeGuideModal();return;}
+      fox2TransitionWorksGuide(action==='back'?-1:1);
+    });
+  });
+  if(fox2GuideReplayStep===1) fox2StartAcetoneAnimation(replay);
+  else if(fox2GuideReplayStep===2) fox2StartDayIntroAnimation(replay);
+  else fox2StartCompareIntroAnimation(replay);
+  fox2GuideReplayTransitioning=false;
+}
+
+function fox2TransitionWorksGuide(delta){
+  if(fox2GuideReplayTransitioning) return;
+  var replay=document.getElementById('guide-replay');
+  var card=replay&&replay.querySelector('.program-onboarding-card');
+  if(!replay||!card) return;
+  fox2GuideReplayTransitioning=true;
+  card.classList.add(delta<0?'is-leaving-back':'is-leaving-forward');
+  window.setTimeout(function(){
+    fox2GuideReplayStep=Math.max(1,Math.min(3,fox2GuideReplayStep+delta));
+    fox2RenderWorksGuide(delta<0?'back':'forward');
+  },160);
 }
 
 var fox2ProgramEnterDirection='';
