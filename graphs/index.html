@@ -6269,8 +6269,9 @@ var fox2ProgramHistoryDays=[];
 
 function fox2EncodeProgramSnapshot(snapshot){
   try{
-    var json=JSON.stringify(snapshot),bytes=new TextEncoder().encode(json),binary='';
-    for(var i=0;i<bytes.length;i++) binary+=String.fromCharCode(bytes[i]);
+    var json=JSON.stringify(snapshot),binary=encodeURIComponent(json).replace(/%([0-9A-F]{2})/g,function(match,hex){
+      return String.fromCharCode(parseInt(hex,16));
+    });
     return btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
   }catch(e){return '';}
 }
@@ -6280,9 +6281,9 @@ function fox2DecodeProgramSnapshot(encoded){
     if(!encoded||encoded.length>16000) return null;
     var normalized=encoded.replace(/-/g,'+').replace(/_/g,'/');
     while(normalized.length%4) normalized+='=';
-    var binary=atob(normalized),bytes=new Uint8Array(binary.length);
-    for(var i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
-    var snapshot=JSON.parse(new TextDecoder().decode(bytes));
+    var binary=atob(normalized),escaped='';
+    for(var i=0;i<binary.length;i++) escaped+='%'+('0'+binary.charCodeAt(i).toString(16)).slice(-2);
+    var snapshot=JSON.parse(decodeURIComponent(escaped));
     return snapshot&&snapshot.v===1&&snapshot.program&&typeof snapshot.program==='object'?snapshot:null;
   }catch(e){return null;}
 }
@@ -7443,6 +7444,14 @@ function handleBottomShare() {
   var sharingProgram=fox2HasStartedProgram();
   var url = sharingProgram?fox2ProgramShareUrl():fox2ResultsShareUrl();
   if(!fox2ValidShareUrl(url)) url=fox2ShareBaseUrl().toString();
+  if(sharingProgram){
+    var payload=new URL(url).searchParams.get('program_share')||'';
+    if(!payload||!fox2DecodeProgramSnapshot(payload)){
+      var errorStatus=document.getElementById('program-status');
+      if(errorStatus) errorStatus.textContent='Share link could not be created. Reload and try again.';
+      return;
+    }
+  }
   var title=sharingProgram?'FOX2 Progress Tracking':'FOX2 Results';
   if (navigator.share) {
     navigator.share({ title: title, url: url }).catch(function() {});

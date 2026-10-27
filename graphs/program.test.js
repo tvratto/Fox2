@@ -1,5 +1,6 @@
 const assert=require('assert');
 const fs=require('fs');
+const vm=require('vm');
 
 const source=fs.readFileSync(__dirname+'/index.html','utf8');
 
@@ -8,6 +9,17 @@ function functionSource(name,nextName){
   const end=source.indexOf('function '+nextName+'(',start+1);
   return source.slice(start,end);
 }
+
+(function snapshotCodecWorksWithoutTextEncoder(){
+  const codecSource=functionSource('fox2EncodeProgramSnapshot','fox2IsoOrBlank');
+  const context={btoa,atob,encodeURIComponent,decodeURIComponent,JSON,parseInt};
+  vm.runInNewContext(codecSource,context);
+  const snapshot={v:1,program:{screen:'measure',action:'Walk after dinner — café'},days:[{date:'2026-10-26',score:138}]};
+  const encoded=context.fox2EncodeProgramSnapshot(snapshot);
+  assert.ok(encoded.length>0,'program snapshots should always encode to a URL payload');
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(context.fox2DecodeProgramSnapshot(encoded))),snapshot,
+    'program snapshots should round-trip without TextEncoder or TextDecoder');
+})();
 
 const programTab=source.indexOf('data-page="0">Progress</button>');
 const dataTab=source.indexOf('data-page="1">Data</button>');
@@ -334,6 +346,8 @@ assert.ok(source.includes("if(!url.searchParams.has('id'))"),
   'links without a stable device id should retain enough payload data to load');
 assert.ok(source.includes("url.searchParams.set('program_share',encoded)"),
   'sharing from Progress should add the read-only snapshot to the results URL');
+assert.ok(source.includes("if(!payload||!fox2DecodeProgramSnapshot(payload))"),
+  'the Share button should refuse to send a link with a missing or invalid program snapshot');
 assert.ok(source.includes('var sharingProgram=fox2HasStartedProgram()'),
   'sharing should include active program state regardless of the visible pager index');
 assert.ok(source.includes("return fox2Program.screen!=='overview'||!!fox2Program.action||!!fox2Program.baselineStart"),
