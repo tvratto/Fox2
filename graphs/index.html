@@ -93,6 +93,10 @@ html, body {
 .program-progress-result strong { color:#fff; font-weight:900; }
 .program-progress-result-change { color:#ffb84d; font-weight:950; white-space:nowrap; }
 .program-progress .program-options-toggle { min-height:38px; margin-top:9px; font-size:13px; }
+.program-options-anchor { position:relative; }
+.program-options-popover { position:absolute; z-index:20; top:calc(100% + 7px); left:-7px; right:-7px; padding:15px; border:1px solid rgba(255,255,255,.14); border-radius:18px; background:#17191d; box-shadow:0 18px 46px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.04); }
+.program-options-popover > p { margin:0; color:rgba(255,255,255,.64); font-size:14px; line-height:1.4; }
+.program-options-popover .program-option-actions { margin-top:13px; }
 .program-section { margin-top:26px; padding-top:24px; border-top:1px solid rgba(255,255,255,.1); }
 .program-eyebrow { margin-bottom:10px; color:var(--program-gold); font-size:12px; font-weight:900; letter-spacing:.14em; text-transform:uppercase; }
 .program-title { margin:0; font-size:clamp(28px,8vw,34px); line-height:1.04; letter-spacing:-.045em; font-weight:900; }
@@ -6455,7 +6459,15 @@ function fox2ProgressHtml(metrics){
     else if(resultChange<0) resultCopy='<strong>'+resultAction+'</strong> has decreased your Fat Use Score by <span class="program-progress-result-change">'+Math.abs(resultChange)+'%</span> versus baseline.';
     else resultCopy='<strong>'+resultAction+'</strong> has kept your Fat Use Score at baseline.';
   }
-  var programOptions=screen==='measure'?'<button type="button" class="program-options-toggle" data-program-action="toggle-options" aria-expanded="'+fox2ProgramOptionsOpen+'">Program options '+(fox2ProgramOptionsOpen?'▴':'▾')+'</button>':'';
+  var programOptions='';
+  if(screen==='measure'){
+    var optionButtons='';
+    if(metrics.measureDays.length) optionButtons+='<button type="button" class="program-option-card is-primary" data-program-action="finish-measuring"><strong>Finish program and view result</strong><span>End the program early and save the result so far.</span></button>';
+    optionButtons+='<button type="button" class="program-option-card" data-program-action="restart-measuring"><strong>Restart program</strong><span>Keep your Fat Use Baseline and return to day 1.</span></button>'
+      +'<button type="button" class="program-option-card" data-program-action="start-over"><strong>Start over with a new baseline</strong><span>Begin a new program with a new Fat Use Baseline.</span></button>';
+    programOptions='<div class="program-options-anchor"><button type="button" class="program-options-toggle" data-program-action="toggle-options" aria-haspopup="true" aria-expanded="'+fox2ProgramOptionsOpen+'">Program options '+(fox2ProgramOptionsOpen?'▴':'▾')+'</button>'
+      +(fox2ProgramOptionsOpen?'<div class="program-options-popover"><p>Change how your 30-day program is running.</p><div class="program-option-actions">'+optionButtons+'</div></div>':'')+'</div>';
+  }
   return '<section class="program-progress" role="region" aria-label="30-day program: '+dayLabel+', '+pct+' percent complete, '+phase+'">'
     +'<div class="program-progress-head"><div class="program-progress-title">30-Day Program</div><div class="program-day">'+dayLabel+'</div></div>'
     +'<div class="program-bar"><div class="program-bar-fill" style="width:'+pct+'%"></div></div>'
@@ -6809,12 +6821,6 @@ function fox2MeasureDashboardHtml(metrics,options){
 
 function fox2MeasureHtml(metrics){
   var content=fox2MeasureDashboardHtml(metrics);
-  if(fox2ProgramOptionsOpen){
-    content+='<div class="program-options"><p>Change how your 30-day program is running.</p><div class="program-option-actions">';
-    if(metrics.measureDays.length) content+='<button type="button" class="program-option-card is-primary" data-program-action="finish-measuring"><strong>Finish program and view result</strong><span>End the program early and save the result so far.</span></button>';
-    content+='<button type="button" class="program-option-card" data-program-action="restart-measuring"><strong>Restart program</strong><span>Keep your Fat Use Baseline and return to day 1.</span></button>'
-      +'<button type="button" class="program-option-card" data-program-action="start-over"><strong>Start over with a new baseline</strong><span>Begin a new program with a new Fat Use Baseline.</span></button></div></div>';
-  }
   return content;
 }
 
@@ -7226,7 +7232,7 @@ function fox2RenderProgram(){
   var replay=shell.querySelector('[data-recap-replay]');
   if(replay) replay.addEventListener('click',fox2ReplayMeasureRecap);
   if(screen==='measure'||screen==='results') window.setTimeout(fox2AnimateMeasureRecap,0);
-  if(fox2ProgramOptionsOpen) window.setTimeout(function(){
+  if(fox2ProgramOptionsOpen&&screen==='baseline') window.setTimeout(function(){
     var options=shell.querySelector('.program-options');
     if(options) options.scrollIntoView({behavior:'smooth',block:'start',inline:'nearest'});
   },20);

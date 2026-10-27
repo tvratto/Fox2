@@ -288,18 +288,20 @@ assert.ok(!source.includes('program-recap-summary" role="group"'),
 assert.ok(!source.includes('<div class="program-action-name"><span>Your actions</span>'));
 assert.ok(!source.includes("Your score builds as the day continues."));
 assert.ok(!source.includes('Measure as usual. Sync again tomorrow.'));
-assert.ok(source.includes("var programOptions=screen==='measure'?'<button type=\"button\" class=\"program-options-toggle\""),
+assert.ok(source.includes('class="program-options-anchor"'),
   'the program-options trigger should stay inside the fixed progress card');
-assert.ok(source.includes("content+='<div class=\"program-options\"><p>Change how your 30-day program is running."),
-  'program options should expand in the familiar inline section below the dashboard');
+assert.ok(source.includes('class="program-options-popover"'),
+  'program options should open in a box anchored directly beneath the trigger');
 assert.ok(!source.includes('program-options-sheet'),
   'program options should no longer open in a detached bottom sheet');
 assert.ok(!source.includes('>Tracking options '),
   'the old tracking-options trigger should not remain below the measure card');
-assert.ok(source.includes("if(metrics.measureDays.length) content+='<button type=\"button\" class=\"program-option-card is-primary\""),
+assert.ok(source.includes("if(metrics.measureDays.length) optionButtons+='<button type=\"button\" class=\"program-option-card is-primary\""),
   'finish measuring should be hidden until it can be used, not shown disabled');
 assert.ok(!source.includes("data-program-action=\"finish-measuring\" '+(metrics.measureDays.length?'':'disabled')"),
   'finish measuring should not appear as an unexplained disabled control');
+assert.ok(source.includes("if(fox2ProgramOptionsOpen&&screen==='baseline')"),
+  'measure-program options should not trigger page scrolling');
 assert.ok(source.includes("options.scrollIntoView({behavior:'smooth',block:'start',inline:'nearest'})"),
   'opening baseline options should bring their inline controls into view');
 assert.ok(source.includes('window.fox2SetInitialPage(activeProgram?0:1)'),
