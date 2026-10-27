@@ -181,8 +181,14 @@ assert.ok(source.includes('function fox2MeasureDashboardHtml(metrics,options)'),
   'the measure page should present the completed-day recap and cumulative action progress');
 assert.ok(source.includes('Today So Far'),
   'the first synced measurement should produce a genuine same-day progress state');
-assert.ok(source.includes("today.readings+' '+(today.readings===1?'reading':'readings')+' · Day in progress"),
+assert.ok(source.includes('<span class="program-today-progress-label">Day in progress</span>'),
   'the same-day state should say that the result is still in progress');
+assert.ok(source.includes('class="program-today-grid"'),
+  'the Today So Far ring and explanation should use the compact prototype layout');
+assert.ok(source.includes('--today-color:var(--program-orange)'),
+  'the Today So Far ring should use the program progress color');
+assert.ok(source.includes('todayVisual.value/Math.max(1,Number(metrics.baseline)||FOX2_STANDARD_BASELINE)'),
+  'the Today So Far ring should show progress toward the Fat Use Baseline');
 assert.ok(source.includes('function fox2TodayProgramDay()'),
   'the same-day state should use the actual current calendar day rather than the last available day');
 assert.ok(source.includes('function fox2TodayHistoryHtml(today,metrics)'),
