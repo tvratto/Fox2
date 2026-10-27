@@ -350,6 +350,10 @@ assert.ok(source.includes("'/rest/v1/rpc/create_share_snapshot'"),
   'active Progress state should be prepared as an immutable server snapshot');
 assert.ok(source.includes("'/rest/v1/rpc/get_share_snapshot'"),
   'a short token should retrieve its immutable server snapshot');
+assert.ok(source.includes("fox2ProgramReadOnly&&/^[0-9a-f]{40}$/.test(fox2ShareToken)"),
+  'an existing frozen share should be re-shareable without creating another snapshot');
+assert.ok(!source.includes("if(fox2ProgramReadOnly||!fox2HasStartedProgram()) return Promise.resolve('')"),
+  'legacy shared state should not prevent conversion to a short snapshot link');
 assert.ok(source.includes("url.searchParams.set('share',token)"),
   'frozen snapshots should use a short token-only results URL');
 assert.ok(source.includes("if(!fox2PreparedShareToken)"),

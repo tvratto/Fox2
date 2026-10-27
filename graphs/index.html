@@ -6517,7 +6517,14 @@ function fox2FrozenShareUrl(token){
 }
 
 function fox2PrepareFrozenShare(){
-  if(fox2ProgramReadOnly||!fox2HasStartedProgram()) return Promise.resolve('');
+  if(!fox2HasStartedProgram()) return Promise.resolve('');
+  // A frozen shared page can be re-shared with the same immutable token.
+  // Legacy shared pages are also allowed through below so they can be
+  // converted into the new short snapshot format instead of failing early.
+  if(fox2ProgramReadOnly&&/^[0-9a-f]{40}$/.test(fox2ShareToken)){
+    fox2PreparedShareToken=fox2ShareToken;
+    return Promise.resolve(fox2ShareToken);
+  }
   var snapshot=fox2BuildProgramShareSnapshot();
   var fingerprint=JSON.stringify({v:snapshot.v,program:snapshot.program,payload:snapshot.payload,days:snapshot.days});
   if(fox2PreparedShareToken&&fox2PreparedShareFingerprint===fingerprint) return Promise.resolve(fox2PreparedShareToken);
