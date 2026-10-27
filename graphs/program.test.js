@@ -283,6 +283,14 @@ assert.ok(source.includes('fox2MeasureDashboardHtml(metrics,{forceHistory:true})
   'the completed program should retain the full chart and final result summary');
 assert.ok(source.includes('has increased your Fat Use Score by <span class="program-progress-result-change">'),
   'a positive result should explain what increased');
+assert.ok(source.includes("var resultDuration='After '+day+' '+(day===1?'day':'days')+', '"),
+  'the fixed result should state how far into the program the result was measured');
+assert.ok(source.includes('class="program-progress-result-action"'),
+  'the user’s chosen action should be highlighted in the fixed result statement');
+assert.ok(source.includes('.program-progress-result p { margin:0; color:rgba(255,255,255,.82); font-size:19px'),
+  'the fixed result should be the dominant text in the progress card');
+assert.ok(source.includes('.program-progress .program-options-toggle { width:auto; min-height:32px; margin:5px 0 -7px'),
+  'the options control should remain compact and left-aligned at the card bottom');
 assert.ok(!source.includes('program-recap-summary" role="group"'),
   'the recap card should not duplicate the fixed result statement');
 assert.ok(!source.includes('<div class="program-action-name"><span>Your actions</span>'));

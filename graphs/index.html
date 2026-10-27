@@ -87,12 +87,13 @@ html, body {
 .program-phases .is-current { color:#fff; }
 .program-phases .is-complete { color:var(--program-orange); }
 .program-progress-meta { margin-top:12px; color:rgba(255,255,255,.55); font-size:12px; font-weight:700; }
-.program-progress-result { margin-top:14px; padding-top:13px; border-top:1px solid rgba(255,255,255,.1); }
-.program-progress-result-label { display:block; margin-bottom:6px; color:var(--program-orange); font-size:10px; line-height:1; font-weight:900; letter-spacing:.12em; text-transform:uppercase; }
-.program-progress-result p { margin:0; color:rgba(255,255,255,.76); font-size:14px; line-height:1.38; font-weight:650; overflow-wrap:anywhere; }
+.program-progress-result { margin-top:14px; padding-top:14px; border-top:1px solid rgba(255,255,255,.1); }
+.program-progress-result-label { display:block; margin-bottom:8px; color:var(--program-orange); font-size:11px; line-height:1; font-weight:900; letter-spacing:.12em; text-transform:uppercase; }
+.program-progress-result p { margin:0; color:rgba(255,255,255,.82); font-size:19px; line-height:1.36; font-weight:680; letter-spacing:-.015em; overflow-wrap:anywhere; }
 .program-progress-result strong { color:#fff; font-weight:900; }
+.program-progress-result-action { padding:1px 4px 2px; border-radius:5px; background:rgba(255,140,0,.16); box-decoration-break:clone; -webkit-box-decoration-break:clone; }
 .program-progress-result-change { color:#ffb84d; font-weight:950; white-space:nowrap; }
-.program-progress .program-options-toggle { min-height:38px; margin-top:9px; font-size:13px; }
+.program-progress .program-options-toggle { width:auto; min-height:32px; margin:5px 0 -7px; padding:0 8px 0 0; font-size:11px; text-align:left; }
 .program-options-anchor { position:relative; }
 .program-options-popover { position:absolute; z-index:20; top:calc(100% + 7px); left:-7px; right:-7px; padding:15px; border:1px solid rgba(255,255,255,.14); border-radius:18px; background:#17191d; box-shadow:0 18px 46px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.04); }
 .program-options-popover > p { margin:0; color:rgba(255,255,255,.64); font-size:14px; line-height:1.4; }
@@ -336,7 +337,7 @@ html, body {
 .program-recap-sequence.is-settled .program-recap-ring-track,.program-recap-sequence.is-settled .program-recap-score,.program-recap-sequence.is-settled .program-recap-kicker,.program-recap-sequence.is-settled .program-recap-date { opacity:0; }
 .program-recap-sequence.is-settled .program-recap-history-title,.program-recap-sequence.is-settled .program-recap-history-frame,.program-recap-sequence.is-settled .program-recap-history-mark { opacity:1; transform:none; }
 @media (prefers-reduced-motion:reduce){.program-recap-sequence:not(.is-replaying) *{animation:none!important;transition:none!important}}
-@media (max-width:350px){.program-recap-summary{margin-inline:10px;padding-inline:14px}.program-recap-statement{font-size:15px}.program-recap-svg{margin-top:4px}.program-recap-sequence.is-settled .program-recap-summary{padding-inline:14px}.program-today-card{padding-inline:13px}.program-today-grid{grid-template-columns:112px minmax(0,1fr);gap:8px}.program-today-ring{width:108px;height:108px}}
+@media (max-width:350px){.program-recap-summary{margin-inline:10px;padding-inline:14px}.program-recap-statement{font-size:15px}.program-recap-svg{margin-top:4px}.program-recap-sequence.is-settled .program-recap-summary{padding-inline:14px}.program-today-card{padding-inline:13px}.program-today-grid{grid-template-columns:112px minmax(0,1fr);gap:8px}.program-today-ring{width:108px;height:108px}.program-progress-result p{font-size:17px}}
 .program-history { display:grid; gap:11px; margin-top:19px; }
 .program-history-item { padding:16px; border-radius:18px; background:rgba(255,255,255,.045); border:1px solid rgba(255,255,255,.08); }
 .program-history-title { display:flex; gap:9px; margin:0 0 15px; font-size:15px; line-height:1.35; font-weight:850; }
@@ -6455,9 +6456,10 @@ function fox2ProgressHtml(metrics){
   if(metrics.baseline&&metrics.after&&metrics.measureDays.length){
     var resultChange=Math.round((metrics.after-metrics.baseline)/metrics.baseline*100);
     var resultAction=fox2Escape(fox2Program.action||'Your actions');
-    if(resultChange>0) resultCopy='<strong>'+resultAction+'</strong> has increased your Fat Use Score by <span class="program-progress-result-change">'+resultChange+'%</span> versus baseline.';
-    else if(resultChange<0) resultCopy='<strong>'+resultAction+'</strong> has decreased your Fat Use Score by <span class="program-progress-result-change">'+Math.abs(resultChange)+'%</span> versus baseline.';
-    else resultCopy='<strong>'+resultAction+'</strong> has kept your Fat Use Score at baseline.';
+    var resultDuration='After '+day+' '+(day===1?'day':'days')+', ';
+    if(resultChange>0) resultCopy=resultDuration+'<strong class="program-progress-result-action">'+resultAction+'</strong> has increased your Fat Use Score by <span class="program-progress-result-change">'+resultChange+'%</span> versus baseline.';
+    else if(resultChange<0) resultCopy=resultDuration+'<strong class="program-progress-result-action">'+resultAction+'</strong> has decreased your Fat Use Score by <span class="program-progress-result-change">'+Math.abs(resultChange)+'%</span> versus baseline.';
+    else resultCopy=resultDuration+'<strong class="program-progress-result-action">'+resultAction+'</strong> has kept your Fat Use Score at baseline.';
   }
   var programOptions='';
   if(screen==='measure'){
