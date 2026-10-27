@@ -384,8 +384,8 @@ assert.ok(source.includes('Shared FOX2 progress'),
   'receivers should be told that they are viewing shared progress');
 assert.ok(source.includes('.program-shell.is-shared [data-program-action]'),
   'program mutation controls should be hidden in the shared view');
-assert.ok(source.includes('.fox2-shared .tags { display:none!important; }'),
-  'the Data tag tray should be hidden in a frozen shared view');
+assert.ok(source.includes('.fox2-shared .tags { opacity:.34; filter:grayscale(1); pointer-events:none!important; }'),
+  'the Data tag tray should remain visible but muted and inactive in a frozen shared view');
 assert.ok(source.includes('if(fox2ProgramReadOnly||!_sbDeviceId)return;'),
   'a frozen shared view must never save data tags');
 assert.ok(source.includes('function fox2FrozenAnalysisRows()'),

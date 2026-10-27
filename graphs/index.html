@@ -355,9 +355,9 @@ html, body {
 .program-shared-banner { margin:0 0 13px; padding:9px 12px; border:1px solid rgba(255,140,0,.28); border-radius:13px; background:rgba(255,140,0,.08); color:rgba(255,255,255,.66); font-size:12px; font-weight:850; letter-spacing:.04em; text-align:center; text-transform:uppercase; }
 .program-shell.is-shared [data-program-action] { display:none!important; }
 .program-shell.is-shared .program-input { pointer-events:none; }
-.fox2-shared .tags { display:none!important; }
+.fox2-shared .tags { opacity:.34; filter:grayscale(1); pointer-events:none!important; }
 .fox2-shared #eventLayer { pointer-events:none!important; }
-.fox2-shared #eventLayer .event-hint { display:none!important; }
+.fox2-shared #eventLayer .event-hint { opacity:.38; }
 .program-hidden { display:none !important; }
 .card-wrap { width: 100%; max-width: 420px; margin: auto 0; }
 .card-wrap canvas { width: 100%; height: auto; display: block; }
@@ -8335,7 +8335,6 @@ function updateTagWheelScale(){
 function buildTags(){
   const d=DAYS[selectedDay],wrap=document.getElementById('tagsScroll');
   wrap.innerHTML='';
-  if(fox2ProgramReadOnly) return;
 
   Array.from({length:ALL_TAGS.length*3},(_,wheelIdx)=>ALL_TAGS[wheelIdx%ALL_TAGS.length]).forEach(([icon,name],wheelIdx)=>{
     if(wheelIdx>0 && wheelIdx%ALL_TAGS.length===0){
