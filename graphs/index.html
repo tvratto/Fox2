@@ -578,6 +578,7 @@ html, body {
 #export-modal,
 #guide-modal,
 #program-baseline-confirm {
+  position: relative;
   background: #111;
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 20px;
@@ -585,6 +586,19 @@ html, body {
   width: min(392px, calc(100vw - 18px));
   display: flex; flex-direction: column; gap: 8px;
 }
+.modal-corner-close {
+  position: absolute; top: 7px; right: 7px; z-index: 3;
+  width: 38px; height: 38px; padding: 0;
+  border: 0; border-radius: 50%;
+  background: rgba(255,255,255,.08); color: #fff;
+  font: 500 23px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  cursor: pointer;
+}
+.modal-corner-close:active { background: rgba(255,255,255,.15); }
+#info-modal-title,
+#export-modal-title,
+#guide-modal-title,
+#program-baseline-confirm-title { padding-right: 38px; }
 #info-modal-title {
   font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.32);
   letter-spacing: .12em; text-transform: uppercase;
@@ -1348,7 +1362,9 @@ html, body {
   min-width:220px;
   max-width:300px;
 }
+.note-popup > .modal-corner-close { top:8px; right:8px; }
 .note-popup-time{
+  padding-right:38px;
   font-size:11px;
   font-weight:750;
   letter-spacing:.08em;
@@ -2278,6 +2294,7 @@ html, body {
 
 <div id="export-modal-overlay" onclick="if(event.target===this)closeExportModal()">
   <div id="export-modal" role="dialog" aria-modal="true" aria-labelledby="export-modal-title">
+    <button type="button" class="modal-corner-close" onclick="closeExportModal()" aria-label="Close export">×</button>
     <div class="export-modal-title" id="export-modal-title">Export your FOX2 data</div>
     <div class="export-modal-copy">Choose the level of detail you need.</div>
     <button class="export-choice" onclick="downloadFox2MeasurementsCsv()">Measurements CSV<span>Every breath measurement, with its matching Fat Use Score.</span></button>
@@ -2287,7 +2304,8 @@ html, body {
 </div>
 
 <div id="info-modal-overlay" onclick="if(event.target===this)closeInfoModal()">
-  <div id="info-modal">
+  <div id="info-modal" role="dialog" aria-modal="true" aria-labelledby="info-modal-title">
+    <button type="button" class="modal-corner-close" onclick="closeInfoModal()" aria-label="Close Squad Info">×</button>
     <div id="info-modal-title">Squad Info</div>
     <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="info-device-id">—</span></div>
     <div class="info-row"><span class="info-label">Clinic</span><span class="info-value" id="info-clinic-id">—</span></div>
@@ -2310,6 +2328,7 @@ html, body {
 
 <div id="guide-modal-overlay" onclick="if(event.target===this)closeGuideModal()">
   <div id="guide-modal" role="dialog" aria-modal="true" aria-labelledby="guide-modal-title">
+    <button type="button" class="modal-corner-close" onclick="closeGuideModal()" aria-label="Close FOX2 Help">×</button>
     <div id="guide-menu">
       <div class="export-modal-title" id="guide-modal-title">FOX2 Help</div>
       <div class="export-modal-copy">Review how FOX2 works or see how to take a measurement.</div>
@@ -2323,6 +2342,7 @@ html, body {
 
 <div id="program-baseline-confirm-overlay" onclick="if(event.target===this)fox2ClosePreviousBaselineConfirm()">
   <div id="program-baseline-confirm" role="dialog" aria-modal="true" aria-labelledby="program-baseline-confirm-title" aria-describedby="program-baseline-confirm-copy">
+    <button type="button" class="modal-corner-close" onclick="fox2ClosePreviousBaselineConfirm()" aria-label="Close baseline confirmation">×</button>
     <div class="program-confirm-title" id="program-baseline-confirm-title">Use fewer than 7 days?</div>
     <div class="program-confirm-copy" id="program-baseline-confirm-copy"></div>
     <div class="program-confirm-actions">
@@ -9743,6 +9763,7 @@ function openNotePopup(dayIdx, eventIdx, minute, editing){
   const textEl=document.getElementById('note-popup-text');
   const saveBtn=document.getElementById('note-popup-save');
   const cancelBtn=document.getElementById('note-popup-cancel');
+  const closeBtn=document.getElementById('note-popup-close');
 
   timeEl.textContent=minuteToTime(minute);
   const ev=DAYS[dayIdx].events[eventIdx];
@@ -9767,6 +9788,7 @@ function openNotePopup(dayIdx, eventIdx, minute, editing){
     saveTagsForDay(dayIdx);
     saveBtn.removeEventListener('click',doSave);
     cancelBtn.removeEventListener('click',doCancel);
+    closeBtn.removeEventListener('click',doCancel);
   }
 
   function doCancel(){
@@ -9780,10 +9802,12 @@ function openNotePopup(dayIdx, eventIdx, minute, editing){
     saveTagsForDay(dayIdx);
     saveBtn.removeEventListener('click',doSave);
     cancelBtn.removeEventListener('click',doCancel);
+    closeBtn.removeEventListener('click',doCancel);
   }
 
   saveBtn.addEventListener('click',doSave);
   cancelBtn.addEventListener('click',doCancel);
+  closeBtn.addEventListener('click',doCancel);
 }
 
 function renderEvents(force){
@@ -10059,7 +10083,8 @@ function initDayGraphPopup(){
   <span class="ub-dismiss">×</span>
 </div>
 
-<div id="note-popup" class="note-popup" style="display:none;">
+<div id="note-popup" class="note-popup" style="display:none;" role="dialog" aria-labelledby="note-popup-time">
+  <button type="button" class="modal-corner-close" id="note-popup-close" aria-label="Close note editor">×</button>
   <div class="note-popup-time" id="note-popup-time"></div>
   <textarea id="note-popup-text" placeholder="Write a note…" rows="3"></textarea>
   <div class="note-popup-btns">
