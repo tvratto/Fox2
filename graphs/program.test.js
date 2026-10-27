@@ -118,8 +118,8 @@ assert.ok(source.includes("fox2Program.screen='first'"),
 assert.ok(source.includes('function fox2FirstMeasurementHtml()'),
   'onboarding should walk the user through the first measurement and sync');
 assert.ok(source.includes('Tap your phone to FOX2 again to sync it.'));
-assert.ok(source.includes('Finish tracking and view result'));
-assert.ok(source.includes('Restart the tracking period'));
+assert.ok(source.includes('Finish program and view result'));
+assert.ok(source.includes('Restart program'));
 assert.ok(source.includes('Start over with a new baseline'));
 assert.ok(source.includes('function fox2SetProgramHistory(readingRows,scoreRows)'),
   'the program should retain complete score history beyond the current NFC payload');
@@ -288,12 +288,18 @@ assert.ok(!source.includes('program-recap-summary" role="group"'),
 assert.ok(!source.includes('<div class="program-action-name"><span>Your actions</span>'));
 assert.ok(!source.includes("Your score builds as the day continues."));
 assert.ok(!source.includes('Measure as usual. Sync again tomorrow.'));
+assert.ok(source.includes('class="program-progress-options"'),
+  'the program-options trigger should stay inside the fixed progress card');
+assert.ok(source.includes('class="program-options-sheet" role="dialog"'),
+  'program options should open in a compact modal sheet instead of expanding below the page');
+assert.ok(!source.includes('>Tracking options '),
+  'the old tracking-options trigger should not remain below the measure card');
 assert.ok(source.includes("if(metrics.measureDays.length) content+='<button type=\"button\" class=\"program-option-card is-primary\""),
   'finish measuring should be hidden until it can be used, not shown disabled');
 assert.ok(!source.includes("data-program-action=\"finish-measuring\" '+(metrics.measureDays.length?'':'disabled')"),
   'finish measuring should not appear as an unexplained disabled control');
 assert.ok(source.includes("options.scrollIntoView({behavior:'smooth',block:'start',inline:'nearest'})"),
-  'opening measure options should bring the controls into view');
+  'opening baseline options should bring their inline controls into view');
 assert.ok(source.includes('window.fox2SetInitialPage(activeProgram?0:1)'),
   'every load during active Progress Tracking should route to Progress');
 assert.ok(source.includes("params.get('program_share')||''"),
