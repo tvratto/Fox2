@@ -300,6 +300,8 @@ assert.ok(source.includes('class="program-options-anchor"'),
   'the program-options trigger should stay inside the fixed progress card');
 assert.ok(source.includes('class="program-options-popover"'),
   'program options should open in a box anchored directly beneath the trigger');
+assert.ok(source.includes('class="program-options-popover-close" data-program-action="toggle-options" aria-label="Close program options">×</button>'),
+  'the anchored options box should have an explicit close control');
 assert.ok(!source.includes('program-options-sheet'),
   'program options should no longer open in a detached bottom sheet');
 assert.ok(!source.includes('>Tracking options '),
