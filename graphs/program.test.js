@@ -182,6 +182,12 @@ assert.ok(source.includes("today.readings+' '+(today.readings===1?'reading':'rea
   'the same-day state should say that the result is still in progress');
 assert.ok(source.includes('function fox2TodayProgramDay()'),
   'the same-day state should use the actual current calendar day rather than the last available day');
+assert.ok(source.includes('function fox2TodayHistoryHtml(today,metrics)'),
+  'the same-day state should include the live 30-day history chart');
+assert.ok(source.includes("fox2TodayHistoryHtml(today,metrics)+'</div>"),
+  'the live chart should appear directly below the Today So Far ring');
+assert.ok(source.includes('Live · Day '),
+  'the current unfinished bar should be identified as live rather than completed');
 assert.ok(source.includes('Morning Recap'));
 assert.ok(source.includes('30-Day Fat Use Scores'));
 assert.ok(source.includes('Results So Far'));

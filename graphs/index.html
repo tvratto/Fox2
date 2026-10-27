@@ -292,17 +292,29 @@ html, body {
 .program-recap-change { color:#ffb84d; font-weight:950; white-space:nowrap; }
 .program-recap-yesterday { display:block; margin-top:7px; color:rgba(255,255,255,.47); font-size:13px; line-height:1.35; font-weight:730; }
 .program-recap-yesterday strong { color:#ffb84d; font-weight:900; }
-.program-today-card { min-height:335px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px 18px 22px; text-align:center; }
+.program-today-card { min-height:490px; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding:20px 18px 18px; text-align:center; }
 .program-today-title { margin:0; color:#fff; font-size:22px; line-height:1.1; font-weight:900; letter-spacing:-.025em; }
-.program-today-ring { display:block; width:220px; height:220px; margin:5px auto 0; overflow:visible; }
+.program-today-ring { display:block; width:190px; height:190px; margin:2px auto 0; overflow:visible; }
 .program-today-track,.program-today-value { fill:none; stroke-width:16; }
 .program-today-track { stroke:rgba(255,255,255,.11); }
 .program-today-value { stroke:var(--today-color); stroke-linecap:round; transform:rotate(-90deg); transform-origin:110px 110px; stroke-dasharray:339.292; stroke-dashoffset:var(--today-offset); animation:program-today-fill .72s cubic-bezier(.2,.8,.2,1) both; }
 .program-today-score { fill:#fff; font:950 54px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; letter-spacing:-.06em; text-anchor:middle; }
 .program-today-unit { fill:rgba(255,255,255,.46); font:850 9px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; letter-spacing:.11em; text-anchor:middle; }
-.program-today-status { margin-top:-2px; color:rgba(255,255,255,.5); font-size:14px; line-height:1.35; font-weight:730; }
-.program-today-baseline { margin-top:13px; padding:8px 12px; border-radius:12px; background:rgba(255,255,255,.055); color:rgba(255,255,255,.48); font-size:12px; font-weight:750; }
-.program-today-baseline strong { color:#fff; font-weight:900; }
+.program-today-status { margin-top:-7px; color:rgba(255,255,255,.5); font-size:14px; line-height:1.35; font-weight:730; }
+.program-today-history { width:100%; margin-top:20px; padding-top:15px; border-top:1px solid rgba(255,255,255,.08); text-align:left; }
+.program-today-history-head { display:flex; align-items:baseline; justify-content:space-between; gap:12px; }
+.program-today-history-head strong { color:#fff; font-size:15px; line-height:1.2; font-weight:900; }
+.program-today-history-head span { color:var(--program-orange); font-size:10px; line-height:1; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
+.program-today-history-svg { display:block; width:100%; height:auto; margin-top:7px; overflow:visible; }
+.program-today-history-axis { stroke:rgba(255,255,255,.22); stroke-width:1.4; }
+.program-today-history-baseline { stroke:rgba(255,255,255,.3); stroke-width:1.4; stroke-dasharray:4 5; }
+.program-today-history-label { fill:rgba(255,255,255,.4); font:800 9px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; letter-spacing:.03em; }
+.program-today-history-slot { stroke:rgba(255,255,255,.13); stroke-width:5; stroke-linecap:round; }
+.program-today-history-missing { fill:transparent; stroke:rgba(255,255,255,.38); stroke-width:1.6; }
+.program-today-history-base,.program-today-history-above { stroke-width:7; stroke-linecap:round; opacity:.63; }
+.program-today-history-base { stroke:#ff8c00; }
+.program-today-history-above { stroke:#ffb84d; }
+.program-today-history-now { fill:var(--program-orange); opacity:.95; }
 @keyframes program-today-fill { from{stroke-dashoffset:339.292} to{stroke-dashoffset:var(--today-offset)} }
 .program-recap-empty { min-height:235px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:28px; text-align:center; }
 .program-recap-empty strong { color:#fff; font-size:22px; }
@@ -6698,6 +6710,28 @@ function fox2RecapHistorySvg(model){
   return '<g class="program-recap-history-frame">'+slots+'<line class="program-recap-baseline" x1="14" y1="'+model.baselineY.toFixed(1)+'" x2="322" y2="'+model.baselineY.toFixed(1)+'"></line><line class="program-recap-axis" x1="14" y1="209" x2="322" y2="209"></line><text class="program-recap-day-label" x="14" y="226">DAY 1</text><text class="program-recap-day-label" x="322" y="226" text-anchor="end">DAY 30</text></g>'+marks;
 }
 
+function fox2TodayHistoryHtml(today,metrics){
+  var baseline=Math.max(1,Number(metrics.baseline)||FOX2_STANDARD_BASELINE);
+  var dayIndex=Math.max(0,Math.min(FOX2_MEASURE_DAYS-1,fox2DaysBetween(fox2Program.measureStart,fox2TodayIso())));
+  var scaleMax=Math.max(60,Math.ceil((Math.max(today.score,baseline)*1.12)/30)*30);
+  var plotBottom=100,plotHeight=67,baselineY=plotBottom-Math.min(plotHeight,baseline/scaleMax*plotHeight);
+  var scoreHeight=today.score?Math.max(7,today.score/scaleMax*plotHeight):0;
+  var scoreTop=plotBottom-scoreHeight,baseTop=Math.max(scoreTop,baselineY);
+  var slots='',marks='',todayX=18+dayIndex*(300/(FOX2_MEASURE_DAYS-1));
+  for(var i=0;i<FOX2_MEASURE_DAYS;i++){
+    var x=18+i*(300/(FOX2_MEASURE_DAYS-1));
+    slots+=i<dayIndex
+      ? '<circle class="program-today-history-missing" cx="'+x.toFixed(1)+'" cy="98" r="2.7"></circle>'
+      : '<line class="program-today-history-slot" x1="'+x.toFixed(1)+'" y1="96" x2="'+x.toFixed(1)+'" y2="100"></line>';
+  }
+  if(today.score>0){
+    marks+='<line class="program-today-history-base" x1="'+todayX.toFixed(1)+'" y1="'+baseTop.toFixed(1)+'" x2="'+todayX.toFixed(1)+'" y2="'+plotBottom+'"></line>';
+    if(scoreTop<baselineY) marks+='<line class="program-today-history-above" x1="'+todayX.toFixed(1)+'" y1="'+scoreTop.toFixed(1)+'" x2="'+todayX.toFixed(1)+'" y2="'+baselineY.toFixed(1)+'"></line>';
+    marks+='<circle class="program-today-history-now" cx="'+todayX.toFixed(1)+'" cy="'+scoreTop.toFixed(1)+'" r="3.2"></circle>';
+  }
+  return '<div class="program-today-history"><div class="program-today-history-head"><strong>30-Day Fat Use Scores</strong><span>Live · Day '+(dayIndex+1)+'</span></div><svg class="program-today-history-svg" viewBox="0 0 336 126" role="img" aria-label="Live 30-day Fat Use Score chart. Today is day '+(dayIndex+1)+' with a current score of '+fox2Round(today.score)+'. Baseline '+fox2Round(baseline)+'.">'+slots+'<line class="program-today-history-baseline" x1="14" y1="'+baselineY.toFixed(1)+'" x2="322" y2="'+baselineY.toFixed(1)+'"></line><line class="program-today-history-axis" x1="14" y1="101" x2="322" y2="101"></line>'+marks+'<text class="program-today-history-label" x="14" y="119">DAY 1</text><text class="program-today-history-label" x="322" y="119" text-anchor="end">DAY 30</text><text class="program-today-history-label" x="322" y="'+Math.max(10,baselineY-5).toFixed(1)+'" text-anchor="end">BASELINE '+fox2Round(baseline)+'</text></svg></div>';
+}
+
 function fox2MeasureDashboardHtml(metrics){
   var model=fox2RecapModel(metrics),action=fox2Program.action||'Your action';
   if(!model){
@@ -6705,7 +6739,7 @@ function fox2MeasureDashboardHtml(metrics){
     if(today){
       var todayVisual=fox2RingVisual(today.score),circumference=339.292;
       var todayOffset=(circumference*(1-todayVisual.progress)).toFixed(3);
-      return '<section class="program-measure-dashboard"><div class="program-recap-sequence is-settled"><div class="program-today-card"><h2 class="program-today-title">Today So Far</h2><svg class="program-today-ring" viewBox="0 0 220 220" role="img" aria-label="Today Fat Use Score '+todayVisual.value+' from '+today.readings+' '+(today.readings===1?'reading':'readings')+'"><circle class="program-today-track" cx="110" cy="110" r="54"></circle><circle class="program-today-value" cx="110" cy="110" r="54" style="--today-color:'+todayVisual.color+';--today-offset:'+todayOffset+'"></circle><text class="program-today-score" x="110" y="116">'+todayVisual.value+'</text><text class="program-today-unit" x="110" y="138">FAT USE SCORE</text></svg><div class="program-today-status">'+today.readings+' '+(today.readings===1?'reading':'readings')+' · Day in progress</div><div class="program-today-baseline">Baseline <strong>'+fox2Round(metrics.baseline)+'</strong> set</div></div></div></section>';
+      return '<section class="program-measure-dashboard"><div class="program-recap-sequence is-settled"><div class="program-today-card"><h2 class="program-today-title">Today So Far</h2><svg class="program-today-ring" viewBox="0 0 220 220" role="img" aria-label="Today Fat Use Score '+todayVisual.value+' from '+today.readings+' '+(today.readings===1?'reading':'readings')+'"><circle class="program-today-track" cx="110" cy="110" r="54"></circle><circle class="program-today-value" cx="110" cy="110" r="54" style="--today-color:'+todayVisual.color+';--today-offset:'+todayOffset+'"></circle><text class="program-today-score" x="110" y="116">'+todayVisual.value+'</text><text class="program-today-unit" x="110" y="138">FAT USE SCORE</text></svg><div class="program-today-status">'+today.readings+' '+(today.readings===1?'reading':'readings')+' · Day in progress</div>'+fox2TodayHistoryHtml(today,metrics)+'</div></div></section>';
     }
     return '<section class="program-measure-dashboard"><div class="program-recap-sequence is-settled"><div class="program-recap-empty"><strong>Results So Far</strong><span>Your first completed day will appear here after you sync.</span></div></div></section>';
   }
