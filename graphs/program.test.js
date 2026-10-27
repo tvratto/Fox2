@@ -345,15 +345,29 @@ assert.ok(source.includes("['id','p','c'].forEach"),
 assert.ok(source.includes("if(!url.searchParams.has('id'))"),
   'links without a stable device id should retain enough payload data to load');
 assert.ok(source.includes("url.searchParams.set('program_share',encoded)"),
-  'sharing from Progress should add the read-only snapshot to the results URL');
-assert.ok(source.includes("if(!payload||!fox2DecodeProgramSnapshot(payload))"),
-  'the Share button should refuse to send a link with a missing or invalid program snapshot');
+  'legacy self-contained program share links should remain readable');
+assert.ok(source.includes("'/rest/v1/rpc/create_share_snapshot'"),
+  'active Progress state should be prepared as an immutable server snapshot');
+assert.ok(source.includes("'/rest/v1/rpc/get_share_snapshot'"),
+  'a short token should retrieve its immutable server snapshot');
+assert.ok(source.includes("url.searchParams.set('share',token)"),
+  'frozen snapshots should use a short token-only results URL');
+assert.ok(source.includes("if(!fox2PreparedShareToken)"),
+  'the Share button should refuse to send a program link before its snapshot is ready');
+assert.ok(source.includes('function fox2InvalidatePreparedShare()'),
+  'editing program state should invalidate an older prepared snapshot immediately');
+assert.ok((source.match(/fox2InvalidatePreparedShare\(\);/g)||[]).length >= 2,
+  'both program edits and refreshed history should invalidate an older prepared snapshot');
+assert.ok(source.includes("['ws','d','a','t','s','h','tz','v','p','c'].forEach"),
+  'a frozen snapshot should contain the exact display payload without exposing a device id');
+assert.ok(source.includes('if (fox2RemoteShareSnapshot || !dParam || totalDays === 0) return'),
+  'opening a frozen snapshot must never write its embedded data back as live device data');
 assert.ok(source.includes('var sharingProgram=fox2HasStartedProgram()'),
   'sharing should include active program state regardless of the visible pager index');
 assert.ok(source.includes("return fox2Program.screen!=='overview'||!!fox2Program.action||!!fox2Program.baselineStart"),
   'program sharing should recognize state established beyond onboarding');
-assert.ok(source.includes("var url = sharingProgram?fox2ProgramShareUrl():fox2ResultsShareUrl()"),
-  'the always-available Share button should use canonical links on every page');
+assert.ok(source.includes('sharingProgram&&fox2PreparedShareToken?fox2FrozenShareUrl(fox2PreparedShareToken):fox2ResultsShareUrl()'),
+  'the always-available Share button should use the prepared frozen link for active Progress');
 assert.ok(source.includes("if(!fox2ValidShareUrl(url)) url=fox2ShareBaseUrl().toString()"),
   'the share handler should reject rewritten or UUID-style routes before invoking Messages');
 assert.ok(source.includes('Shared FOX2 progress'),
