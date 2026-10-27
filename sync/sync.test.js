@@ -20,6 +20,8 @@ assert.ok(syncSource.includes("var presenceKey='fox2-results-presence:'"));
 assert.ok(syncSource.includes("var updateKey='fox2-sync-update:'"));
 assert.ok(syncSource.includes('publishUpdate(url)'));
 assert.ok(syncSource.includes('existing=hasRecentPresence()'));
+assert.ok(syncSource.includes("Number(presence.generation||0)>=handoffGeneration"));
+assert.ok(syncSource.includes("Number(data.generation||0)>=handoffGeneration"));
 assert.ok(syncSource.includes("window.location.replace(url)"));
 assert.ok(!syncSource.includes("window.open(resultsUrl(),'fox2-results-'"));
 assert.ok(syncSource.includes("channel.postMessage({type:'focus'"));
@@ -39,6 +41,8 @@ assert.ok(graphSource.includes('Promise.all(writePromises)'));
 assert.ok(graphSource.includes('window._fox2Handoff.reportWrites(ok)'));
 assert.ok(graphSource.includes("type:'fox2-sync-complete'"));
 assert.ok(graphSource.includes("url.searchParams.set('program','1')"));
+assert.ok(graphSource.includes("generation:handoffGeneration"));
+assert.ok(graphSource.includes("Number(incoming.generation||0)>=handoffGeneration"));
 
 (function legacyGraphUrlHandsOffToAnEstablishedResult(){
   const start=graphSource.indexOf('(function setupSyncHandoff(){');
@@ -91,6 +95,16 @@ assert.ok(graphSource.includes("url.searchParams.set('program','1')"));
   assert.equal(incoming.elements['nfc-sync-title'].textContent,'Your FOX2 is synced');
   assert.equal(incoming.elements['nfc-sync-return'].style.display,'block');
   assert.ok(storage['fox2-sync-update:DEVICE1']);
+
+  // A page running the old handoff code must not capture a newly loaded page.
+  const staleChannel=new MockBroadcastChannel('fox2-sync-DEVICE3');
+  staleChannel.addEventListener('message',event=>{
+    if(event.data&&event.data.type==='probe') staleChannel.postMessage({type:'present',deviceId:'DEVICE3',nonce:event.data.nonce});
+  });
+  const replacement=page('?id=DEVICE3&d=s%3A0010');
+  assert.equal(replacement.window._fox2Handoff.existing,false);
+  replacement.timers.splice(0).forEach(timer=>timer());
+  assert.equal(replacement.window._fox2Handoff.established,true);
 
   const firstPage=page('?id=DEVICE2&d=s%3A0010');
   assert.equal(firstPage.window._fox2Handoff.existing,false);

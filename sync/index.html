@@ -31,6 +31,7 @@
   </main>
   <script>
     (function(){
+      var handoffGeneration=2;
       var incoming=new URL(window.location.href);
       var params=new URLSearchParams(incoming.search);
       var deviceId=params.get('id')||'';
@@ -49,7 +50,7 @@
       }
       function hasRecentPresence(){
         var presence=readStored(presenceKey);
-        return !!(presence&&presence.instanceId&&Date.now()-Number(presence.updatedAt||0)<120000);
+        return !!(presence&&presence.instanceId&&Number(presence.generation||0)>=handoffGeneration&&Date.now()-Number(presence.updatedAt||0)<120000);
       }
       function publishUpdate(url){
         try{localStorage.setItem(updateKey,JSON.stringify({url:url,updatedAt:Date.now()}));}catch(e){}
@@ -58,6 +59,7 @@
       function resultsUrl(){
         var url=new URL('/graphs/',window.location.origin);
         params.forEach(function(value,key){ if(key!=='sync') url.searchParams.set(key,value); });
+        if(!url.searchParams.get('program_share')) url.searchParams.delete('program_share');
         url.searchParams.set('src','nfc');
         url.searchParams.set('handoff','1');
         url.searchParams.set('program','1');
@@ -106,7 +108,7 @@
         channel=new BroadcastChannel('fox2-sync-'+safeId);
         channel.addEventListener('message',function(event){
           var data=event.data||{};
-          if(data.type==='present'&&data.deviceId===deviceId&&data.nonce===nonce) existing=true;
+          if(data.type==='present'&&data.deviceId===deviceId&&data.nonce===nonce&&Number(data.generation||0)>=handoffGeneration) existing=true;
         });
         probe();
       }

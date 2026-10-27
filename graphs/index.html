@@ -2388,6 +2388,7 @@ var sParam    = params.get('s') || '';
 // this new page becomes a temporary sync handoff instead of another result.
 (function setupSyncHandoff(){
   if(window.top!==window.self) return;
+  var handoffGeneration=2;
   var deviceId=params.get('id')||'';
   if(!deviceId) return;
   var safeId=deviceId.replace(/[^A-Za-z0-9_-]/g,'');
@@ -2406,7 +2407,7 @@ var sParam    = params.get('s') || '';
     try{return JSON.parse(localStorage.getItem(key)||'null');}catch(e){return null;}
   }
   function markPresent(){
-    try{localStorage.setItem(presenceKey,JSON.stringify({instanceId:instanceId,updatedAt:Date.now()}));}catch(e){}
+    try{localStorage.setItem(presenceKey,JSON.stringify({instanceId:instanceId,generation:handoffGeneration,updatedAt:Date.now()}));}catch(e){}
   }
   function clearPresence(){
     try{
@@ -2452,6 +2453,7 @@ var sParam    = params.get('s') || '';
   function resultsUrl(){
     var url=new URL(window.location.href);
     url.searchParams.delete('sync');
+    if(!url.searchParams.get('program_share')) url.searchParams.delete('program_share');
     url.searchParams.set('handoff','1');
     url.searchParams.set('program','1');
     url.searchParams.set('sync_rev',String(Date.now()));
@@ -2482,14 +2484,14 @@ var sParam    = params.get('s') || '';
     var incoming=event.data||{};
     if(incoming.deviceId!==deviceId) return;
     if(incoming.type==='probe'&&state.established){
-      channel.postMessage({type:'present',deviceId:deviceId,nonce:incoming.nonce||''});
+      channel.postMessage({type:'present',deviceId:deviceId,nonce:incoming.nonce||'',generation:handoffGeneration});
       return;
     }
     if(incoming.type==='focus'&&state.established){
       window.focus();
       return;
     }
-    if(incoming.type==='present'&&!state.decided&&incoming.nonce===nonce){
+    if(incoming.type==='present'&&!state.decided&&incoming.nonce===nonce&&Number(incoming.generation||0)>=handoffGeneration){
       state.existing=true;
       return;
     }
