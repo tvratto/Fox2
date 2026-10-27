@@ -6326,6 +6326,22 @@ function fox2InvalidatePreparedShare(){
   fox2PreparedShareToken='';
 }
 
+function fox2PreparedShareStorageKey(){
+  return fox2ProgramStorageKey()+':prepared-share';
+}
+
+function fox2CachedPreparedShare(fingerprint){
+  try{
+    var cached=JSON.parse(localStorage.getItem(fox2PreparedShareStorageKey())||'null');
+    if(cached&&cached.fingerprint===fingerprint&&/^[0-9a-f]{40}$/.test(cached.token||'')) return cached.token;
+  }catch(e){}
+  return '';
+}
+
+function fox2CachePreparedShare(fingerprint,token){
+  try{ localStorage.setItem(fox2PreparedShareStorageKey(),JSON.stringify({fingerprint:fingerprint,token:token})); }catch(e){}
+}
+
 function fox2EncodeProgramSnapshot(snapshot){
   try{
     var json=JSON.stringify(snapshot),binary=encodeURIComponent(json).replace(/%([0-9A-F]{2})/g,function(match,hex){
@@ -6438,7 +6454,7 @@ function fox2SetProgramHistory(readingRows,scoreRows){
     var date=String(row.reading_ts).slice(0,10);
     readingCounts[date]=(readingCounts[date]||0)+1;
   });
-  fox2ProgramHistoryDays=(scoreRows||[]).reduce(function(days,row){
+  var nextHistoryDays=(scoreRows||[]).reduce(function(days,row){
     if(!row||!row.day_date||Number(row.auc_score)<=0) return days;
     var date=String(row.day_date);
     if(date<'2026-09-29') date=addIsoDays(date,1);
@@ -6446,9 +6462,13 @@ function fox2SetProgramHistory(readingRows,scoreRows){
     days.push({date:date,score:Number(row.auc_score)});
     return days;
   },[]);
+  var historyChanged=JSON.stringify(nextHistoryDays)!==JSON.stringify(fox2ProgramHistoryDays);
+  fox2ProgramHistoryDays=nextHistoryDays;
   if(typeof fox2RenderProgram==='function'&&document.getElementById('program-shell')) fox2RenderProgram();
-  fox2InvalidatePreparedShare();
-  if(typeof fox2PrepareFrozenShare==='function') fox2PrepareFrozenShare();
+  if(historyChanged){
+    fox2InvalidatePreparedShare();
+    if(typeof fox2PrepareFrozenShare==='function') fox2PrepareFrozenShare();
+  }
 }
 
 function fox2AllCompletedScoreDays(){
@@ -6502,6 +6522,12 @@ function fox2PrepareFrozenShare(){
   var fingerprint=JSON.stringify({v:snapshot.v,program:snapshot.program,payload:snapshot.payload,days:snapshot.days});
   if(fox2PreparedShareToken&&fox2PreparedShareFingerprint===fingerprint) return Promise.resolve(fox2PreparedShareToken);
   if(fox2PreparedSharePromise&&fox2PreparedShareFingerprint===fingerprint) return fox2PreparedSharePromise;
+  var cachedToken=fox2CachedPreparedShare(fingerprint);
+  if(cachedToken){
+    fox2PreparedShareFingerprint=fingerprint;
+    fox2PreparedShareToken=cachedToken;
+    return Promise.resolve(cachedToken);
+  }
   fox2PreparedShareFingerprint=fingerprint;
   fox2PreparedShareToken='';
   fox2PreparedSharePromise=fetch(FOX2_SUPABASE_URL+'/rest/v1/rpc/create_share_snapshot',{
@@ -6514,6 +6540,7 @@ function fox2PrepareFrozenShare(){
   }).then(function(token){
     token=String(token||'').replace(/^"|"$/g,'');
     if(!/^[0-9a-f]{40}$/.test(token)) throw new Error('Invalid snapshot token');
+    fox2CachePreparedShare(fingerprint,token);
     if(fox2PreparedShareFingerprint===fingerprint) fox2PreparedShareToken=token;
     return token;
   }).catch(function(){
@@ -7548,16 +7575,22 @@ function handleBottomShare() {
   // Program state belongs to the device's shared results, not to the visual
   // tab position. Mobile Safari can report a stale pager index while sharing.
   var sharingProgram=fox2HasStartedProgram();
-  var url = sharingProgram&&fox2PreparedShareToken?fox2FrozenShareUrl(fox2PreparedShareToken):fox2ResultsShareUrl();
-  if(!fox2ValidShareUrl(url)) url=fox2ShareBaseUrl().toString();
-  if(sharingProgram){
+  if(sharingProgram&&!fox2PreparedShareToken){
+    var preparing=fox2PrepareFrozenShare();
+    // A matching cached token is restored synchronously and can be shared on
+    // this same tap. A network request needs one more tap after it finishes so
+    // iOS retains the user gesture required by navigator.share().
     if(!fox2PreparedShareToken){
       var preparingStatus=document.getElementById('program-status');
-      if(preparingStatus) preparingStatus.textContent=fox2PreparedSharePromise?'Preparing secure share link… Tap Share again in a moment.':'Share link could not be created. Reload and try again.';
-      fox2PrepareFrozenShare();
+      if(preparingStatus) preparingStatus.textContent='Preparing secure share link…';
+      preparing.then(function(token){
+        if(preparingStatus) preparingStatus.textContent=token?'Share link ready. Tap Share again.':'Share link could not be created. Check your connection and try again.';
+      });
       return;
     }
   }
+  var url = sharingProgram?fox2FrozenShareUrl(fox2PreparedShareToken):fox2ResultsShareUrl();
+  if(!fox2ValidShareUrl(url)) url=fox2ShareBaseUrl().toString();
   var title=sharingProgram?'FOX2 Progress Tracking':'FOX2 Results';
   if (navigator.share) {
     navigator.share({ title: title, url: url }).catch(function() {});

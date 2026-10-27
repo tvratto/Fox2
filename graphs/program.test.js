@@ -358,6 +358,12 @@ assert.ok(source.includes('function fox2InvalidatePreparedShare()'),
   'editing program state should invalidate an older prepared snapshot immediately');
 assert.ok((source.match(/fox2InvalidatePreparedShare\(\);/g)||[]).length >= 2,
   'both program edits and refreshed history should invalidate an older prepared snapshot');
+assert.ok(source.includes("fox2ProgramStorageKey()+':prepared-share'"),
+  'a completed snapshot token should survive a page reload for unchanged program data');
+assert.ok(source.includes('if(historyChanged){'),
+  'an identical history refresh should not discard a ready snapshot token');
+assert.ok(source.includes('Share link ready. Tap Share again.'),
+  'a first tap during preparation should clearly tell the user when the link is ready');
 assert.ok(source.includes("['ws','d','a','t','s','h','tz','v','p','c'].forEach"),
   'a frozen snapshot should contain the exact display payload without exposing a device id');
 assert.ok(source.includes('if (fox2RemoteShareSnapshot || !dParam || totalDays === 0) return'),
@@ -366,7 +372,7 @@ assert.ok(source.includes('var sharingProgram=fox2HasStartedProgram()'),
   'sharing should include active program state regardless of the visible pager index');
 assert.ok(source.includes("return fox2Program.screen!=='overview'||!!fox2Program.action||!!fox2Program.baselineStart"),
   'program sharing should recognize state established beyond onboarding');
-assert.ok(source.includes('sharingProgram&&fox2PreparedShareToken?fox2FrozenShareUrl(fox2PreparedShareToken):fox2ResultsShareUrl()'),
+assert.ok(source.includes('sharingProgram?fox2FrozenShareUrl(fox2PreparedShareToken):fox2ResultsShareUrl()'),
   'the always-available Share button should use the prepared frozen link for active Progress');
 assert.ok(source.includes("if(!fox2ValidShareUrl(url)) url=fox2ShareBaseUrl().toString()"),
   'the share handler should reject rewritten or UUID-style routes before invoking Messages');
