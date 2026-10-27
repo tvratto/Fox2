@@ -6430,6 +6430,14 @@ function fox2ResultsShareUrl(){
   return fox2ShareBaseUrl().toString();
 }
 
+function fox2HasStartedProgram(){
+  if(fox2ProgramReadOnly) return true;
+  if(!fox2Program||fox2Program.optedOut) return false;
+  return fox2Program.screen!=='overview'||!!fox2Program.action||!!fox2Program.baselineStart||
+    Number(fox2Program.baselineValue)>0||!!fox2Program.measureStart||
+    (Array.isArray(fox2Program.resultHistory)&&fox2Program.resultHistory.length>0);
+}
+
 function fox2ProgramShareUrl(){
   var url=fox2ShareBaseUrl();
   var encoded=fox2EncodeProgramSnapshot(fox2BuildProgramShareSnapshot());
@@ -7419,7 +7427,9 @@ function fox2InitProgram(){
 var currentPage = 0;
 
 function handleBottomShare() {
-  var sharingProgram=currentPage===0;
+  // Program state belongs to the device's shared results, not to the visual
+  // tab position. Mobile Safari can report a stale pager index while sharing.
+  var sharingProgram=fox2HasStartedProgram();
   var url = sharingProgram?fox2ProgramShareUrl():fox2ResultsShareUrl();
   if(!fox2ValidShareUrl(url)) url=fox2ShareBaseUrl().toString();
   var title=sharingProgram?'FOX2 Progress Tracking':'FOX2 Results';

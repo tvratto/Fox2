@@ -332,6 +332,10 @@ assert.ok(source.includes("if(!url.searchParams.has('id'))"),
   'links without a stable device id should retain enough payload data to load');
 assert.ok(source.includes("url.searchParams.set('program_share',encoded)"),
   'sharing from Progress should add the read-only snapshot to the results URL');
+assert.ok(source.includes('var sharingProgram=fox2HasStartedProgram()'),
+  'sharing should include active program state regardless of the visible pager index');
+assert.ok(source.includes("return fox2Program.screen!=='overview'||!!fox2Program.action||!!fox2Program.baselineStart"),
+  'program sharing should recognize state established beyond onboarding');
 assert.ok(source.includes("var url = sharingProgram?fox2ProgramShareUrl():fox2ResultsShareUrl()"),
   'the always-available Share button should use canonical links on every page');
 assert.ok(source.includes("if(!fox2ValidShareUrl(url)) url=fox2ShareBaseUrl().toString()"),
