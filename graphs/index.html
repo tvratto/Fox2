@@ -2849,7 +2849,32 @@ var _isNewerPayload    = false;
     var deviceRows = results[1];
     var historyReadings = results[2];
     var historyScores   = results[3];
-    if(typeof fox2SetProgramHistory==='function') fox2SetProgramHistory(historyReadings,historyScores);
+    var storedDeviceRow = deviceRows && deviceRows[0] ? deviceRows[0] : null;
+    var storedWs       = storedDeviceRow ? (storedDeviceRow.last_ws_param       || '') : '';
+    var storedMeasAt   = storedDeviceRow ? (storedDeviceRow.last_measurement_at || '') : '';
+    var wsVal          = parseInt(wsParam  || '0', 36);
+    var storedWsVal    = parseInt(storedWs || '0', 36);
+    var pageMs         = lastMeasurementAt ? new Date(lastMeasurementAt).getTime() : 0;
+    var storedMs       = storedMeasAt      ? new Date(storedMeasAt).getTime()      : 0;
+    var isNewerPayload = wsVal > storedWsVal ||
+                         (wsVal === storedWsVal && pageMs > storedMs);
+    var pageIsCurrentOrNewer = wsVal > storedWsVal ||
+                               (wsVal === storedWsVal && pageMs >= storedMs);
+    _isNewerPayload = isNewerPayload;
+    // The history query completes before this sync's writes. Merge the incoming
+    // payload into that snapshot before Progress is re-rendered so an older
+    // stored score can never replace the score that was just read from FOX2.
+    // Older open tabs do not get this authority; their stored history wins.
+    var mergedHistoryReadings=pageIsCurrentOrNewer?historyReadings.concat(readingRows):historyReadings;
+    var mergedScoresByDate={};
+    historyScores.forEach(function(row){
+      if(row&&row.day_date) mergedScoresByDate[String(row.day_date)]=row;
+    });
+    if(pageIsCurrentOrNewer) writeScoreRows.forEach(function(row){
+        if(row&&row.day_date) mergedScoresByDate[String(row.day_date)]=row;
+      });
+    var mergedHistoryScores=Object.keys(mergedScoresByDate).sort().map(function(date){return mergedScoresByDate[date];});
+    if(typeof fox2SetProgramHistory==='function') fox2SetProgramHistory(mergedHistoryReadings,mergedHistoryScores);
 
     // ── Now fire the writes (after we've captured pre-write state) ──
     var writePromises=[];
@@ -2872,20 +2897,10 @@ var _isNewerPayload    = false;
 
     // Only write payload params if this page's dParam is different from what's
     // already stored — prevents an older open tab from overwriting newer data.
-    var storedDeviceRow = deviceRows && deviceRows[0] ? deviceRows[0] : null;
     // Determine if this page carries newer data than what's stored.
     // Primary signal: ws (windowStart epoch, base36) — higher = newer window.
     // Tiebreaker when ws matches: lastMeasurementAt derived from d param — later = newer.
     // Compare as epoch ms to avoid ISO format mismatch (.000Z vs +00:00).
-    var storedWs       = storedDeviceRow ? (storedDeviceRow.last_ws_param       || '') : '';
-    var storedMeasAt   = storedDeviceRow ? (storedDeviceRow.last_measurement_at || '') : '';
-    var wsVal          = parseInt(wsParam  || '0', 36);
-    var storedWsVal    = parseInt(storedWs || '0', 36);
-    var pageMs         = lastMeasurementAt ? new Date(lastMeasurementAt).getTime() : 0;
-    var storedMs       = storedMeasAt      ? new Date(storedMeasAt).getTime()      : 0;
-    var isNewerPayload = wsVal > storedWsVal ||
-                         (wsVal === storedWsVal && pageMs > storedMs);
-    _isNewerPayload = isNewerPayload;
     // Only write if this page carries new data — prevents stale reloads clobbering anything.
     if (isNewerPayload) {
       var deviceWriteBody = {

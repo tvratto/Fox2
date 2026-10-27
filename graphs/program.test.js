@@ -123,8 +123,16 @@ assert.ok(source.includes('Restart the tracking period'));
 assert.ok(source.includes('Start over with a new baseline'));
 assert.ok(source.includes('function fox2SetProgramHistory(readingRows,scoreRows)'),
   'the program should retain complete score history beyond the current NFC payload');
-assert.ok(source.includes("fox2SetProgramHistory(historyReadings,historyScores)"),
-  'server history should be supplied to the guided program');
+assert.ok(source.includes("fox2SetProgramHistory(mergedHistoryReadings,mergedHistoryScores)"),
+  'merged server and incoming history should be supplied to the guided program');
+assert.ok(source.includes('var mergedHistoryReadings=pageIsCurrentOrNewer?historyReadings.concat(readingRows):historyReadings'),
+  'the current NFC readings should be available before the asynchronous history write completes');
+assert.ok(source.includes('var pageIsCurrentOrNewer = wsVal > storedWsVal'),
+  'only a current or newer device payload should override stored history');
+assert.ok(source.includes('mergedScoresByDate[String(row.day_date)]=row'),
+  'daily scores should be merged by calendar date');
+assert.ok(source.indexOf('writeScoreRows.forEach(function(row)')<source.indexOf("fox2SetProgramHistory(mergedHistoryReadings,mergedHistoryScores)"),
+  'the incoming NFC scores should override stale stored scores before Progress re-renders');
 assert.ok(source.includes('function fox2AllCompletedScoreDays()'),
   'guided program metrics should merge historical and current score days');
 assert.ok(source.includes('function fox2PreviousBaselineDays()'),
