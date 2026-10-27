@@ -120,11 +120,16 @@ assert.ok(!source.includes('function fox2IntroHtml()'),
 assert.ok(source.includes('function fox2MethodHtml()'),
   'onboarding should offer a Fat Use Baseline choice before action setup');
 assert.ok(source.includes('Measure my baseline'));
-assert.ok(source.includes('Use a standard baseline'));
+assert.ok(source.includes('Choose a default baseline'));
+assert.ok(source.includes('Enter another score'));
 assert.ok(source.includes('var FOX2_STANDARD_BASELINE=75;'),
   'the standard starting point should be explicit and centralized');
-assert.ok(source.includes('(a low Fat Use Baseline) and begin the 30-day program.'),
-  'the standard baseline option should explain what the reference value represents');
+assert.ok(source.includes('var FOX2_DEFAULT_BASELINES=[75,120,180];'),
+  'onboarding and active-program settings should share the approved default baselines');
+assert.ok(source.includes('Reference values—not goals.'),
+  'the defaults should not be mistaken for program targets');
+assert.ok(source.includes("data-program-action=\"method-next\""),
+  'choosing a baseline should be distinct from continuing onboarding');
 assert.ok(source.includes("fox2Program.screen='first'"),
   'both starting-point paths should lead into the first-measurement handoff');
 assert.ok(source.includes('function fox2FirstMeasurementHtml()'),
@@ -133,6 +138,16 @@ assert.ok(source.includes('Tap your phone to FOX2 again to sync it.'));
 assert.ok(source.includes('Finish program and view result'));
 assert.ok(source.includes('Restart program'));
 assert.ok(source.includes('Start over with a new baseline'));
+assert.ok(source.includes('class="program-options-baseline"'),
+  'active program options should show the current Fat Use Baseline');
+assert.ok(source.includes('data-program-action="change-baseline"'),
+  'the current baseline should be editable from Program options');
+assert.ok(source.includes('function fox2OpenBaselineEditor()'),
+  'the active program should provide a focused baseline editor');
+assert.ok(source.includes('Your program results will be recalculated.'),
+  'changing a baseline should explain its effect on existing results');
+assert.ok(source.includes('function fox2BeginNewMeasuredBaseline()'),
+  'measuring a new baseline should explicitly begin a new program');
 assert.ok(source.includes('function fox2SetProgramHistory(readingRows,scoreRows)'),
   'the program should retain complete score history beyond the current NFC payload');
 assert.ok(source.includes("fox2SetProgramHistory(mergedHistoryReadings,mergedHistoryScores)"),

@@ -99,6 +99,12 @@ html, body {
 .program-options-popover-close { position:absolute; top:7px; right:7px; width:38px; height:38px; padding:0; border:0; border-radius:50%; background:rgba(255,255,255,.08); color:#fff; font:500 23px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; cursor:pointer; }
 .program-options-popover > p { margin:0; padding-right:38px; color:rgba(255,255,255,.64); font-size:14px; line-height:1.4; }
 .program-options-popover .program-option-actions { margin-top:13px; }
+.program-options-baseline { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:14px; padding:14px 0; border-block:1px solid rgba(255,255,255,.1); }
+.program-options-baseline-value span,.program-options-baseline-value strong,.program-options-baseline-value small { display:block; }
+.program-options-baseline-value span { color:rgba(255,255,255,.48); font-size:10px; font-weight:900; letter-spacing:.1em; text-transform:uppercase; }
+.program-options-baseline-value strong { margin-top:3px; color:#fff; font-size:29px; line-height:1; font-weight:950; }
+.program-options-baseline-value small { margin-top:5px; color:rgba(255,255,255,.48); font-size:12px; font-weight:700; }
+.program-options-baseline-change { min-height:42px; padding:0 4px; border:0; background:transparent; color:var(--program-orange); font:850 14px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; cursor:pointer; }
 .program-section { margin-top:26px; padding-top:24px; border-top:1px solid rgba(255,255,255,.1); }
 .program-eyebrow { margin-bottom:10px; color:var(--program-gold); font-size:12px; font-weight:900; letter-spacing:.14em; text-transform:uppercase; }
 .program-title { margin:0; font-size:clamp(28px,8vw,34px); line-height:1.04; letter-spacing:-.045em; font-weight:900; }
@@ -199,6 +205,17 @@ html, body {
 .program-method-badge { display:block; margin-bottom:8px; color:var(--program-orange); font-size:10px; font-weight:900; letter-spacing:.12em; text-transform:uppercase; }
 .program-method strong { display:block; font-size:19px; line-height:1.18; font-weight:900; letter-spacing:-.02em; }
 .program-method span:last-child { display:block; margin-top:7px; color:rgba(255,255,255,.58); font-size:13px; line-height:1.4; font-weight:600; }
+.program-method-choice { display:grid; grid-template-columns:24px 1fr; gap:11px; align-items:start; }
+.program-method-radio { width:20px; height:20px; margin-top:1px; border:2px solid rgba(255,255,255,.38); border-radius:50%; box-shadow:inset 0 0 0 4px #111318; }
+.program-method.is-selected { border-color:rgba(255,140,0,.72); background:rgba(255,140,0,.12); }
+.program-method.is-selected .program-method-radio { border-color:var(--program-orange); background:var(--program-orange); }
+.program-baseline-defaults { display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin:12px 0 0 35px; }
+.program-baseline-default { min-height:58px; border:1px solid rgba(255,255,255,.14); border-radius:15px; background:rgba(255,255,255,.05); color:#fff; font:950 21px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; cursor:pointer; }
+.program-baseline-default.is-selected { border-color:var(--program-orange); background:rgba(255,140,0,.13); color:#ffad47; }
+.program-baseline-reference-note { margin:8px 0 0 35px; color:rgba(255,255,255,.4); font-size:11px; font-weight:700; text-align:center; }
+.program-baseline-manual { margin:12px 0 0 35px; }
+.program-baseline-manual input { width:100%; min-height:50px; padding:0 14px; border:1px solid rgba(255,255,255,.14); border-radius:15px; background:rgba(255,255,255,.055); color:#fff; font:750 17px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; }
+.program-baseline-manual input:focus { outline:2px solid rgba(255,140,0,.7); outline-offset:2px; }
 .program-first-steps { width:100%; display:grid; gap:10px; margin:22px 0 20px; text-align:left; }
 .program-first-step { display:grid; grid-template-columns:30px 1fr; gap:11px; align-items:center; color:rgba(255,255,255,.72); font-size:14px; line-height:1.35; }
 .program-first-step b { width:30px; height:30px; display:grid; place-items:center; border-radius:50%; background:rgba(255,140,0,.14); color:var(--program-orange); font-size:13px; }
@@ -566,7 +583,8 @@ html, body {
 #info-modal-overlay,
 #export-modal-overlay,
 #guide-modal-overlay,
-#program-baseline-confirm-overlay {
+#program-baseline-confirm-overlay,
+#program-baseline-editor-overlay {
   display: none;
   position: fixed; inset: 0; z-index: 200;
   background: rgba(0,0,0,0.7);
@@ -576,11 +594,13 @@ html, body {
 #info-modal-overlay.open,
 #export-modal-overlay.open,
 #guide-modal-overlay.open,
-#program-baseline-confirm-overlay.open { display: flex; }
+#program-baseline-confirm-overlay.open,
+#program-baseline-editor-overlay.open { display: flex; }
 #info-modal,
 #export-modal,
 #guide-modal,
-#program-baseline-confirm {
+#program-baseline-confirm,
+#program-baseline-editor {
   position: relative;
   background: #111;
   border: 1px solid rgba(255,255,255,0.12);
@@ -601,7 +621,8 @@ html, body {
 #info-modal-title,
 #export-modal-title,
 #guide-modal-title,
-#program-baseline-confirm-title { padding-right: 38px; }
+#program-baseline-confirm-title,
+#program-baseline-editor-title { padding-right: 38px; }
 #info-modal-title {
   font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.32);
   letter-spacing: .12em; text-transform: uppercase;
@@ -624,6 +645,17 @@ html, body {
 .program-confirm-actions button { min-height:46px; border-radius:14px; font:800 14px/1.2 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; cursor:pointer; }
 .program-confirm-cancel { border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.05); color:#fff; }
 .program-confirm-use { border:0; background:#fff; color:#050505; }
+.program-baseline-editor-copy { margin:0 0 3px; padding-right:38px; color:rgba(255,255,255,.58); font-size:14px; line-height:1.45; }
+.program-baseline-editor-label { margin-top:8px; color:rgba(255,255,255,.42); font-size:10px; font-weight:900; letter-spacing:.11em; text-transform:uppercase; }
+.program-baseline-editor-current { color:var(--program-orange,#ff8c00); font-size:42px; line-height:1; font-weight:950; text-align:center; }
+.program-baseline-editor-current + small { color:rgba(255,255,255,.45); font-size:12px; font-weight:700; text-align:center; }
+#program-baseline-editor .program-baseline-defaults,#program-baseline-editor .program-baseline-manual { margin-left:0; }
+#program-baseline-editor .program-baseline-reference-note { margin-left:0; }
+.program-baseline-editor-or { display:flex; align-items:center; gap:10px; margin:10px 0 0; color:rgba(255,255,255,.38); font-size:11px; }
+.program-baseline-editor-or::before,.program-baseline-editor-or::after { content:""; flex:1; height:1px; background:rgba(255,255,255,.1); }
+.program-baseline-editor-review,.program-baseline-editor-new { width:100%; min-height:48px; border-radius:14px; font:850 14px/1.2 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; cursor:pointer; }
+.program-baseline-editor-review { margin-top:12px; border:0; background:#fff; color:#050505; }
+.program-baseline-editor-new { margin-top:4px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.045); color:#fff; }
 .export-choice {
   width: 100%; padding: 12px 13px; border-radius: 13px;
   border: 1px solid rgba(255,255,255,.10); background: rgba(255,255,255,.06);
@@ -2352,6 +2384,13 @@ html, body {
       <button type="button" class="program-confirm-cancel" onclick="fox2ClosePreviousBaselineConfirm()">Cancel</button>
       <button type="button" class="program-confirm-use" id="program-baseline-confirm-use" onclick="fox2ConfirmPreviousBaseline()">Use these days</button>
     </div>
+  </div>
+</div>
+
+<div id="program-baseline-editor-overlay" onclick="if(event.target===this)fox2CloseBaselineEditor()">
+  <div id="program-baseline-editor" role="dialog" aria-modal="true" aria-labelledby="program-baseline-editor-title">
+    <button type="button" class="modal-corner-close" onclick="fox2CloseBaselineEditor()" aria-label="Close baseline settings">×</button>
+    <div id="program-baseline-editor-content"></div>
   </div>
 </div>
 
@@ -6310,7 +6349,11 @@ var FOX2_BASELINE_DAYS=7;
 var FOX2_MEASURE_DAYS=30;
 var FOX2_PROGRAM_DAYS=FOX2_MEASURE_DAYS;
 var FOX2_STANDARD_BASELINE=75;
+var FOX2_DEFAULT_BASELINES=[75,120,180];
 var fox2ProgramOptionsOpen=false;
+var fox2BaselineEditorValue=FOX2_STANDARD_BASELINE;
+var fox2BaselineEditorSource='default';
+var fox2BaselineEditorStep='choose';
 var fox2AnimatedMeasureDate='';
 var fox2SharedProgramSnapshot=null;
 var fox2ProgramDemoSnapshot=null;
@@ -6379,7 +6422,7 @@ function fox2NormalizeSharedProgram(snapshot){
   defaults.screen=screens.indexOf(raw.screen)>=0?raw.screen:'overview';
   defaults.optedOut=false;
   defaults.setupMode='new';
-  defaults.baselineMode=raw.baselineMode==='standard'?'standard':'personal';
+  defaults.baselineMode=['personal','default','manual'].indexOf(raw.baselineMode)>=0?raw.baselineMode:(raw.baselineMode==='standard'?'default':'personal');
   defaults.action=String(raw.action||'').slice(0,2000);
   defaults.baselineStart=fox2IsoOrBlank(raw.baselineStart);
   defaults.baselineValue=isFinite(Number(raw.baselineValue))&&Number(raw.baselineValue)>0?Number(raw.baselineValue):null;
@@ -6654,6 +6697,15 @@ function fox2Mean(values){
 
 function fox2Round(value){ return value==null?null:Math.round(value); }
 
+function fox2BaselineSourceLabel(){
+  var source=String(fox2Program.baselineSource||'');
+  if(source==='default'||source==='standard') return 'Default';
+  if(source==='manual') return 'Entered manually';
+  if(source==='previous') return fox2Program.baselineRange?'Measured · '+fox2Program.baselineRange:'Measured from previous days';
+  if(source==='measured'||source==='current') return fox2Program.baselineRange?'Measured · '+fox2Program.baselineRange:'Measured over 7 days';
+  return fox2Program.baselineMode==='personal'?'Measured baseline':'Reference baseline';
+}
+
 function fox2ProgramMetrics(){
   var baselineDays=fox2CompletedScoresSince(fox2Program.baselineStart).slice(0,FOX2_BASELINE_DAYS);
   var baseline=Number(fox2Program.baselineValue);
@@ -6687,12 +6739,16 @@ function fox2ProgressHtml(metrics){
   }
   var programOptions='';
   if(screen==='measure'){
+    var baselineValue=fox2Round(metrics.baseline)||FOX2_STANDARD_BASELINE;
+    var baselineSource=fox2BaselineSourceLabel();
     var optionButtons='';
     if(metrics.measureDays.length) optionButtons+='<button type="button" class="program-option-card is-primary" data-program-action="finish-measuring"><strong>Finish program and view result</strong><span>End the program early and save the result so far.</span></button>';
     optionButtons+='<button type="button" class="program-option-card" data-program-action="restart-measuring"><strong>Restart program</strong><span>Keep your Fat Use Baseline and return to day 1.</span></button>'
       +'<button type="button" class="program-option-card" data-program-action="start-over"><strong>Start over with a new baseline</strong><span>Begin a new program with a new Fat Use Baseline.</span></button>';
     programOptions='<div class="program-options-anchor"><button type="button" class="program-options-toggle" data-program-action="toggle-options" aria-haspopup="true" aria-expanded="'+fox2ProgramOptionsOpen+'">Program options '+(fox2ProgramOptionsOpen?'▴':'▾')+'</button>'
-      +(fox2ProgramOptionsOpen?'<div class="program-options-popover"><button type="button" class="program-options-popover-close" data-program-action="toggle-options" aria-label="Close program options">×</button><p>Change how your 30-day program is running.</p><div class="program-option-actions">'+optionButtons+'</div></div>':'')+'</div>';
+      +(fox2ProgramOptionsOpen?'<div class="program-options-popover"><button type="button" class="program-options-popover-close" data-program-action="toggle-options" aria-label="Close program options">×</button><p>Change how your 30-day program is running.</p>'
+        +'<div class="program-options-baseline"><div class="program-options-baseline-value"><span>Fat Use Baseline</span><strong>'+baselineValue+'</strong><small>'+fox2Escape(baselineSource)+'</small></div><button type="button" class="program-options-baseline-change" data-program-action="change-baseline">Change ›</button></div>'
+        +'<div class="program-option-actions">'+optionButtons+'</div></div>':'')+'</div>';
   }
   return '<section class="program-progress" role="region" aria-label="30-day program: '+dayLabel+', '+pct+' percent complete, '+phase+'">'
     +'<div class="program-progress-head"><div class="program-progress-title">30-Day Program</div><div class="program-day">'+dayLabel+'</div></div>'
@@ -6802,16 +6858,24 @@ function fox2CompareIntroHtml(mode){
 }
 
 function fox2MethodHtml(){
-  return '<section class="program-onboarding-card"><div class="program-eyebrow">Choose your Fat Use Baseline</div><h1 class="program-title">How would you like to begin?</h1>'
+  var mode=fox2Program.baselineMode||'personal';
+  if(mode==='standard') mode='default';
+  var storedValue=fox2Round(fox2Program.baselineValue);
+  var value=storedValue||FOX2_STANDARD_BASELINE;
+  var defaults=FOX2_DEFAULT_BASELINES.map(function(score){
+    return '<button type="button" class="program-baseline-default '+(mode==='default'&&value===score?'is-selected':'')+'" data-program-action="choose-default-'+score+'">'+score+'</button>';
+  }).join('');
+  return '<section class="program-onboarding-card"><div class="program-eyebrow">Set up your program</div><h1 class="program-title">Choose your Fat Use Baseline.</h1><p class="program-copy">FOX2 uses this reference to show how your Fat Use Score changes during the program.</p>'
     +'<div class="program-methods">'
-      +'<button type="button" class="program-method is-recommended" data-program-action="method-personal"><span class="program-method-badge">Recommended</span><strong>Measure my baseline</strong><span>Use seven completed days to learn your personal Fat Use Baseline.</span></button>'
-      +'<button type="button" class="program-method" data-program-action="method-standard"><span class="program-method-badge">Start now</span><strong>Use a standard baseline</strong><span>Use a Fat Use Score of '+FOX2_STANDARD_BASELINE+' (a low Fat Use Baseline) and begin the 30-day program.</span></button>'
-    +'</div><button type="button" class="program-secondary" data-program-action="back-intro">Back</button></section>';
+      +'<button type="button" class="program-method '+(mode==='personal'?'is-selected is-recommended':'')+'" data-program-action="method-personal"><span class="program-method-choice"><i class="program-method-radio" aria-hidden="true"></i><span><span class="program-method-badge">Recommended</span><strong>Measure my baseline</strong><span>Measure for seven completed days before beginning your action.</span></span></span></button>'
+      +'<div><button type="button" class="program-method '+(mode==='default'?'is-selected':'')+'" data-program-action="method-default"><span class="program-method-choice"><i class="program-method-radio" aria-hidden="true"></i><span><strong>Choose a default baseline</strong><span>Begin your action and 30-day program immediately.</span></span></span></button>'+(mode==='default'?'<div class="program-baseline-defaults">'+defaults+'</div><div class="program-baseline-reference-note">Reference values—not goals.</div>':'')+'</div>'
+      +'<div><button type="button" class="program-method '+(mode==='manual'?'is-selected':'')+'" data-program-action="method-manual"><span class="program-method-choice"><i class="program-method-radio" aria-hidden="true"></i><span><strong>Enter another score</strong><span>Use a Fat Use Score you already know.</span></span></span></button>'+(mode==='manual'?'<label class="program-baseline-manual"><span class="sr-only">Manual Fat Use Baseline</span><input id="program-baseline-manual-input" type="number" min="1" max="999" inputmode="numeric" value="'+(storedValue||'')+'" placeholder="Fat Use Score"></label>':'')+'</div>'
+    +'</div><button type="button" class="program-primary" data-program-action="method-next">Next</button><button type="button" class="program-secondary" data-program-action="back-intro">Back</button></section>';
 }
 
 function fox2SetupHtml(){
   var mode=fox2Program.setupMode||'new',changing=mode==='change',restarting=mode==='restart';
-  var personal=!changing&&!restarting&&fox2Program.baselineMode!=='standard';
+  var personal=!changing&&!restarting&&fox2Program.baselineMode==='personal';
   return '<section><div class="program-eyebrow">'+(changing?'Change actions':restarting?'Start over':'Your action')+'</div>'
     +'<h1 class="program-title">'+(changing?'What will you add or change?':restarting?'What will you try next?':personal?'What will you try after your baseline is ready?':'What are you changing?')+'</h1>'
     +'<p class="program-copy">'+(changing?'Your Fat Use Baseline will stay the same.':restarting?'You will establish a new Fat Use Baseline before tracking these actions.':personal?'Describe your planned action now. Begin it after FOX2 finishes learning your Fat Use Baseline.':'Describe the action or actions you want to evaluate.')+'</p>'
@@ -6837,10 +6901,10 @@ function fox2HasTodayMeasurement(){
 }
 
 function fox2FirstMeasurementHtml(){
-  var personal=fox2Program.baselineMode!=='standard',received=fox2HasTodayMeasurement();
+  var personal=fox2Program.baselineMode==='personal',received=fox2HasTodayMeasurement();
   return '<section><div class="program-first-day"><div class="program-eyebrow">'+(personal?'Fat Use Baseline · Day 1':'30-Day Program · Day 1')+'</div>'
     +'<h2>Take your first measurement.</h2>'
-    +(personal?'':'<div class="program-reference"><span>Fat Use Baseline</span><strong>'+FOX2_STANDARD_BASELINE+'</strong></div>')
+    +(personal?'':'<div class="program-reference"><span>Fat Use Baseline</span><strong>'+fox2Round(fox2Program.baselineValue)+'</strong></div>')
     +'<div class="program-first-steps"><div class="program-first-step"><b>1</b><span>Pick up FOX2 and press the main button.</span></div><div class="program-first-step"><b>2</b><span>Select Measure and complete your breath test.</span></div><div class="program-first-step"><b>3</b><span>Tap your phone to FOX2 again to sync it.</span></div></div>'
     +(received?'<div class="program-first-received">Measurement received</div><button type="button" class="program-primary" data-program-action="finish-first">Continue</button>':'<p>Leave this page open. It will update after FOX2 syncs.</p>')
     +'</div></section>';
@@ -7452,6 +7516,11 @@ function fox2RenderProgram(){
   var input=shell.querySelector('#program-action-input');
   if(input&&fox2ProgramReadOnly) input.readOnly=true;
   if(input) input.addEventListener('input',function(){fox2Program.action=input.value;});
+  var manualBaselineInput=shell.querySelector('#program-baseline-manual-input');
+  if(manualBaselineInput) manualBaselineInput.addEventListener('input',function(){
+    var value=Math.round(Number(manualBaselineInput.value));
+    fox2Program.baselineValue=isFinite(value)&&value>0?value:null;
+  });
   shell.querySelectorAll('[data-program-action]').forEach(function(button){
     button.addEventListener('click',function(){fox2BeginProgramAction(button.dataset.programAction);});
   });
@@ -7469,6 +7538,7 @@ function fox2BeginProgramAction(action){
     'continue-intro':'forward',
     'continue-day':'forward',
     'start':'forward',
+    'method-next':'forward',
     'back-overview':'back',
     'back-day':'back',
     'back-intro':'back'
@@ -7519,6 +7589,103 @@ function fox2ConfirmPreviousBaseline(){
   fox2RenderProgram();
 }
 
+function fox2OpenBaselineEditor(){
+  var current=fox2Round(fox2Program.baselineValue)||FOX2_STANDARD_BASELINE;
+  fox2BaselineEditorValue=current;
+  fox2BaselineEditorSource=(fox2Program.baselineSource==='manual'||fox2Program.baselineMode==='manual')?'manual':
+    ((fox2Program.baselineSource==='default'||fox2Program.baselineSource==='standard'||fox2Program.baselineMode==='default'||fox2Program.baselineMode==='standard')?'default':'');
+  fox2BaselineEditorStep='choose';
+  fox2RenderBaselineEditor();
+  var overlay=document.getElementById('program-baseline-editor-overlay');
+  if(overlay) overlay.classList.add('open');
+}
+
+function fox2CloseBaselineEditor(){
+  var overlay=document.getElementById('program-baseline-editor-overlay');
+  if(overlay) overlay.classList.remove('open');
+}
+
+function fox2SelectBaselineDefault(value){
+  value=Math.round(Number(value));
+  if(FOX2_DEFAULT_BASELINES.indexOf(value)<0) return;
+  fox2BaselineEditorValue=value;
+  fox2BaselineEditorSource='default';
+  fox2RenderBaselineEditor();
+}
+
+function fox2RenderBaselineEditor(message){
+  var content=document.getElementById('program-baseline-editor-content');
+  if(!content) return;
+  var current=fox2Round(fox2Program.baselineValue)||FOX2_STANDARD_BASELINE;
+  if(fox2BaselineEditorStep==='confirm'){
+    content.innerHTML='<div class="program-confirm-title" id="program-baseline-editor-title">Confirm baseline change</div>'
+      +'<div class="program-baseline-editor-current">'+fox2BaselineEditorValue+'</div><small>New Fat Use Baseline</small>'
+      +'<p class="program-baseline-editor-copy">Change your Fat Use Baseline from '+current+' to '+fox2BaselineEditorValue+'? Your program results will be recalculated.</p>'
+      +'<div class="program-confirm-actions"><button type="button" class="program-confirm-cancel" onclick="fox2BaselineEditorBack()">Back</button><button type="button" class="program-confirm-use" onclick="fox2ApplyBaselineChange()">Change baseline</button></div>';
+    return;
+  }
+  if(fox2BaselineEditorStep==='restart'){
+    content.innerHTML='<div class="program-confirm-title" id="program-baseline-editor-title">Measure a new baseline?</div>'
+      +'<p class="program-baseline-editor-copy">This ends the current program. You will define your next action, then begin a new seven-day Fat Use Baseline.</p>'
+      +'<div class="program-confirm-actions"><button type="button" class="program-confirm-cancel" onclick="fox2BaselineEditorBack()">Cancel</button><button type="button" class="program-confirm-use" onclick="fox2BeginNewMeasuredBaseline()">Start new baseline</button></div>';
+    return;
+  }
+  var defaults=FOX2_DEFAULT_BASELINES.map(function(value){
+    return '<button type="button" class="program-baseline-default '+(fox2BaselineEditorSource==='default'&&fox2BaselineEditorValue===value?'is-selected':'')+'" onclick="fox2SelectBaselineDefault('+value+')">'+value+'</button>';
+  }).join('');
+  content.innerHTML='<div class="program-confirm-title" id="program-baseline-editor-title">Change Fat Use Baseline</div>'
+    +'<p class="program-baseline-editor-copy">Current baseline: <strong>'+current+'</strong>. Changing it recalculates your program results.</p>'
+    +'<div class="program-baseline-editor-label">Choose a default</div><div class="program-baseline-defaults">'+defaults+'</div><div class="program-baseline-reference-note">Reference values—not goals.</div>'
+    +'<div class="program-baseline-editor-or">or</div><label class="program-baseline-manual"><span class="sr-only">Enter another Fat Use Baseline</span><input id="program-baseline-editor-input" type="number" min="1" max="999" inputmode="numeric" value="'+(fox2BaselineEditorSource==='manual'?fox2BaselineEditorValue:'')+'" placeholder="Enter another score"></label>'
+    +(message?'<p class="program-baseline-editor-copy" role="alert">'+fox2Escape(message)+'</p>':'')
+    +'<button type="button" class="program-baseline-editor-review" onclick="fox2ReviewBaselineChange()">Review change</button><button type="button" class="program-baseline-editor-new" onclick="fox2ReviewNewMeasuredBaseline()">Measure a new baseline</button>';
+}
+
+function fox2ReviewBaselineChange(){
+  var input=document.getElementById('program-baseline-editor-input');
+  var manual=input?Math.round(Number(input.value)):0;
+  if(manual>0){fox2BaselineEditorValue=manual;fox2BaselineEditorSource='manual';}
+  if(!fox2BaselineEditorSource){fox2RenderBaselineEditor('Choose a default or enter another score.');return;}
+  fox2BaselineEditorStep='confirm';
+  fox2RenderBaselineEditor();
+}
+
+function fox2BaselineEditorBack(){
+  fox2BaselineEditorStep='choose';
+  fox2RenderBaselineEditor();
+}
+
+function fox2ApplyBaselineChange(){
+  fox2Program.baselineValue=fox2BaselineEditorValue;
+  fox2Program.baselineMode=fox2BaselineEditorSource==='manual'?'manual':'default';
+  fox2Program.baselineSource=fox2BaselineEditorSource;
+  fox2Program.baselineRange=fox2BaselineEditorSource==='manual'?'Entered manually':'Default reference';
+  fox2ProgramOptionsOpen=false;
+  fox2CloseBaselineEditor();
+  fox2SaveProgram();
+  fox2RenderProgram();
+}
+
+function fox2ReviewNewMeasuredBaseline(){
+  fox2BaselineEditorStep='restart';
+  fox2RenderBaselineEditor();
+}
+
+function fox2BeginNewMeasuredBaseline(){
+  fox2Program.setupMode='restart';
+  fox2Program.baselineMode='personal';
+  fox2Program.baselineStart='';
+  fox2Program.baselineValue=null;
+  fox2Program.baselineSource='';
+  fox2Program.baselineRange='';
+  fox2Program.measureStart='';
+  fox2Program.screen='setup';
+  fox2ProgramOptionsOpen=false;
+  fox2CloseBaselineEditor();
+  fox2SaveProgram();
+  fox2RenderProgram();
+}
+
 function fox2HandleProgramAction(action){
   if(fox2ProgramReadOnly) return;
   var input=document.getElementById('program-action-input');
@@ -7537,9 +7704,23 @@ function fox2HandleProgramAction(action){
   }else if(action==='back-intro'){
     fox2Program.screen='intro';
   }else if(action==='method-personal'){
-    fox2Program.baselineMode='personal'; fox2Program.baselineValue=null; fox2Program.baselineSource=''; fox2Program.baselineRange=''; fox2Program.setupMode='new'; fox2Program.screen='setup';
-  }else if(action==='method-standard'){
-    fox2Program.baselineMode='standard'; fox2Program.baselineValue=FOX2_STANDARD_BASELINE; fox2Program.baselineSource='standard'; fox2Program.baselineRange='Standard reference'; fox2Program.setupMode='new'; fox2Program.screen='setup';
+    fox2Program.baselineMode='personal'; fox2Program.baselineValue=null; fox2Program.baselineSource=''; fox2Program.baselineRange=''; fox2Program.setupMode='new'; fox2RenderProgram(); return;
+  }else if(action==='method-default'||action==='method-standard'){
+    fox2Program.baselineMode='default'; fox2Program.baselineValue=FOX2_STANDARD_BASELINE; fox2Program.baselineSource='default'; fox2Program.baselineRange='Default reference'; fox2RenderProgram(); return;
+  }else if(action.indexOf('choose-default-')===0){
+    var defaultValue=Math.round(Number(action.replace('choose-default-','')));
+    if(FOX2_DEFAULT_BASELINES.indexOf(defaultValue)>=0){fox2Program.baselineMode='default';fox2Program.baselineValue=defaultValue;fox2Program.baselineSource='default';fox2Program.baselineRange='Default reference';}
+    fox2RenderProgram(); return;
+  }else if(action==='method-manual'){
+    fox2Program.baselineMode='manual'; fox2Program.baselineValue=null; fox2Program.baselineSource='manual'; fox2Program.baselineRange='Entered manually'; fox2RenderProgram(); return;
+  }else if(action==='method-next'){
+    if(fox2Program.baselineMode==='manual'&&(!isFinite(Number(fox2Program.baselineValue))||Number(fox2Program.baselineValue)<=0)){
+      fox2ProgramTransitioning=false;
+      fox2RenderProgram();
+      var manualField=document.getElementById('program-baseline-manual-input'); if(manualField) manualField.focus();
+      return;
+    }
+    fox2Program.setupMode='new'; fox2Program.screen='setup';
   }else if(action==='opt-out'){
     fox2Program.optedOut=true; fox2Program.screen='overview'; fox2SaveProgram(); fox2RenderProgram();
     if(window.fox2GoToPage) window.fox2GoToPage(1,true);
@@ -7549,24 +7730,26 @@ function fox2HandleProgramAction(action){
   }else if(action==='begin'){
     if(fox2Program.setupMode==='change'){
       fox2Program.measureStart=fox2TodayIso(); fox2Program.screen='measure';
-    }else if(fox2Program.baselineMode==='standard'){
-      fox2Program.baselineValue=FOX2_STANDARD_BASELINE; fox2Program.baselineSource='standard'; fox2Program.baselineRange='Standard reference'; fox2Program.baselineStart=''; fox2Program.measureStart=fox2TodayIso(); fox2Program.screen='first';
+    }else if(fox2Program.baselineMode!=='personal'){
+      fox2Program.baselineValue=fox2Round(fox2Program.baselineValue)||FOX2_STANDARD_BASELINE; fox2Program.baselineSource=fox2Program.baselineMode==='manual'?'manual':'default'; fox2Program.baselineRange=fox2Program.baselineMode==='manual'?'Entered manually':'Default reference'; fox2Program.baselineStart=''; fox2Program.measureStart=fox2TodayIso(); fox2Program.screen='first';
     }else{
       fox2Program.baselineStart=fox2TodayIso(); fox2Program.baselineValue=null; fox2Program.baselineSource=''; fox2Program.baselineRange=''; fox2Program.measureStart=''; fox2Program.screen='first';
     }
     fox2Program.setupMode='new'; fox2ProgramOptionsOpen=false;
   }else if(action==='finish-first'){
-    fox2Program.screen=fox2Program.baselineMode==='standard'?'measure':'baseline';
+    fox2Program.screen=fox2Program.baselineMode==='personal'?'baseline':'measure';
   }else if(action==='toggle-options'){
     fox2ProgramOptionsOpen=!fox2ProgramOptionsOpen; fox2RenderProgram(); return;
   }else if(action==='use-baseline'){
-    if(metrics.baseline){fox2Program.baselineValue=metrics.baseline;fox2Program.baselineSource='current';fox2Program.baselineRange=fox2DateRange(metrics.baselineDays);fox2Program.measureStart=fox2TodayIso();fox2Program.screen='measure';fox2ProgramOptionsOpen=false;}
+    if(metrics.baseline){fox2Program.baselineValue=metrics.baseline;fox2Program.baselineSource='measured';fox2Program.baselineRange=fox2DateRange(metrics.baselineDays);fox2Program.measureStart=fox2TodayIso();fox2Program.screen='measure';fox2ProgramOptionsOpen=false;}
   }else if(action==='use-previous-baseline'){
     var previous=fox2PreviousBaselineDays();
     if(previous.length===7) fox2UsePreviousBaseline(previous);
     else if(previous.length){fox2OpenPreviousBaselineConfirm(previous);return;}
   }else if(action==='restart-baseline'){
     fox2Program.baselineStart=fox2TodayIso();fox2Program.baselineValue=null;fox2Program.baselineSource='';fox2Program.baselineRange='';fox2ProgramOptionsOpen=false;
+  }else if(action==='change-baseline'){
+    fox2OpenBaselineEditor(); return;
   }else if(action==='finish-measuring'){
     if(fox2FinalizeResult(metrics)){fox2Program.screen='results';fox2ProgramOptionsOpen=false;}
   }else if(action==='restart-measuring'){
