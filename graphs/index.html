@@ -87,6 +87,11 @@ html, body {
 .program-phases .is-current { color:#fff; }
 .program-phases .is-complete { color:var(--program-orange); }
 .program-progress-meta { margin-top:12px; color:rgba(255,255,255,.55); font-size:12px; font-weight:700; }
+.program-progress-result { margin-top:14px; padding-top:13px; border-top:1px solid rgba(255,255,255,.1); }
+.program-progress-result-label { display:block; margin-bottom:6px; color:var(--program-orange); font-size:10px; line-height:1; font-weight:900; letter-spacing:.12em; text-transform:uppercase; }
+.program-progress-result p { margin:0; color:rgba(255,255,255,.76); font-size:14px; line-height:1.38; font-weight:650; overflow-wrap:anywhere; }
+.program-progress-result strong { color:#fff; font-weight:900; }
+.program-progress-result-change { color:#ffb84d; font-weight:950; white-space:nowrap; }
 .program-section { margin-top:26px; padding-top:24px; border-top:1px solid rgba(255,255,255,.1); }
 .program-eyebrow { margin-bottom:10px; color:var(--program-gold); font-size:12px; font-weight:900; letter-spacing:.14em; text-transform:uppercase; }
 .program-title { margin:0; font-size:clamp(28px,8vw,34px); line-height:1.04; letter-spacing:-.045em; font-weight:900; }
@@ -6440,11 +6445,21 @@ function fox2ProgressHtml(metrics){
   var pct=Math.max(0,Math.min(100,Math.round(day/total*100)));
   var dayLabel=current==='baseline'?'Fat Use Baseline':'Day '+day+' of '+total;
   var baselineClass=current==='baseline'?'is-current':(current==='measure'||current==='results'?'is-complete':'');
+  var resultLabel=current==='results'?'Final Result':'Results So Far';
+  var resultCopy='Your first result will appear after your first completed program day.';
+  if(metrics.baseline&&metrics.after&&metrics.measureDays.length){
+    var resultChange=Math.round((metrics.after-metrics.baseline)/metrics.baseline*100);
+    var resultAction=fox2Escape(fox2Program.action||'Your actions');
+    if(resultChange>0) resultCopy='<strong>'+resultAction+'</strong> has increased your Fat Use Score by <span class="program-progress-result-change">'+resultChange+'%</span> versus baseline.';
+    else if(resultChange<0) resultCopy='<strong>'+resultAction+'</strong> has decreased your Fat Use Score by <span class="program-progress-result-change">'+Math.abs(resultChange)+'%</span> versus baseline.';
+    else resultCopy='<strong>'+resultAction+'</strong> has kept your Fat Use Score at baseline.';
+  }
   return '<section class="program-progress" role="img" aria-label="30-day program: '+dayLabel+', '+pct+' percent complete, '+phase+'">'
     +'<div class="program-progress-head"><div class="program-progress-title">30-Day Program</div><div class="program-day">'+dayLabel+'</div></div>'
     +'<div class="program-bar"><div class="program-bar-fill" style="width:'+pct+'%"></div></div>'
     +'<div class="program-phases"><span class="'+baselineClass+'">'+(baselineClass==='is-complete'?'✓ ':'')+'Baseline</span><span class="'+(current==='measure'?'is-current':'')+'">Measure</span><span class="'+(current==='results'?'is-current':'')+'">Results</span></div>'
-    +'<div class="program-progress-meta"'+(showPhase?'':' style="justify-content:flex-end"')+'>'+(showPhase?'<span>'+phase+'</span>':'')+'<span>'+pct+'% Complete</span></div></section>';
+    +'<div class="program-progress-meta"'+(showPhase?'':' style="justify-content:flex-end"')+'>'+(showPhase?'<span>'+phase+'</span>':'')+'<span>'+pct+'% Complete</span></div>'
+    +'<div class="program-progress-result"><span class="program-progress-result-label">'+resultLabel+'</span><p>'+resultCopy+'</p></div></section>';
 }
 
 function fox2BaselineChart(days,estimate){
@@ -6765,7 +6780,7 @@ function fox2TodayHistoryHtml(today,metrics){
 
 function fox2MeasureDashboardHtml(metrics,options){
   options=options||{};
-  var model=fox2RecapModel(metrics),action=fox2Program.action||'Your action';
+  var model=fox2RecapModel(metrics);
   var today=options.forceHistory?null:fox2TodayProgramDay();
   if(today){
     var todayVisual=fox2RingVisual(today.score),circumference=339.292;
@@ -6781,26 +6796,12 @@ function fox2MeasureDashboardHtml(metrics,options){
   var latestDateLabel=fox2AddIsoDays(fox2TodayIso(),-1)===model.latest.date?'Yesterday':fox2ShortDate(model.latest.date);
   var path=fox2RecapMorphPath(model.latestVisual.progress,animate?0:1,model.latestSlot.x,model.latestSlot.top,model.plotBottom);
   var scoreText=fox2Round(model.latest.score);
-  var elapsedDay=Math.min(FOX2_MEASURE_DAYS,Math.max(1,fox2DaysBetween(fox2Program.measureStart,fox2TodayIso())+1));
-  var latestChange=Math.round((model.latest.score-model.baseline)/model.baseline*100);
-  var resultSentence=model.change>0
-    ? 'has increased your <strong>Fat Use Score</strong> <span class="program-recap-change" id="program-action-change" aria-live="polite">'+fox2PercentMagnitude(model.change)+'</span> over your baseline.'
-    : model.change<0
-      ? 'has decreased your <strong>Fat Use Score</strong> <span class="program-recap-change" id="program-action-change" aria-live="polite">'+fox2PercentMagnitude(model.change)+'</span> below your baseline.'
-      : 'has kept your <strong>Fat Use Score</strong> at your baseline.<span class="program-hidden" id="program-action-change">0%</span>';
-  var latestSentence=latestDateLabel==='Yesterday'
-    ? 'Yesterday was <strong>'+fox2SignedPercent(latestChange)+'</strong>.'
-    : 'Your latest completed day was <strong>'+fox2SignedPercent(latestChange)+'</strong>.';
-  var finalResult=!!options.final;
-  var summaryTitle=finalResult?'Your Result':'Results So Far';
-  var summaryLead=finalResult?'After 30 days':'By day '+elapsedDay;
   return '<section class="program-measure-dashboard"><div class="program-recap-sequence'+settledClass+'" style="--recap-color:'+model.latestVisual.color+'" data-recap-animate="'+(animate?'1':'0')+'" data-latest-date="'+fox2Escape(model.latest.date)+'" data-score="'+scoreText+'" data-fill="'+model.latestVisual.progress+'" data-target-x="'+model.latestSlot.x+'" data-target-top="'+model.latestSlot.top.toFixed(1)+'" data-target-bottom="'+model.plotBottom+'" data-from="'+model.priorChange+'" data-to="'+model.change+'">'
     +'<div class="program-recap-head"><span class="program-recap-kicker">Morning Recap</span><span class="program-recap-date">'+fox2Escape(latestDateLabel)+'</span><div class="program-recap-history-title"><div class="program-recap-title-row"><strong>30-Day Fat Use Scores</strong><button type="button" class="program-recap-replay" data-recap-replay aria-label="Replay morning recap" title="Replay morning recap">↻</button></div><span>'+model.completed+' completed '+(model.completed===1?'day':'days')+' · Baseline '+fox2Round(model.baseline)+'</span></div></div>'
     +'<svg class="program-recap-svg" viewBox="0 0 336 236" role="img" aria-label="'+fox2Escape(latestDateLabel)+' Fat Use Score '+scoreText+', added to day '+model.latestDayNumber+' of your 30-day history">'
     +'<circle class="program-recap-ring-track" cx="168" cy="112" r="54"></circle><path class="program-recap-morph" d="'+path+'"></path>'
     +'<g class="program-recap-score"><text class="program-recap-score-value" id="program-recap-score" x="168" y="116">'+scoreText+'</text><text class="program-recap-score-label" x="168" y="136">FAT USE SCORE</text></g>'
     +fox2RecapHistorySvg(model)+'</svg>'
-    +'<div class="program-recap-summary" role="group" aria-label="'+summaryLead+', '+fox2Escape(action)+' changed your Fat Use Score '+fox2SignedPercent(model.change)+' versus baseline. '+fox2Escape(latestSentence.replace(/<[^>]+>/g,''))+'"><h2>'+summaryTitle+'</h2><p class="program-recap-statement">'+summaryLead+', <strong>'+fox2Escape(action)+'</strong> '+resultSentence+'<span class="program-recap-yesterday">'+latestSentence+'</span></p></div>'
     +'</div></section>';
 }
 
@@ -6966,7 +6967,7 @@ function fox2ResultsHtml(metrics){
     return '<article class="program-history-item"><h2 class="program-history-title"><span class="program-history-bullet"></span><span>'+fox2Escape(item.action||'Actions')+'</span></h2><div role="table" aria-label="Action result"><div class="program-result-table-head" role="row"><span>Before</span><span>After</span><span>Change</span></div><div class="program-result-table-values" role="row"><span>'+item.before+'</span><span>'+item.after+'</span><span>'+(change>=0?'+':'')+change+'%</span></div></div></article>';
   }).join('');
   var previousResults=history?'<section class="program-section"><div class="program-eyebrow">Previous Programs</div><div class="program-history">'+history+'</div></section>':'';
-  return fox2MeasureDashboardHtml(metrics,{forceHistory:true,final:true})
+  return fox2MeasureDashboardHtml(metrics,{forceHistory:true})
     +'<section class="program-section"><h2 class="program-section-title">What do you want to do?</h2><button type="button" class="program-choice is-primary" data-program-action="maintain">Keep tracking</button><button type="button" class="program-choice" data-program-action="change-actions">Add or change actions</button><button type="button" class="program-choice" data-program-action="start-over">Start over</button></section>'
     +previousResults;
 }

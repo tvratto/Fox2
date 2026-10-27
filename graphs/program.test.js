@@ -179,7 +179,7 @@ assert.ok(source.includes('Fat Use Baseline ready'));
 assert.ok(source.includes('Start tracking'));
 assert.ok(!source.includes("Yesterday's result"),
   'the first measuring day should not show an empty yesterday result');
-assert.ok(source.includes("action=fox2Program.action||'Your action'"));
+assert.ok(source.includes("resultAction=fox2Escape(fox2Program.action||'Your actions')"));
 assert.ok(!source.includes("completed '+(metrics.measureDays.length===1?'day':'days')+' included"),
   'the compact measure page should not repeat the completed-day count');
 assert.ok(!source.includes('Continue your actions.'),
@@ -275,16 +275,16 @@ assert.ok(source.includes('function fox2RevealRecapHistory(root,done)'),
 assert.ok(source.includes("path.setAttribute('stroke-width','6.5')"),
   'the morph should land at the exact width of the settled chart bar');
 assert.ok(source.includes('program-measure-dashboard'));
-assert.ok(source.includes("var summaryLead=finalResult?'After 30 days':'By day '+elapsedDay"),
-  'the result summary should explicitly connect elapsed time and the chosen action');
-assert.ok(source.includes('fox2MeasureDashboardHtml(metrics,{forceHistory:true,final:true})'),
+assert.ok(source.includes('class="program-progress-result"'),
+  'the cumulative result should occupy a fixed location in the program progress card');
+assert.ok(source.includes("resultLabel=current==='results'?'Final Result':'Results So Far'"),
+  'the fixed result should distinguish the completed program from an interim result');
+assert.ok(source.includes('fox2MeasureDashboardHtml(metrics,{forceHistory:true})'),
   'the completed program should retain the full chart and final result summary');
-assert.ok(source.includes("var summaryTitle=finalResult?'Your Result':'Results So Far'"),
-  'the completed program should clearly distinguish its final result from an interim result');
-assert.ok(source.includes('has increased your <strong>Fat Use Score</strong>'),
+assert.ok(source.includes('has increased your Fat Use Score by <span class="program-progress-result-change">'),
   'a positive result should explain what increased');
-assert.ok(source.includes("Yesterday was <strong>'+fox2SignedPercent(latestChange)+'</strong>."),
-  'the result summary should put the latest completed day beside the running result');
+assert.ok(!source.includes('program-recap-summary" role="group"'),
+  'the recap card should not duplicate the fixed result statement');
 assert.ok(!source.includes('<div class="program-action-name"><span>Your actions</span>'));
 assert.ok(!source.includes("Your score builds as the day continues."));
 assert.ok(!source.includes('Measure as usual. Sync again tomorrow.'));
