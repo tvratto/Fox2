@@ -355,6 +355,9 @@ html, body {
 .program-shared-banner { margin:0 0 13px; padding:9px 12px; border:1px solid rgba(255,140,0,.28); border-radius:13px; background:rgba(255,140,0,.08); color:rgba(255,255,255,.66); font-size:12px; font-weight:850; letter-spacing:.04em; text-align:center; text-transform:uppercase; }
 .program-shell.is-shared [data-program-action] { display:none!important; }
 .program-shell.is-shared .program-input { pointer-events:none; }
+.fox2-shared .tags { display:none!important; }
+.fox2-shared #eventLayer { pointer-events:none!important; }
+.fox2-shared #eventLayer .event-hint { display:none!important; }
 .program-hidden { display:none !important; }
 .card-wrap { width: 100%; max-width: 420px; margin: auto 0; }
 .card-wrap canvas { width: 100%; height: auto; display: block; }
@@ -6314,6 +6317,8 @@ var fox2ProgramDemoSnapshot=null;
 var fox2ProgramSnapshot=null;
 var fox2ProgramReadOnly=false;
 var fox2ProgramHistoryDays=[];
+var fox2ProgramHistoryReadings=[];
+var fox2ProgramHistoryScores=[];
 var fox2PreparedShareFingerprint='';
 var fox2PreparedShareToken='';
 var fox2PreparedSharePromise=null;
@@ -6398,6 +6403,10 @@ if(fox2ProgramSnapshot&&Array.isArray(fox2ProgramSnapshot.days)){
     return result;
   },[]).sort(function(a,b){return a.date.localeCompare(b.date);}).slice(-60);
 }
+if(fox2ProgramSnapshot&&fox2ProgramSnapshot.analysis){
+  fox2ProgramHistoryReadings=Array.isArray(fox2ProgramSnapshot.analysis.readings)?fox2ProgramSnapshot.analysis.readings:[];
+  fox2ProgramHistoryScores=Array.isArray(fox2ProgramSnapshot.analysis.scores)?fox2ProgramSnapshot.analysis.scores:[];
+}
 
 function fox2ProgramStorageKey(){
   var id=params.get('id')||params.get('p')||'local';
@@ -6448,6 +6457,12 @@ function fox2DaysBetween(start,end){
 
 function fox2SetProgramHistory(readingRows,scoreRows){
   if(fox2ProgramSnapshot) return;
+  fox2ProgramHistoryReadings=(readingRows||[]).filter(function(row){
+    return row&&row.reading_ts&&isFinite(Number(row.ppm));
+  }).map(function(row){return {reading_ts:String(row.reading_ts),ppm:Number(row.ppm)};}).slice(-500);
+  fox2ProgramHistoryScores=(scoreRows||[]).filter(function(row){
+    return row&&row.day_date&&isFinite(Number(row.auc_score));
+  }).map(function(row){return {day_date:String(row.day_date),auc_score:Number(row.auc_score)};}).slice(-120);
   var readingCounts={};
   (readingRows||[]).forEach(function(row){
     if(!row||!row.reading_ts) return;
@@ -6506,7 +6521,11 @@ function fox2BuildProgramShareSnapshot(){
       resultHistory:sharedResults
     },
     payload:payload,
-    days:fox2AllCompletedScoreDays().slice(-60)
+    days:fox2AllCompletedScoreDays().slice(-60),
+    analysis:{
+      readings:fox2ProgramHistoryReadings.slice(-500),
+      scores:fox2ProgramHistoryScores.slice(-120)
+    }
   };
 }
 
@@ -6526,7 +6545,7 @@ function fox2PrepareFrozenShare(){
     return Promise.resolve(fox2ShareToken);
   }
   var snapshot=fox2BuildProgramShareSnapshot();
-  var fingerprint=JSON.stringify({v:snapshot.v,program:snapshot.program,payload:snapshot.payload,days:snapshot.days});
+  var fingerprint=JSON.stringify({v:snapshot.v,program:snapshot.program,payload:snapshot.payload,days:snapshot.days,analysis:snapshot.analysis});
   if(fox2PreparedShareToken&&fox2PreparedShareFingerprint===fingerprint) return Promise.resolve(fox2PreparedShareToken);
   if(fox2PreparedSharePromise&&fox2PreparedShareFingerprint===fingerprint) return fox2PreparedSharePromise;
   var cachedToken=fox2CachedPreparedShare(fingerprint);
@@ -7862,6 +7881,32 @@ function buildHistoricalAnalysis(readingRows,scoreRows){
   return {days:classified,completedWithScore:completedWithScore};
 }
 
+function fox2FrozenAnalysisRows(){
+  if(!fox2ProgramReadOnly) return null;
+  if(fox2ProgramHistoryReadings.length||fox2ProgramHistoryScores.length){
+    return {readings:fox2ProgramHistoryReadings,scores:fox2ProgramHistoryScores};
+  }
+  // Backward compatibility for snapshots created before full analysis rows
+  // were embedded. Reconstruct the available history from the frozen payload;
+  // never fetch the owner's live records from a shared page.
+  var readings=[],scores=[];
+  (typeof DAYS==='undefined'?[]:DAYS).forEach(function(day){
+    if(!day||!day.isoDate) return;
+    (Array.isArray(day.pts)?day.pts:[]).forEach(function(point){
+      var minute=Number(point[0]),value=Number(point[1]);
+      if(!isFinite(minute)||!isFinite(value)) return;
+      readings.push({
+        reading_ts:new Date(Date.parse(day.isoDate+'T00:00:00Z')+minute*60000).toISOString(),
+        ppm:value
+      });
+    });
+    if(isFinite(Number(day.score))&&Number(day.score)>0){
+      scores.push({day_date:day.isoDate,auc_score:Number(day.score)});
+    }
+  });
+  return {readings:readings,scores:scores};
+}
+
 function analysisRate(days){
   if(!days.length) return 0;
   return days.filter(function(d){return d.movement==='responsive';}).length/days.length;
@@ -8290,6 +8335,7 @@ function updateTagWheelScale(){
 function buildTags(){
   const d=DAYS[selectedDay],wrap=document.getElementById('tagsScroll');
   wrap.innerHTML='';
+  if(fox2ProgramReadOnly) return;
 
   Array.from({length:ALL_TAGS.length*3},(_,wheelIdx)=>ALL_TAGS[wheelIdx%ALL_TAGS.length]).forEach(([icon,name],wheelIdx)=>{
     if(wheelIdx>0 && wheelIdx%ALL_TAGS.length===0){
@@ -9725,7 +9771,7 @@ function saveLeaderboardPrefs(optIn){
 }
 
 function saveTagsForDay(idx){
-  if(!_sbDeviceId)return;
+  if(fox2ProgramReadOnly||!_sbDeviceId)return;
   clearTimeout(_tagSaveTimer[idx]);
   _tagSaveTimer[idx]=setTimeout(function(){
     var d=DAYS[idx];
@@ -9838,6 +9884,7 @@ function clientInGraph(x,y){
 }
 
 function startTagDrag(icon,name,x,y,sourceEl,eventIndex){
+  if(fox2ProgramReadOnly)return;
   activeDrag={icon,name,sourceEl,eventIndex};
   if(sourceEl)sourceEl.classList.add("dragging-source");
   const ghost=document.getElementById("dragGhost");
@@ -9885,7 +9932,7 @@ function moveTagDrag(x,y){
 }
 
 function endTagDrag(x,y){
-  if(!activeDrag)return;
+  if(fox2ProgramReadOnly||!activeDrag)return;
 
   const d=DAYS[selectedDay];
   const droppedInGraph=clientInGraph(x,y);
@@ -10067,7 +10114,12 @@ function initResultsPage(){
 // Install pager DOM structure immediately so layout is stable before Supabase resolves.
 // _doInit will call enableGraphDaySwipe() later but installDayPager() guards against double-install.
 function earlyInit(){
+  document.documentElement.classList.toggle('fox2-shared',fox2ProgramReadOnly);
   resizeP();loop();buildRail();updateCard();buildTags();installDayPager();initDayGraphPopup();
+  if(fox2ProgramReadOnly){
+    var frozenAnalysis=fox2FrozenAnalysisRows();
+    renderHistoricalAnalysis(frozenAnalysis.readings,frozenAnalysis.scores);
+  }
   setTimeout(function(){drawGraph();renderEvents();},80);
 }
 if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',earlyInit);}else{setTimeout(earlyInit,0);}
