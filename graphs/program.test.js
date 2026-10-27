@@ -111,7 +111,7 @@ assert.ok(source.includes('Measure my baseline'));
 assert.ok(source.includes('Use a standard baseline'));
 assert.ok(source.includes('var FOX2_STANDARD_BASELINE=75;'),
   'the standard starting point should be explicit and centralized');
-assert.ok(source.includes('(a low Fat Use Baseline) and begin the 30-day evaluation.'),
+assert.ok(source.includes('(a low Fat Use Baseline) and begin the 30-day program.'),
   'the standard baseline option should explain what the reference value represents');
 assert.ok(source.includes("fox2Program.screen='first'"),
   'both starting-point paths should lead into the first-measurement handoff');
@@ -159,7 +159,10 @@ assert.ok(source.includes('Add or change actions'));
 assert.ok(source.includes('var FOX2_MEASURE_DAYS=30;'),
   'the measurement segment should last 30 days');
 assert.ok(source.includes('var FOX2_PROGRAM_DAYS=FOX2_MEASURE_DAYS;'),
-  'the visible 30-day evaluation should begin after baseline preparation');
+  'the visible 30-day program should begin after baseline preparation');
+assert.ok(source.includes('30-Day Program'));
+assert.ok(source.includes('>Measure</span>'));
+assert.ok(source.includes('>Results</span>'));
 assert.ok(!source.includes("phase='Measure · Day '"),
   'the progress block should not repeat the current measuring day');
 assert.ok(source.includes("fox2DaysBetween(fox2Program.measureStart,fox2TodayIso())>=FOX2_MEASURE_DAYS"),
@@ -174,7 +177,7 @@ assert.ok(!source.includes("completed '+(metrics.measureDays.length===1?'day':'d
 assert.ok(!source.includes('Continue your actions.'),
   'the compact measure page should not repeat generic next-step messaging');
 assert.ok(source.includes('function fox2SignedPercent(value)'));
-assert.ok(source.includes('function fox2MeasureDashboardHtml(metrics)'),
+assert.ok(source.includes('function fox2MeasureDashboardHtml(metrics,options)'),
   'the measure page should present the completed-day recap and cumulative action progress');
 assert.ok(source.includes('Today So Far'),
   'the first synced measurement should produce a genuine same-day progress state');
@@ -186,6 +189,12 @@ assert.ok(source.includes('function fox2TodayHistoryHtml(today,metrics)'),
   'the same-day state should include the live 30-day history chart');
 assert.ok(source.includes("fox2TodayHistoryHtml(today,metrics)+'</div>"),
   'the live chart should appear directly below the Today So Far ring');
+assert.ok(source.includes('var today=options.forceHistory?null:fox2TodayProgramDay()'),
+  'a current-day reading should take priority over settled history during an active program');
+assert.ok(source.includes('completedByDate[date]'),
+  'the live today chart should preserve completed prior-day bars');
+assert.ok(source.includes('program-today-history-current'),
+  'the unfinished current-day bar should be visually distinct from completed days');
 assert.ok(source.includes('Live · Day '),
   'the current unfinished bar should be identified as live rather than completed');
 assert.ok(source.includes('Morning Recap'));
@@ -250,8 +259,12 @@ assert.ok(source.includes('function fox2RevealRecapHistory(root,done)'),
 assert.ok(source.includes("path.setAttribute('stroke-width','6.5')"),
   'the morph should land at the exact width of the settled chart bar');
 assert.ok(source.includes('program-measure-dashboard'));
-assert.ok(source.includes("By day '+elapsedDay+', <strong>'+fox2Escape(action)+'</strong>"),
+assert.ok(source.includes("var summaryLead=finalResult?'After 30 days':'By day '+elapsedDay"),
   'the result summary should explicitly connect elapsed time and the chosen action');
+assert.ok(source.includes('fox2MeasureDashboardHtml(metrics,{forceHistory:true,final:true})'),
+  'the completed program should retain the full chart and final result summary');
+assert.ok(source.includes("var summaryTitle=finalResult?'Your Result':'Results So Far'"),
+  'the completed program should clearly distinguish its final result from an interim result');
 assert.ok(source.includes('has increased your <strong>Fat Use Score</strong>'),
   'a positive result should explain what increased');
 assert.ok(source.includes("Yesterday was <strong>'+fox2SignedPercent(latestChange)+'</strong>."),
@@ -316,7 +329,7 @@ assert.ok(source.includes("if(!explicitReplay&&window.matchMedia"),
   'an explicit replay should run even when automatic motion is reduced');
 assert.ok(source.includes('.program-recap-sequence:not(.is-replaying) *'),
   'reduced-motion CSS should not suppress an explicitly requested replay');
-assert.ok(source.includes("if(screen==='measure') window.setTimeout(fox2AnimateMeasureRecap,0)"),
-  'the completed-day story should animate after the measure page renders');
+assert.ok(source.includes("if(screen==='measure'||screen==='results') window.setTimeout(fox2AnimateMeasureRecap,0)"),
+  'the completed-day story should animate after measure and final-results pages render');
 
 console.log('program tests passed');

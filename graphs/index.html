@@ -311,9 +311,10 @@ html, body {
 .program-today-history-label { fill:rgba(255,255,255,.4); font:800 9px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; letter-spacing:.03em; }
 .program-today-history-slot { stroke:rgba(255,255,255,.13); stroke-width:5; stroke-linecap:round; }
 .program-today-history-missing { fill:transparent; stroke:rgba(255,255,255,.38); stroke-width:1.6; }
-.program-today-history-base,.program-today-history-above { stroke-width:7; stroke-linecap:round; opacity:.63; }
+.program-today-history-base,.program-today-history-above { stroke-width:7; stroke-linecap:round; }
 .program-today-history-base { stroke:#ff8c00; }
 .program-today-history-above { stroke:#ffb84d; }
+.program-today-history-current { opacity:.58; }
 .program-today-history-now { fill:var(--program-orange); opacity:.95; }
 @keyframes program-today-fill { from{stroke-dashoffset:339.292} to{stroke-dashoffset:var(--today-offset)} }
 .program-recap-empty { min-height:235px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:28px; text-align:center; }
@@ -6415,16 +6416,16 @@ function fox2ProgressHtml(metrics){
     phase='Fat Use Baseline · '+metrics.baselineDays.length+' of '+FOX2_BASELINE_DAYS+' days'; current='baseline';
   }else if(screen==='measure'){
     var elapsed=Math.max(1,fox2DaysBetween(fox2Program.measureStart,fox2TodayIso())+1);
-    day=Math.min(total,elapsed); phase='30-day evaluation'; current='measure'; showPhase=false;
+    day=Math.min(total,elapsed); phase='30-day program'; current='measure'; showPhase=false;
   }else if(screen==='results'){day=total;phase='Result ready';current='results';}
   else if(screen==='maintain'){day=total;phase='Tracking complete';current='results';}
   var pct=Math.max(0,Math.min(100,Math.round(day/total*100)));
   var dayLabel=current==='baseline'?'Fat Use Baseline':'Day '+day+' of '+total;
   var baselineClass=current==='baseline'?'is-current':(current==='measure'||current==='results'?'is-complete':'');
-  return '<section class="program-progress" role="img" aria-label="30-day evaluation: '+dayLabel+', '+pct+' percent complete, '+phase+'">'
-    +'<div class="program-progress-head"><div class="program-progress-title">30-Day Evaluation</div><div class="program-day">'+dayLabel+'</div></div>'
+  return '<section class="program-progress" role="img" aria-label="30-day program: '+dayLabel+', '+pct+' percent complete, '+phase+'">'
+    +'<div class="program-progress-head"><div class="program-progress-title">30-Day Program</div><div class="program-day">'+dayLabel+'</div></div>'
     +'<div class="program-bar"><div class="program-bar-fill" style="width:'+pct+'%"></div></div>'
-    +'<div class="program-phases"><span class="'+baselineClass+'">'+(baselineClass==='is-complete'?'✓ ':'')+'Baseline</span><span class="'+(current==='measure'?'is-current':'')+'">30 Days</span><span class="'+(current==='results'?'is-current':'')+'">Result</span></div>'
+    +'<div class="program-phases"><span class="'+baselineClass+'">'+(baselineClass==='is-complete'?'✓ ':'')+'Baseline</span><span class="'+(current==='measure'?'is-current':'')+'">Measure</span><span class="'+(current==='results'?'is-current':'')+'">Results</span></div>'
     +'<div class="program-progress-meta"'+(showPhase?'':' style="justify-content:flex-end"')+'>'+(showPhase?'<span>'+phase+'</span>':'')+'<span>'+pct+'% Complete</span></div></section>';
 }
 
@@ -6531,7 +6532,7 @@ function fox2MethodHtml(){
   return '<section class="program-onboarding-card"><div class="program-eyebrow">Choose your Fat Use Baseline</div><h1 class="program-title">How would you like to begin?</h1>'
     +'<div class="program-methods">'
       +'<button type="button" class="program-method is-recommended" data-program-action="method-personal"><span class="program-method-badge">Recommended</span><strong>Measure my baseline</strong><span>Use seven completed days to learn your personal Fat Use Baseline.</span></button>'
-      +'<button type="button" class="program-method" data-program-action="method-standard"><span class="program-method-badge">Start now</span><strong>Use a standard baseline</strong><span>Use a Fat Use Score of '+FOX2_STANDARD_BASELINE+' (a low Fat Use Baseline) and begin the 30-day evaluation.</span></button>'
+      +'<button type="button" class="program-method" data-program-action="method-standard"><span class="program-method-badge">Start now</span><strong>Use a standard baseline</strong><span>Use a Fat Use Score of '+FOX2_STANDARD_BASELINE+' (a low Fat Use Baseline) and begin the 30-day program.</span></button>'
     +'</div><button type="button" class="program-secondary" data-program-action="back-intro">Back</button></section>';
 }
 
@@ -6564,7 +6565,7 @@ function fox2HasTodayMeasurement(){
 
 function fox2FirstMeasurementHtml(){
   var personal=fox2Program.baselineMode!=='standard',received=fox2HasTodayMeasurement();
-  return '<section><div class="program-first-day"><div class="program-eyebrow">'+(personal?'Fat Use Baseline · Day 1':'30-Day Evaluation · Day 1')+'</div>'
+  return '<section><div class="program-first-day"><div class="program-eyebrow">'+(personal?'Fat Use Baseline · Day 1':'30-Day Program · Day 1')+'</div>'
     +'<h2>Take your first measurement.</h2>'
     +(personal?'':'<div class="program-reference"><span>Fat Use Baseline</span><strong>'+FOX2_STANDARD_BASELINE+'</strong></div>')
     +'<div class="program-first-steps"><div class="program-first-step"><b>1</b><span>Pick up FOX2 and press the main button.</span></div><div class="program-first-step"><b>2</b><span>Select Measure and complete your breath test.</span></div><div class="program-first-step"><b>3</b><span>Tap your phone to FOX2 again to sync it.</span></div></div>'
@@ -6713,34 +6714,47 @@ function fox2RecapHistorySvg(model){
 function fox2TodayHistoryHtml(today,metrics){
   var baseline=Math.max(1,Number(metrics.baseline)||FOX2_STANDARD_BASELINE);
   var dayIndex=Math.max(0,Math.min(FOX2_MEASURE_DAYS-1,fox2DaysBetween(fox2Program.measureStart,fox2TodayIso())));
-  var scaleMax=Math.max(60,Math.ceil((Math.max(today.score,baseline)*1.12)/30)*30);
+  var completedByDate={};
+  (metrics.measureDays||[]).forEach(function(day){completedByDate[day.date]=day;});
+  var completedScores=(metrics.measureDays||[]).map(function(day){return Number(day.score)||0;});
+  var peak=Math.max.apply(null,[Number(today.score)||0,baseline].concat(completedScores));
+  var scaleMax=Math.max(60,Math.ceil((peak*1.12)/30)*30);
   var plotBottom=100,plotHeight=67,baselineY=plotBottom-Math.min(plotHeight,baseline/scaleMax*plotHeight);
   var scoreHeight=today.score?Math.max(7,today.score/scaleMax*plotHeight):0;
   var scoreTop=plotBottom-scoreHeight,baseTop=Math.max(scoreTop,baselineY);
-  var slots='',marks='',todayX=18+dayIndex*(300/(FOX2_MEASURE_DAYS-1));
+  var slots='',marks='',start=fox2Program.measureStart,todayX=18+dayIndex*(300/(FOX2_MEASURE_DAYS-1));
   for(var i=0;i<FOX2_MEASURE_DAYS;i++){
-    var x=18+i*(300/(FOX2_MEASURE_DAYS-1));
-    slots+=i<dayIndex
-      ? '<circle class="program-today-history-missing" cx="'+x.toFixed(1)+'" cy="98" r="2.7"></circle>'
-      : '<line class="program-today-history-slot" x1="'+x.toFixed(1)+'" y1="96" x2="'+x.toFixed(1)+'" y2="100"></line>';
+    var x=18+i*(300/(FOX2_MEASURE_DAYS-1)),date=fox2AddIsoDays(start,i),completed=completedByDate[date];
+    if(completed){
+      var completedScore=Math.max(0,Number(completed.score)||0);
+      var completedHeight=completedScore?Math.max(7,completedScore/scaleMax*plotHeight):0;
+      var completedTop=plotBottom-completedHeight,completedBaseTop=Math.max(completedTop,baselineY);
+      marks+='<line class="program-today-history-base" x1="'+x.toFixed(1)+'" y1="'+completedBaseTop.toFixed(1)+'" x2="'+x.toFixed(1)+'" y2="'+plotBottom+'"></line>';
+      if(completedTop<baselineY) marks+='<line class="program-today-history-above" x1="'+x.toFixed(1)+'" y1="'+completedTop.toFixed(1)+'" x2="'+x.toFixed(1)+'" y2="'+baselineY.toFixed(1)+'"></line>';
+    }else if(i<dayIndex){
+      slots+='<circle class="program-today-history-missing" cx="'+x.toFixed(1)+'" cy="98" r="2.7"></circle>';
+    }else{
+      slots+='<line class="program-today-history-slot" x1="'+x.toFixed(1)+'" y1="96" x2="'+x.toFixed(1)+'" y2="100"></line>';
+    }
   }
   if(today.score>0){
-    marks+='<line class="program-today-history-base" x1="'+todayX.toFixed(1)+'" y1="'+baseTop.toFixed(1)+'" x2="'+todayX.toFixed(1)+'" y2="'+plotBottom+'"></line>';
-    if(scoreTop<baselineY) marks+='<line class="program-today-history-above" x1="'+todayX.toFixed(1)+'" y1="'+scoreTop.toFixed(1)+'" x2="'+todayX.toFixed(1)+'" y2="'+baselineY.toFixed(1)+'"></line>';
+    marks+='<line class="program-today-history-base program-today-history-current" x1="'+todayX.toFixed(1)+'" y1="'+baseTop.toFixed(1)+'" x2="'+todayX.toFixed(1)+'" y2="'+plotBottom+'"></line>';
+    if(scoreTop<baselineY) marks+='<line class="program-today-history-above program-today-history-current" x1="'+todayX.toFixed(1)+'" y1="'+scoreTop.toFixed(1)+'" x2="'+todayX.toFixed(1)+'" y2="'+baselineY.toFixed(1)+'"></line>';
     marks+='<circle class="program-today-history-now" cx="'+todayX.toFixed(1)+'" cy="'+scoreTop.toFixed(1)+'" r="3.2"></circle>';
   }
   return '<div class="program-today-history"><div class="program-today-history-head"><strong>30-Day Fat Use Scores</strong><span>Live · Day '+(dayIndex+1)+'</span></div><svg class="program-today-history-svg" viewBox="0 0 336 126" role="img" aria-label="Live 30-day Fat Use Score chart. Today is day '+(dayIndex+1)+' with a current score of '+fox2Round(today.score)+'. Baseline '+fox2Round(baseline)+'.">'+slots+'<line class="program-today-history-baseline" x1="14" y1="'+baselineY.toFixed(1)+'" x2="322" y2="'+baselineY.toFixed(1)+'"></line><line class="program-today-history-axis" x1="14" y1="101" x2="322" y2="101"></line>'+marks+'<text class="program-today-history-label" x="14" y="119">DAY 1</text><text class="program-today-history-label" x="322" y="119" text-anchor="end">DAY 30</text><text class="program-today-history-label" x="322" y="'+Math.max(10,baselineY-5).toFixed(1)+'" text-anchor="end">BASELINE '+fox2Round(baseline)+'</text></svg></div>';
 }
 
-function fox2MeasureDashboardHtml(metrics){
+function fox2MeasureDashboardHtml(metrics,options){
+  options=options||{};
   var model=fox2RecapModel(metrics),action=fox2Program.action||'Your action';
+  var today=options.forceHistory?null:fox2TodayProgramDay();
+  if(today){
+    var todayVisual=fox2RingVisual(today.score),circumference=339.292;
+    var todayOffset=(circumference*(1-todayVisual.progress)).toFixed(3);
+    return '<section class="program-measure-dashboard"><div class="program-recap-sequence is-settled"><div class="program-today-card"><h2 class="program-today-title">Today So Far</h2><svg class="program-today-ring" viewBox="0 0 220 220" role="img" aria-label="Today Fat Use Score '+todayVisual.value+' from '+today.readings+' '+(today.readings===1?'reading':'readings')+'"><circle class="program-today-track" cx="110" cy="110" r="54"></circle><circle class="program-today-value" cx="110" cy="110" r="54" style="--today-color:'+todayVisual.color+';--today-offset:'+todayOffset+'"></circle><text class="program-today-score" x="110" y="116">'+todayVisual.value+'</text><text class="program-today-unit" x="110" y="138">FAT USE SCORE</text></svg><div class="program-today-status">'+today.readings+' '+(today.readings===1?'reading':'readings')+' · Day in progress</div>'+fox2TodayHistoryHtml(today,metrics)+'</div></div></section>';
+  }
   if(!model){
-    var today=fox2TodayProgramDay();
-    if(today){
-      var todayVisual=fox2RingVisual(today.score),circumference=339.292;
-      var todayOffset=(circumference*(1-todayVisual.progress)).toFixed(3);
-      return '<section class="program-measure-dashboard"><div class="program-recap-sequence is-settled"><div class="program-today-card"><h2 class="program-today-title">Today So Far</h2><svg class="program-today-ring" viewBox="0 0 220 220" role="img" aria-label="Today Fat Use Score '+todayVisual.value+' from '+today.readings+' '+(today.readings===1?'reading':'readings')+'"><circle class="program-today-track" cx="110" cy="110" r="54"></circle><circle class="program-today-value" cx="110" cy="110" r="54" style="--today-color:'+todayVisual.color+';--today-offset:'+todayOffset+'"></circle><text class="program-today-score" x="110" y="116">'+todayVisual.value+'</text><text class="program-today-unit" x="110" y="138">FAT USE SCORE</text></svg><div class="program-today-status">'+today.readings+' '+(today.readings===1?'reading':'readings')+' · Day in progress</div>'+fox2TodayHistoryHtml(today,metrics)+'</div></div></section>';
-    }
     return '<section class="program-measure-dashboard"><div class="program-recap-sequence is-settled"><div class="program-recap-empty"><strong>Results So Far</strong><span>Your first completed day will appear here after you sync.</span></div></div></section>';
   }
   var animate=fox2ShouldAnimateRecap(model),settledClass=animate?'':' is-history-visible is-bar-landed is-settled';
@@ -6757,13 +6771,16 @@ function fox2MeasureDashboardHtml(metrics){
   var latestSentence=latestDateLabel==='Yesterday'
     ? 'Yesterday was <strong>'+fox2SignedPercent(latestChange)+'</strong>.'
     : 'Your latest completed day was <strong>'+fox2SignedPercent(latestChange)+'</strong>.';
+  var finalResult=!!options.final;
+  var summaryTitle=finalResult?'Your Result':'Results So Far';
+  var summaryLead=finalResult?'After 30 days':'By day '+elapsedDay;
   return '<section class="program-measure-dashboard"><div class="program-recap-sequence'+settledClass+'" style="--recap-color:'+model.latestVisual.color+'" data-recap-animate="'+(animate?'1':'0')+'" data-latest-date="'+fox2Escape(model.latest.date)+'" data-score="'+scoreText+'" data-fill="'+model.latestVisual.progress+'" data-target-x="'+model.latestSlot.x+'" data-target-top="'+model.latestSlot.top.toFixed(1)+'" data-target-bottom="'+model.plotBottom+'" data-from="'+model.priorChange+'" data-to="'+model.change+'">'
     +'<div class="program-recap-head"><span class="program-recap-kicker">Morning Recap</span><span class="program-recap-date">'+fox2Escape(latestDateLabel)+'</span><div class="program-recap-history-title"><div class="program-recap-title-row"><strong>30-Day Fat Use Scores</strong><button type="button" class="program-recap-replay" data-recap-replay aria-label="Replay morning recap" title="Replay morning recap">↻</button></div><span>'+model.completed+' completed '+(model.completed===1?'day':'days')+' · Baseline '+fox2Round(model.baseline)+'</span></div></div>'
     +'<svg class="program-recap-svg" viewBox="0 0 336 236" role="img" aria-label="'+fox2Escape(latestDateLabel)+' Fat Use Score '+scoreText+', added to day '+model.latestDayNumber+' of your 30-day history">'
     +'<circle class="program-recap-ring-track" cx="168" cy="112" r="54"></circle><path class="program-recap-morph" d="'+path+'"></path>'
     +'<g class="program-recap-score"><text class="program-recap-score-value" id="program-recap-score" x="168" y="116">'+scoreText+'</text><text class="program-recap-score-label" x="168" y="136">FAT USE SCORE</text></g>'
     +fox2RecapHistorySvg(model)+'</svg>'
-    +'<div class="program-recap-summary" role="group" aria-label="By day '+elapsedDay+', '+fox2Escape(action)+' changed your Fat Use Score '+fox2SignedPercent(model.change)+' versus baseline. '+fox2Escape(latestSentence.replace(/<[^>]+>/g,''))+'"><h2>Results So Far</h2><p class="program-recap-statement">By day '+elapsedDay+', <strong>'+fox2Escape(action)+'</strong> '+resultSentence+'<span class="program-recap-yesterday">'+latestSentence+'</span></p></div>'
+    +'<div class="program-recap-summary" role="group" aria-label="'+summaryLead+', '+fox2Escape(action)+' changed your Fat Use Score '+fox2SignedPercent(model.change)+' versus baseline. '+fox2Escape(latestSentence.replace(/<[^>]+>/g,''))+'"><h2>'+summaryTitle+'</h2><p class="program-recap-statement">'+summaryLead+', <strong>'+fox2Escape(action)+'</strong> '+resultSentence+'<span class="program-recap-yesterday">'+latestSentence+'</span></p></div>'
     +'</div></section>';
 }
 
@@ -6923,12 +6940,15 @@ function fox2ResultsHtml(metrics){
   if(!items.length&&metrics.baseline&&metrics.after){
     items=[{action:fox2Program.action,before:fox2Round(metrics.baseline),after:fox2Round(metrics.after),change:Math.round((metrics.after-metrics.baseline)/metrics.baseline*100)}];
   }
-  var history=items.length?items.map(function(item){
+  var previous=items.slice(1);
+  var history=previous.map(function(item){
     var change=Number(item.change)||0;
     return '<article class="program-history-item"><h2 class="program-history-title"><span class="program-history-bullet"></span><span>'+fox2Escape(item.action||'Actions')+'</span></h2><div role="table" aria-label="Action result"><div class="program-result-table-head" role="row"><span>Before</span><span>After</span><span>Change</span></div><div class="program-result-table-values" role="row"><span>'+item.before+'</span><span>'+item.after+'</span><span>'+(change>=0?'+':'')+change+'%</span></div></div></article>';
-  }).join(''):'<div class="program-baseline-empty">No completed results yet</div>';
-  return '<section><div class="program-eyebrow">Results</div><h1 class="program-title">Action History</h1><div class="program-history">'+history+'</div></section>'
-    +'<section class="program-section"><h2 class="program-section-title">What do you want to do?</h2><button type="button" class="program-choice is-primary" data-program-action="maintain">Keep tracking</button><button type="button" class="program-choice" data-program-action="change-actions">Add or change actions</button><button type="button" class="program-choice" data-program-action="start-over">Start over</button></section>';
+  }).join('');
+  var previousResults=history?'<section class="program-section"><div class="program-eyebrow">Previous Programs</div><div class="program-history">'+history+'</div></section>':'';
+  return fox2MeasureDashboardHtml(metrics,{forceHistory:true,final:true})
+    +'<section class="program-section"><h2 class="program-section-title">What do you want to do?</h2><button type="button" class="program-choice is-primary" data-program-action="maintain">Keep tracking</button><button type="button" class="program-choice" data-program-action="change-actions">Add or change actions</button><button type="button" class="program-choice" data-program-action="start-over">Start over</button></section>'
+    +previousResults;
 }
 
 function fox2MaintainHtml(){
@@ -7183,7 +7203,7 @@ function fox2RenderProgram(){
   });
   var replay=shell.querySelector('[data-recap-replay]');
   if(replay) replay.addEventListener('click',fox2ReplayMeasureRecap);
-  if(screen==='measure') window.setTimeout(fox2AnimateMeasureRecap,0);
+  if(screen==='measure'||screen==='results') window.setTimeout(fox2AnimateMeasureRecap,0);
   if(fox2ProgramOptionsOpen) window.setTimeout(function(){
     var options=shell.querySelector('.program-options');
     if(options) options.scrollIntoView({behavior:'smooth',block:'start',inline:'nearest'});
