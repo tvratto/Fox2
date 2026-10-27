@@ -324,12 +324,18 @@ assert.ok(source.includes('fox2ProgramSnapshot=fox2SharedProgramSnapshot||fox2Pr
   'shared and demo snapshots should use the same representative program state');
 assert.ok(source.includes('fox2ProgramReadOnly=!!fox2SharedProgramSnapshot'),
   'only shared snapshots should be read-only');
-assert.ok(source.includes("url.searchParams.delete('program_demo')"),
-  'sharing the interactive demo should produce an ordinary read-only share URL');
+assert.ok(source.includes("var url=new URL('/graphs/',window.location.origin)"),
+  'shared links should always be built from the canonical graphs route');
+assert.ok(source.includes("['id','p','c'].forEach"),
+  'shared links should retain stable device and user context');
+assert.ok(source.includes("if(!url.searchParams.has('id'))"),
+  'links without a stable device id should retain enough payload data to load');
 assert.ok(source.includes("url.searchParams.set('program_share',encoded)"),
   'sharing from Progress should add the read-only snapshot to the results URL');
-assert.ok(source.includes("var url = sharingProgram?fox2ProgramShareUrl():window.location.href"),
-  'the always-available Share button should use a tracking-aware link on Progress');
+assert.ok(source.includes("var url = sharingProgram?fox2ProgramShareUrl():fox2ResultsShareUrl()"),
+  'the always-available Share button should use canonical links on every page');
+assert.ok(source.includes("if(!fox2ValidShareUrl(url)) url=fox2ShareBaseUrl().toString()"),
+  'the share handler should reject rewritten or UUID-style routes before invoking Messages');
 assert.ok(source.includes('Shared FOX2 progress'),
   'receivers should be told that they are viewing shared progress');
 assert.ok(source.includes('.program-shell.is-shared [data-program-action]'),

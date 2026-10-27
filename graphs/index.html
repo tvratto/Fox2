@@ -6409,16 +6409,41 @@ function fox2BuildProgramShareSnapshot(){
   };
 }
 
+function fox2ShareBaseUrl(){
+  var url=new URL('/graphs/',window.location.origin);
+  ['id','p','c'].forEach(function(key){
+    var value=params.get(key);
+    if(value) url.searchParams.set(key,value);
+  });
+  // Older and test links may not have a stable device id yet. Keep only the
+  // fields needed to reconstruct their data, while still using /graphs/.
+  if(!url.searchParams.has('id')){
+    ['ws','d','a','t','s','h','tz','v'].forEach(function(key){
+      var value=params.get(key);
+      if(value) url.searchParams.set(key,value);
+    });
+  }
+  return url;
+}
+
+function fox2ResultsShareUrl(){
+  return fox2ShareBaseUrl().toString();
+}
+
 function fox2ProgramShareUrl(){
-  var url=new URL(window.location.href);
+  var url=fox2ShareBaseUrl();
   var encoded=fox2EncodeProgramSnapshot(fox2BuildProgramShareSnapshot());
   if(encoded) url.searchParams.set('program_share',encoded);
-  url.searchParams.delete('sync');
-  url.searchParams.delete('handoff');
-  url.searchParams.delete('sync_rev');
-  url.searchParams.delete('program');
-  url.searchParams.delete('program_demo');
   return url.toString();
+}
+
+function fox2ValidShareUrl(value){
+  try{
+    var url=new URL(value);
+    return url.origin===window.location.origin&&/^\/graphs\/?$/.test(url.pathname);
+  }catch(error){
+    return false;
+  }
 }
 
 function fox2CompletedScoresSince(start){
@@ -7395,7 +7420,8 @@ var currentPage = 0;
 
 function handleBottomShare() {
   var sharingProgram=currentPage===0;
-  var url = sharingProgram?fox2ProgramShareUrl():window.location.href;
+  var url = sharingProgram?fox2ProgramShareUrl():fox2ResultsShareUrl();
+  if(!fox2ValidShareUrl(url)) url=fox2ShareBaseUrl().toString();
   var title=sharingProgram?'FOX2 Progress Tracking':'FOX2 Results';
   if (navigator.share) {
     navigator.share({ title: title, url: url }).catch(function() {});
