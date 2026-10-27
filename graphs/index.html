@@ -92,16 +92,7 @@ html, body {
 .program-progress-result p { margin:0; color:rgba(255,255,255,.76); font-size:14px; line-height:1.38; font-weight:650; overflow-wrap:anywhere; }
 .program-progress-result strong { color:#fff; font-weight:900; }
 .program-progress-result-change { color:#ffb84d; font-weight:950; white-space:nowrap; }
-.program-progress-options { display:flex; width:100%; min-height:42px; align-items:center; justify-content:space-between; margin-top:12px; padding:10px 0 0; border:0; border-top:1px solid rgba(255,255,255,.1); background:transparent; color:rgba(255,255,255,.72); font:850 13px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; text-align:left; cursor:pointer; }
-.program-progress-options span { color:rgba(255,255,255,.42); font-size:20px; font-weight:500; }
-.program-options-modal { position:fixed; z-index:120; inset:0; display:flex; align-items:flex-end; justify-content:center; padding:18px 12px calc(18px + env(safe-area-inset-bottom)); }
-.program-options-backdrop { position:absolute; inset:0; border:0; background:rgba(0,0,0,.68); backdrop-filter:blur(5px); cursor:pointer; }
-.program-options-sheet { position:relative; z-index:1; width:min(100%,420px); padding:18px; border:1px solid rgba(255,255,255,.14); border-radius:24px; background:#15171b; box-shadow:0 -18px 60px rgba(0,0,0,.5); }
-.program-options-sheet-head { display:flex; align-items:center; justify-content:space-between; gap:14px; }
-.program-options-sheet-head h2 { margin:0; color:#fff; font-size:21px; line-height:1.1; font-weight:900; letter-spacing:-.025em; }
-.program-options-close { width:42px; height:42px; padding:0; border:0; border-radius:50%; background:rgba(255,255,255,.08); color:#fff; font-size:22px; line-height:1; cursor:pointer; }
-.program-options-sheet > p { margin:8px 0 0; color:rgba(255,255,255,.58); font-size:14px; line-height:1.4; }
-.program-options-sheet .program-option-actions { margin-top:15px; }
+.program-progress .program-options-toggle { min-height:38px; margin-top:9px; font-size:13px; }
 .program-section { margin-top:26px; padding-top:24px; border-top:1px solid rgba(255,255,255,.1); }
 .program-eyebrow { margin-bottom:10px; color:var(--program-gold); font-size:12px; font-weight:900; letter-spacing:.14em; text-transform:uppercase; }
 .program-title { margin:0; font-size:clamp(28px,8vw,34px); line-height:1.04; letter-spacing:-.045em; font-weight:900; }
@@ -6464,7 +6455,7 @@ function fox2ProgressHtml(metrics){
     else if(resultChange<0) resultCopy='<strong>'+resultAction+'</strong> has decreased your Fat Use Score by <span class="program-progress-result-change">'+Math.abs(resultChange)+'%</span> versus baseline.';
     else resultCopy='<strong>'+resultAction+'</strong> has kept your Fat Use Score at baseline.';
   }
-  var programOptions=screen==='measure'?'<button type="button" class="program-progress-options" data-program-action="toggle-options" aria-haspopup="dialog" aria-expanded="'+fox2ProgramOptionsOpen+'">Program options <span aria-hidden="true">›</span></button>':'';
+  var programOptions=screen==='measure'?'<button type="button" class="program-options-toggle" data-program-action="toggle-options" aria-expanded="'+fox2ProgramOptionsOpen+'">Program options '+(fox2ProgramOptionsOpen?'▴':'▾')+'</button>':'';
   return '<section class="program-progress" role="region" aria-label="30-day program: '+dayLabel+', '+pct+' percent complete, '+phase+'">'
     +'<div class="program-progress-head"><div class="program-progress-title">30-Day Program</div><div class="program-day">'+dayLabel+'</div></div>'
     +'<div class="program-bar"><div class="program-bar-fill" style="width:'+pct+'%"></div></div>'
@@ -6819,10 +6810,10 @@ function fox2MeasureDashboardHtml(metrics,options){
 function fox2MeasureHtml(metrics){
   var content=fox2MeasureDashboardHtml(metrics);
   if(fox2ProgramOptionsOpen){
-    content+='<div class="program-options-modal"><button type="button" class="program-options-backdrop" data-program-action="toggle-options" aria-label="Close program options"></button><section class="program-options-sheet" role="dialog" aria-modal="true" aria-labelledby="program-options-title"><div class="program-options-sheet-head"><h2 id="program-options-title">Program options</h2><button type="button" class="program-options-close" data-program-action="toggle-options" aria-label="Close program options">×</button></div><p>Change how your 30-day program is running.</p><div class="program-option-actions">';
+    content+='<div class="program-options"><p>Change how your 30-day program is running.</p><div class="program-option-actions">';
     if(metrics.measureDays.length) content+='<button type="button" class="program-option-card is-primary" data-program-action="finish-measuring"><strong>Finish program and view result</strong><span>End the program early and save the result so far.</span></button>';
     content+='<button type="button" class="program-option-card" data-program-action="restart-measuring"><strong>Restart program</strong><span>Keep your Fat Use Baseline and return to day 1.</span></button>'
-      +'<button type="button" class="program-option-card" data-program-action="start-over"><strong>Start over with a new baseline</strong><span>Begin a new program with a new Fat Use Baseline.</span></button></div></section></div>';
+      +'<button type="button" class="program-option-card" data-program-action="start-over"><strong>Start over with a new baseline</strong><span>Begin a new program with a new Fat Use Baseline.</span></button></div></div>';
   }
   return content;
 }
@@ -7235,11 +7226,6 @@ function fox2RenderProgram(){
   var replay=shell.querySelector('[data-recap-replay]');
   if(replay) replay.addEventListener('click',fox2ReplayMeasureRecap);
   if(screen==='measure'||screen==='results') window.setTimeout(fox2AnimateMeasureRecap,0);
-  var optionsSheet=shell.querySelector('.program-options-sheet');
-  if(optionsSheet) window.setTimeout(function(){
-    var close=optionsSheet.querySelector('.program-options-close');
-    if(close) close.focus();
-  },0);
   if(fox2ProgramOptionsOpen) window.setTimeout(function(){
     var options=shell.querySelector('.program-options');
     if(options) options.scrollIntoView({behavior:'smooth',block:'start',inline:'nearest'});

@@ -288,10 +288,12 @@ assert.ok(!source.includes('program-recap-summary" role="group"'),
 assert.ok(!source.includes('<div class="program-action-name"><span>Your actions</span>'));
 assert.ok(!source.includes("Your score builds as the day continues."));
 assert.ok(!source.includes('Measure as usual. Sync again tomorrow.'));
-assert.ok(source.includes('class="program-progress-options"'),
+assert.ok(source.includes("var programOptions=screen==='measure'?'<button type=\"button\" class=\"program-options-toggle\""),
   'the program-options trigger should stay inside the fixed progress card');
-assert.ok(source.includes('class="program-options-sheet" role="dialog"'),
-  'program options should open in a compact modal sheet instead of expanding below the page');
+assert.ok(source.includes("content+='<div class=\"program-options\"><p>Change how your 30-day program is running."),
+  'program options should expand in the familiar inline section below the dashboard');
+assert.ok(!source.includes('program-options-sheet'),
+  'program options should no longer open in a detached bottom sheet');
 assert.ok(!source.includes('>Tracking options '),
   'the old tracking-options trigger should not remain below the measure card');
 assert.ok(source.includes("if(metrics.measureDays.length) content+='<button type=\"button\" class=\"program-option-card is-primary\""),
