@@ -97,12 +97,15 @@ assert.ok(graphSource.includes("Number(incoming.generation||0)>=handoffGeneratio
   assert.ok(storage['fox2-sync-update:DEVICE1']);
 
   // A page running the old handoff code must not capture a newly loaded page.
+  var staleRefresh='';
   const staleChannel=new MockBroadcastChannel('fox2-sync-DEVICE3');
   staleChannel.addEventListener('message',event=>{
     if(event.data&&event.data.type==='probe') staleChannel.postMessage({type:'present',deviceId:'DEVICE3',nonce:event.data.nonce});
+    if(event.data&&event.data.type==='updated') staleRefresh=event.data.resultsUrl||'';
   });
   const replacement=page('?id=DEVICE3&d=s%3A0010');
   assert.equal(replacement.window._fox2Handoff.existing,false);
+  assert.ok(staleRefresh.includes('client_gen=2'));
   replacement.timers.splice(0).forEach(timer=>timer());
   assert.equal(replacement.window._fox2Handoff.established,true);
 

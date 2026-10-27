@@ -2491,8 +2491,16 @@ var sParam    = params.get('s') || '';
       window.focus();
       return;
     }
-    if(incoming.type==='present'&&!state.decided&&incoming.nonce===nonce&&Number(incoming.generation||0)>=handoffGeneration){
-      state.existing=true;
+    if(incoming.type==='present'&&!state.decided&&incoming.nonce===nonce){
+      if(Number(incoming.generation||0)>=handoffGeneration){
+        state.existing=true;
+      }else{
+        // A pre-fix results tab is still alive. It understands `updated`, so
+        // use that message to replace its cached document with this build.
+        var refreshUrl=new URL(window.location.href);
+        refreshUrl.searchParams.set('client_gen',String(handoffGeneration));
+        channel.postMessage({type:'updated',deviceId:deviceId,resultsUrl:refreshUrl.toString()});
+      }
       return;
     }
     if(incoming.type==='updated'&&state.established&&incoming.resultsUrl){
@@ -6413,6 +6421,7 @@ function fox2BuildProgramShareSnapshot(){
 
 function fox2ShareBaseUrl(){
   var url=new URL('/graphs/',window.location.origin);
+  url.searchParams.set('share_v','2');
   ['id','p','c'].forEach(function(key){
     var value=params.get(key);
     if(value) url.searchParams.set(key,value);

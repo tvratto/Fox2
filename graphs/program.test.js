@@ -326,6 +326,8 @@ assert.ok(source.includes('fox2ProgramReadOnly=!!fox2SharedProgramSnapshot'),
   'only shared snapshots should be read-only');
 assert.ok(source.includes("var url=new URL('/graphs/',window.location.origin)"),
   'shared links should always be built from the canonical graphs route');
+assert.ok(source.includes("url.searchParams.set('share_v','2')"),
+  'new share links should expose their share implementation version');
 assert.ok(source.includes("['id','p','c'].forEach"),
   'shared links should retain stable device and user context');
 assert.ok(source.includes("if(!url.searchParams.has('id'))"),
