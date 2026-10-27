@@ -189,8 +189,10 @@ assert.ok(source.includes('function fox2MeasureDashboardHtml(metrics,options)'),
   'the measure page should present the completed-day recap and cumulative action progress');
 assert.ok(source.includes('Today So Far'),
   'the first synced measurement should produce a genuine same-day progress state');
-assert.ok(source.includes('<span class="program-today-progress-label">Day in progress</span>'),
-  'the same-day state should say that the result is still in progress');
+assert.ok(!source.includes('program-today-progress-label'),
+  'the Today So Far heading should not repeat that the day is in progress');
+assert.ok(!source.includes('Today is underway'),
+  'the Today So Far card should not repeat that today is underway');
 assert.ok(source.includes('class="program-today-grid"'),
   'the Today So Far ring and explanation should use the compact prototype layout');
 assert.ok(source.includes('--today-color:var(--program-orange)'),
