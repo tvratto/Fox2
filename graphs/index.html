@@ -637,6 +637,7 @@ html, body {
   color:#fff; text-align:left; text-decoration:none; font:800 15px/1.2 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; cursor:pointer;
 }
 .guide-choice span { display:block; margin-top:4px; color:rgba(255,255,255,.43); font-size:12px; line-height:1.35; font-weight:550; }
+.guide-choice[hidden] { display:none; }
 .guide-choice:active { background:rgba(255,255,255,.11); }
 #guide-modal-overlay.is-viewer { align-items:flex-start; padding:calc(env(safe-area-inset-top) + 14px) 9px calc(env(safe-area-inset-bottom) + 74px); overflow:auto; background:#000; }
 #guide-modal-overlay.is-viewer #guide-modal { width:min(430px,100%); max-height:none; padding:0; border:0; background:transparent; }
@@ -2368,11 +2369,19 @@ html, body {
   <div id="guide-modal" role="dialog" aria-modal="true" aria-labelledby="guide-modal-title">
     <button type="button" class="modal-corner-close" onclick="closeGuideModal()" aria-label="Close FOX2 Help">×</button>
     <div id="guide-menu">
-      <div class="export-modal-title" id="guide-modal-title">FOX2 Help</div>
-      <div class="export-modal-copy">Review how FOX2 works or see how to take a measurement.</div>
-      <button type="button" class="guide-choice" onclick="openFox2WorksGuide()">How FOX2 Works<span>Replay the three-part introduction.</span></button>
-      <a class="guide-choice" href="/guide/" target="_self">How to Measure<span>Warmup, blowing, and measurement tips.</span></a>
-      <button type="button" class="export-modal-close" onclick="closeGuideModal()">Close</button>
+      <div id="guide-menu-main">
+        <div class="export-modal-title" id="guide-modal-title">FOX2 Help</div>
+        <div class="export-modal-copy">Review how FOX2 works or see how to take a measurement.</div>
+        <button type="button" class="guide-choice" onclick="openFox2WorksGuide()">How FOX2 Works<span>Replay the three-part introduction.</span></button>
+        <a class="guide-choice" href="/guide/" target="_self">How to Measure<span>Warmup, blowing, and measurement tips.</span></a>
+        <button type="button" class="guide-choice" id="guide-restore-session" onclick="openFox2RestoreGuideConfirm()" hidden>Restore Last Session<span>Undo the most recent restart or new-baseline choice.</span></button>
+        <button type="button" class="export-modal-close" onclick="closeGuideModal()">Close</button>
+      </div>
+      <div id="guide-restore-confirm" hidden>
+        <div class="program-confirm-title">Restore Last Session?</div>
+        <p class="program-confirm-copy">Replace the current Progress Tracking setup with the session saved before your most recent restart or baseline change?</p>
+        <div class="program-confirm-actions"><button type="button" class="program-confirm-cancel" onclick="cancelFox2RestoreGuideConfirm()">Keep current</button><button type="button" class="program-confirm-use" onclick="restoreFox2LastSession()">Restore session</button></div>
+      </div>
     </div>
     <div id="guide-replay" hidden></div>
   </div>
@@ -7488,13 +7497,39 @@ var fox2GuideReplayTransitioning=false;
 function openGuideModal(){
   var overlay=document.getElementById('guide-modal-overlay');
   var menu=document.getElementById('guide-menu');
+  var main=document.getElementById('guide-menu-main');
+  var confirm=document.getElementById('guide-restore-confirm');
+  var restore=document.getElementById('guide-restore-session');
   var replay=document.getElementById('guide-replay');
   if(!overlay||!menu||!replay) return;
   overlay.classList.remove('is-viewer');
   menu.hidden=false;
+  if(main) main.hidden=false;
+  if(confirm) confirm.hidden=true;
+  if(restore) restore.hidden=fox2ProgramReadOnly||!fox2LoadProgramBackup();
   replay.hidden=true;
   replay.innerHTML='';
   overlay.classList.add('open');
+}
+
+function openFox2RestoreGuideConfirm(){
+  if(fox2ProgramReadOnly||!fox2LoadProgramBackup()) return;
+  var main=document.getElementById('guide-menu-main');
+  var confirm=document.getElementById('guide-restore-confirm');
+  if(main) main.hidden=true;
+  if(confirm) confirm.hidden=false;
+}
+
+function cancelFox2RestoreGuideConfirm(){
+  var main=document.getElementById('guide-menu-main');
+  var confirm=document.getElementById('guide-restore-confirm');
+  if(main) main.hidden=false;
+  if(confirm) confirm.hidden=true;
+}
+
+function restoreFox2LastSession(){
+  if(!fox2RestoreProgramBackup()) return;
+  closeGuideModal();
 }
 
 function closeGuideModal(){

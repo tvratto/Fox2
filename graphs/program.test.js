@@ -112,6 +112,18 @@ assert.ok(source.includes('onclick="openGuideModal()"'),
 assert.ok(source.includes('FOX2 Help'));
 assert.ok(source.includes('How FOX2 Works<span>Replay the three-part introduction.</span>'));
 assert.ok(source.includes('How to Measure<span>Warmup, blowing, and measurement tips.</span>'));
+assert.ok(source.includes('Restore Last Session<span>Undo the most recent restart or new-baseline choice.</span>'),
+  'Help should expose recovery when a previous program session is available');
+assert.ok(source.includes('restore.hidden=fox2ProgramReadOnly||!fox2LoadProgramBackup()'),
+  'Restore Last Session should only appear when a local recovery exists');
+assert.ok(source.includes('.guide-choice[hidden] { display:none; }'),
+  'the conditional restore entry should remain hidden when no recovery exists');
+assert.ok(source.includes('function openFox2RestoreGuideConfirm()'),
+  'Help recovery should require a focused confirmation');
+assert.ok(source.includes('Replace the current Progress Tracking setup with the session saved before your most recent restart or baseline change?'),
+  'the confirmation should explain exactly what restoration replaces');
+assert.ok(source.includes('function restoreFox2LastSession()'),
+  'the Help recovery action should restore the protected program backup');
 assert.ok(source.includes('href="/guide/"'),
   'measurement help should remain available');
 assert.ok(source.includes('data-guide-action="done">Done</button>'),
