@@ -374,6 +374,14 @@ assert.ok(source.includes('has increased your Fat Use Score by <span class="prog
   'a positive result should explain what increased');
 assert.ok(source.includes("var resultDuration='After '+day+' '+(day===1?'day':'days')+', '"),
   'the fixed result should state how far into the program the result was measured');
+assert.ok(source.includes('function fox2CurrentProgramResult()'),
+  'finished programs should resolve the saved result belonging to the current program');
+assert.ok(source.includes("var savedResult=(fox2Program.screen==='results'||fox2Program.screen==='maintain')?fox2CurrentProgramResult():null"),
+  'finished programs should freeze their metrics at the saved result');
+assert.ok(source.includes('if(measureEnd) measureDays=measureDays.filter(function(day){return day.date<=measureEnd;})'),
+  'later measurements must not change a previously finished program result');
+assert.ok(source.includes("}else if(screen==='results'){day=metrics.elapsedDays;phase='Result ready';current='results';}"),
+  'an early final result should show its actual elapsed program days rather than 30');
 assert.ok(source.includes('class="program-progress-result-action"'),
   'the user’s chosen action should be highlighted in the fixed result statement');
 assert.ok(source.includes('.program-progress-result p { margin:0; color:rgba(255,255,255,.82); font-size:19px'),

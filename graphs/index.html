@@ -6778,13 +6778,25 @@ function fox2BaselineSourceLabel(){
   return fox2Program.baselineMode==='personal'?'Measured baseline':'Reference baseline';
 }
 
+function fox2CurrentProgramResult(){
+  var id=fox2Program.measureStart+'|'+fox2Program.action;
+  var history=Array.isArray(fox2Program.resultHistory)?fox2Program.resultHistory:[];
+  for(var i=history.length-1;i>=0;i--) if(history[i]&&history[i].id===id) return history[i];
+  return null;
+}
+
 function fox2ProgramMetrics(){
   var baselineDays=fox2CompletedScoresSince(fox2Program.baselineStart).slice(0,FOX2_BASELINE_DAYS);
   var baseline=Number(fox2Program.baselineValue);
   if(!isFinite(baseline)||baseline<=0) baseline=fox2Mean(baselineDays.map(function(day){return day.score;}));
   var measureDays=fox2CompletedScoresSince(fox2Program.measureStart);
+  var savedResult=(fox2Program.screen==='results'||fox2Program.screen==='maintain')?fox2CurrentProgramResult():null;
+  var measureEnd=fox2IsoOrBlank(savedResult&&savedResult.date);
+  if(measureEnd) measureDays=measureDays.filter(function(day){return day.date<=measureEnd;});
   var after=fox2Mean(measureDays.map(function(day){return day.score;}));
-  return {baselineDays:baselineDays,baseline:baseline,measureDays:measureDays,after:after};
+  var elapsedEnd=measureEnd||fox2TodayIso();
+  var elapsedDays=fox2Program.measureStart?Math.max(1,Math.min(FOX2_MEASURE_DAYS,fox2DaysBetween(fox2Program.measureStart,elapsedEnd)+1)):0;
+  return {baselineDays:baselineDays,baseline:baseline,measureDays:measureDays,after:after,measureEnd:measureEnd,elapsedDays:elapsedDays};
 }
 
 function fox2ProgressHtml(metrics){
@@ -6792,10 +6804,9 @@ function fox2ProgressHtml(metrics){
   if(screen==='baseline'){
     phase='Fat Use Baseline · '+metrics.baselineDays.length+' of '+FOX2_BASELINE_DAYS+' days'; current='baseline';
   }else if(screen==='measure'){
-    var elapsed=Math.max(1,fox2DaysBetween(fox2Program.measureStart,fox2TodayIso())+1);
-    day=Math.min(total,elapsed); phase='30-day program'; current='measure'; showPhase=false;
-  }else if(screen==='results'){day=total;phase='Result ready';current='results';}
-  else if(screen==='maintain'){day=total;phase='Tracking complete';current='results';}
+    day=metrics.elapsedDays; phase='30-day program'; current='measure'; showPhase=false;
+  }else if(screen==='results'){day=metrics.elapsedDays;phase='Result ready';current='results';}
+  else if(screen==='maintain'){day=metrics.elapsedDays;phase='Tracking complete';current='results';}
   var pct=Math.max(0,Math.min(100,Math.round(day/total*100)));
   var dayLabel=current==='baseline'?'Fat Use Baseline':'Day '+day+' of '+total;
   var baselineClass=current==='baseline'?'is-current':(current==='measure'||current==='results'?'is-complete':'');
