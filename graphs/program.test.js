@@ -154,6 +154,26 @@ assert.ok(source.includes('Your program results will be recalculated.'),
   'changing a baseline should explain its effect on existing results');
 assert.ok(source.includes('function fox2BeginNewMeasuredBaseline()'),
   'measuring a new baseline should explicitly begin a new program');
+assert.ok(source.includes('function fox2SaveProgramBackup(reason)'),
+  'destructive program changes should preserve the prior program locally');
+assert.ok(source.includes("fox2SaveProgramBackup('new baseline')"),
+  'starting a new measured baseline should preserve the active program first');
+assert.ok(source.includes("fox2SaveProgramBackup('restart baseline')")&&
+  source.includes("fox2SaveProgramBackup('restart program')")&&
+  source.includes("fox2SaveProgramBackup('start over')"),
+  'every restart path should preserve a recoverable copy of the active program');
+assert.ok(source.includes('data-program-action="restore-previous-program"'),
+  'Program options should expose the most recent recoverable program');
+assert.ok(source.includes('Undo and resume previous program'),
+  'the replacement setup screen should expose an immediate undo');
+assert.ok(source.includes('You are on Day '),
+  'the new-baseline confirmation should identify the progress that would be ended');
+assert.ok(source.includes('Keep current program')&&source.includes('End program and start baseline'),
+  'the destructive confirmation should make canceling the prominent safe choice');
+assert.ok(source.includes('function fox2ApplyProgramRecoveryParam()'),
+  'a one-time recovery URL should be able to restore known program metadata');
+assert.ok(source.includes("params.get('program_recover')"),
+  'the recovery URL should use an explicit program recovery parameter');
 assert.ok(source.includes('function fox2SetProgramHistory(readingRows,scoreRows)'),
   'the program should retain complete score history beyond the current NFC payload');
 assert.ok(source.includes("fox2SetProgramHistory(mergedHistoryReadings,mergedHistoryScores)"),

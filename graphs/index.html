@@ -647,6 +647,7 @@ html, body {
 .program-confirm-actions button { min-height:46px; border-radius:14px; font:800 14px/1.2 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; cursor:pointer; }
 .program-confirm-cancel { border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.05); color:#fff; }
 .program-confirm-use { border:0; background:#fff; color:#050505; }
+.program-confirm-destructive { border:1px solid rgba(255,112,112,.52); background:rgba(255,80,80,.09); color:#ff9a9a; }
 .program-baseline-editor-copy { margin:0 0 3px; padding-right:38px; color:rgba(255,255,255,.58); font-size:14px; line-height:1.45; }
 .program-baseline-editor-label { margin-top:8px; color:rgba(255,255,255,.42); font-size:10px; font-weight:900; letter-spacing:.11em; text-transform:uppercase; }
 .program-baseline-editor-current { color:var(--program-orange,#ff8c00); font-size:42px; line-height:1; font-weight:950; text-align:center; }
@@ -6462,6 +6463,39 @@ function fox2ProgramStorageKey(){
   return 'fox2-program-v'+FOX2_PROGRAM_VERSION+':'+String(id).replace(/[^A-Za-z0-9_-]/g,'');
 }
 
+function fox2ProgramBackupStorageKey(){ return fox2ProgramStorageKey()+':previous'; }
+
+function fox2SaveProgramBackup(reason){
+  if(fox2ProgramReadOnly||!fox2Program) return;
+  try{
+    localStorage.setItem(fox2ProgramBackupStorageKey(),JSON.stringify({
+      savedAt:new Date().toISOString(), reason:String(reason||'program change'), program:fox2Program
+    }));
+  }catch(e){}
+}
+
+function fox2LoadProgramBackup(){
+  try{
+    var backup=JSON.parse(localStorage.getItem(fox2ProgramBackupStorageKey())||'null');
+    var savedAt=backup&&Date.parse(backup.savedAt||'');
+    if(!backup||!backup.program||!isFinite(savedAt)||Date.now()-savedAt>30*86400000) return null;
+    return backup;
+  }catch(e){return null;}
+}
+
+function fox2RestoreProgramBackup(){
+  var backup=fox2LoadProgramBackup();
+  if(!backup) return false;
+  fox2Program=Object.assign(fox2DefaultProgram(),backup.program,{resultHistory:Array.isArray(backup.program.resultHistory)?backup.program.resultHistory:[]});
+  try{localStorage.removeItem(fox2ProgramBackupStorageKey());}catch(e){}
+  fox2ProgramOptionsOpen=false;
+  fox2SaveProgram();
+  fox2RenderProgram();
+  var status=document.getElementById('program-status');
+  if(status) status.textContent='Previous program restored.';
+  return true;
+}
+
 function fox2DefaultProgram(){
   return {
     screen:'overview', optedOut:false, setupMode:'new', baselineMode:'personal', action:'',
@@ -6481,6 +6515,30 @@ function fox2LoadProgram(){
 }
 
 var fox2Program=fox2LoadProgram();
+
+function fox2ApplyProgramRecoveryParam(){
+  var encoded=params.get('program_recover')||'';
+  if(!encoded) return;
+  var recovery=fox2DecodeProgramSnapshot(encoded);
+  var deviceId=params.get('id')||'';
+  if(!recovery||recovery.v!==1||(recovery.deviceId&&recovery.deviceId!==deviceId)) return;
+  var baseline=Math.round(Number(recovery.baselineValue));
+  var measureStart=fox2IsoOrBlank(recovery.measureStart);
+  if(!baseline||!measureStart) return;
+  fox2Program=Object.assign(fox2Program,{
+    screen:'measure', optedOut:false, setupMode:'new', baselineMode:'default',
+    baselineStart:'', baselineValue:baseline, baselineSource:'default', baselineRange:'Default reference',
+    measureStart:measureStart
+  });
+  try{localStorage.setItem(fox2ProgramStorageKey(),JSON.stringify(fox2Program));}catch(e){}
+  try{
+    var cleanUrl=new URL(window.location.href);
+    cleanUrl.searchParams.delete('program_recover');
+    window.history.replaceState(null,'',cleanUrl.toString());
+  }catch(e){}
+}
+
+fox2ApplyProgramRecoveryParam();
 
 function fox2SaveProgram(){
   if(fox2ProgramReadOnly) return;
@@ -6751,6 +6809,7 @@ function fox2ProgressHtml(metrics){
     if(metrics.measureDays.length) optionButtons+='<button type="button" class="program-option-card is-primary" data-program-action="finish-measuring"><strong>Finish program and view result</strong><span>End the program early and save the result so far.</span></button>';
     optionButtons+='<button type="button" class="program-option-card" data-program-action="restart-measuring"><strong>Restart program</strong><span>Keep your Fat Use Baseline and return to day 1.</span></button>'
       +'<button type="button" class="program-option-card" data-program-action="start-over"><strong>Start over with a new baseline</strong><span>Begin a new program with a new Fat Use Baseline.</span></button>';
+    if(fox2LoadProgramBackup()) optionButtons+='<button type="button" class="program-option-card" data-program-action="restore-previous-program"><strong>Restore previous program</strong><span>Undo the most recent restart or new-baseline choice.</span></button>';
     programOptions='<div class="program-options-anchor"><button type="button" class="program-options-toggle" data-program-action="toggle-options" aria-haspopup="true" aria-expanded="'+fox2ProgramOptionsOpen+'">Program options '+(fox2ProgramOptionsOpen?'▴':'▾')+'</button>'
       +(fox2ProgramOptionsOpen?'<div class="program-options-popover"><button type="button" class="program-options-popover-close" data-program-action="toggle-options" aria-label="Close program options">×</button><p>Change how your 30-day program is running.</p>'
         +'<div class="program-options-baseline"><div class="program-options-baseline-value"><span>Fat Use Baseline</span><strong>'+baselineValue+'</strong><small>'+fox2Escape(baselineSource)+'</small></div><button type="button" class="program-options-baseline-change" data-program-action="change-baseline">Change ›</button></div>'
@@ -6889,6 +6948,7 @@ function fox2SetupHtml(){
     +'<textarea class="program-input" id="program-action-input" placeholder="Describe what you are changing or trying…">'+fox2Escape(changing||restarting?'':fox2Program.action)+'</textarea>'
     +'<div class="program-examples">Write as much as you want. For example: change a GLP-1 dose, exercise more, change meal timing, or change your diet.</div>'
     +'<button type="button" class="program-primary" data-program-action="begin">'+(changing?'Start tracking':restarting?'Begin new baseline':'Continue')+'</button>'
+    +(restarting&&fox2LoadProgramBackup()?'<button type="button" class="program-secondary" data-program-action="restore-previous-program">Undo and resume previous program</button>':'')
     +'<button type="button" class="program-secondary" data-program-action="back">Back</button></section>';
 }
 
@@ -7653,9 +7713,10 @@ function fox2RenderBaselineEditor(message){
     return;
   }
   if(fox2BaselineEditorStep==='restart'){
+    var day=Math.max(1,Math.min(FOX2_MEASURE_DAYS,fox2DaysBetween(fox2Program.measureStart,fox2TodayIso())+1));
     content.innerHTML='<div class="program-confirm-title" id="program-baseline-editor-title">Measure a new baseline?</div>'
-      +'<p class="program-baseline-editor-copy">This ends the current program. You will define your next action, then begin a new seven-day Fat Use Baseline.</p>'
-      +'<div class="program-confirm-actions"><button type="button" class="program-confirm-cancel" onclick="fox2BaselineEditorBack()">Cancel</button><button type="button" class="program-confirm-use" onclick="fox2BeginNewMeasuredBaseline()">Start new baseline</button></div>';
+      +'<p class="program-baseline-editor-copy">You are on Day '+day+' of 30. This will end your current program and begin a new seven-day Fat Use Baseline.</p>'
+      +'<div class="program-confirm-actions"><button type="button" class="program-confirm-cancel" onclick="fox2CloseBaselineEditor()">Keep current program</button><button type="button" class="program-confirm-destructive" onclick="fox2BeginNewMeasuredBaseline()">End program and start baseline</button></div>';
     return;
   }
   var defaults=FOX2_DEFAULT_BASELINES.map(function(value){
@@ -7666,7 +7727,7 @@ function fox2RenderBaselineEditor(message){
     +'<div class="program-baseline-editor-label">Choose a default</div><div class="program-baseline-defaults">'+defaults+'</div><div class="program-baseline-reference-note">Reference values—not goals.</div>'
     +'<div class="program-baseline-editor-or">or</div><label class="program-baseline-manual"><span class="sr-only">Enter another Fat Use Baseline</span><input id="program-baseline-editor-input" type="number" min="1" max="999" inputmode="numeric" value="'+(fox2BaselineEditorSource==='manual'?fox2BaselineEditorValue:'')+'" placeholder="Enter another score"></label>'
     +(message?'<p class="program-baseline-editor-copy" role="alert">'+fox2Escape(message)+'</p>':'')
-    +'<button type="button" class="program-baseline-editor-review" onclick="fox2ReviewBaselineChange()">Review change</button><button type="button" class="program-baseline-editor-new" onclick="fox2ReviewNewMeasuredBaseline()">Measure a new baseline</button>';
+    +'<button type="button" class="program-baseline-editor-review" onclick="fox2ReviewBaselineChange()">Review change</button><button type="button" class="program-baseline-editor-new" onclick="fox2ReviewNewMeasuredBaseline()">End current program and measure a new baseline</button>';
 }
 
 function fox2ReviewBaselineChange(){
@@ -7700,6 +7761,7 @@ function fox2ReviewNewMeasuredBaseline(){
 }
 
 function fox2BeginNewMeasuredBaseline(){
+  fox2SaveProgramBackup('new baseline');
   fox2Program.setupMode='restart';
   fox2Program.baselineMode='personal';
   fox2Program.baselineStart='';
@@ -7775,19 +7837,24 @@ function fox2HandleProgramAction(action){
     if(previous.length===7) fox2UsePreviousBaseline(previous);
     else if(previous.length){fox2OpenPreviousBaselineConfirm(previous);return;}
   }else if(action==='restart-baseline'){
+    fox2SaveProgramBackup('restart baseline');
     fox2Program.baselineStart=fox2TodayIso();fox2Program.baselineValue=null;fox2Program.baselineSource='';fox2Program.baselineRange='';fox2ProgramOptionsOpen=false;
   }else if(action==='change-baseline'){
     fox2OpenBaselineEditor(); return;
   }else if(action==='finish-measuring'){
     if(fox2FinalizeResult(metrics)){fox2Program.screen='results';fox2ProgramOptionsOpen=false;}
   }else if(action==='restart-measuring'){
+    fox2SaveProgramBackup('restart program');
     fox2Program.measureStart=fox2TodayIso();fox2ProgramOptionsOpen=false;
   }else if(action==='maintain'){
     fox2Program.screen='maintain';
   }else if(action==='change-actions'){
     fox2Program.setupMode='change';fox2Program.screen='setup';fox2ProgramOptionsOpen=false;
   }else if(action==='start-over'){
+    fox2SaveProgramBackup('start over');
     fox2Program.setupMode='restart';fox2Program.baselineMode='personal';fox2Program.baselineStart='';fox2Program.baselineValue=null;fox2Program.baselineSource='';fox2Program.baselineRange='';fox2Program.measureStart='';fox2Program.screen='method';fox2ProgramOptionsOpen=false;
+  }else if(action==='restore-previous-program'){
+    fox2RestoreProgramBackup(); return;
   }
   fox2SaveProgram(); fox2RenderProgram();
 }
