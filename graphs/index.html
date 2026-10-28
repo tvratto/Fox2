@@ -6843,7 +6843,7 @@ function fox2ProgressHtml(metrics){
   }else if(screen==='results'){
     programOptions='<div class="program-options-anchor"><button type="button" class="program-options-toggle" data-program-action="toggle-options" aria-haspopup="true" aria-expanded="'+fox2ProgramOptionsOpen+'">Program options '+(fox2ProgramOptionsOpen?'▴':'▾')+'</button>'
       +(fox2ProgramOptionsOpen?'<div class="program-options-popover"><button type="button" class="program-options-popover-close" data-program-action="toggle-options" aria-label="Close program options">×</button><p>What do you want to do?</p><div class="program-option-actions">'
-        +'<button type="button" class="program-option-card is-primary" data-program-action="extend-tracking"><strong>Extend tracking</strong><span>'+(day>=total?'Add 15 days to this program.':'Continue this program through day '+total+'.')+'</span></button>'
+        +'<button type="button" class="program-option-card is-primary" data-program-action="extend-tracking"><strong>Continue this program</strong><span>'+(day>=total?'Add 15 more days.':'Resume tracking through day '+total+'.')+'</span></button>'
         +'<button type="button" class="program-option-card" data-program-action="change-actions"><strong>Add or change actions</strong><span>Keep this baseline and begin a new 30-day program.</span></button>'
         +'<button type="button" class="program-option-card" data-program-action="start-over"><strong>Start over</strong><span>Begin again with a new Fat Use Baseline.</span></button></div></div>':'')+'</div>';
   }

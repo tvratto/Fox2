@@ -303,9 +303,9 @@ assert.ok(source.includes("else if(previous.length){fox2OpenPreviousBaselineConf
 assert.ok(source.includes('function fox2ConfirmPreviousBaseline()'),
   'the confirmation should apply the available historical days');
 assert.ok(source.includes("data-program-action=\"use-previous-baseline\""));
-assert.ok(source.includes('Extend tracking'));
-assert.ok(source.includes("day>=total?'Add 15 days to this program.':'Continue this program through day '+total+'.'"),
-  'Extend tracking should resume an early result or add 15 days after the target is reached');
+assert.ok(source.includes('Continue this program'));
+assert.ok(source.includes("day>=total?'Add 15 more days.':'Resume tracking through day '+total+'.'"),
+  'continuing should resume an early result or add 15 days after the target is reached');
 assert.ok(source.includes("if(screen==='maintain'){\n    screen='results';"),
   'legacy maintenance sessions should return to their saved result automatically');
 assert.ok(source.includes("}else if(action==='extend-tracking'||action==='maintain'){"),
