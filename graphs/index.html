@@ -368,7 +368,6 @@ html, body {
 .program-result-table-values span:last-child { color:var(--program-orange); }
 .program-choice { margin-top:9px; padding:10px 14px; border:1px solid rgba(255,255,255,.13); background:rgba(255,255,255,.035); color:#fff; }
 .program-choice.is-primary { border:0; background:#fff; color:#050505; }
-.program-maintain-mark { width:82px; height:82px; display:grid; place-items:center; margin:22px auto 16px; border-radius:50%; background:rgba(255,140,0,.12); color:var(--program-orange); font-size:36px; font-weight:900; }
 .program-center { text-align:center; }
 .program-status { min-height:18px; margin-top:13px; color:rgba(255,255,255,.42); font-size:12px; line-height:1.4; text-align:center; }
 .program-shared-banner { margin:0 0 13px; padding:9px 12px; border:1px solid rgba(255,140,0,.28); border-radius:13px; background:rgba(255,140,0,.08); color:rgba(255,255,255,.66); font-size:12px; font-weight:850; letter-spacing:.04em; text-align:center; text-transform:uppercase; }
@@ -6806,7 +6805,6 @@ function fox2ProgressHtml(metrics){
   }else if(screen==='measure'){
     day=metrics.elapsedDays; phase='30-day program'; current='measure'; showPhase=false;
   }else if(screen==='results'){day=metrics.elapsedDays;phase='Result ready';current='results';}
-  else if(screen==='maintain'){day=metrics.elapsedDays;phase='Tracking complete';current='results';}
   var pct=Math.max(0,Math.min(100,Math.round(day/total*100)));
   var dayLabel=current==='baseline'?'Fat Use Baseline':'Day '+day+' of '+total;
   var baselineClass=current==='baseline'?'is-current':(current==='measure'||current==='results'?'is-complete':'');
@@ -6836,7 +6834,7 @@ function fox2ProgressHtml(metrics){
   }else if(screen==='results'){
     programOptions='<div class="program-options-anchor"><button type="button" class="program-options-toggle" data-program-action="toggle-options" aria-haspopup="true" aria-expanded="'+fox2ProgramOptionsOpen+'">Program options '+(fox2ProgramOptionsOpen?'▴':'▾')+'</button>'
       +(fox2ProgramOptionsOpen?'<div class="program-options-popover"><button type="button" class="program-options-popover-close" data-program-action="toggle-options" aria-label="Close program options">×</button><p>What do you want to do?</p><div class="program-option-actions">'
-        +'<button type="button" class="program-option-card is-primary" data-program-action="maintain"><strong>Keep tracking</strong><span>Continue measuring without starting a new program.</span></button>'
+        +'<button type="button" class="program-option-card is-primary" data-program-action="maintain"><strong>Keep tracking</strong><span>Stay on this Final Result and continue measuring normally.</span></button>'
         +'<button type="button" class="program-option-card" data-program-action="change-actions"><strong>Add or change actions</strong><span>Keep this baseline and begin a new 30-day program.</span></button>'
         +'<button type="button" class="program-option-card" data-program-action="start-over"><strong>Start over</strong><span>Begin again with a new Fat Use Baseline.</span></button></div></div>':'')+'</div>';
   }
@@ -7373,11 +7371,6 @@ function fox2ResultsHtml(metrics){
   return fox2MeasureDashboardHtml(metrics,{forceHistory:true})+previousResults;
 }
 
-function fox2MaintainHtml(){
-  return '<section><div class="program-eyebrow">Ongoing tracking</div><div class="program-maintain-mark">✓</div><h1 class="program-title program-center">Keep going</h1><p class="program-copy program-center">FOX2 will keep tracking your fat use.</p><div class="program-action-name" style="margin-top:22px"><span>Current actions</span>'+fox2Escape(fox2Program.action||'Your current actions')+'</div></section>'
-    +'<section class="program-section"><h2 class="program-section-title">Next</h2><p class="program-copy">Keep measuring and syncing FOX2.</p><button type="button" class="program-choice" data-program-action="change-actions">Add or change actions</button><button type="button" class="program-choice" data-program-action="start-over">Start over</button></section>';
-}
-
 var FOX2_ONBOARDING_SPEED=1.5;
 function fox2OnboardingTime(milliseconds){return milliseconds/FOX2_ONBOARDING_SPEED;}
 
@@ -7616,6 +7609,11 @@ function fox2RenderProgram(){
     screen='overview';
     fox2Program.screen=screen;
   }
+  if(screen==='maintain'){
+    screen='results';
+    fox2Program.screen=screen;
+    if(!fox2ProgramReadOnly) fox2SaveProgram();
+  }
   if(!fox2ProgramReadOnly&&screen==='measure'&&fox2Program.measureStart&&fox2DaysBetween(fox2Program.measureStart,fox2TodayIso())>=FOX2_MEASURE_DAYS&&fox2FinalizeResult(metrics)){
     fox2Program.screen='results'; screen='results'; fox2ProgramOptionsOpen=false; fox2SaveProgram();
   }
@@ -7628,7 +7626,6 @@ function fox2RenderProgram(){
   else if(screen==='baseline') body=fox2BaselineHtml(metrics);
   else if(screen==='measure') body=fox2MeasureHtml(metrics);
   else if(screen==='results') body=fox2ResultsHtml(metrics);
-  else if(screen==='maintain') body=fox2MaintainHtml();
   else body=fox2OverviewHtml();
   var progress=(screen==='overview'||screen==='day-intro'||screen==='compare-intro')?'':fox2ProgressHtml(metrics);
   shell.innerHTML=(fox2ProgramReadOnly?'<div class="program-shared-banner">Shared FOX2 progress</div>':'')+progress+body+'<div class="program-status" id="program-status"></div>';
@@ -7896,7 +7893,7 @@ function fox2HandleProgramAction(action){
     fox2SaveProgramBackup('restart program');
     fox2Program.measureStart=fox2TodayIso();fox2ProgramOptionsOpen=false;
   }else if(action==='maintain'){
-    fox2Program.screen='maintain';
+    fox2Program.screen='results';fox2ProgramOptionsOpen=false;
   }else if(action==='change-actions'){
     fox2SaveProgramBackup('change actions');
     fox2Program.setupMode='change';fox2Program.screen='setup';fox2ProgramOptionsOpen=false;
@@ -7911,7 +7908,7 @@ function fox2HandleProgramAction(action){
 
 function fox2RouteInitialPage(){
   if(window.fox2SetInitialPage){
-    var activeProgram=fox2ProgramReadOnly||(!fox2Program.optedOut&&fox2Program.screen!=='maintain');
+    var activeProgram=fox2ProgramReadOnly||!fox2Program.optedOut;
     window.fox2SetInitialPage(activeProgram?0:1);
   }
 }

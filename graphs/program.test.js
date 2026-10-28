@@ -37,8 +37,8 @@ assert.ok(source.includes('answers the live BroadcastChannel probe'),
   'only a live response from another FOX2 tab should trigger the handoff');
 assert.ok(source.includes('},900);'),
   'the Safari handoff should allow a background results tab time to answer');
-assert.ok(source.includes("var activeProgram=fox2ProgramReadOnly||(!fox2Program.optedOut&&fox2Program.screen!=='maintain')"),
-  'opted-out and maintenance users should open on Data on later visits');
+assert.ok(source.includes('var activeProgram=fox2ProgramReadOnly||!fox2Program.optedOut'),
+  'completed programs should continue opening on their Final Result');
 assert.ok(source.includes('See when your body is using fat for energy.'),
   'onboarding should begin with the metabolic meaning of the measurement');
 assert.ok(source.includes('When your body uses more fat, acetone in your breath rises.'),
@@ -240,6 +240,16 @@ assert.ok(source.includes('function fox2ConfirmPreviousBaseline()'),
   'the confirmation should apply the available historical days');
 assert.ok(source.includes("data-program-action=\"use-previous-baseline\""));
 assert.ok(source.includes('Keep tracking'));
+assert.ok(source.includes('Stay on this Final Result and continue measuring normally.'),
+  'Keep tracking should explain that it does not create another page or program');
+assert.ok(source.includes("if(screen==='maintain'){\n    screen='results';"),
+  'legacy maintenance sessions should return to their Final Result automatically');
+assert.ok(source.includes("}else if(action==='maintain'){\n    fox2Program.screen='results';fox2ProgramOptionsOpen=false;"),
+  'Keep tracking should close options while staying on the Final Result');
+assert.ok(!source.includes('function fox2MaintainHtml()'),
+  'the redundant Keep going page should no longer exist');
+assert.ok(!source.includes('Keep going</h1>'),
+  'the unexplained Keep going state should not be shown');
 assert.ok(source.includes('Add or change actions'));
 assert.ok(source.includes('var FOX2_MEASURE_DAYS=30;'),
   'the measurement segment should last 30 days');
