@@ -224,8 +224,14 @@ assert.ok(source.includes('class="program-today-grid"'),
   'the Today So Far ring and explanation should use the compact prototype layout');
 assert.ok(source.includes('--today-color:var(--program-orange)'),
   'the Today So Far ring should use the program progress color');
-assert.ok(source.includes('todayVisual.value/Math.max(1,Number(metrics.baseline)||FOX2_STANDARD_BASELINE)'),
+assert.ok(source.includes('var todayRatio=todayVisual.value/baseline'),
   'the Today So Far ring should show progress toward the Fat Use Baseline');
+assert.ok(source.includes('var todayOverflow=Math.max(0,Math.min(1,todayRatio-1))'),
+  'progress beyond the Fat Use Baseline should begin a second ring lap');
+assert.ok(source.includes('class="program-today-overflow"'),
+  'the second lap should overlay the closed ring in lighter orange');
+assert.ok(source.includes('.program-today-overflow { stroke:#ffb84d;'),
+  'the second ring lap should use the approved lighter orange');
 assert.ok(source.includes('function fox2TodayProgramDay()'),
   'the same-day state should use the actual current calendar day rather than the last available day');
 assert.ok(source.includes('function fox2TodayHistoryHtml(today,metrics)'),

@@ -325,9 +325,10 @@ html, body {
 .program-today-title { margin:0; color:#fff; font-size:18px; line-height:1.1; font-weight:900; letter-spacing:-.025em; }
 .program-today-grid { display:grid; grid-template-columns:126px minmax(0,1fr); gap:12px; align-items:center; padding-top:7px; }
 .program-today-ring { display:block; width:122px; height:122px; overflow:visible; }
-.program-today-track,.program-today-value { fill:none; stroke-width:11; }
+.program-today-track,.program-today-value,.program-today-overflow { fill:none; stroke-width:11; }
 .program-today-track { stroke:rgba(255,255,255,.11); }
 .program-today-value { stroke:var(--today-color); stroke-linecap:round; transform:rotate(-90deg); transform-origin:60px 60px; stroke-dasharray:339.292; stroke-dashoffset:var(--today-offset); animation:program-today-fill .72s cubic-bezier(.2,.8,.2,1) both; }
+.program-today-overflow { stroke:#ffb84d; stroke-linecap:round; transform:rotate(-90deg); transform-origin:60px 60px; stroke-dasharray:339.292; stroke-dashoffset:var(--today-overflow-offset); animation:program-today-overflow-fill .72s .72s cubic-bezier(.2,.8,.2,1) both; }
 .program-today-score { fill:#fff; font:950 50px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; letter-spacing:-.06em; text-anchor:middle; }
 .program-today-unit { fill:rgba(255,255,255,.46); font:850 9px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; letter-spacing:.11em; text-anchor:middle; }
 .program-today-copy p { margin:0 0 10px; color:rgba(255,255,255,.58); font-size:12px; line-height:1.4; font-weight:600; }
@@ -349,6 +350,7 @@ html, body {
 .program-today-history-current { opacity:.58; }
 .program-today-history-now { fill:var(--program-orange); opacity:.95; }
 @keyframes program-today-fill { from{stroke-dashoffset:339.292} to{stroke-dashoffset:var(--today-offset)} }
+@keyframes program-today-overflow-fill { from{stroke-dashoffset:339.292} to{stroke-dashoffset:var(--today-overflow-offset)} }
 .program-recap-empty { min-height:235px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:28px; text-align:center; }
 .program-recap-empty strong { color:#fff; font-size:22px; }
 .program-recap-empty span { max-width:245px; margin-top:9px; color:rgba(255,255,255,.46); font-size:14px; line-height:1.45; }
@@ -7088,10 +7090,15 @@ function fox2MeasureDashboardHtml(metrics,options){
   var today=options.forceHistory?null:fox2TodayProgramDay();
   if(today){
     var todayVisual=fox2RingVisual(today.score),circumference=339.292;
-    var todayProgress=Math.max(.002,Math.min(1,todayVisual.value/Math.max(1,Number(metrics.baseline)||FOX2_STANDARD_BASELINE)));
+    var baseline=Math.max(1,Number(metrics.baseline)||FOX2_STANDARD_BASELINE);
+    var todayRatio=todayVisual.value/baseline;
+    var todayProgress=Math.max(.002,Math.min(1,todayRatio));
+    var todayOverflow=Math.max(0,Math.min(1,todayRatio-1));
     var todayOffset=(circumference*(1-todayProgress)).toFixed(3);
+    var todayOverflowOffset=(circumference*(1-todayOverflow)).toFixed(3);
+    var todayOverflowRing=todayOverflow>0?'<circle class="program-today-overflow" cx="60" cy="60" r="54" style="--today-overflow-offset:'+todayOverflowOffset+'"></circle>':'';
     var todayDay=Math.max(1,Math.min(FOX2_MEASURE_DAYS,fox2DaysBetween(fox2Program.measureStart,fox2TodayIso())+1));
-    return '<section class="program-measure-dashboard"><div class="program-recap-sequence is-settled"><div class="program-today-card"><h2 class="program-today-title">Today So Far</h2><div class="program-today-grid"><svg class="program-today-ring" viewBox="0 0 120 120" role="img" aria-label="Today Fat Use Score '+todayVisual.value+' from '+today.readings+' '+(today.readings===1?'reading':'readings')+'"><circle class="program-today-track" cx="60" cy="60" r="54"></circle><circle class="program-today-value" cx="60" cy="60" r="54" style="--today-color:var(--program-orange);--today-offset:'+todayOffset+'"></circle><text class="program-today-score" x="60" y="64">'+todayVisual.value+'</text><text class="program-today-unit" x="60" y="82">FAT USE SCORE</text></svg><div class="program-today-copy"><p>Today becomes day '+todayDay+' of your program after the day is complete.</p><span class="program-today-status">'+today.readings+' '+(today.readings===1?'reading':'readings')+' today</span></div></div>'+fox2TodayHistoryHtml(today,metrics)+'</div></div></section>';
+    return '<section class="program-measure-dashboard"><div class="program-recap-sequence is-settled"><div class="program-today-card"><h2 class="program-today-title">Today So Far</h2><div class="program-today-grid"><svg class="program-today-ring" viewBox="0 0 120 120" role="img" aria-label="Today Fat Use Score '+todayVisual.value+' from '+today.readings+' '+(today.readings===1?'reading':'readings')+'"><circle class="program-today-track" cx="60" cy="60" r="54"></circle><circle class="program-today-value" cx="60" cy="60" r="54" style="--today-color:var(--program-orange);--today-offset:'+todayOffset+'"></circle>'+todayOverflowRing+'<text class="program-today-score" x="60" y="64">'+todayVisual.value+'</text><text class="program-today-unit" x="60" y="82">FAT USE SCORE</text></svg><div class="program-today-copy"><p>Today becomes day '+todayDay+' of your program after the day is complete.</p><span class="program-today-status">'+today.readings+' '+(today.readings===1?'reading':'readings')+' today</span></div></div>'+fox2TodayHistoryHtml(today,metrics)+'</div></div></section>';
   }
   if(!model){
     return '<section class="program-measure-dashboard"><div class="program-recap-sequence is-settled"><div class="program-recap-empty"><strong>Results So Far</strong><span>Your first completed day will appear here after you sync.</span></div></div></section>';
