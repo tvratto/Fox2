@@ -6360,7 +6360,6 @@ function shareStreaks() {
 var FOX2_PROGRAM_VERSION=1;
 var FOX2_BASELINE_DAYS=7;
 var FOX2_MEASURE_DAYS=30;
-var FOX2_PROGRAM_DAYS=FOX2_MEASURE_DAYS;
 var FOX2_STANDARD_BASELINE=75;
 var FOX2_DEFAULT_BASELINES=[75,120,180];
 var fox2ProgramOptionsOpen=false;
@@ -6444,6 +6443,7 @@ function fox2NormalizeSharedProgram(snapshot){
   defaults.baselineSource=String(raw.baselineSource||'').slice(0,40);
   defaults.baselineRange=String(raw.baselineRange||'').slice(0,80);
   defaults.measureStart=fox2IsoOrBlank(raw.measureStart);
+  defaults.targetDays=Math.max(FOX2_MEASURE_DAYS,Math.min(365,Math.round(Number(raw.targetDays)||FOX2_MEASURE_DAYS)));
   defaults.resultHistory=Array.isArray(raw.resultHistory)?raw.resultHistory.slice(-20).map(function(item){
     return {id:String(item&&item.id||'').slice(0,220),action:String(item&&item.action||'').slice(0,2000),before:Number(item&&item.before)||0,after:Number(item&&item.after)||0,change:Number(item&&item.change)||0,date:fox2IsoOrBlank(item&&item.date)};
   }):[];
@@ -6508,7 +6508,7 @@ function fox2DefaultProgram(){
   return {
     screen:'overview', optedOut:false, setupMode:'new', baselineMode:'personal', action:'',
     baselineStart:'', baselineValue:null, baselineSource:'', baselineRange:'',
-    measureStart:'', resultHistory:[]
+    measureStart:'', targetDays:FOX2_MEASURE_DAYS, resultHistory:[]
   };
 }
 
@@ -6633,6 +6633,7 @@ function fox2BuildProgramShareSnapshot(){
       baselineSource:fox2Program.baselineSource,
       baselineRange:fox2Program.baselineRange,
       measureStart:fox2Program.measureStart,
+      targetDays:fox2ProgramTargetDays(),
       resultHistory:sharedResults
     },
     payload:payload,
@@ -6769,6 +6770,10 @@ function fox2Mean(values){
 
 function fox2Round(value){ return value==null?null:Math.round(value); }
 
+function fox2ProgramTargetDays(){
+  return Math.max(FOX2_MEASURE_DAYS,Math.min(365,Math.round(Number(fox2Program.targetDays)||FOX2_MEASURE_DAYS)));
+}
+
 function fox2BaselineSourceLabel(){
   var source=String(fox2Program.baselineSource||'');
   if(source==='default'||source==='standard') return 'Default';
@@ -6797,21 +6802,21 @@ function fox2ProgramMetrics(){
   if(measureEnd) measureDays=measureDays.filter(function(day){return day.date<=measureEnd;});
   var after=fox2Mean(measureDays.map(function(day){return day.score;}));
   var elapsedEnd=measureEnd||fox2TodayIso();
-  var elapsedDays=fox2Program.measureStart?Math.max(1,Math.min(FOX2_MEASURE_DAYS,fox2DaysBetween(fox2Program.measureStart,elapsedEnd)+1)):0;
+  var elapsedDays=fox2Program.measureStart?Math.max(1,Math.min(fox2ProgramTargetDays(),fox2DaysBetween(fox2Program.measureStart,elapsedEnd)+1)):0;
   return {baselineDays:baselineDays,baseline:baseline,measureDays:measureDays,after:after,measureEnd:measureEnd,elapsedDays:elapsedDays,savedResult:savedResult};
 }
 
 function fox2ProgressHtml(metrics){
-  var total=FOX2_PROGRAM_DAYS,screen=fox2Program.screen,day=0,phase='Getting started',current='baseline',showPhase=true;
+  var total=fox2ProgramTargetDays(),screen=fox2Program.screen,day=0,phase='Getting started',current='baseline',showPhase=true;
   if(screen==='baseline'){
     phase='Fat Use Baseline · '+metrics.baselineDays.length+' of '+FOX2_BASELINE_DAYS+' days'; current='baseline';
   }else if(screen==='measure'){
-    day=metrics.elapsedDays; phase='30-day program'; current='measure'; showPhase=false;
+    day=metrics.elapsedDays; phase=total+'-day program'; current='measure'; showPhase=false;
   }else if(screen==='results'){day=metrics.elapsedDays;phase='Result ready';current='results';}
   var pct=Math.max(0,Math.min(100,Math.round(day/total*100)));
-  var dayLabel=current==='baseline'?'Fat Use Baseline':'Day '+day+' of '+total;
+  var dayLabel=current==='baseline'?'Fat Use Baseline':current==='results'?day+' '+(day===1?'day':'days')+' tracked':'Day '+day+' of '+total;
   var baselineClass=current==='baseline'?'is-current':(current==='measure'||current==='results'?'is-complete':'');
-  var resultLabel=current==='results'?'Final Result':'Results So Far';
+  var resultLabel=current==='results'?'Program Result':'Results So Far';
   var resultCopy='Your first result will appear after your first completed program day.';
   if((metrics.baseline&&metrics.after&&metrics.measureDays.length)||metrics.savedResult){
     var frozenResult=current==='results'&&metrics.savedResult?metrics.savedResult:null;
@@ -6827,23 +6832,23 @@ function fox2ProgressHtml(metrics){
     var baselineValue=fox2Round(metrics.baseline)||FOX2_STANDARD_BASELINE;
     var baselineSource=fox2BaselineSourceLabel();
     var optionButtons='';
-    if(metrics.measureDays.length) optionButtons+='<button type="button" class="program-option-card is-primary" data-program-action="finish-measuring"><strong>Finish program and view result</strong><span>End the program early and save the result so far.</span></button>';
+    if(metrics.measureDays.length) optionButtons+='<button type="button" class="program-option-card is-primary" data-program-action="finish-measuring"><strong>View program result</strong><span>Save a result using the completed days so far.</span></button>';
     optionButtons+='<button type="button" class="program-option-card" data-program-action="restart-measuring"><strong>Restart program</strong><span>Keep your Fat Use Baseline and return to day 1.</span></button>'
       +'<button type="button" class="program-option-card" data-program-action="start-over"><strong>Start over with a new baseline</strong><span>Begin a new program with a new Fat Use Baseline.</span></button>';
     if(fox2LoadProgramBackup()) optionButtons+='<button type="button" class="program-option-card" data-program-action="restore-previous-program"><strong>Restore previous program</strong><span>Undo the most recent restart or new-baseline choice.</span></button>';
     programOptions='<div class="program-options-anchor"><button type="button" class="program-options-toggle" data-program-action="toggle-options" aria-haspopup="true" aria-expanded="'+fox2ProgramOptionsOpen+'">Program options '+(fox2ProgramOptionsOpen?'▴':'▾')+'</button>'
-      +(fox2ProgramOptionsOpen?'<div class="program-options-popover"><button type="button" class="program-options-popover-close" data-program-action="toggle-options" aria-label="Close program options">×</button><p>Change how your 30-day program is running.</p>'
+      +(fox2ProgramOptionsOpen?'<div class="program-options-popover"><button type="button" class="program-options-popover-close" data-program-action="toggle-options" aria-label="Close program options">×</button><p>Change how your '+total+'-day program is running.</p>'
         +'<div class="program-options-baseline"><div class="program-options-baseline-value"><span>Fat Use Baseline</span><strong>'+baselineValue+'</strong><small>'+fox2Escape(baselineSource)+'</small></div><button type="button" class="program-options-baseline-change" data-program-action="change-baseline">Change ›</button></div>'
         +'<div class="program-option-actions">'+optionButtons+'</div></div>':'')+'</div>';
   }else if(screen==='results'){
     programOptions='<div class="program-options-anchor"><button type="button" class="program-options-toggle" data-program-action="toggle-options" aria-haspopup="true" aria-expanded="'+fox2ProgramOptionsOpen+'">Program options '+(fox2ProgramOptionsOpen?'▴':'▾')+'</button>'
       +(fox2ProgramOptionsOpen?'<div class="program-options-popover"><button type="button" class="program-options-popover-close" data-program-action="toggle-options" aria-label="Close program options">×</button><p>What do you want to do?</p><div class="program-option-actions">'
-        +'<button type="button" class="program-option-card is-primary" data-program-action="maintain"><strong>Keep tracking</strong><span>Stay on this Final Result and continue measuring normally.</span></button>'
+        +'<button type="button" class="program-option-card is-primary" data-program-action="extend-tracking"><strong>Extend tracking</strong><span>'+(day>=total?'Add 15 days to this program.':'Continue this program through day '+total+'.')+'</span></button>'
         +'<button type="button" class="program-option-card" data-program-action="change-actions"><strong>Add or change actions</strong><span>Keep this baseline and begin a new 30-day program.</span></button>'
         +'<button type="button" class="program-option-card" data-program-action="start-over"><strong>Start over</strong><span>Begin again with a new Fat Use Baseline.</span></button></div></div>':'')+'</div>';
   }
-  return '<section class="program-progress" role="region" aria-label="30-day program: '+dayLabel+', '+pct+' percent complete, '+phase+'">'
-    +'<div class="program-progress-head"><div class="program-progress-title">30-Day Program</div><div class="program-day">'+dayLabel+'</div></div>'
+  return '<section class="program-progress" role="region" aria-label="'+total+'-day program: '+dayLabel+', '+pct+' percent complete, '+phase+'">'
+    +'<div class="program-progress-head"><div class="program-progress-title">'+total+'-Day Program</div><div class="program-day">'+dayLabel+'</div></div>'
     +'<div class="program-bar"><div class="program-bar-fill" style="width:'+pct+'%"></div></div>'
     +'<div class="program-phases"><span class="'+baselineClass+'">'+(baselineClass==='is-complete'?'✓ ':'')+'Baseline</span><span class="'+(current==='measure'?'is-current':'')+'">Measure</span><span class="'+(current==='results'?'is-current':'')+'">Results</span></div>'
     +'<div class="program-progress-meta"'+(showPhase?'':' style="justify-content:flex-end"')+'>'+(showPhase?'<span>'+phase+'</span>':'')+'<span>'+pct+'% Complete</span></div>'
@@ -7084,13 +7089,13 @@ function fox2AddIsoDays(iso,amount){
 }
 
 function fox2RecapModel(metrics){
-  var measureDays=(metrics.measureDays||[]).slice(0,FOX2_MEASURE_DAYS);
+  var target=fox2ProgramTargetDays(),measureDays=(metrics.measureDays||[]).slice(0,target);
   if(!measureDays.length) return null;
   var latest=measureDays[measureDays.length-1],baseline=Math.max(1,Number(metrics.baseline)||1);
   var start=fox2Program.measureStart||measureDays[0].date,byDate={},slots=[];
   measureDays.forEach(function(day){byDate[day.date]=day;});
-  var completedBeforeToday=Math.min(FOX2_MEASURE_DAYS,fox2DaysBetween(start,fox2TodayIso()));
-  for(var i=0;i<FOX2_MEASURE_DAYS;i++){
+  var completedBeforeToday=Math.min(target,fox2DaysBetween(start,fox2TodayIso()));
+  for(var i=0;i<target;i++){
     var slotDate=fox2AddIsoDays(start,i),completed=byDate[slotDate]||null;
     slots.push({date:slotDate,score:completed?Math.max(0,Number(completed.score)||0):0,complete:!!completed,missing:!completed&&i<completedBeforeToday});
   }
@@ -7098,19 +7103,19 @@ function fox2RecapModel(metrics){
   var peak=Math.max.apply(null,values),scaleMax=Math.max(60,Math.ceil((peak*1.12)/30)*30);
   var plotBottom=208,plotHeight=92;
   slots.forEach(function(day,index){
-    day.x=18+index*(300/(FOX2_MEASURE_DAYS-1));
+    day.x=18+index*(300/(target-1));
     day.height=day.score?Math.max(8,day.score/scaleMax*plotHeight):0;
     day.top=plotBottom-day.height;
     day.baseTop=Math.max(day.top,plotBottom-Math.min(plotHeight,baseline/scaleMax*plotHeight));
   });
   var baselineY=plotBottom-Math.min(plotHeight,baseline/scaleMax*plotHeight);
-  var latestIndex=Math.max(0,Math.min(FOX2_MEASURE_DAYS-1,fox2DaysBetween(start,latest.date)));
+  var latestIndex=Math.max(0,Math.min(target-1,fox2DaysBetween(start,latest.date)));
   var latestSlot=slots[latestIndex],latestVisual=fox2RingVisual(latest.score);
   var after=fox2Mean(measureDays.map(function(day){return day.score;}));
   var change=Math.round((after-baseline)/baseline*100);
   var prior=measureDays.slice(0,-1),priorAverage=prior.length?fox2Mean(prior.map(function(day){return day.score;})):baseline;
   var priorChange=Math.round((priorAverage-baseline)/baseline*100);
-  return {latest:latest,slots:slots,completed:measureDays.length,latestDayNumber:latestIndex+1,baseline:baseline,baselineY:baselineY,plotBottom:plotBottom,latestSlot:latestSlot,latestVisual:latestVisual,change:change,priorChange:priorChange};
+  return {latest:latest,slots:slots,target:target,completed:measureDays.length,latestDayNumber:latestIndex+1,baseline:baseline,baselineY:baselineY,plotBottom:plotBottom,latestSlot:latestSlot,latestVisual:latestVisual,change:change,priorChange:priorChange};
 }
 
 function fox2RecapSeenKey(){ return fox2ProgramStorageKey()+':last-recap-day'; }
@@ -7138,12 +7143,12 @@ function fox2RecapHistorySvg(model){
     var above=day.top<model.baselineY?'<line class="program-recap-bar-above" x1="'+day.x.toFixed(1)+'" y1="'+day.top.toFixed(1)+'" x2="'+day.x.toFixed(1)+'" y2="'+model.baselineY.toFixed(1)+'"></line>':'';
     return '<g class="program-recap-history-mark'+(isLatest?' is-latest':'')+'" data-recap-history-index="'+index+'" role="img" aria-label="'+fox2Escape(fox2ShortDate(day.date))+' Fat Use Score '+fox2Round(day.score)+'"><line class="program-recap-bar-base" x1="'+day.x.toFixed(1)+'" y1="'+day.baseTop.toFixed(1)+'" x2="'+day.x.toFixed(1)+'" y2="'+model.plotBottom+'"></line>'+above+'</g>';
   }).join('');
-  return '<g class="program-recap-history-frame">'+slots+'<line class="program-recap-baseline" x1="14" y1="'+model.baselineY.toFixed(1)+'" x2="322" y2="'+model.baselineY.toFixed(1)+'"></line><line class="program-recap-axis" x1="14" y1="209" x2="322" y2="209"></line><text class="program-recap-day-label" x="14" y="226">DAY 1</text><text class="program-recap-day-label" x="322" y="226" text-anchor="end">DAY 30</text></g>'+marks;
+  return '<g class="program-recap-history-frame">'+slots+'<line class="program-recap-baseline" x1="14" y1="'+model.baselineY.toFixed(1)+'" x2="322" y2="'+model.baselineY.toFixed(1)+'"></line><line class="program-recap-axis" x1="14" y1="209" x2="322" y2="209"></line><text class="program-recap-day-label" x="14" y="226">DAY 1</text><text class="program-recap-day-label" x="322" y="226" text-anchor="end">DAY '+model.target+'</text></g>'+marks;
 }
 
 function fox2TodayHistoryHtml(today,metrics,recapModel){
-  var baseline=Math.max(1,Number(metrics.baseline)||FOX2_STANDARD_BASELINE);
-  var dayIndex=Math.max(0,Math.min(FOX2_MEASURE_DAYS-1,fox2DaysBetween(fox2Program.measureStart,fox2TodayIso())));
+  var target=fox2ProgramTargetDays(),baseline=Math.max(1,Number(metrics.baseline)||FOX2_STANDARD_BASELINE);
+  var dayIndex=Math.max(0,Math.min(target-1,fox2DaysBetween(fox2Program.measureStart,fox2TodayIso())));
   var completedByDate={};
   (metrics.measureDays||[]).forEach(function(day){completedByDate[day.date]=day;});
   var completedScores=(metrics.measureDays||[]).map(function(day){return Number(day.score)||0;});
@@ -7152,9 +7157,9 @@ function fox2TodayHistoryHtml(today,metrics,recapModel){
   var plotBottom=100,plotHeight=67,baselineY=plotBottom-Math.min(plotHeight,baseline/scaleMax*plotHeight);
   var scoreHeight=today.score?Math.max(7,today.score/scaleMax*plotHeight):0;
   var scoreTop=plotBottom-scoreHeight,baseTop=Math.max(scoreTop,baselineY);
-  var slots='',marks='',start=fox2Program.measureStart,todayX=18+dayIndex*(300/(FOX2_MEASURE_DAYS-1));
-  for(var i=0;i<FOX2_MEASURE_DAYS;i++){
-    var x=18+i*(300/(FOX2_MEASURE_DAYS-1)),date=fox2AddIsoDays(start,i),completed=completedByDate[date];
+  var slots='',marks='',start=fox2Program.measureStart,todayX=18+dayIndex*(300/(target-1));
+  for(var i=0;i<target;i++){
+    var x=18+i*(300/(target-1)),date=fox2AddIsoDays(start,i),completed=completedByDate[date];
     if(completed){
       var completedScore=Math.max(0,Number(completed.score)||0);
       var completedHeight=completedScore?Math.max(7,completedScore/scaleMax*plotHeight):0;
@@ -7173,7 +7178,7 @@ function fox2TodayHistoryHtml(today,metrics,recapModel){
     marks+='<circle class="program-today-history-now" cx="'+todayX.toFixed(1)+'" cy="'+scoreTop.toFixed(1)+'" r="3.2"></circle>';
   }
   var replay=recapModel?'<button type="button" class="program-recap-replay" data-recap-replay-today aria-label="Replay morning recap" title="Replay morning recap">↻</button>':'';
-  return '<div class="program-today-history"><div class="program-today-history-head"><div class="program-recap-title-row"><strong>30-Day Fat Use Scores</strong>'+replay+'</div><span>Live · Day '+(dayIndex+1)+'</span></div><svg class="program-today-history-svg" viewBox="0 0 336 126" role="img" aria-label="Live 30-day Fat Use Score chart. Today is day '+(dayIndex+1)+' with a current score of '+fox2Round(today.score)+'. Baseline '+fox2Round(baseline)+'.">'+slots+'<line class="program-today-history-baseline" x1="14" y1="'+baselineY.toFixed(1)+'" x2="322" y2="'+baselineY.toFixed(1)+'"></line><line class="program-today-history-axis" x1="14" y1="101" x2="322" y2="101"></line>'+marks+'<text class="program-today-history-label" x="14" y="119">DAY 1</text><text class="program-today-history-label" x="322" y="119" text-anchor="end">DAY 30</text><text class="program-today-history-label" x="322" y="'+Math.max(10,baselineY-5).toFixed(1)+'" text-anchor="end">BASELINE '+fox2Round(baseline)+'</text></svg></div>';
+  return '<div class="program-today-history"><div class="program-today-history-head"><div class="program-recap-title-row"><strong>'+target+'-Day Fat Use Scores</strong>'+replay+'</div><span>Live · Day '+(dayIndex+1)+'</span></div><svg class="program-today-history-svg" viewBox="0 0 336 126" role="img" aria-label="Live '+target+'-day Fat Use Score chart. Today is day '+(dayIndex+1)+' with a current score of '+fox2Round(today.score)+'. Baseline '+fox2Round(baseline)+'.">'+slots+'<line class="program-today-history-baseline" x1="14" y1="'+baselineY.toFixed(1)+'" x2="322" y2="'+baselineY.toFixed(1)+'"></line><line class="program-today-history-axis" x1="14" y1="101" x2="322" y2="101"></line>'+marks+'<text class="program-today-history-label" x="14" y="119">DAY 1</text><text class="program-today-history-label" x="322" y="119" text-anchor="end">DAY '+target+'</text><text class="program-today-history-label" x="322" y="'+Math.max(10,baselineY-5).toFixed(1)+'" text-anchor="end">BASELINE '+fox2Round(baseline)+'</text></svg></div>';
 }
 
 function fox2MeasureDashboardHtml(metrics,options){
@@ -7191,7 +7196,7 @@ function fox2MeasureDashboardHtml(metrics,options){
     var todayOffset=(circumference*(1-todayProgress)).toFixed(3);
     var todayOverflowOffset=(circumference*(1-todayOverflow)).toFixed(3);
     var todayOverflowRing=todayOverflow>0?'<circle class="program-today-overflow" cx="60" cy="60" r="54" style="--today-overflow-offset:'+todayOverflowOffset+'"></circle>':'';
-    var todayDay=Math.max(1,Math.min(FOX2_MEASURE_DAYS,fox2DaysBetween(fox2Program.measureStart,fox2TodayIso())+1));
+    var todayDay=Math.max(1,Math.min(fox2ProgramTargetDays(),fox2DaysBetween(fox2Program.measureStart,fox2TodayIso())+1));
     return '<section class="program-measure-dashboard"><div class="program-recap-sequence is-settled"><div class="program-today-card"><h2 class="program-today-title">Today So Far</h2><div class="program-today-grid"><svg class="program-today-ring" viewBox="0 0 120 120" role="img" aria-label="Today Fat Use Score '+todayVisual.value+' from '+today.readings+' '+(today.readings===1?'reading':'readings')+'"><circle class="program-today-track" cx="60" cy="60" r="54"></circle><circle class="program-today-value" cx="60" cy="60" r="54" style="--today-color:var(--program-orange);--today-offset:'+todayOffset+'"></circle>'+todayOverflowRing+'<text class="program-today-score" x="60" y="64">'+todayVisual.value+'</text><text class="program-today-unit" x="60" y="82">FAT USE SCORE</text></svg><div class="program-today-copy"><p>Today becomes day '+todayDay+' of your program after the day is complete.</p><span class="program-today-status">'+today.readings+' '+(today.readings===1?'reading':'readings')+' today</span></div></div>'+fox2TodayHistoryHtml(today,metrics,model)+'</div></div></section>';
   }
   if(!model){
@@ -7202,8 +7207,8 @@ function fox2MeasureDashboardHtml(metrics,options){
   var path=fox2RecapMorphPath(model.latestVisual.progress,animate?0:1,model.latestSlot.x,model.latestSlot.top,model.plotBottom);
   var scoreText=fox2Round(model.latest.score);
   return '<section class="program-measure-dashboard"><div class="program-recap-sequence'+settledClass+'" style="--recap-color:'+model.latestVisual.color+'" data-recap-animate="'+(animate?'1':'0')+'" data-latest-date="'+fox2Escape(model.latest.date)+'" data-score="'+scoreText+'" data-fill="'+model.latestVisual.progress+'" data-target-x="'+model.latestSlot.x+'" data-target-top="'+model.latestSlot.top.toFixed(1)+'" data-target-bottom="'+model.plotBottom+'" data-from="'+model.priorChange+'" data-to="'+model.change+'">'
-    +'<div class="program-recap-head"><span class="program-recap-kicker">Morning Recap</span><span class="program-recap-date">'+fox2Escape(latestDateLabel)+'</span><div class="program-recap-history-title"><div class="program-recap-title-row"><strong>30-Day Fat Use Scores</strong><button type="button" class="program-recap-replay" data-recap-replay aria-label="Replay morning recap" title="Replay morning recap">↻</button></div><span>'+model.completed+' completed '+(model.completed===1?'day':'days')+' · Baseline '+fox2Round(model.baseline)+'</span></div></div>'
-    +'<svg class="program-recap-svg" viewBox="0 0 336 236" role="img" aria-label="'+fox2Escape(latestDateLabel)+' Fat Use Score '+scoreText+', added to day '+model.latestDayNumber+' of your 30-day history">'
+    +'<div class="program-recap-head"><span class="program-recap-kicker">Morning Recap</span><span class="program-recap-date">'+fox2Escape(latestDateLabel)+'</span><div class="program-recap-history-title"><div class="program-recap-title-row"><strong>'+model.target+'-Day Fat Use Scores</strong><button type="button" class="program-recap-replay" data-recap-replay aria-label="Replay morning recap" title="Replay morning recap">↻</button></div><span>'+model.completed+' completed '+(model.completed===1?'day':'days')+' · Baseline '+fox2Round(model.baseline)+'</span></div></div>'
+    +'<svg class="program-recap-svg" viewBox="0 0 336 236" role="img" aria-label="'+fox2Escape(latestDateLabel)+' Fat Use Score '+scoreText+', added to day '+model.latestDayNumber+' of your '+model.target+'-day history">'
     +'<circle class="program-recap-ring-track" cx="168" cy="112" r="54"></circle><path class="program-recap-morph" d="'+path+'"></path>'
     +'<g class="program-recap-score"><text class="program-recap-score-value" id="program-recap-score" x="168" y="116">'+scoreText+'</text><text class="program-recap-score-label" x="168" y="136">FAT USE SCORE</text></g>'
     +fox2RecapHistorySvg(model)+'</svg>'
@@ -7211,8 +7216,7 @@ function fox2MeasureDashboardHtml(metrics,options){
 }
 
 function fox2MeasureHtml(metrics){
-  var content=fox2MeasureDashboardHtml(metrics);
-  return content;
+  return fox2MeasureDashboardHtml(metrics)+fox2ProgramHistoryHtml(fox2Program.resultHistory.slice().reverse(),'Past Results');
 }
 
 function fox2AnimateValue(from,to,duration,update,done){
@@ -7361,18 +7365,21 @@ function fox2FinalizeResult(metrics){
   return true;
 }
 
+function fox2ProgramHistoryHtml(items,title){
+  var history=(items||[]).map(function(item){
+    var change=Number(item.change)||0;
+    return '<article class="program-history-item"><h2 class="program-history-title"><span class="program-history-bullet"></span><span>'+fox2Escape(item.action||'Actions')+'</span></h2><div role="table" aria-label="Action result"><div class="program-result-table-head" role="row"><span>Before</span><span>After</span><span>Change</span></div><div class="program-result-table-values" role="row"><span>'+item.before+'</span><span>'+item.after+'</span><span>'+(change>=0?'+':'')+change+'%</span></div></div></article>';
+  }).join('');
+  return history?'<section class="program-section"><div class="program-eyebrow">'+fox2Escape(title||'Past Results')+'</div><div class="program-history">'+history+'</div></section>':'';
+}
+
 function fox2ResultsHtml(metrics){
   var items=fox2Program.resultHistory.slice().reverse();
   if(!items.length&&metrics.baseline&&metrics.after){
     items=[{action:fox2Program.action,before:fox2Round(metrics.baseline),after:fox2Round(metrics.after),change:Math.round((metrics.after-metrics.baseline)/metrics.baseline*100)}];
   }
   var previous=items.slice(1);
-  var history=previous.map(function(item){
-    var change=Number(item.change)||0;
-    return '<article class="program-history-item"><h2 class="program-history-title"><span class="program-history-bullet"></span><span>'+fox2Escape(item.action||'Actions')+'</span></h2><div role="table" aria-label="Action result"><div class="program-result-table-head" role="row"><span>Before</span><span>After</span><span>Change</span></div><div class="program-result-table-values" role="row"><span>'+item.before+'</span><span>'+item.after+'</span><span>'+(change>=0?'+':'')+change+'%</span></div></div></article>';
-  }).join('');
-  var previousResults=history?'<section class="program-section"><div class="program-eyebrow">Previous Programs</div><div class="program-history">'+history+'</div></section>':'';
-  return fox2MeasureDashboardHtml(metrics,{forceHistory:true})+previousResults;
+  return fox2MeasureDashboardHtml(metrics,{forceHistory:true})+fox2ProgramHistoryHtml(previous,'Past Results');
 }
 
 var FOX2_ONBOARDING_SPEED=1.5;
@@ -7618,7 +7625,7 @@ function fox2RenderProgram(){
     fox2Program.screen=screen;
     if(!fox2ProgramReadOnly) fox2SaveProgram();
   }
-  if(!fox2ProgramReadOnly&&screen==='measure'&&fox2Program.measureStart&&fox2DaysBetween(fox2Program.measureStart,fox2TodayIso())>=FOX2_MEASURE_DAYS&&fox2FinalizeResult(metrics)){
+  if(!fox2ProgramReadOnly&&screen==='measure'&&fox2Program.measureStart&&fox2DaysBetween(fox2Program.measureStart,fox2TodayIso())>=fox2ProgramTargetDays()&&fox2FinalizeResult(metrics)){
     fox2Program.screen='results'; screen='results'; fox2ProgramOptionsOpen=false; fox2SaveProgram();
   }
   if(screen==='overview') body=fox2OverviewHtml();
@@ -7763,9 +7770,9 @@ function fox2RenderBaselineEditor(message){
     return;
   }
   if(fox2BaselineEditorStep==='restart'){
-    var day=Math.max(1,Math.min(FOX2_MEASURE_DAYS,fox2DaysBetween(fox2Program.measureStart,fox2TodayIso())+1));
+    var target=fox2ProgramTargetDays(),day=Math.max(1,Math.min(target,fox2DaysBetween(fox2Program.measureStart,fox2TodayIso())+1));
     content.innerHTML='<div class="program-confirm-title" id="program-baseline-editor-title">Measure a new baseline?</div>'
-      +'<p class="program-baseline-editor-copy">You are on Day '+day+' of 30. This will end your current program and begin a new seven-day Fat Use Baseline.</p>'
+      +'<p class="program-baseline-editor-copy">You are on Day '+day+' of '+target+'. This will end your current program and begin a new seven-day Fat Use Baseline.</p>'
       +'<div class="program-confirm-actions"><button type="button" class="program-confirm-cancel" onclick="fox2CloseBaselineEditor()">Keep current program</button><button type="button" class="program-confirm-destructive" onclick="fox2BeginNewMeasuredBaseline()">End program and start baseline</button></div>';
     return;
   }
@@ -7820,6 +7827,7 @@ function fox2BeginNewMeasuredBaseline(){
   fox2Program.baselineSource='';
   fox2Program.baselineRange='';
   fox2Program.measureStart='';
+  fox2Program.targetDays=FOX2_MEASURE_DAYS;
   fox2Program.screen='setup';
   fox2ProgramOptionsOpen=false;
   fox2CloseBaselineEditor();
@@ -7870,6 +7878,7 @@ function fox2HandleProgramAction(action){
     fox2Program.screen=fox2Program.setupMode==='new'?'method':'results';
   }else if(action==='begin'){
     fox2Program.action=(input?input.value:fox2ActionDraft).trim();
+    fox2Program.targetDays=FOX2_MEASURE_DAYS;
     if(fox2Program.setupMode==='change'){
       fox2Program.measureStart=fox2TodayIso(); fox2Program.screen='measure';
     }else if(fox2Program.baselineMode!=='personal'){
@@ -7897,15 +7906,18 @@ function fox2HandleProgramAction(action){
     if(fox2FinalizeResult(metrics)){fox2Program.screen='results';fox2ProgramOptionsOpen=true;}
   }else if(action==='restart-measuring'){
     fox2SaveProgramBackup('restart program');
-    fox2Program.measureStart=fox2TodayIso();fox2ProgramOptionsOpen=false;
-  }else if(action==='maintain'){
-    fox2Program.screen='results';fox2ProgramOptionsOpen=false;
+    fox2Program.measureStart=fox2TodayIso();fox2Program.targetDays=FOX2_MEASURE_DAYS;fox2ProgramOptionsOpen=false;
+  }else if(action==='extend-tracking'||action==='maintain'){
+    var currentResult=fox2CurrentProgramResult(),currentTarget=fox2ProgramTargetDays();
+    if(metrics.elapsedDays>=currentTarget) fox2Program.targetDays=currentTarget+15;
+    if(currentResult) fox2Program.resultHistory=fox2Program.resultHistory.filter(function(item){return item!==currentResult;});
+    fox2Program.screen='measure';fox2ProgramOptionsOpen=false;
   }else if(action==='change-actions'){
     fox2SaveProgramBackup('change actions');
     fox2ActionDraft='';fox2Program.setupMode='change';fox2Program.screen='setup';fox2ProgramOptionsOpen=false;
   }else if(action==='start-over'){
     fox2SaveProgramBackup('start over');
-    fox2ActionDraft='';fox2Program.setupMode='restart';fox2Program.baselineMode='personal';fox2Program.baselineStart='';fox2Program.baselineValue=null;fox2Program.baselineSource='';fox2Program.baselineRange='';fox2Program.measureStart='';fox2Program.screen='method';fox2ProgramOptionsOpen=false;
+    fox2ActionDraft='';fox2Program.setupMode='restart';fox2Program.baselineMode='personal';fox2Program.baselineStart='';fox2Program.baselineValue=null;fox2Program.baselineSource='';fox2Program.baselineRange='';fox2Program.measureStart='';fox2Program.targetDays=FOX2_MEASURE_DAYS;fox2Program.screen='method';fox2ProgramOptionsOpen=false;
   }else if(action==='restore-previous-program'){
     fox2RestoreProgramBackup(); return;
   }

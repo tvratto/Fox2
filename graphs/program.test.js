@@ -31,7 +31,7 @@ function functionSource(name,nextName){
 
   context.fox2Program.screen='results';
   Object.assign(context,{FOX2_PROGRAM_DAYS:30,FOX2_STANDARD_BASELINE:75,fox2ProgramOptionsOpen:false,
-    fox2Escape:value=>String(value),fox2BaselineSourceLabel:()=>''});
+    fox2Escape:value=>String(value),fox2BaselineSourceLabel:()=>'',fox2ProgramTargetDays:()=>30});
   vm.runInNewContext(functionSource('fox2ProgressHtml','fox2BaselineChart'),context);
   const html=context.fox2ProgressHtml({baseline:75,after:125,measureDays:[{score:125}],elapsedDays:3,savedResult:context.fox2CurrentProgramResult()});
   assert.ok(html.includes('Add a walk after eating')&&html.includes('67%'),
@@ -43,7 +43,7 @@ function functionSource(name,nextName){
 (function newActionStartsOnlyWhenConfirmed(){
   const program={screen:'setup',setupMode:'change',action:'Add a walk after eating',baselineMode:'default'};
   const context={fox2ProgramReadOnly:false,fox2Program:program,fox2ActionDraft:'Oatmeal for breakfast',
-    fox2ProgramOptionsOpen:false,document:{getElementById:id=>id==='program-action-input'?{value:'Oatmeal for breakfast'}:null},
+    FOX2_MEASURE_DAYS:30,fox2ProgramOptionsOpen:false,document:{getElementById:id=>id==='program-action-input'?{value:'Oatmeal for breakfast'}:null},
     fox2ProgramMetrics:()=>({}),fox2TodayIso:()=> '2026-10-28',fox2Round:value=>value,
     fox2SaveProgram:()=>{},fox2RenderProgram:()=>{}};
   vm.runInNewContext(functionSource('fox2HandleProgramAction','fox2RouteInitialPage'),context);
@@ -52,6 +52,27 @@ function functionSource(name,nextName){
   assert.strictEqual(program.measureStart,'2026-10-28');
   assert.strictEqual(program.screen,'measure',
     'confirming a changed action should begin a fresh program rather than remain on Final Result');
+})();
+
+(function extendTrackingResumesOrAddsFifteenDays(){
+  function run(elapsedDays){
+    const result={id:'2026-10-01|Walk after eating',action:'Walk after eating',change:18};
+    const program={screen:'results',setupMode:'new',action:'Walk after eating',measureStart:'2026-10-01',targetDays:30,resultHistory:[result]};
+    const context={fox2ProgramReadOnly:false,fox2Program:program,fox2ActionDraft:'',FOX2_MEASURE_DAYS:30,
+      fox2ProgramOptionsOpen:true,document:{getElementById:()=>null},fox2ProgramMetrics:()=>({elapsedDays}),
+      fox2CurrentProgramResult:()=>result,fox2ProgramTargetDays:()=>program.targetDays,
+      fox2SaveProgram:()=>{},fox2RenderProgram:()=>{}};
+    vm.runInNewContext(functionSource('fox2HandleProgramAction','fox2RouteInitialPage'),context);
+    context.fox2HandleProgramAction('extend-tracking');
+    return program;
+  }
+  const early=run(3);
+  assert.strictEqual(early.targetDays,30,'ending early and extending should continue toward the original day 30');
+  assert.strictEqual(early.screen,'measure');
+  assert.strictEqual(early.resultHistory.length,0,'the temporary early result should resume as a live result');
+  const complete=run(30);
+  assert.strictEqual(complete.targetDays,45,'extending a completed 30-day program should add 15 days');
+  assert.strictEqual(complete.screen,'measure');
 })();
 
 const programTab=source.indexOf('data-page="0">Progress</button>');
@@ -188,7 +209,9 @@ assert.ok(source.includes("fox2Program.screen='first'"),
 assert.ok(source.includes('function fox2FirstMeasurementHtml()'),
   'onboarding should walk the user through the first measurement and sync');
 assert.ok(source.includes('Tap your phone to FOX2 again to sync it.'));
-assert.ok(source.includes('Finish program and view result'));
+assert.ok(source.includes('View program result'));
+assert.ok(source.includes('Save a result using the completed days so far.'),
+  'reviewing a result early should not imply that tracking can never continue');
 assert.ok(source.includes("if(fox2FinalizeResult(metrics)){fox2Program.screen='results';fox2ProgramOptionsOpen=true;}"),
   'finishing early should open the next choices immediately beneath Program options');
 assert.ok(source.includes("}else if(screen==='results'){\n    programOptions='<div class=\"program-options-anchor\""),
@@ -280,29 +303,38 @@ assert.ok(source.includes("else if(previous.length){fox2OpenPreviousBaselineConf
 assert.ok(source.includes('function fox2ConfirmPreviousBaseline()'),
   'the confirmation should apply the available historical days');
 assert.ok(source.includes("data-program-action=\"use-previous-baseline\""));
-assert.ok(source.includes('Keep tracking'));
-assert.ok(source.includes('Stay on this Final Result and continue measuring normally.'),
-  'Keep tracking should explain that it does not create another page or program');
+assert.ok(source.includes('Extend tracking'));
+assert.ok(source.includes("day>=total?'Add 15 days to this program.':'Continue this program through day '+total+'.'"),
+  'Extend tracking should resume an early result or add 15 days after the target is reached');
 assert.ok(source.includes("if(screen==='maintain'){\n    screen='results';"),
-  'legacy maintenance sessions should return to their Final Result automatically');
-assert.ok(source.includes("}else if(action==='maintain'){\n    fox2Program.screen='results';fox2ProgramOptionsOpen=false;"),
-  'Keep tracking should close options while staying on the Final Result');
+  'legacy maintenance sessions should return to their saved result automatically');
+assert.ok(source.includes("}else if(action==='extend-tracking'||action==='maintain'){"),
+  'the former maintenance action should migrate into Extend tracking');
+assert.ok(source.includes('if(metrics.elapsedDays>=currentTarget) fox2Program.targetDays=currentTarget+15;'),
+  'a completed program should extend by 15 days');
+assert.ok(source.includes("fox2Program.screen='measure';fox2ProgramOptionsOpen=false;"),
+  'extending should resume the active measuring experience');
 assert.ok(!source.includes('function fox2MaintainHtml()'),
   'the redundant Keep going page should no longer exist');
 assert.ok(!source.includes('Keep going</h1>'),
   'the unexplained Keep going state should not be shown');
 assert.ok(source.includes('Add or change actions'));
+assert.ok(source.includes("fox2ProgramHistoryHtml(fox2Program.resultHistory.slice().reverse(),'Past Results')"),
+  'active tracking should keep prior action results visible');
+assert.ok(source.includes('function fox2ProgramHistoryHtml(items,title)'),
+  'past action results should use one consistent before, after, and change presentation');
 assert.ok(source.includes('var FOX2_MEASURE_DAYS=30;'),
-  'the measurement segment should last 30 days');
-assert.ok(source.includes('var FOX2_PROGRAM_DAYS=FOX2_MEASURE_DAYS;'),
-  'the visible 30-day program should begin after baseline preparation');
-assert.ok(source.includes('30-Day Program'));
+  'new programs should begin with a 30-day measurement segment');
+assert.ok(source.includes('targetDays:FOX2_MEASURE_DAYS'),
+  'each program should persist its own tracking duration');
+assert.ok(source.includes("fox2Program.targetDays=currentTarget+15"),
+  'extended programs should persist their longer duration');
 assert.ok(source.includes('>Measure</span>'));
 assert.ok(source.includes('>Results</span>'));
 assert.ok(!source.includes("phase='Measure · Day '"),
   'the progress block should not repeat the current measuring day');
-assert.ok(source.includes("fox2DaysBetween(fox2Program.measureStart,fox2TodayIso())>=FOX2_MEASURE_DAYS"),
-  'the program should advance to results after the 30-day measurement segment');
+assert.ok(source.includes("fox2DaysBetween(fox2Program.measureStart,fox2TodayIso())>=fox2ProgramTargetDays()"),
+  'the program should advance to results after its current tracking duration');
 assert.ok(source.includes('Fat Use Baseline ready'));
 assert.ok(source.includes('Start tracking'));
 assert.ok(!source.includes("Yesterday's result"),
@@ -336,7 +368,7 @@ assert.ok(source.includes('.program-today-overflow { stroke:#ffb84d;'),
 assert.ok(source.includes('function fox2TodayProgramDay()'),
   'the same-day state should use the actual current calendar day rather than the last available day');
 assert.ok(source.includes('function fox2TodayHistoryHtml(today,metrics,recapModel)'),
-  'the same-day state should include the live 30-day history chart');
+  'the same-day state should include the live program history chart');
 assert.ok(source.includes("fox2TodayHistoryHtml(today,metrics,model)+'</div>"),
   'the live chart should appear directly below the Today So Far ring');
 assert.ok(source.includes('var recapPending=!!(model&&fox2ShouldAnimateRecap(model))'),
@@ -354,7 +386,7 @@ assert.ok(source.includes('program-today-history-current'),
 assert.ok(source.includes('Live · Day '),
   'the current unfinished bar should be identified as live rather than completed');
 assert.ok(source.includes('Morning Recap'));
-assert.ok(source.includes('30-Day Fat Use Scores'));
+assert.ok(source.includes("<strong>'+target+'-Day Fat Use Scores</strong>"));
 assert.ok(source.includes('Results So Far'));
 assert.ok(source.includes('function fox2RingVisual(score)'),
   'the recap ring should retain the firmware ring tiers');
@@ -365,13 +397,13 @@ assert.ok(source.includes('function fox2RecapMorphPath(fillFraction,amount,targe
 assert.ok(source.includes('totalTurn=sweep*(1-p)'),
   'the morph should remove curvature continuously rather than cross-fading shapes');
 assert.ok(source.includes('program-recap-baseline'),
-  'the 30-day view should retain the starting point as a quiet comparison');
+  'the program view should retain the starting point as a quiet comparison');
 assert.ok(source.includes('fox2RecapHistorySvg(model)'),
-  'the ring should land in the same 30-day chart shown after the recap');
-assert.ok(source.includes('for(var i=0;i<FOX2_MEASURE_DAYS;i++)'),
-  'the chart should always build all 30 tracking-day positions');
-assert.ok(source.includes("day.x=18+index*(300/(FOX2_MEASURE_DAYS-1))"),
-  'all 30 chart positions should fit into one fixed view');
+  'the ring should land in the same program chart shown after the recap');
+assert.ok(source.includes('for(var i=0;i<target;i++)'),
+  'the chart should build every position in the current tracking duration');
+assert.ok(source.includes("day.x=18+index*(300/(target-1))"),
+  'all program-day positions should fit into one fixed view');
 assert.ok(source.includes('class="program-recap-slot"'),
   'unfinished tracking days should remain visibly open');
 assert.ok(source.includes('.program-recap-bar-base { stroke:#ff8c00;'),
@@ -384,7 +416,7 @@ assert.ok(source.includes('missing:!completed&&i<completedBeforeToday'),
   'elapsed days without completed results should remain explicit gaps');
 assert.ok(source.includes('program-recap-missing'),
   'missing days should look different from future chart positions');
-assert.ok(source.includes("added to day '+model.latestDayNumber+' of your 30-day history"),
+assert.ok(source.includes("added to day '+model.latestDayNumber+' of your '+model.target+'-day history"),
   'the recap should report the newest result’s calendar-day position, not its compacted result count');
 assert.ok(source.includes("root.classList.add('is-morphing')"));
 assert.ok(source.includes("root.classList.add('is-history-visible')"));
@@ -417,8 +449,8 @@ assert.ok(source.includes("path.setAttribute('stroke-width','6.5')"),
 assert.ok(source.includes('program-measure-dashboard'));
 assert.ok(source.includes('class="program-progress-result"'),
   'the cumulative result should occupy a fixed location in the program progress card');
-assert.ok(source.includes("resultLabel=current==='results'?'Final Result':'Results So Far'"),
-  'the fixed result should distinguish the completed program from an interim result');
+assert.ok(source.includes("resultLabel=current==='results'?'Program Result':'Results So Far'"),
+  'the saved result should avoid implying that tracking can never continue');
 assert.ok(source.includes('fox2MeasureDashboardHtml(metrics,{forceHistory:true})'),
   'the completed program should retain the full chart and final result summary');
 assert.ok(source.includes('has increased your Fat Use Score by <span class="program-progress-result-change">'),
