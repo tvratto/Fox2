@@ -114,6 +114,8 @@ assert.ok(source.includes('How FOX2 Works<span>Replay the three-part introductio
 assert.ok(source.includes('How to Measure<span>Warmup, blowing, and measurement tips.</span>'));
 assert.ok(source.includes('Restore Last Session<span>Undo the most recent restart or new-baseline choice.</span>'),
   'Help should expose recovery when a previous program session is available');
+assert.ok(!source.includes('<button type="button" class="export-modal-close" onclick="closeGuideModal()">Close</button>'),
+  'the Help menu should use only its upper-right close control');
 assert.ok(source.includes('restore.hidden=fox2ProgramReadOnly||!fox2LoadProgramBackup()'),
   'Restore Last Session should only appear when a local recovery exists');
 assert.ok(source.includes('.guide-choice[hidden] { display:none; }'),
