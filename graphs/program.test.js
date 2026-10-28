@@ -31,6 +31,10 @@ assert.ok(programTab>=0&&programTab<dataTab&&dataTab<historyTab&&historyTab<anal
 assert.ok(source.includes('id="program-shell"'),'program page should be mounted in the pager');
 assert.ok(source.includes("fox2Program.optedOut=true"),'the intro should persist an explicit opt-out');
 assert.ok(source.includes("window.fox2GoToPage(1,true)"),'opting out should route directly to Data');
+assert.ok(source.includes('Date.now()-Number(priorPresence.updatedAt||0)<120000'),
+  'a recently active Safari results tab should still receive a sync after being suspended');
+assert.ok(source.includes('},900);'),
+  'the Safari handoff should allow a background results tab time to answer');
 assert.ok(source.includes("var activeProgram=fox2ProgramReadOnly||(!fox2Program.optedOut&&fox2Program.screen!=='maintain')"),
   'opted-out and maintenance users should open on Data on later visits');
 assert.ok(source.includes('See when your body is using fat for energy.'),
@@ -234,12 +238,18 @@ assert.ok(source.includes('.program-today-overflow { stroke:#ffb84d;'),
   'the second ring lap should use the approved lighter orange');
 assert.ok(source.includes('function fox2TodayProgramDay()'),
   'the same-day state should use the actual current calendar day rather than the last available day');
-assert.ok(source.includes('function fox2TodayHistoryHtml(today,metrics)'),
+assert.ok(source.includes('function fox2TodayHistoryHtml(today,metrics,recapModel)'),
   'the same-day state should include the live 30-day history chart');
-assert.ok(source.includes("fox2TodayHistoryHtml(today,metrics)+'</div>"),
+assert.ok(source.includes("fox2TodayHistoryHtml(today,metrics,model)+'</div>"),
   'the live chart should appear directly below the Today So Far ring');
-assert.ok(source.includes('var today=options.forceHistory?null:fox2TodayProgramDay()'),
-  'a current-day reading should take priority over settled history during an active program');
+assert.ok(source.includes('var recapPending=!!(model&&fox2ShouldAnimateRecap(model))'),
+  'an unseen completed day should be detected before choosing the same-day view');
+assert.ok(source.includes('var today=(options.forceHistory||forceReplay||recapPending)?null:fox2TodayProgramDay()'),
+  'an unseen completed-day recap should take priority over a current-day reading');
+assert.ok(source.includes('data-recap-replay-today'),
+  'Today So Far should retain a way to replay the latest completed-day recap');
+assert.ok(source.includes('function fox2ReplayLatestFromToday()'),
+  'the Today So Far replay control should return to the completed-day animation');
 assert.ok(source.includes('completedByDate[date]'),
   'the live today chart should preserve completed prior-day bars');
 assert.ok(source.includes('program-today-history-current'),

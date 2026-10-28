@@ -2518,7 +2518,9 @@ var sParam    = params.get('s') || '';
     }catch(e){return false;}
   }
 
-  var state={deviceId:deviceId,safeId:safeId,established:false,existing:false,decided:!canProbe,writesDone:false,writesOk:false,finished:false};
+  var priorPresence=readStored(presenceKey);
+  var recentPresence=!!(priorPresence&&priorPresence.instanceId!==instanceId&&Date.now()-Number(priorPresence.updatedAt||0)<120000);
+  var state={deviceId:deviceId,safeId:safeId,established:false,existing:recentPresence,decided:!canProbe,writesDone:false,writesOk:false,finished:false};
   window._fox2Handoff=state;
 
   function establish(){
@@ -2622,7 +2624,7 @@ var sParam    = params.get('s') || '';
     state.decided=true;
     if(!state.existing) establish();
     else maybeFinish();
-  },500);
+  },900);
 
   if(returnButton) returnButton.addEventListener('click',function(){
     // The established results page has already received the new URL above.
@@ -6357,6 +6359,7 @@ var fox2BaselineEditorValue=FOX2_STANDARD_BASELINE;
 var fox2BaselineEditorSource='default';
 var fox2BaselineEditorStep='choose';
 var fox2AnimatedMeasureDate='';
+var fox2ReplayFromToday=false;
 var fox2SharedProgramSnapshot=null;
 var fox2ProgramDemoSnapshot=null;
 var fox2ProgramSnapshot=null;
@@ -7050,7 +7053,7 @@ function fox2RecapHistorySvg(model){
   return '<g class="program-recap-history-frame">'+slots+'<line class="program-recap-baseline" x1="14" y1="'+model.baselineY.toFixed(1)+'" x2="322" y2="'+model.baselineY.toFixed(1)+'"></line><line class="program-recap-axis" x1="14" y1="209" x2="322" y2="209"></line><text class="program-recap-day-label" x="14" y="226">DAY 1</text><text class="program-recap-day-label" x="322" y="226" text-anchor="end">DAY 30</text></g>'+marks;
 }
 
-function fox2TodayHistoryHtml(today,metrics){
+function fox2TodayHistoryHtml(today,metrics,recapModel){
   var baseline=Math.max(1,Number(metrics.baseline)||FOX2_STANDARD_BASELINE);
   var dayIndex=Math.max(0,Math.min(FOX2_MEASURE_DAYS-1,fox2DaysBetween(fox2Program.measureStart,fox2TodayIso())));
   var completedByDate={};
@@ -7081,13 +7084,16 @@ function fox2TodayHistoryHtml(today,metrics){
     if(scoreTop<baselineY) marks+='<line class="program-today-history-above program-today-history-current" x1="'+todayX.toFixed(1)+'" y1="'+scoreTop.toFixed(1)+'" x2="'+todayX.toFixed(1)+'" y2="'+baselineY.toFixed(1)+'"></line>';
     marks+='<circle class="program-today-history-now" cx="'+todayX.toFixed(1)+'" cy="'+scoreTop.toFixed(1)+'" r="3.2"></circle>';
   }
-  return '<div class="program-today-history"><div class="program-today-history-head"><strong>30-Day Fat Use Scores</strong><span>Live · Day '+(dayIndex+1)+'</span></div><svg class="program-today-history-svg" viewBox="0 0 336 126" role="img" aria-label="Live 30-day Fat Use Score chart. Today is day '+(dayIndex+1)+' with a current score of '+fox2Round(today.score)+'. Baseline '+fox2Round(baseline)+'.">'+slots+'<line class="program-today-history-baseline" x1="14" y1="'+baselineY.toFixed(1)+'" x2="322" y2="'+baselineY.toFixed(1)+'"></line><line class="program-today-history-axis" x1="14" y1="101" x2="322" y2="101"></line>'+marks+'<text class="program-today-history-label" x="14" y="119">DAY 1</text><text class="program-today-history-label" x="322" y="119" text-anchor="end">DAY 30</text><text class="program-today-history-label" x="322" y="'+Math.max(10,baselineY-5).toFixed(1)+'" text-anchor="end">BASELINE '+fox2Round(baseline)+'</text></svg></div>';
+  var replay=recapModel?'<button type="button" class="program-recap-replay" data-recap-replay-today aria-label="Replay morning recap" title="Replay morning recap">↻</button>':'';
+  return '<div class="program-today-history"><div class="program-today-history-head"><div class="program-recap-title-row"><strong>30-Day Fat Use Scores</strong>'+replay+'</div><span>Live · Day '+(dayIndex+1)+'</span></div><svg class="program-today-history-svg" viewBox="0 0 336 126" role="img" aria-label="Live 30-day Fat Use Score chart. Today is day '+(dayIndex+1)+' with a current score of '+fox2Round(today.score)+'. Baseline '+fox2Round(baseline)+'.">'+slots+'<line class="program-today-history-baseline" x1="14" y1="'+baselineY.toFixed(1)+'" x2="322" y2="'+baselineY.toFixed(1)+'"></line><line class="program-today-history-axis" x1="14" y1="101" x2="322" y2="101"></line>'+marks+'<text class="program-today-history-label" x="14" y="119">DAY 1</text><text class="program-today-history-label" x="322" y="119" text-anchor="end">DAY 30</text><text class="program-today-history-label" x="322" y="'+Math.max(10,baselineY-5).toFixed(1)+'" text-anchor="end">BASELINE '+fox2Round(baseline)+'</text></svg></div>';
 }
 
 function fox2MeasureDashboardHtml(metrics,options){
   options=options||{};
   var model=fox2RecapModel(metrics);
-  var today=options.forceHistory?null:fox2TodayProgramDay();
+  var forceReplay=!!fox2ReplayFromToday;
+  var recapPending=!!(model&&fox2ShouldAnimateRecap(model));
+  var today=(options.forceHistory||forceReplay||recapPending)?null:fox2TodayProgramDay();
   if(today){
     var todayVisual=fox2RingVisual(today.score),circumference=339.292;
     var baseline=Math.max(1,Number(metrics.baseline)||FOX2_STANDARD_BASELINE);
@@ -7098,12 +7104,12 @@ function fox2MeasureDashboardHtml(metrics,options){
     var todayOverflowOffset=(circumference*(1-todayOverflow)).toFixed(3);
     var todayOverflowRing=todayOverflow>0?'<circle class="program-today-overflow" cx="60" cy="60" r="54" style="--today-overflow-offset:'+todayOverflowOffset+'"></circle>':'';
     var todayDay=Math.max(1,Math.min(FOX2_MEASURE_DAYS,fox2DaysBetween(fox2Program.measureStart,fox2TodayIso())+1));
-    return '<section class="program-measure-dashboard"><div class="program-recap-sequence is-settled"><div class="program-today-card"><h2 class="program-today-title">Today So Far</h2><div class="program-today-grid"><svg class="program-today-ring" viewBox="0 0 120 120" role="img" aria-label="Today Fat Use Score '+todayVisual.value+' from '+today.readings+' '+(today.readings===1?'reading':'readings')+'"><circle class="program-today-track" cx="60" cy="60" r="54"></circle><circle class="program-today-value" cx="60" cy="60" r="54" style="--today-color:var(--program-orange);--today-offset:'+todayOffset+'"></circle>'+todayOverflowRing+'<text class="program-today-score" x="60" y="64">'+todayVisual.value+'</text><text class="program-today-unit" x="60" y="82">FAT USE SCORE</text></svg><div class="program-today-copy"><p>Today becomes day '+todayDay+' of your program after the day is complete.</p><span class="program-today-status">'+today.readings+' '+(today.readings===1?'reading':'readings')+' today</span></div></div>'+fox2TodayHistoryHtml(today,metrics)+'</div></div></section>';
+    return '<section class="program-measure-dashboard"><div class="program-recap-sequence is-settled"><div class="program-today-card"><h2 class="program-today-title">Today So Far</h2><div class="program-today-grid"><svg class="program-today-ring" viewBox="0 0 120 120" role="img" aria-label="Today Fat Use Score '+todayVisual.value+' from '+today.readings+' '+(today.readings===1?'reading':'readings')+'"><circle class="program-today-track" cx="60" cy="60" r="54"></circle><circle class="program-today-value" cx="60" cy="60" r="54" style="--today-color:var(--program-orange);--today-offset:'+todayOffset+'"></circle>'+todayOverflowRing+'<text class="program-today-score" x="60" y="64">'+todayVisual.value+'</text><text class="program-today-unit" x="60" y="82">FAT USE SCORE</text></svg><div class="program-today-copy"><p>Today becomes day '+todayDay+' of your program after the day is complete.</p><span class="program-today-status">'+today.readings+' '+(today.readings===1?'reading':'readings')+' today</span></div></div>'+fox2TodayHistoryHtml(today,metrics,model)+'</div></div></section>';
   }
   if(!model){
     return '<section class="program-measure-dashboard"><div class="program-recap-sequence is-settled"><div class="program-recap-empty"><strong>Results So Far</strong><span>Your first completed day will appear here after you sync.</span></div></div></section>';
   }
-  var animate=fox2ShouldAnimateRecap(model),settledClass=animate?'':' is-history-visible is-bar-landed is-settled';
+  var animate=forceReplay||recapPending,settledClass=animate?'':' is-history-visible is-bar-landed is-settled';
   var latestDateLabel=fox2AddIsoDays(fox2TodayIso(),-1)===model.latest.date?'Yesterday':fox2ShortDate(model.latest.date);
   var path=fox2RecapMorphPath(model.latestVisual.progress,animate?0:1,model.latestSlot.x,model.latestSlot.top,model.plotBottom);
   var scoreText=fox2Round(model.latest.score);
@@ -7156,6 +7162,13 @@ function fox2ReplayMeasureRecap(){
   var replay=root.querySelector('[data-recap-replay]');
   if(replay) replay.disabled=true;
   window.setTimeout(fox2AnimateMeasureRecap,80);
+}
+
+function fox2ReplayLatestFromToday(){
+  if(!fox2RecapModel(fox2ProgramMetrics())) return;
+  fox2ReplayFromToday=true;
+  fox2AnimatedMeasureDate='';
+  fox2RenderProgram();
 }
 
 function fox2RecapPop(path,kind,targetX,targetTop,targetBottom,done){
@@ -7533,6 +7546,13 @@ function fox2RenderProgram(){
   });
   var replay=shell.querySelector('[data-recap-replay]');
   if(replay) replay.addEventListener('click',fox2ReplayMeasureRecap);
+  var todayReplay=shell.querySelector('[data-recap-replay-today]');
+  if(todayReplay) todayReplay.addEventListener('click',fox2ReplayLatestFromToday);
+  if(fox2ReplayFromToday){
+    var replayRoot=shell.querySelector('.program-recap-sequence[data-latest-date]');
+    if(replayRoot) replayRoot.classList.add('is-replaying');
+    fox2ReplayFromToday=false;
+  }
   if(screen==='measure'||screen==='results') window.setTimeout(fox2AnimateMeasureRecap,0);
   if(fox2ProgramOptionsOpen&&screen==='baseline') window.setTimeout(function(){
     var options=shell.querySelector('.program-options');
