@@ -156,6 +156,16 @@ assert.ok(source.includes('function fox2FirstMeasurementHtml()'),
   'onboarding should walk the user through the first measurement and sync');
 assert.ok(source.includes('Tap your phone to FOX2 again to sync it.'));
 assert.ok(source.includes('Finish program and view result'));
+assert.ok(source.includes("if(fox2FinalizeResult(metrics)){fox2Program.screen='results';fox2ProgramOptionsOpen=true;}"),
+  'finishing early should open the next choices immediately beneath Program options');
+assert.ok(source.includes("}else if(screen==='results'){\n    programOptions='<div class=\"program-options-anchor\""),
+  'result choices should use the anchored Program options popover');
+assert.ok(source.includes('<p>What do you want to do?</p><div class="program-option-actions">'),
+  'the anchored result popover should present the next-step question');
+assert.ok(!source.includes('<section class="program-section"><h2 class="program-section-title">What do you want to do?</h2>'),
+  'result choices should no longer be stranded at the bottom of the page');
+assert.ok(source.includes("fox2SaveProgramBackup('change actions')"),
+  'adding or changing actions should preserve the program that preceded it');
 assert.ok(source.includes('Restart program'));
 assert.ok(source.includes('Start over with a new baseline'));
 assert.ok(source.includes('class="program-options-baseline"'),

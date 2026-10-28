@@ -6822,6 +6822,12 @@ function fox2ProgressHtml(metrics){
       +(fox2ProgramOptionsOpen?'<div class="program-options-popover"><button type="button" class="program-options-popover-close" data-program-action="toggle-options" aria-label="Close program options">×</button><p>Change how your 30-day program is running.</p>'
         +'<div class="program-options-baseline"><div class="program-options-baseline-value"><span>Fat Use Baseline</span><strong>'+baselineValue+'</strong><small>'+fox2Escape(baselineSource)+'</small></div><button type="button" class="program-options-baseline-change" data-program-action="change-baseline">Change ›</button></div>'
         +'<div class="program-option-actions">'+optionButtons+'</div></div>':'')+'</div>';
+  }else if(screen==='results'){
+    programOptions='<div class="program-options-anchor"><button type="button" class="program-options-toggle" data-program-action="toggle-options" aria-haspopup="true" aria-expanded="'+fox2ProgramOptionsOpen+'">Program options '+(fox2ProgramOptionsOpen?'▴':'▾')+'</button>'
+      +(fox2ProgramOptionsOpen?'<div class="program-options-popover"><button type="button" class="program-options-popover-close" data-program-action="toggle-options" aria-label="Close program options">×</button><p>What do you want to do?</p><div class="program-option-actions">'
+        +'<button type="button" class="program-option-card is-primary" data-program-action="maintain"><strong>Keep tracking</strong><span>Continue measuring without starting a new program.</span></button>'
+        +'<button type="button" class="program-option-card" data-program-action="change-actions"><strong>Add or change actions</strong><span>Keep this baseline and begin a new 30-day program.</span></button>'
+        +'<button type="button" class="program-option-card" data-program-action="start-over"><strong>Start over</strong><span>Begin again with a new Fat Use Baseline.</span></button></div></div>':'')+'</div>';
   }
   return '<section class="program-progress" role="region" aria-label="30-day program: '+dayLabel+', '+pct+' percent complete, '+phase+'">'
     +'<div class="program-progress-head"><div class="program-progress-title">30-Day Program</div><div class="program-day">'+dayLabel+'</div></div>'
@@ -7353,9 +7359,7 @@ function fox2ResultsHtml(metrics){
     return '<article class="program-history-item"><h2 class="program-history-title"><span class="program-history-bullet"></span><span>'+fox2Escape(item.action||'Actions')+'</span></h2><div role="table" aria-label="Action result"><div class="program-result-table-head" role="row"><span>Before</span><span>After</span><span>Change</span></div><div class="program-result-table-values" role="row"><span>'+item.before+'</span><span>'+item.after+'</span><span>'+(change>=0?'+':'')+change+'%</span></div></div></article>';
   }).join('');
   var previousResults=history?'<section class="program-section"><div class="program-eyebrow">Previous Programs</div><div class="program-history">'+history+'</div></section>':'';
-  return fox2MeasureDashboardHtml(metrics,{forceHistory:true})
-    +'<section class="program-section"><h2 class="program-section-title">What do you want to do?</h2><button type="button" class="program-choice is-primary" data-program-action="maintain">Keep tracking</button><button type="button" class="program-choice" data-program-action="change-actions">Add or change actions</button><button type="button" class="program-choice" data-program-action="start-over">Start over</button></section>'
-    +previousResults;
+  return fox2MeasureDashboardHtml(metrics,{forceHistory:true})+previousResults;
 }
 
 function fox2MaintainHtml(){
@@ -7876,13 +7880,14 @@ function fox2HandleProgramAction(action){
   }else if(action==='change-baseline'){
     fox2OpenBaselineEditor(); return;
   }else if(action==='finish-measuring'){
-    if(fox2FinalizeResult(metrics)){fox2Program.screen='results';fox2ProgramOptionsOpen=false;}
+    if(fox2FinalizeResult(metrics)){fox2Program.screen='results';fox2ProgramOptionsOpen=true;}
   }else if(action==='restart-measuring'){
     fox2SaveProgramBackup('restart program');
     fox2Program.measureStart=fox2TodayIso();fox2ProgramOptionsOpen=false;
   }else if(action==='maintain'){
     fox2Program.screen='maintain';
   }else if(action==='change-actions'){
+    fox2SaveProgramBackup('change actions');
     fox2Program.setupMode='change';fox2Program.screen='setup';fox2ProgramOptionsOpen=false;
   }else if(action==='start-over'){
     fox2SaveProgramBackup('start over');
