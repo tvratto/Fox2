@@ -21,6 +21,39 @@ function functionSource(name,nextName){
     'program snapshots should round-trip without TextEncoder or TextDecoder');
 })();
 
+(function completedResultSurvivesAccidentalActionRelabel(){
+  const context={fox2Program:{measureStart:'2026-10-26',action:'Oatmeal for breakfast',resultHistory:[
+    {id:'2026-10-26|Add a walk after eating',action:'Add a walk after eating',before:75,after:125,change:67,date:'2026-10-28'}
+  ]}};
+  vm.runInNewContext(functionSource('fox2CurrentProgramResult','fox2ProgramMetrics'),context);
+  assert.strictEqual(context.fox2CurrentProgramResult().action,'Add a walk after eating',
+    'the saved result must retain its original action even if a draft previously overwrote the live label');
+
+  context.fox2Program.screen='results';
+  Object.assign(context,{FOX2_PROGRAM_DAYS:30,FOX2_STANDARD_BASELINE:75,fox2ProgramOptionsOpen:false,
+    fox2Escape:value=>String(value),fox2BaselineSourceLabel:()=>''});
+  vm.runInNewContext(functionSource('fox2ProgressHtml','fox2BaselineChart'),context);
+  const html=context.fox2ProgressHtml({baseline:75,after:125,measureDays:[{score:125}],elapsedDays:3,savedResult:context.fox2CurrentProgramResult()});
+  assert.ok(html.includes('Add a walk after eating')&&html.includes('67%'),
+    'the Final Result should render the frozen action and percentage');
+  assert.ok(!html.includes('Oatmeal for breakfast'),
+    'the Final Result must not be relabelled with an unconfirmed next action');
+})();
+
+(function newActionStartsOnlyWhenConfirmed(){
+  const program={screen:'setup',setupMode:'change',action:'Add a walk after eating',baselineMode:'default'};
+  const context={fox2ProgramReadOnly:false,fox2Program:program,fox2ActionDraft:'Oatmeal for breakfast',
+    fox2ProgramOptionsOpen:false,document:{getElementById:id=>id==='program-action-input'?{value:'Oatmeal for breakfast'}:null},
+    fox2ProgramMetrics:()=>({}),fox2TodayIso:()=> '2026-10-28',fox2Round:value=>value,
+    fox2SaveProgram:()=>{},fox2RenderProgram:()=>{}};
+  vm.runInNewContext(functionSource('fox2HandleProgramAction','fox2RouteInitialPage'),context);
+  context.fox2HandleProgramAction('begin');
+  assert.strictEqual(program.action,'Oatmeal for breakfast');
+  assert.strictEqual(program.measureStart,'2026-10-28');
+  assert.strictEqual(program.screen,'measure',
+    'confirming a changed action should begin a fresh program rather than remain on Final Result');
+})();
+
 const programTab=source.indexOf('data-page="0">Progress</button>');
 const dataTab=source.indexOf('data-page="1">Data</button>');
 const historyTab=source.indexOf('data-page="2">History</button>');
@@ -166,6 +199,14 @@ assert.ok(!source.includes('<section class="program-section"><h2 class="program-
   'result choices should no longer be stranded at the bottom of the page');
 assert.ok(source.includes("fox2SaveProgramBackup('change actions')"),
   'adding or changing actions should preserve the program that preceded it');
+assert.ok(source.includes("if(input) input.addEventListener('input',function(){fox2ActionDraft=input.value;});"),
+  'typing a proposed action should update only a draft');
+assert.ok(!source.includes("if(input) fox2Program.action=input.value.trim();"),
+  'a draft action must not relabel the completed program');
+assert.ok(source.includes("fox2Program.action=(input?input.value:fox2ActionDraft).trim();"),
+  'the new action should become current only when tracking is confirmed');
+assert.ok(source.includes("fox2ActionDraft='';fox2Program.setupMode='change';fox2Program.screen='setup'"),
+  'changing actions should open a clean draft while preserving the completed result');
 assert.ok(source.includes('Restart program'));
 assert.ok(source.includes('Start over with a new baseline'));
 assert.ok(source.includes('class="program-options-baseline"'),
@@ -266,7 +307,7 @@ assert.ok(source.includes('Fat Use Baseline ready'));
 assert.ok(source.includes('Start tracking'));
 assert.ok(!source.includes("Yesterday's result"),
   'the first measuring day should not show an empty yesterday result');
-assert.ok(source.includes("resultAction=fox2Escape(fox2Program.action||'Your actions')"));
+assert.ok(source.includes("resultAction=fox2Escape((frozenResult&&frozenResult.action)||fox2Program.action||'Your actions')"));
 assert.ok(!source.includes("completed '+(metrics.measureDays.length===1?'day':'days')+' included"),
   'the compact measure page should not repeat the completed-day count');
 assert.ok(!source.includes('Continue your actions.'),
@@ -386,8 +427,16 @@ assert.ok(source.includes("var resultDuration='After '+day+' '+(day===1?'day':'d
   'the fixed result should state how far into the program the result was measured');
 assert.ok(source.includes('function fox2CurrentProgramResult()'),
   'finished programs should resolve the saved result belonging to the current program');
+assert.ok(source.includes("String(history[j].id||'').indexOf(prefix)===0"),
+  'a completed result should remain recoverable by program start date if a draft action corrupted the current label');
 assert.ok(source.includes("var savedResult=(fox2Program.screen==='results'||fox2Program.screen==='maintain')?fox2CurrentProgramResult():null"),
   'finished programs should freeze their metrics at the saved result');
+assert.ok(source.includes('savedResult:savedResult'),
+  'the frozen result should be available to the final-result presentation');
+assert.ok(source.includes("var resultAction=fox2Escape((frozenResult&&frozenResult.action)||fox2Program.action||'Your actions')"),
+  'the final statement should use the action frozen into the saved result');
+assert.ok(source.includes("var resultChange=frozenResult?Number(frozenResult.change)||0"),
+  'the final statement should use the percentage frozen into the saved result');
 assert.ok(source.includes('if(measureEnd) measureDays=measureDays.filter(function(day){return day.date<=measureEnd;})'),
   'later measurements must not change a previously finished program result');
 assert.ok(source.includes("}else if(screen==='results'){day=metrics.elapsedDays;phase='Result ready';current='results';}"),

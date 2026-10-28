@@ -6364,6 +6364,7 @@ var FOX2_PROGRAM_DAYS=FOX2_MEASURE_DAYS;
 var FOX2_STANDARD_BASELINE=75;
 var FOX2_DEFAULT_BASELINES=[75,120,180];
 var fox2ProgramOptionsOpen=false;
+var fox2ActionDraft='';
 var fox2BaselineEditorValue=FOX2_STANDARD_BASELINE;
 var fox2BaselineEditorSource='default';
 var fox2BaselineEditorStep='choose';
@@ -6781,6 +6782,8 @@ function fox2CurrentProgramResult(){
   var id=fox2Program.measureStart+'|'+fox2Program.action;
   var history=Array.isArray(fox2Program.resultHistory)?fox2Program.resultHistory:[];
   for(var i=history.length-1;i>=0;i--) if(history[i]&&history[i].id===id) return history[i];
+  var prefix=fox2Program.measureStart+'|';
+  for(var j=history.length-1;j>=0;j--) if(history[j]&&String(history[j].id||'').indexOf(prefix)===0) return history[j];
   return null;
 }
 
@@ -6795,7 +6798,7 @@ function fox2ProgramMetrics(){
   var after=fox2Mean(measureDays.map(function(day){return day.score;}));
   var elapsedEnd=measureEnd||fox2TodayIso();
   var elapsedDays=fox2Program.measureStart?Math.max(1,Math.min(FOX2_MEASURE_DAYS,fox2DaysBetween(fox2Program.measureStart,elapsedEnd)+1)):0;
-  return {baselineDays:baselineDays,baseline:baseline,measureDays:measureDays,after:after,measureEnd:measureEnd,elapsedDays:elapsedDays};
+  return {baselineDays:baselineDays,baseline:baseline,measureDays:measureDays,after:after,measureEnd:measureEnd,elapsedDays:elapsedDays,savedResult:savedResult};
 }
 
 function fox2ProgressHtml(metrics){
@@ -6810,9 +6813,10 @@ function fox2ProgressHtml(metrics){
   var baselineClass=current==='baseline'?'is-current':(current==='measure'||current==='results'?'is-complete':'');
   var resultLabel=current==='results'?'Final Result':'Results So Far';
   var resultCopy='Your first result will appear after your first completed program day.';
-  if(metrics.baseline&&metrics.after&&metrics.measureDays.length){
-    var resultChange=Math.round((metrics.after-metrics.baseline)/metrics.baseline*100);
-    var resultAction=fox2Escape(fox2Program.action||'Your actions');
+  if((metrics.baseline&&metrics.after&&metrics.measureDays.length)||metrics.savedResult){
+    var frozenResult=current==='results'&&metrics.savedResult?metrics.savedResult:null;
+    var resultChange=frozenResult?Number(frozenResult.change)||0:Math.round((metrics.after-metrics.baseline)/metrics.baseline*100);
+    var resultAction=fox2Escape((frozenResult&&frozenResult.action)||fox2Program.action||'Your actions');
     var resultDuration='After '+day+' '+(day===1?'day':'days')+', ';
     if(resultChange>0) resultCopy=resultDuration+'<strong class="program-progress-result-action">'+resultAction+'</strong> has increased your Fat Use Score by <span class="program-progress-result-change">'+resultChange+'%</span> versus baseline.';
     else if(resultChange<0) resultCopy=resultDuration+'<strong class="program-progress-result-action">'+resultAction+'</strong> has decreased your Fat Use Score by <span class="program-progress-result-change">'+Math.abs(resultChange)+'%</span> versus baseline.';
@@ -6968,7 +6972,7 @@ function fox2SetupHtml(){
     +'<h1 class="program-title">'+(changing?'What will you add or change?':restarting?'What will you try next?':personal?'What will you try after your baseline is ready?':'What are you changing?')+'</h1>'
     +'<p class="program-copy">'+(changing?'Your Fat Use Baseline will stay the same.':restarting?'You will establish a new Fat Use Baseline before tracking these actions.':personal?'Describe your planned action now. Begin it after FOX2 finishes learning your Fat Use Baseline.':'Describe the action or actions you want to evaluate.')+'</p>'
     +'<label class="program-label" for="program-action-input">Action or actions</label>'
-    +'<textarea class="program-input" id="program-action-input" placeholder="Describe what you are changing or trying…">'+fox2Escape(changing||restarting?'':fox2Program.action)+'</textarea>'
+    +'<textarea class="program-input" id="program-action-input" placeholder="Describe what you are changing or trying…">'+fox2Escape(fox2ActionDraft)+'</textarea>'
     +'<div class="program-examples">Write as much as you want. For example: change a GLP-1 dose, exercise more, change meal timing, or change your diet.</div>'
     +'<button type="button" class="program-primary" data-program-action="begin">'+(changing?'Start tracking':restarting?'Begin new baseline':'Continue')+'</button>'
     +(restarting&&fox2LoadProgramBackup()?'<button type="button" class="program-secondary" data-program-action="restore-previous-program">Undo and resume previous program</button>':'')
@@ -7642,7 +7646,7 @@ function fox2RenderProgram(){
   fox2ProgramTransitioning=false;
   var input=shell.querySelector('#program-action-input');
   if(input&&fox2ProgramReadOnly) input.readOnly=true;
-  if(input) input.addEventListener('input',function(){fox2Program.action=input.value;});
+  if(input) input.addEventListener('input',function(){fox2ActionDraft=input.value;});
   var manualBaselineInput=shell.querySelector('#program-baseline-manual-input');
   if(manualBaselineInput) manualBaselineInput.addEventListener('input',function(){
     var value=Math.round(Number(manualBaselineInput.value));
@@ -7808,6 +7812,7 @@ function fox2ReviewNewMeasuredBaseline(){
 
 function fox2BeginNewMeasuredBaseline(){
   fox2SaveProgramBackup('new baseline');
+  fox2ActionDraft='';
   fox2Program.setupMode='restart';
   fox2Program.baselineMode='personal';
   fox2Program.baselineStart='';
@@ -7825,7 +7830,6 @@ function fox2BeginNewMeasuredBaseline(){
 function fox2HandleProgramAction(action){
   if(fox2ProgramReadOnly) return;
   var input=document.getElementById('program-action-input');
-  if(input) fox2Program.action=input.value.trim();
   var metrics=fox2ProgramMetrics();
   if(action==='continue-intro'){
     fox2Program.screen='day-intro';
@@ -7856,14 +7860,16 @@ function fox2HandleProgramAction(action){
       var manualField=document.getElementById('program-baseline-manual-input'); if(manualField) manualField.focus();
       return;
     }
-    fox2Program.setupMode='new'; fox2Program.screen='setup';
+    fox2Program.setupMode='new'; fox2ActionDraft=''; fox2Program.screen='setup';
   }else if(action==='opt-out'){
     fox2Program.optedOut=true; fox2Program.screen='overview'; fox2SaveProgram(); fox2RenderProgram();
     if(window.fox2GoToPage) window.fox2GoToPage(1,true);
     return;
   }else if(action==='back'){
+    fox2ActionDraft='';
     fox2Program.screen=fox2Program.setupMode==='new'?'method':'results';
   }else if(action==='begin'){
+    fox2Program.action=(input?input.value:fox2ActionDraft).trim();
     if(fox2Program.setupMode==='change'){
       fox2Program.measureStart=fox2TodayIso(); fox2Program.screen='measure';
     }else if(fox2Program.baselineMode!=='personal'){
@@ -7871,7 +7877,7 @@ function fox2HandleProgramAction(action){
     }else{
       fox2Program.baselineStart=fox2TodayIso(); fox2Program.baselineValue=null; fox2Program.baselineSource=''; fox2Program.baselineRange=''; fox2Program.measureStart=''; fox2Program.screen='first';
     }
-    fox2Program.setupMode='new'; fox2ProgramOptionsOpen=false;
+    fox2ActionDraft=''; fox2Program.setupMode='new'; fox2ProgramOptionsOpen=false;
   }else if(action==='finish-first'){
     fox2Program.screen=fox2Program.baselineMode==='personal'?'baseline':'measure';
   }else if(action==='toggle-options'){
@@ -7896,10 +7902,10 @@ function fox2HandleProgramAction(action){
     fox2Program.screen='results';fox2ProgramOptionsOpen=false;
   }else if(action==='change-actions'){
     fox2SaveProgramBackup('change actions');
-    fox2Program.setupMode='change';fox2Program.screen='setup';fox2ProgramOptionsOpen=false;
+    fox2ActionDraft='';fox2Program.setupMode='change';fox2Program.screen='setup';fox2ProgramOptionsOpen=false;
   }else if(action==='start-over'){
     fox2SaveProgramBackup('start over');
-    fox2Program.setupMode='restart';fox2Program.baselineMode='personal';fox2Program.baselineStart='';fox2Program.baselineValue=null;fox2Program.baselineSource='';fox2Program.baselineRange='';fox2Program.measureStart='';fox2Program.screen='method';fox2ProgramOptionsOpen=false;
+    fox2ActionDraft='';fox2Program.setupMode='restart';fox2Program.baselineMode='personal';fox2Program.baselineStart='';fox2Program.baselineValue=null;fox2Program.baselineSource='';fox2Program.baselineRange='';fox2Program.measureStart='';fox2Program.screen='method';fox2ProgramOptionsOpen=false;
   }else if(action==='restore-previous-program'){
     fox2RestoreProgramBackup(); return;
   }
