@@ -31,8 +31,10 @@ assert.ok(programTab>=0&&programTab<dataTab&&dataTab<historyTab&&historyTab<anal
 assert.ok(source.includes('id="program-shell"'),'program page should be mounted in the pager');
 assert.ok(source.includes("fox2Program.optedOut=true"),'the intro should persist an explicit opt-out');
 assert.ok(source.includes("window.fox2GoToPage(1,true)"),'opting out should route directly to Data');
-assert.ok(source.includes('Date.now()-Number(priorPresence.updatedAt||0)<120000'),
-  'a recently active Safari results tab should still receive a sync after being suspended');
+assert.ok(source.includes('existing:false,decided:!canProbe'),
+  'a stale Safari presence timestamp must not make the new sync page close itself');
+assert.ok(source.includes('answers the live BroadcastChannel probe'),
+  'only a live response from another FOX2 tab should trigger the handoff');
 assert.ok(source.includes('},900);'),
   'the Safari handoff should allow a background results tab time to answer');
 assert.ok(source.includes("var activeProgram=fox2ProgramReadOnly||(!fox2Program.optedOut&&fox2Program.screen!=='maintain')"),

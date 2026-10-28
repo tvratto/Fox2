@@ -2518,9 +2518,10 @@ var sParam    = params.get('s') || '';
     }catch(e){return false;}
   }
 
-  var priorPresence=readStored(presenceKey);
-  var recentPresence=!!(priorPresence&&priorPresence.instanceId!==instanceId&&Date.now()-Number(priorPresence.updatedAt||0)<120000);
-  var state={deviceId:deviceId,safeId:safeId,established:false,existing:recentPresence,decided:!canProbe,writesDone:false,writesOk:false,finished:false};
+  // A stored presence timestamp is only a hint: iOS may leave it behind for a
+  // suspended or closed tab. Close this sync tab only after another page
+  // answers the live BroadcastChannel probe below.
+  var state={deviceId:deviceId,safeId:safeId,established:false,existing:false,decided:!canProbe,writesDone:false,writesOk:false,finished:false};
   window._fox2Handoff=state;
 
   function establish(){
