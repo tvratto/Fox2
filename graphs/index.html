@@ -334,6 +334,24 @@ html, body {
 .program-today-copy p { margin:0 0 10px; color:rgba(255,255,255,.58); font-size:12px; line-height:1.4; font-weight:600; }
 .program-today-status { display:inline-flex; align-items:center; gap:6px; padding:7px 9px; border-radius:10px; background:rgba(255,255,255,.07); color:rgba(255,255,255,.82); font-size:11px; line-height:1; font-weight:750; }
 .program-today-status::before { content:""; width:6px; height:6px; border-radius:50%; background:var(--program-orange); }
+.program-first-sync { padding:20px 18px 22px; }
+.program-first-sync-results { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin:20px 0 16px; }
+.program-first-sync-result { min-height:176px; padding:13px 9px 11px; border-radius:21px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.09); display:flex; flex-direction:column; align-items:center; justify-content:flex-start; text-align:center; }
+.program-first-sync-label { min-height:26px; color:rgba(255,255,255,.46); font-size:10px; line-height:1.25; font-weight:900; letter-spacing:.09em; text-transform:uppercase; }
+.program-first-sync-zone,.program-first-sync-ring { display:block; width:128px; max-width:100%; height:116px; margin-top:5px; overflow:visible; }
+.program-first-sync-zone-number { fill:#fff; font:950 40px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; letter-spacing:-.05em; text-anchor:middle; }
+.program-first-sync-zone-scale { fill:rgba(255,255,255,.4); font:850 8px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; text-anchor:middle; }
+.program-first-sync-ring-track,.program-first-sync-ring-value { fill:none; stroke-width:10; }
+.program-first-sync-ring-track { stroke:rgba(255,255,255,.11); }
+.program-first-sync-ring-value { stroke-linecap:round; transform:rotate(-90deg); transform-origin:60px 60px; stroke-dasharray:289.027; animation:program-first-sync-ring .72s cubic-bezier(.2,.8,.2,1) both; }
+.program-first-sync-score { fill:#fff; font:950 38px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; letter-spacing:-.05em; text-anchor:middle; }
+.program-first-sync-score-unit { fill:rgba(255,255,255,.4); font:850 7px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; letter-spacing:.08em; text-anchor:middle; }
+.program-first-sync-copy { margin:0 2px 18px; color:rgba(255,255,255,.68); font-size:16px; line-height:1.42; font-weight:650; }
+.program-first-sync-copy strong { color:#fff; font-weight:900; }
+.program-awaiting-first { min-height:410px; padding:28px 20px; display:flex; flex-direction:column; justify-content:center; text-align:center; }
+.program-awaiting-first-mark { width:72px; height:72px; margin:0 auto 22px; border:9px solid rgba(255,140,0,.2); border-top-color:var(--program-orange); border-radius:50%; }
+@keyframes program-first-sync-ring { from{stroke-dashoffset:289.027} to{stroke-dashoffset:var(--first-sync-offset)} }
+@media(max-width:350px){.program-first-sync{padding-inline:12px}.program-first-sync-results{gap:7px}.program-first-sync-result{padding-inline:5px}.program-first-sync-copy{font-size:15px}}
 .program-today-history { width:100%; margin-top:13px; padding-top:14px; border-top:1px solid rgba(255,255,255,.08); text-align:left; }
 .program-today-history-head { display:flex; align-items:baseline; justify-content:space-between; gap:12px; }
 .program-today-history-head strong { color:#fff; font-size:15px; line-height:1.2; font-weight:900; }
@@ -2477,6 +2495,10 @@ var targetAUC = parseInt(params.get('t') || '0', 36);  // base36 encoded
 var dParam    = params.get('d') || '';
 var aParam    = params.get('a') || '';
 var sParam    = params.get('s') || '';
+var fox2SetupToken = params.get('setup') || '';
+var fox2IsSetupEntry = !!fox2SetupToken;
+var fox2IntroComplete = params.get('intro') === '1';
+var fox2AwaitingFirst = params.get('awaiting') === '1';
 
 // Keep one reusable results tab per device. A full legacy NFC URL first asks
 // whether an established results page is already listening. When one answers,
@@ -2852,10 +2874,17 @@ if (fox2RemoteShareLoading) {
   document.getElementById('loading').style.display = 'flex';
   document.getElementById('scroller').style.display = 'none';
   document.getElementById('no-data').style.display  = 'none';
-} else if (!dParam || totalDays === 0) {
+} else if ((!dParam || totalDays === 0) && !fox2IsSetupEntry) {
   document.getElementById('loading').style.display = 'none';
   document.getElementById('scroller').style.display = 'none';
   document.getElementById('no-data').style.display  = 'block';
+} else if (fox2IsSetupEntry) {
+  // A new FOX2 has no measurement payload yet. Its first NFC tap must still
+  // open the product introduction and Progress Tracking setup rather than the
+  // generic "No data" dead end.
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('scroller').style.display = 'flex';
+  document.getElementById('no-data').style.display  = 'none';
 }
 
 // Globals used by banner polling and leaderboard — declared here so they are
@@ -6473,6 +6502,8 @@ function fox2ProgramStorageKey(){
 
 function fox2ProgramBackupStorageKey(){ return fox2ProgramStorageKey()+':previous'; }
 
+function fox2SetupTokenStorageKey(){ return fox2ProgramStorageKey()+':setup-token'; }
+
 function fox2SaveProgramBackup(reason){
   if(fox2ProgramReadOnly||!fox2Program) return;
   try{
@@ -6508,7 +6539,7 @@ function fox2DefaultProgram(){
   return {
     screen:'overview', optedOut:false, setupMode:'new', baselineMode:'personal', action:'',
     baselineStart:'', baselineValue:null, baselineSource:'', baselineRange:'',
-    measureStart:'', targetDays:FOX2_MEASURE_DAYS, resultHistory:[]
+    measureStart:'', targetDays:FOX2_MEASURE_DAYS, resultHistory:[], firstMeasurementSynced:false
   };
 }
 
@@ -6516,9 +6547,32 @@ function fox2LoadProgram(){
   var fallback=fox2DefaultProgram();
   if(fox2ProgramSnapshot) return fox2NormalizeSharedProgram(fox2ProgramSnapshot);
   try{
-    var saved=JSON.parse(localStorage.getItem(fox2ProgramStorageKey())||'null');
-    if(!saved||typeof saved!=='object') return fallback;
-    return Object.assign(fallback,saved,{resultHistory:Array.isArray(saved.resultHistory)?saved.resultHistory:[]});
+    var programKey=fox2ProgramStorageKey();
+    var saved=JSON.parse(localStorage.getItem(programKey)||'null');
+    if(fox2IsSetupEntry&&fox2SetupToken&&localStorage.getItem(fox2SetupTokenStorageKey())!==fox2SetupToken){
+      // A setup token is created only by the physical device setup flow. Treat
+      // a new token as a deliberate fresh handoff, while preserving any prior
+      // local program so Help can restore it if this was accidental.
+      if(saved&&typeof saved==='object'){
+        localStorage.setItem(fox2ProgramBackupStorageKey(),JSON.stringify({
+          savedAt:new Date().toISOString(),reason:'new device setup',program:saved
+        }));
+      }
+      localStorage.setItem(fox2SetupTokenStorageKey(),fox2SetupToken);
+      localStorage.setItem(programKey,JSON.stringify(fallback));
+      return fallback;
+    }
+    if(!saved||typeof saved!=='object'){
+      if(fox2IntroComplete){fallback.screen='first-sync';fallback.firstMeasurementSynced=true;}
+      return fallback;
+    }
+    var merged=Object.assign(fallback,saved,{resultHistory:Array.isArray(saved.resultHistory)?saved.resultHistory:[]});
+    if(fox2IntroComplete&&!merged.action&&!merged.baselineStart&&!merged.measureStart&&
+       (merged.screen==='overview'||merged.screen==='day-intro'||merged.screen==='compare-intro')){
+      merged.screen='first-sync';
+      merged.firstMeasurementSynced=true;
+    }
+    return merged;
   }catch(e){ return fallback; }
 }
 
@@ -6578,17 +6632,13 @@ function fox2SetProgramHistory(readingRows,scoreRows){
   fox2ProgramHistoryScores=(scoreRows||[]).filter(function(row){
     return row&&row.day_date&&isFinite(Number(row.auc_score));
   }).map(function(row){return {day_date:String(row.day_date),auc_score:Number(row.auc_score)};}).slice(-120);
-  var readingCounts={};
-  (readingRows||[]).forEach(function(row){
-    if(!row||!row.reading_ts) return;
-    var date=String(row.reading_ts).slice(0,10);
-    readingCounts[date]=(readingCounts[date]||0)+1;
-  });
   var nextHistoryDays=(scoreRows||[]).reduce(function(days,row){
     if(!row||!row.day_date||Number(row.auc_score)<=0) return days;
     var date=String(row.day_date);
     if(date<'2026-09-29') date=addIsoDays(date,1);
-    if(readingCounts[date]!=null&&readingCounts[date]<2) return days;
+    // A saved firmware score is a measured day even when it came from one
+    // reading. More readings can improve how representative the score is,
+    // but sparse measurement never blocks baseline or program progress.
     days.push({date:date,score:Number(row.auc_score)});
     return days;
   },[]);
@@ -6606,7 +6656,8 @@ function fox2AllCompletedScoreDays(){
   fox2ProgramHistoryDays.forEach(function(day){byDate[day.date]={date:day.date,score:Number(day.score)};});
   if(typeof DAYS!=='undefined') DAYS.forEach(function(day){
     if(!day||Number(day.score)<=0) return;
-    if(Array.isArray(day.pts)&&day.pts.length<2) return;
+    // NFC graph points may be compressed into clusters. The canonical saved
+    // score, not the visible point count, determines whether the day counts.
     byDate[day.isoDate]={date:day.isoDate,score:Number(day.score)};
   });
   return Object.keys(byDate).sort().map(function(date){return byDate[date];});
@@ -7006,6 +7057,53 @@ function fox2FirstMeasurementHtml(){
     +'<div class="program-first-steps"><div class="program-first-step"><b>1</b><span>Pick up FOX2 and press the main button.</span></div><div class="program-first-step"><b>2</b><span>Select Measure and complete your breath test.</span></div><div class="program-first-step"><b>3</b><span>Tap your phone to FOX2 again to sync it.</span></div></div>'
     +(received?'<div class="program-first-received">Measurement received</div><button type="button" class="program-primary" data-program-action="finish-first">Continue</button>':'<p>Leave this page open. It will update after FOX2 syncs.</p>')
     +'</div></section>';
+}
+
+function fox2LatestSyncedMeasurement(){
+  try{
+    if(typeof DAYS==='undefined') return {zone:0,score:0,readings:0};
+    for(var i=DAYS.length-1;i>=0;i--){
+      var day=DAYS[i];
+      if(!day||!Array.isArray(day.pts)||!day.pts.length) continue;
+      var point=day.pts[day.pts.length-1]||[];
+      return {
+        zone:Math.max(0,Math.round(Number(point[1])||0)),
+        score:Math.max(0,Math.round(Number(day.score)||0)),
+        readings:day.pts.length
+      };
+    }
+  }catch(e){}
+  return {zone:0,score:0,readings:0};
+}
+
+function fox2FirstSyncZoneSvg(zone){
+  var cx=64,cy=88,r=48,start=200,end=340,segments=10,gap=3;
+  var colors=['#22d3ee','#22d3ee','#22d3ee','#4ade80','#4ade80','#4ade80','#d946c7','#d946c7','#ff8c00','#ff8c00'];
+  function point(angle){var rad=angle*Math.PI/180;return [cx+r*Math.cos(rad),cy+r*Math.sin(rad)];}
+  var paths='';
+  for(var i=0;i<segments;i++){
+    var a=start+(end-start)*i/segments+gap/2,b=start+(end-start)*(i+1)/segments-gap/2;
+    var p1=point(a),p2=point(b),active=i<Math.max(1,Math.min(segments,Math.ceil(zone)));
+    paths+='<path d="M '+p1[0].toFixed(2)+' '+p1[1].toFixed(2)+' A '+r+' '+r+' 0 0 1 '+p2[0].toFixed(2)+' '+p2[1].toFixed(2)+'" fill="none" stroke="'+(active?colors[i]:'rgba(255,255,255,.12)')+'" stroke-width="10" stroke-linecap="round"/>';
+  }
+  return '<svg class="program-first-sync-zone" viewBox="0 0 128 116" role="img" aria-label="Fat Use Zone '+zone+'">'+paths
+    +'<text class="program-first-sync-zone-number" x="64" y="79">'+zone+'</text>'
+    +'<text class="program-first-sync-zone-scale" x="13" y="110">1</text><text class="program-first-sync-zone-scale" x="115" y="110">10+</text></svg>';
+}
+
+function fox2FirstSyncHtml(){
+  var result=fox2LatestSyncedMeasurement(),visual=fox2RingVisual(result.score);
+  var circumference=289.027,offset=circumference*(1-visual.progress);
+  return '<section class="program-first-sync"><div class="program-eyebrow">FOX2 is connected</div><h1 class="program-title">First measurement synced.</h1>'
+    +'<div class="program-first-sync-results">'
+      +'<div class="program-first-sync-result"><div class="program-first-sync-label">Fat Use Zone</div>'+fox2FirstSyncZoneSvg(result.zone)+'</div>'
+      +'<div class="program-first-sync-result"><div class="program-first-sync-label">Today so far</div><svg class="program-first-sync-ring" viewBox="0 0 120 120" role="img" aria-label="Fat Use Score '+result.score+'"><circle class="program-first-sync-ring-track" cx="60" cy="60" r="46"/><circle class="program-first-sync-ring-value" cx="60" cy="60" r="46" stroke="'+visual.color+'" style="--first-sync-offset:'+offset.toFixed(2)+'"/><text class="program-first-sync-score" x="60" y="64">'+result.score+'</text><text class="program-first-sync-score-unit" x="60" y="79">FAT USE SCORE</text></svg></div>'
+    +'</div><p class="program-first-sync-copy"><strong>Your Fat Use Zone is the reading now.</strong> It has started today’s Fat Use Score.</p>'
+    +'<button type="button" class="program-primary" data-program-action="continue-first-sync">Choose my baseline</button></section>';
+}
+
+function fox2AwaitingFirstHtml(){
+  return '<section class="program-awaiting-first"><div class="program-awaiting-first-mark" aria-hidden="true"></div><div class="program-eyebrow">First measurement</div><h1 class="program-title">Complete your first measurement on FOX2.</h1><p class="program-copy">When FOX2 shows <strong>Tap Phone</strong>, tap your phone to the back of FOX2 again.</p></section>';
 }
 
 function fox2BaselineHtml(metrics){
@@ -7609,7 +7707,7 @@ function fox2RenderProgram(){
   var shell=document.getElementById('program-shell');
   if(!shell) return;
   shell.classList.toggle('is-shared',fox2ProgramReadOnly);
-  var metrics=fox2ProgramMetrics(),screen=fox2Program.screen||'overview',body='';
+  var metrics=fox2ProgramMetrics(),screen=fox2AwaitingFirst?'awaiting':(fox2Program.screen||'overview'),body='';
   // Earlier prototypes had separate starting-point and summary cards. Fold
   // persisted visits to either of those states into the simpler final card.
   if(screen==='baseline-intro'||screen==='intro'){
@@ -7634,11 +7732,13 @@ function fox2RenderProgram(){
   else if(screen==='method') body=fox2MethodHtml();
   else if(screen==='setup') body=fox2SetupHtml();
   else if(screen==='first') body=fox2FirstMeasurementHtml();
+  else if(screen==='first-sync') body=fox2FirstSyncHtml();
+  else if(screen==='awaiting') body=fox2AwaitingFirstHtml();
   else if(screen==='baseline') body=fox2BaselineHtml(metrics);
   else if(screen==='measure') body=fox2MeasureHtml(metrics);
   else if(screen==='results') body=fox2ResultsHtml(metrics);
   else body=fox2OverviewHtml();
-  var progress=(screen==='overview'||screen==='day-intro'||screen==='compare-intro')?'':fox2ProgressHtml(metrics);
+  var progress=(screen==='overview'||screen==='day-intro'||screen==='compare-intro'||screen==='first-sync'||screen==='awaiting')?'':fox2ProgressHtml(metrics);
   shell.innerHTML=(fox2ProgramReadOnly?'<div class="program-shared-banner">Shared FOX2 progress</div>':'')+progress+body+'<div class="program-status" id="program-status"></div>';
   var programPage=shell.closest('.program-page');
   if(programPage) programPage.scrollTop=0;
@@ -7849,8 +7949,10 @@ function fox2HandleProgramAction(action){
     fox2Program.screen='day-intro';
   }else if(action==='start'){
     fox2Program.optedOut=false; fox2Program.setupMode='new'; fox2Program.screen='method';
+  }else if(action==='continue-first-sync'){
+    fox2Program.firstMeasurementSynced=true; fox2Program.optedOut=false; fox2Program.screen='method';
   }else if(action==='back-intro'){
-    fox2Program.screen='intro';
+    fox2Program.screen=fox2Program.firstMeasurementSynced?'first-sync':'intro';
   }else if(action==='method-personal'){
     fox2Program.baselineMode='personal'; fox2Program.baselineValue=null; fox2Program.baselineSource=''; fox2Program.baselineRange=''; fox2Program.setupMode='new'; fox2RenderProgram(); return;
   }else if(action==='method-default'||action==='method-standard'){
@@ -7882,9 +7984,9 @@ function fox2HandleProgramAction(action){
     if(fox2Program.setupMode==='change'){
       fox2Program.measureStart=fox2TodayIso(); fox2Program.screen='measure';
     }else if(fox2Program.baselineMode!=='personal'){
-      fox2Program.baselineValue=fox2Round(fox2Program.baselineValue)||FOX2_STANDARD_BASELINE; fox2Program.baselineSource=fox2Program.baselineMode==='manual'?'manual':'default'; fox2Program.baselineRange=fox2Program.baselineMode==='manual'?'Entered manually':'Default reference'; fox2Program.baselineStart=''; fox2Program.measureStart=fox2TodayIso(); fox2Program.screen='first';
+      fox2Program.baselineValue=fox2Round(fox2Program.baselineValue)||FOX2_STANDARD_BASELINE; fox2Program.baselineSource=fox2Program.baselineMode==='manual'?'manual':'default'; fox2Program.baselineRange=fox2Program.baselineMode==='manual'?'Entered manually':'Default reference'; fox2Program.baselineStart=''; fox2Program.measureStart=fox2TodayIso(); fox2Program.screen=fox2Program.firstMeasurementSynced?'measure':'first';
     }else{
-      fox2Program.baselineStart=fox2TodayIso(); fox2Program.baselineValue=null; fox2Program.baselineSource=''; fox2Program.baselineRange=''; fox2Program.measureStart=''; fox2Program.screen='first';
+      fox2Program.baselineStart=fox2TodayIso(); fox2Program.baselineValue=null; fox2Program.baselineSource=''; fox2Program.baselineRange=''; fox2Program.measureStart=''; fox2Program.screen=fox2Program.firstMeasurementSynced?'baseline':'first';
     }
     fox2ActionDraft=''; fox2Program.setupMode='new'; fox2ProgramOptionsOpen=false;
   }else if(action==='finish-first'){

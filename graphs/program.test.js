@@ -75,6 +75,57 @@ function functionSource(name,nextName){
   assert.strictEqual(complete.screen,'measure');
 })();
 
+(function oneReadingDayStillCounts(){
+  const context={
+    fox2ProgramSnapshot:null,
+    fox2ProgramHistoryReadings:[],
+    fox2ProgramHistoryScores:[],
+    fox2ProgramHistoryDays:[],
+    addIsoDays:date=>date,
+    fox2InvalidatePreparedShare:()=>{},
+    fox2PrepareFrozenShare:()=>{}
+  };
+  vm.runInNewContext(functionSource('fox2SetProgramHistory','fox2AllCompletedScoreDays'),context);
+  context.fox2SetProgramHistory(
+    [{reading_ts:'2026-10-27T08:00:00Z',ppm:3.2}],
+    [{day_date:'2026-10-27',auc_score:77}]
+  );
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(context.fox2ProgramHistoryDays)),[
+    {date:'2026-10-27',score:77}
+  ],'a saved score from one measurement should count as a measured program day');
+})();
+
+(function freshDeviceSetupOpensCleanOnboardingAndPreservesPriorProgram(){
+  const storage={
+    'fox2-program-v1:DEVICE01':JSON.stringify({screen:'measure',action:'Old program',resultHistory:[]})
+  };
+  const localStorage={
+    getItem:key=>Object.prototype.hasOwnProperty.call(storage,key)?storage[key]:null,
+    setItem:(key,value)=>{storage[key]=String(value);}
+  };
+  const context={
+    params:{get:key=>({id:'DEVICE01',setup:'fresh-token'}[key]||'')},
+    localStorage,
+    FOX2_PROGRAM_VERSION:1,
+    FOX2_MEASURE_DAYS:30,
+    fox2ProgramSnapshot:null,
+    fox2IsSetupEntry:true,
+    fox2SetupToken:'fresh-token',
+    fox2ProgramReadOnly:false,
+    Date,
+    JSON,
+    isFinite
+  };
+  const start=source.indexOf('function fox2ProgramStorageKey(');
+  const end=source.indexOf('function fox2ApplyProgramRecoveryParam(',start);
+  vm.runInNewContext(source.slice(start,end),context);
+  assert.strictEqual(context.fox2Program.screen,'overview',
+    'a new physical setup token should open the onboarding introduction');
+  assert.strictEqual(JSON.parse(storage['fox2-program-v1:DEVICE01:previous']).program.action,'Old program',
+    'a prior local program should remain recoverable after a fresh setup handoff');
+  assert.strictEqual(storage['fox2-program-v1:DEVICE01:setup-token'],'fresh-token');
+})();
+
 const programTab=source.indexOf('data-page="0">Progress</button>');
 const dataTab=source.indexOf('data-page="1">Data</button>');
 const historyTab=source.indexOf('data-page="2">History</button>');
@@ -202,10 +253,38 @@ assert.ok(source.includes('var FOX2_DEFAULT_BASELINES=[75,120,180];'),
   'onboarding and active-program settings should share the approved default baselines');
 assert.ok(source.includes('Reference values—not goals.'),
   'the defaults should not be mistaken for program targets');
+assert.ok(source.includes('A saved firmware score is a measured day even when it came from one'),
+  'one-reading days should count toward baseline and program progress');
+assert.ok(source.includes("var fox2SetupToken = params.get('setup') || ''"),
+  'the hosted app should recognize the device first-use handoff');
+assert.ok(source.includes("var fox2IntroComplete = params.get('intro') === '1'"),
+  'the first saved-measurement handoff should remember that the portal already explained FOX2');
+assert.ok(source.includes("if(fox2IntroComplete){fallback.screen='first-sync';fallback.firstMeasurementSynced=true;}"),
+  'a new browser should confirm the first synced result before baseline selection');
+assert.ok(source.includes('function fox2FirstSyncHtml()'),
+  'the first sync should have a dedicated result confirmation screen');
+assert.ok(source.includes('First measurement synced.'),
+  'the first sync confirmation should state exactly what happened');
+assert.ok(source.includes('Your Fat Use Zone is the reading now.'),
+  'the first sync should explain the relationship between the zone and daily score');
+assert.ok(source.includes('data-program-action="continue-first-sync"'),
+  'the first sync should lead explicitly into baseline selection');
+assert.ok(source.includes('function fox2AwaitingFirstHtml()'),
+  'an early NFC tap should show a dedicated waiting state');
+assert.ok(source.includes('Complete your first measurement on FOX2.'),
+  'an early tap should return attention to the independent device workflow');
+assert.ok(source.includes("((!dParam || totalDays === 0) && !fox2IsSetupEntry)"),
+  'a setup handoff with no measurements should not fall into the generic no-data screen');
+assert.ok(!source.includes('readingCounts[date]!=null&&readingCounts[date]<2'),
+  'the web app must not reject a saved daily score because it sees fewer than two readings');
+assert.ok(!source.includes('Array.isArray(day.pts)&&day.pts.length<2'),
+  'compressed NFC point counts must not invalidate a saved daily score');
 assert.ok(source.includes("data-program-action=\"method-next\""),
   'choosing a baseline should be distinct from continuing onboarding');
-assert.ok(source.includes("fox2Program.screen='first'"),
-  'both starting-point paths should lead into the first-measurement handoff');
+assert.ok(source.includes("fox2Program.screen=fox2Program.firstMeasurementSynced?'baseline':'first'"),
+  'a synced first measurement should not be requested a second time for a measured baseline');
+assert.ok(source.includes("fox2Program.screen=fox2Program.firstMeasurementSynced?'measure':'first'"),
+  'a synced first measurement should not be requested a second time for a selected baseline');
 assert.ok(source.includes('function fox2FirstMeasurementHtml()'),
   'onboarding should walk the user through the first measurement and sync');
 assert.ok(source.includes('Tap your phone to FOX2 again to sync it.'));
@@ -280,8 +359,8 @@ assert.ok(source.includes('function fox2PreviousBaselineDays()'),
   'historical baseline helper should exist');
 assert.ok(source.includes("day.date<fox2Program.baselineStart"),
   'historical baseline must only use days before the program baseline began');
-assert.ok(source.includes("readingCounts[date]!=null&&readingCounts[date]<2"),
-  'historical days with raw readings should still require at least two readings');
+assert.ok(!source.includes("readingCounts[date]!=null&&readingCounts[date]<2"),
+  'historical days should remain usable when the person measured once');
 assert.ok(source.includes("return fox2AllCompletedScoreDays().filter(function(day){return day.date>=start&&day.date<today;})"),
   'the measurement result should use all completed program days');
 assert.ok(source.includes("canUsePrevious=previous.length>0"),
