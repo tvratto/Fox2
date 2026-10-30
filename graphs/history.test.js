@@ -21,5 +21,7 @@ assert.equal(context.historyMondayWindowStart(22,sundayStart,3),8);
 
 assert.ok(source.includes('var weekDays   = historyCalendarWeekDays(dayOffset)'));
 assert.ok(source.includes('calcZoneTimes(Math.max(0, chunkStart))'));
+assert.ok(source.includes('startDay = Math.max(0, Math.floor(Number(startDay) || 0));'),
+  'short payload windows must not make History index before the first data day');
 
 console.log('history tests passed');

@@ -1743,12 +1743,6 @@ function renderHistoricalAnalysis(readingRows,scoreRows,tagRows){
   var recentTimeframe='Last 14 calendar days · '+analysisShortDate(recentStart)+'–'+analysisShortDate(recentEnd);
   var weekEvidence=analysisWeekEvidence(weekToDate);
   var positionHtml=analysisTierGuideHtml(progressInsight,recentAverage,recentTimeframe);
-  var historyTrend=document.getElementById('history-score-trend');
-  if(historyTrend){
-    historyTrend.innerHTML=scoreDays.length?'<section class="analysis-card"><h2 class="analysis-section-title">Fat Use Score over time</h2>'
-      +'<p class="analysis-section-copy">Every saved day from the beginning. The highlighted area is the latest 14 calendar days.</p>'
-      +scoreTrendSvg(scoreDays,recentStart)+'</section>':'';
-  }
   var helpingBlock=helpingInsight?'<div class="analysis-experiment"><h3>'+analysisEscape(helpingInsight.headline||helpingInsight.question)+'</h3><p>'+helpingInsight.answer+'</p>'+analysisWhyHtml(helpingInsight.detail,tagEvidenceHtml(helpingInsight))+'</div>':'';
   var openingHtml='<section class="analysis-card">'
     +'<h2 class="analysis-major-title">'+analysisEscape(weekCopy.title)+'</h2>'

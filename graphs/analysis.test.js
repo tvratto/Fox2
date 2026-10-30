@@ -347,9 +347,8 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(source.includes('analysisRecentScoreOpportunity(scoreDays,history.activeDate'));
   assert.ok(source.includes('analysisQuestionCardHtml(insight'));
   assert.equal(context.FOX2_SHOW_EXTENDED_ANALYSIS,false);
-  assert.ok(source.includes("document.getElementById('history-score-trend')"));
-  assert.ok(source.includes('historyTrend.innerHTML=scoreDays.length'));
-  assert.ok(source.indexOf('Fat Use Score over time')<source.indexOf('var helpingBlock='));
+  assert.ok(!source.includes("document.getElementById('history-score-trend')"),
+    'Analysis should not replace the detailed History tab with a score-only chart');
 })();
 
 (function showsOnlyTheRecentPatternCard(){
@@ -435,12 +434,13 @@ vm.runInContext(fs.readFileSync(__dirname+'/analysis.js','utf8'),context);
   assert.ok(contextual.detail.includes('not a proven cause'));
 })();
 
-(function placesTheLongTermScoreChartInHistory(){
+(function keepsHistoryFocusedOnTheDetailedDataCanvas(){
   const pageSource=fs.readFileSync(__dirname+'/index.html','utf8');
   const historyCanvas=pageSource.indexOf('id="card-fuel"');
   const historyTrend=pageSource.indexOf('id="history-score-trend"');
   const analysisShell=pageSource.indexOf('id="analysis-shell"');
-  assert.ok(historyCanvas>=0&&historyTrend>historyCanvas&&historyTrend<analysisShell);
+  assert.ok(historyCanvas>=0&&historyCanvas<analysisShell);
+  assert.equal(historyTrend,-1,'History should not include the score-only replacement card');
 })();
 
 (function raisesAStallQuestionOnlyForAFlatOrFallingSub120Week(){
