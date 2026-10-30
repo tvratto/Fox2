@@ -7028,6 +7028,8 @@ function fox2ProgressHtml(metrics){
   var summary='Your progress will appear here soon.',summaryDetail='';
   var hasActiveChange=!!(programStart&&fox2Program.action);
   var actionName=hasActiveChange?'“'+fox2Program.action+'”':'';
+  var earlyResult=latest?(latest.current?'Today’s Fat Use Score is '+fox2Round(latest.score)+' so far.':'Your latest Fat Use Score is '+fox2Round(latest.score)+'.'):'';
+  if(earlyResult&&hasBaseline) earlyResult+=' Your baseline is '+fox2Round(baseline)+'.';
   if(completedShown.length>=4){
     var trendStart=completedShown[0].date;
     var trendXs=completedShown.map(function(day){return fox2DaysBetween(trendStart,day.date);});
@@ -7070,15 +7072,15 @@ function fox2ProgressHtml(metrics){
     summary='Today’s score is taking shape.';
     summaryDetail=hasActiveChange?actionName+' is in progress. Today is '+fox2Round(today.score)+' and still updating.':'It is currently '+fox2Round(today.score)+' and will update as you measure.';
   }else if(shownDays.length){
-    summary='Your progress is taking shape.';
-    summaryDetail='Keep measuring to reveal a clearer pattern.';
+    summary='It’s early—here’s what we see so far.';
+    summaryDetail=earlyResult;
   }
   if(!hasBaseline&&!hasActiveChange){
     if(completedShown.length){
       if(completedShown.length>=4&&trendChange>trendThreshold){summary='Great—your Fat Use Score is rising.';summaryDetail='Recent scores are moving higher.';}
       else if(completedShown.length>=4&&trendChange<-trendThreshold){summary='Your Fat Use Score has dipped.';summaryDetail='Keep measuring to see if this pattern holds.';}
       else if(completedShown.length>=4){summary='Your Fat Use Score is holding steady.';summaryDetail='Recent scores are staying in a similar range.';}
-      else{summary='Your progress is taking shape.';summaryDetail='Keep measuring to reveal a clearer pattern.';}
+      else{summary='It’s early—here’s what we see so far.';summaryDetail=earlyResult;}
     }else if(today){
       summary='Today’s score is taking shape.';
       summaryDetail='It is currently '+fox2Round(today.score)+' and will update as you measure.';

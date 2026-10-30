@@ -49,7 +49,7 @@ function functionSource(name,nextName){
 
   context.fox2Program={measureStart:'',action:'',resultHistory:[]};
   const openHtml=context.fox2ProgressHtml({baseline:0,measureDays:[],elapsedDays:0,savedResult:null});
-  assert.ok(openHtml.includes('Your progress is taking shape.')&&openHtml.includes('Keep measuring to reveal a clearer pattern.'),
+  assert.ok(openHtml.includes('It’s early—here’s what we see so far.')&&openHtml.includes('Today’s Fat Use Score is 94 so far.'),
     'measurements without a baseline or change should still produce a useful neutral Progress state');
   assert.ok(openHtml.includes('Want to see what affects your fat use?')&&openHtml.includes('Set up a baseline'),
     'the neutral Progress state should offer one clear baseline setup prompt');
@@ -458,6 +458,8 @@ assert.ok(source.includes('Great—your Fat Use Score is rising.')&&source.inclu
   'the Progress summary should lead with a conversational interpretation and connect it to the current change');
 assert.ok(!source.includes("summary='You have '+shownDays.length")&&!source.includes("summaryDetail='Keep measuring and sync again after your first completed day.'"),
   'Progress summaries should not report measurement or day counts');
+assert.ok(source.includes('It’s early—here’s what we see so far.')&&source.includes("var earlyResult=latest?"),
+  'an early Progress state should report the latest result instead of using vague progress language');
 assert.ok(source.includes('.program-previous-changes li { display:grid; grid-template-columns:8px minmax(0,1fr)')&&source.includes('font-size:15px'),
   'What you’ve learned should use large stacked phone-readable text');
 assert.ok(!source.includes('program-canonical-average'),
