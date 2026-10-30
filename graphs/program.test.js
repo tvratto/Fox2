@@ -48,8 +48,14 @@ function functionSource(name,nextName){
     'Progress should compare daily Scores directly while identifying the dated lifestyle change');
   assert.ok(html.includes('It’s only been a few days, but since starting Oatmeal for breakfast, your Fat Use Score is already higher.')&&html.includes('program-canonical-hero-value">12%')&&html.includes('program-canonical-hero-label">ABOVE BASELINE'),
     'an early result should name the active action and show its percentage impact as a directional hero result');
-  assert.ok(html.includes('What you’ve learned')&&html.includes('Add a walk after eating')&&html.includes('2026-10-26–2026-10-28')&&html.includes('Your Fat Use Score was 67% higher.'),
-    'Progress should retain a concise start-to-finish record of prior changes and their impact');
+  assert.ok(html.includes('data-program-action="open-past-results">Past results</button>')&&!html.includes('Add a walk after eating'),
+    'Progress should keep prior changes behind one quiet Past results link rather than lengthening the main card');
+  const content={innerHTML:''},overlay={classList:{add(){}},querySelector(){return null;}};
+  context.document={getElementById:id=>id==='past-results-content'?content:overlay};
+  vm.runInNewContext(functionSource('fox2OpenPastResults','fox2ClosePastResults'),context);
+  context.fox2OpenPastResults();
+  assert.ok(content.innerHTML.includes('Add a walk after eating')&&content.innerHTML.includes('2026-10-26–2026-10-28')&&content.innerHTML.includes('↑ 67%'),
+    'Past results should retain each change, its full date range, and its directional percentage impact');
 
   context.fox2Program={measureStart:'',action:'',resultHistory:[]};
   const openHtml=context.fox2ProgressHtml({baseline:0,measureDays:[],elapsedDays:0,savedResult:null});
@@ -57,7 +63,7 @@ function functionSource(name,nextName){
     'measurements without a baseline or change should still produce a useful neutral Progress state');
   assert.ok(openHtml.includes('Want to see what affects your fat use?')&&openHtml.includes('Set up a baseline'),
     'the neutral Progress state should offer one clear baseline setup prompt');
-  assert.ok(!openHtml.includes('BASELINE ')&&!openHtml.includes('What you’ve learned'),
+  assert.ok(!openHtml.includes('BASELINE ')&&!openHtml.includes('Past results'),
     'the neutral state should not invent a baseline or attributed change result');
 })();
 
@@ -479,8 +485,8 @@ assert.ok(source.includes('stroke-dasharray:3 5')&&source.includes('BASELINE '),
   'a baseline should be rendered as a dotted white reference across the chart');
 assert.ok(source.includes('fox2ResolveProgressMessage')&&source.includes('program-canonical-hero')&&!source.includes('program-canonical-context')&&!source.includes('program-calendar-change-note'),
   'the current change and result should read as one concise narrative rather than separate boxes');
-assert.ok(source.includes('background:rgba(255,140,0,.08)')&&source.includes('color:#ffc46f'),
-  'previous change records should be visually emphasized without introducing a new chart');
+assert.ok(source.includes('data-program-action="open-past-results">Past results</button>')&&source.includes('id="past-results-overlay"'),
+  'completed changes should open from a quiet Past results link beneath the chart');
 assert.ok(source.includes('program-canonical-summary'),
   'Progress should lead with a large plain-language summary');
 assert.ok(source.includes('copy-generator.js')&&source.includes("Fox2CopyGenerator.generateCopy('progress',input)"),
@@ -489,8 +495,12 @@ assert.ok(!source.includes("summary='You have '+shownDays.length")&&!source.incl
   'Progress summaries should not report measurement or day counts');
 assert.ok(!source.includes('function fox2ResolveProgressMessage(input){\n  input=input||{};'),
   'Progress message rules should not be duplicated inside the page');
-assert.ok(source.includes('.program-previous-changes li { display:grid; grid-template-columns:8px minmax(0,1fr)')&&source.includes('font-size:15px'),
-  'What you’ve learned should use large stacked phone-readable text');
+assert.ok(source.includes('.past-results-action { color:#fff; font-size:17px')&&source.includes('.past-results-impact { display:flex;')&&source.includes('font-size:25px'),
+  'Past results should use phone-readable change names and prominent percentage impacts');
+assert.ok(source.includes("arrow=change>0?'↑':(change<0?'↓':'→')")&&source.includes('.past-results-impact.is-up { color:var(--program-orange,#ff8c00); }'),
+  'Past results should pair directional arrows with orange increases and neutral decreases');
+assert.ok(!source.includes('program-previous-changes')&&!source.includes('What you’ve learned'),
+  'completed-change records should no longer expand the main Progress card');
 assert.ok(!source.includes('program-canonical-average'),
   'Progress should not repeat the chart with a separate average value');
 assert.ok(source.includes('Want to see what affects your fat use?')&&source.includes('Set up a baseline'),

@@ -23,10 +23,11 @@ history chart. Both use orange for score data.
   compared directly.
 - Today’s unfinished bar uses a thin yellow outline; do not place a `SO FAR`
   text label beside it.
-- When completed change records exist, a compact `What you’ve learned` list below
-  the chart names each change, shows its starting and ending dates beside the
-  name, and states its measured Fat Use Score impact. Use a subtle orange-tinted
-  container and stronger impact text to distinguish this record from the graph.
+- When completed change records exist, show a quiet `Past results` link beneath
+  the chart. Its mobile sheet lists every completed change with its starting and
+  ending dates plus a prominent arrow and percentage impact. Upward impacts use
+  orange; unchanged and downward impacts stay neutral rather than alarming red.
+  Keep the active change in the main Progress summary until it is complete.
 - Bar height, score labels, and the optional baseline reference communicate
   value and comparison; bar color does not encode score tiers.
 - The baseline uses one dotted white reference across the chart so it remains
@@ -58,8 +59,9 @@ history chart. Both use orange for score data.
   stating how many days were missed, and ask only for one new measurement.
 - Do not add a separate average value beneath the chart.
 - Without a baseline or active change, keep the chart useful: show the recent
-  pattern without a baseline line or attributed result, omit `What you’ve
-  learned`, and offer one `Set up a baseline` prompt below the chart.
+  pattern without a baseline line or attributed result, omit `Past results`
+  unless completed records exist, and offer one `Set up a baseline` prompt below
+  the chart.
 - Baseline setup is optional and always has an explicit `Cancel setup` path
   back to the unchanged Progress view. Baseline choices use round radio
   markers; they must not collapse into line-shaped bullets.
@@ -70,9 +72,9 @@ history chart. Both use orange for score data.
   current baseline and action, each with one `Change` control. Measuring a new
   baseline is not a top-level program option; it remains nested inside the
   baseline-change flow.
-- `What you’ve learned` uses phone-readable stacked text: a large change name
-  and date line followed by a clear result sentence. Do not compress these
-  fields into tiny side-by-side columns.
+- `Past results` uses phone-readable rows: a large change name with its date
+  range and a prominent arrow percentage. Do not compress these fields into
+  tiny text or add a second graph.
 - Do not introduce additional graphs, score-tier colors, or alternate visual
   objects in Progress.
 
