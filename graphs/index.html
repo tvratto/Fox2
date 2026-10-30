@@ -6969,6 +6969,59 @@ function fox2ProgramMetrics(){
   return {baselineDays:baselineDays,baseline:baseline,measureDays:measureDays,after:after,measureEnd:measureEnd,elapsedDays:elapsedDays,savedResult:savedResult};
 }
 
+function fox2ResolveProgressMessage(input){
+  input=input||{};
+  var completed=Array.isArray(input.completedDays)?input.completedDays:[];
+  var baseline=Number(input.baseline),hasBaseline=isFinite(baseline)&&baseline>0;
+  var action=String(input.action||'').trim(),hasAction=!!action;
+  var hasToday=!!input.today;
+  if(!completed.length){
+    if(hasToday) return {state:'accumulating',summary:'It’s early—today’s result is still building.',detail:hasBaseline?'Keep measuring to complete the comparison with your baseline.':'Keep measuring to complete your first daily Fat Use Score.'};
+    return {state:'empty',summary:'Your progress will appear here soon.',detail:'Measure and sync to get started.'};
+  }
+  var first=Number(completed[0].score)||0;
+  var latest=Number(completed[completed.length-1].score)||0;
+  var average=fox2Mean(completed.map(function(day){return Number(day.score)||0;}));
+  if(completed.length===1){
+    return {state:'first-result',summary:'Your first completed Fat Use Score is '+fox2Round(latest)+'.',detail:hasAction?'Keep measuring to see how '+action+' affects your Fat Use Score.':'Keep measuring to see what changes.'};
+  }
+  var reference=hasBaseline?baseline:first;
+  var result=hasBaseline?average:latest;
+  var difference=result-reference;
+  var percent=Math.round(Math.abs(difference)/Math.max(1,reference)*100);
+  var direction=difference>0?'up':(difference<0?'down':'same');
+  var stage=completed.length<4?'early':'established';
+  var summary='';
+  if(stage==='early'){
+    if(hasAction){
+      if(direction==='up') summary='It’s only been a few days, but '+action+' has already increased your Fat Use Score by '+percent+'%.';
+      else if(direction==='down') summary='It’s only been a few days, but '+action+' has decreased your Fat Use Score by '+percent+'% so far.';
+      else summary='It’s only been a few days, and '+action+' has not changed your Fat Use Score yet.';
+    }else if(hasBaseline){
+      if(direction==='up') summary='It’s only been a few days, but your Fat Use Score is already '+percent+'% above your baseline.';
+      else if(direction==='down') summary='It’s only been a few days, and your Fat Use Score is '+percent+'% below your baseline so far.';
+      else summary='It’s only been a few days, and your Fat Use Score is unchanged from your baseline so far.';
+    }else{
+      if(direction==='up') summary='It’s only been a few days, but your Fat Use Score is already '+percent+'% higher than where it started.';
+      else if(direction==='down') summary='It’s only been a few days, and your Fat Use Score is '+percent+'% lower than where it started so far.';
+      else summary='It’s only been a few days, and your Fat Use Score is unchanged so far.';
+    }
+  }else if(hasAction){
+    if(direction==='up') summary='Great—'+action+' has increased your Fat Use Score by '+percent+'%.';
+    else if(direction==='down') summary=action+' has decreased your Fat Use Score by '+percent+'%.';
+    else summary=action+' has not changed your Fat Use Score yet.';
+  }else if(hasBaseline){
+    if(direction==='up') summary='Great—your Fat Use Score is averaging '+percent+'% above your baseline.';
+    else if(direction==='down') summary='Your Fat Use Score is averaging '+percent+'% below your baseline.';
+    else summary='Your Fat Use Score is averaging right at your baseline.';
+  }else{
+    if(direction==='up') summary='Great—your Fat Use Score is '+percent+'% higher than when you started.';
+    else if(direction==='down') summary='Your Fat Use Score is '+percent+'% lower than when you started.';
+    else summary='Your Fat Use Score is unchanged from when you started.';
+  }
+  return {state:stage+'-'+direction,summary:summary,detail:'',percent:percent,direction:direction,reference:hasBaseline?'baseline':'first-score'};
+}
+
 function fox2ProgressHtml(metrics){
   var today=fox2TodayProgramDay();
   var days=fox2AllCompletedScoreDays().filter(function(day){return !today||day.date!==today.date;});
@@ -7023,102 +7076,9 @@ function fox2ProgressHtml(metrics){
   }).join('');
   var previousChanges=previousChangeItems?'<section class="program-previous-changes"><h2 class="program-previous-changes-title">What you’ve learned</h2><ul>'+previousChangeItems+'</ul></section>':'';
   var completedShown=shownDays.filter(function(day){return !day.current;});
-  var summaryDays=completedShown.length?completedShown:shownDays;
-  var average=summaryDays.length?Math.round(summaryDays.reduce(function(sum,day){return sum+Number(day.score||0);},0)/summaryDays.length):0;
-  var summary='Your progress will appear here soon.',summaryDetail='';
   var hasActiveChange=!!(programStart&&fox2Program.action);
-  var actionLabel=hasActiveChange?fox2Program.action:'';
-  var actionName=hasActiveChange?'“'+fox2Program.action+'”':'';
-  var earlySummary='It’s only been a few days—your first result is in.';
-  var earlyDetail=hasActiveChange?'Keep measuring to see how '+actionLabel+' affects your Fat Use Score.':'Keep measuring to see which direction your Fat Use Score moves.';
-  if(completedShown.length){
-    var earlyFirst=Number(completedShown[0].score)||0;
-    var earlyLatest=Number(completedShown[completedShown.length-1].score)||0;
-    if(hasBaseline){
-      var earlyBaselinePercent=Math.round(Math.abs(earlyLatest-baseline)/baseline*100);
-      if(hasActiveChange){
-        if(earlyLatest>baseline){earlySummary='It’s only been a few days, but '+actionLabel+' has already increased your Fat Use Score by '+earlyBaselinePercent+'%.';}
-        else if(earlyLatest<baseline){earlySummary='It’s only been a few days, but '+actionLabel+' has decreased your Fat Use Score by '+earlyBaselinePercent+'% so far.';}
-        else{earlySummary='It’s only been a few days, and '+actionLabel+' has not changed your Fat Use Score yet.';}
-      }else if(earlyLatest>baseline){earlySummary='It’s only been a few days, but your Fat Use Score is already '+earlyBaselinePercent+'% above your baseline.';}
-      else if(earlyLatest<baseline){earlySummary='It’s only been a few days, and your Fat Use Score is '+earlyBaselinePercent+'% below your baseline so far.';}
-      else{earlySummary='It’s only been a few days, and your Fat Use Score is unchanged from your baseline so far.';}
-      earlyDetail='';
-    }else if(completedShown.length>=2){
-      var earlyChangePercent=Math.round(Math.abs(earlyLatest-earlyFirst)/Math.max(1,earlyFirst)*100);
-      if(hasActiveChange){
-        if(earlyLatest>earlyFirst){earlySummary='It’s only been a few days, but '+actionLabel+' has already increased your Fat Use Score by '+earlyChangePercent+'%.';}
-        else if(earlyLatest<earlyFirst){earlySummary='It’s only been a few days, but '+actionLabel+' has decreased your Fat Use Score by '+earlyChangePercent+'% so far.';}
-        else{earlySummary='It’s only been a few days, and '+actionLabel+' has not changed your Fat Use Score yet.';}
-      }else if(earlyLatest>earlyFirst){earlySummary='It’s only been a few days, but your Fat Use Score is already '+earlyChangePercent+'% higher than where it started.';}
-      else if(earlyLatest<earlyFirst){earlySummary='It’s only been a few days, and your Fat Use Score is '+earlyChangePercent+'% lower than where it started so far.';}
-      else{earlySummary='It’s only been a few days, and your Fat Use Score is unchanged so far.';}
-      earlyDetail='';
-    }
-  }
-  if(completedShown.length>=4){
-    var trendStart=completedShown[0].date;
-    var trendXs=completedShown.map(function(day){return fox2DaysBetween(trendStart,day.date);});
-    var trendXMean=fox2Mean(trendXs),trendYMean=fox2Mean(completedShown.map(function(day){return Number(day.score)||0;}));
-    var trendNumerator=0,trendDenominator=0;
-    completedShown.forEach(function(day,index){
-      var xDelta=trendXs[index]-trendXMean,yDelta=(Number(day.score)||0)-trendYMean;
-      trendNumerator+=xDelta*yDelta;
-      trendDenominator+=xDelta*xDelta;
-    });
-    var trendSlope=trendDenominator?trendNumerator/trendDenominator:0;
-    var trendSpan=Math.max(1,trendXs[trendXs.length-1]-trendXs[0]);
-    var trendChange=trendSlope*trendSpan,trendThreshold=Math.max(6,average*.08);
-    var trendReference=Math.max(1,hasBaseline?baseline:trendYMean);
-    var totalTrendRate=Math.max(1,Math.round(Math.abs(trendChange)/trendReference*100));
-    var baselineRate=hasBaseline?Math.max(1,Math.round(Math.abs(average-baseline)/baseline*100)):0;
-    if(trendChange>trendThreshold){
-      summary='Great—your Fat Use Score is rising.';
-      summaryDetail=hasActiveChange?'Your score is up about '+totalTrendRate+'% since starting '+actionName+'.':'Recent scores are moving higher.';
-    }else if(trendChange<-trendThreshold){
-      summary='Your Fat Use Score has dipped.';
-      summaryDetail=hasActiveChange?'Your score is down about '+totalTrendRate+'% since starting '+actionName+'. Keep measuring to see if it holds.':'Keep measuring to see if this pattern holds.';
-    }else if(hasBaseline&&average>baseline*1.05){
-      summary='Great—your score is above baseline.';
-      summaryDetail=hasActiveChange?actionName+' is averaging about '+baselineRate+'% above your starting point.':'Recent scores are averaging about '+baselineRate+'% above your starting point.';
-    }else if(hasBaseline&&average<baseline*.95){
-      summary='Your score is below baseline.';
-      summaryDetail=hasActiveChange?actionName+' is averaging about '+baselineRate+'% below your starting point.':'Recent scores are averaging about '+baselineRate+'% below your starting point.';
-    }else if(hasBaseline){
-      summary='Your score is close to baseline.';
-      summaryDetail=hasActiveChange?actionName+' has not changed your score much yet.':'Recent scores are staying near your starting point.';
-    }else{
-      summary='Your Fat Use Score is holding steady.';
-      summaryDetail='Recent scores are staying in a similar range.';
-    }
-  }else if(completedShown.length){
-    summary=earlySummary;
-    summaryDetail=earlyDetail;
-  }else if(hasBaseline&&today){
-    summary='It’s early—today’s result is still building.';
-    summaryDetail='Keep measuring to complete the comparison with your baseline.';
-  }else if(today){
-    summary='It’s early—today’s result is still building.';
-    summaryDetail='Keep measuring to complete your first daily Fat Use Score.';
-  }else if(shownDays.length){
-    summary=earlySummary;
-    summaryDetail=earlyDetail;
-  }
-  if(!hasBaseline&&!hasActiveChange){
-    if(completedShown.length){
-      if(completedShown.length>=4&&trendChange>trendThreshold){summary='Great—your Fat Use Score is rising.';summaryDetail='Recent scores are moving higher.';}
-      else if(completedShown.length>=4&&trendChange<-trendThreshold){summary='Your Fat Use Score has dipped.';summaryDetail='Keep measuring to see if this pattern holds.';}
-      else if(completedShown.length>=4){summary='Your Fat Use Score is holding steady.';summaryDetail='Recent scores are staying in a similar range.';}
-      else{summary=earlySummary;summaryDetail=earlyDetail;}
-    }else if(today){
-      summary='It’s early—today’s result is still building.';
-      summaryDetail='Keep measuring to complete your first daily Fat Use Score.';
-    }else{
-      summary='Your progress will appear here soon.';
-      summaryDetail='Measure and sync to get started.';
-    }
-  }
-  if(!summaryDetail&&hasActiveChange&&!completedShown.length) summaryDetail='Keep measuring to see how '+actionName+' affects your Fat Use Score.';
+  var message=fox2ResolveProgressMessage({completedDays:completedShown,today:today,baseline:hasBaseline?baseline:0,action:hasActiveChange?fox2Program.action:''});
+  var summary=message.summary,summaryDetail=message.detail;
   var key=latest?[latest.date,fox2Round(latest.score),latest.readings||0].join('|'):'';
   var animate=!!(latest&&key!==fox2LastProgressAnimationKey);
   var ring=latest?'<section class="program-canonical-progress-view program-canonical-progress-ring"><div class="program-eyebrow">'+(latest.current?'Synced just now':'Morning recap')+'</div><h1>'+(latest.current?'Today’s Fat Use Score':'Yesterday’s Fat Use Score')+'</h1><svg class="program-today-ring" viewBox="0 0 120 120" role="img" aria-label="Fat Use Score '+visual.value+(latest.current?' so far':' final')+'"><circle class="program-today-track" cx="60" cy="60" r="54" style="stroke:var(--program-orange);opacity:.18"></circle><circle class="program-today-value" cx="60" cy="60" r="54" style="--today-color:var(--program-orange);--today-offset:'+(339.292*(1-visual.progress)).toFixed(3)+'"></circle><text class="program-today-score" x="60" y="64">'+visual.value+'</text><text class="program-today-unit" x="60" y="82">'+(latest.current?'TODAY SO FAR':'FINAL')+'</text></svg><p class="program-canonical-progress-copy">'+(latest.current?'This Score includes the reading you just synced and is still accumulating.':'This is the completed Score for your latest finished day.')+'</p></section>':'';

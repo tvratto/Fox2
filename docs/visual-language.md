@@ -42,8 +42,13 @@ history chart. Both use orange for score data.
 - Before a reliable trend is available, use one conversational sentence that
   names the action and states its actual percentage impact (for example: “It’s
   only been a few days, but Zepbound 0.25 mg has already increased your Fat Use
-  Score by 28%.”). Do not separate the action from its result or use vague
+  Score by 12%.”). Do not separate the action from its result or use vague
   language such as `taking shape`.
+- Resolve Progress copy from one deterministic message state: empty,
+  accumulating, first result, early comparison, or established comparison.
+  Baseline comparisons use the average of completed post-change daily Scores;
+  today’s unfinished Score is never included. Without a baseline, compare the
+  latest completed Score with the first completed Score.
 - Do not add a separate average value beneath the chart.
 - Without a baseline or active change, keep the chart useful: show the recent
   pattern without a baseline line or attributed result, omit `What you’ve

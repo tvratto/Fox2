@@ -38,13 +38,14 @@ function functionSource(name,nextName){
     fox2AllCompletedScoreDays:()=>[{date:'2026-10-27',score:72},{date:'2026-10-28',score:96}],
     fox2RingVisual:score=>({value:Math.round(score),color:'#4ADE80',progress:Math.min(1,score/120)}),
     Math,Date,isFinite});
+  vm.runInNewContext(functionSource('fox2ResolveProgressMessage','fox2ProgressHtml'),context);
   vm.runInNewContext(functionSource('fox2ProgressHtml','fox2SimpleProgressChartHtml'),context);
   const html=context.fox2ProgressHtml({baseline:75,after:125,measureDays:[{score:125}],elapsedDays:3,savedResult:context.fox2CurrentProgramResult()});
   assert.ok(html.includes('Today’s Fat Use Score')&&html.includes('30-Day Progress'),
     'Progress should move from the synced daily ring into the canonical daily bars');
   assert.ok(html.includes('BASELINE 75')&&html.includes('Oatmeal for breakfast'),
     'Progress should compare daily Scores directly while identifying the dated lifestyle change');
-  assert.ok(html.includes('It’s only been a few days, but Oatmeal for breakfast has already increased your Fat Use Score by 28%.'),
+  assert.ok(html.includes('It’s only been a few days, but Oatmeal for breakfast has already increased your Fat Use Score by 12%.'),
     'an early result should name the active action and report its percentage impact in one sentence');
   assert.ok(html.includes('What you’ve learned')&&html.includes('Add a walk after eating')&&html.includes('2026-10-26–2026-10-28')&&html.includes('Your Fat Use Score was 67% higher.'),
     'Progress should retain a concise start-to-finish record of prior changes and their impact');
@@ -57,6 +58,22 @@ function functionSource(name,nextName){
     'the neutral Progress state should offer one clear baseline setup prompt');
   assert.ok(!openHtml.includes('BASELINE ')&&!openHtml.includes('What you’ve learned'),
     'the neutral state should not invent a baseline or attributed change result');
+})();
+
+(function progressMessageStateMachineCoversCoreStates(){
+  const context={fox2Mean:values=>values.reduce((sum,value)=>sum+Number(value||0),0)/values.length,
+    fox2Round:value=>Math.round(value),Math,isFinite};
+  vm.runInNewContext(functionSource('fox2ResolveProgressMessage','fox2ProgressHtml'),context);
+  const resolve=context.fox2ResolveProgressMessage;
+  assert.strictEqual(resolve({completedDays:[],today:null}).state,'empty');
+  assert.strictEqual(resolve({completedDays:[],today:{score:62},baseline:75}).state,'accumulating');
+  assert.strictEqual(resolve({completedDays:[{score:85}],action:'Zepbound 0.25 mg'}).state,'first-result');
+  assert.strictEqual(resolve({completedDays:[{score:72},{score:96}],baseline:75,action:'Zepbound 0.25 mg'}).summary,
+    'It’s only been a few days, but Zepbound 0.25 mg has already increased your Fat Use Score by 12%.');
+  assert.strictEqual(resolve({completedDays:[{score:90},{score:96},{score:102},{score:108}],baseline:75,action:'Zepbound 0.25 mg'}).summary,
+    'Great—Zepbound 0.25 mg has increased your Fat Use Score by 32%.');
+  assert.strictEqual(resolve({completedDays:[{score:80},{score:100}],baseline:0,action:''}).summary,
+    'It’s only been a few days, but your Fat Use Score is already 25% higher than where it started.');
 })();
 
 (function newActionStartsOnlyWhenConfirmed(){
@@ -450,17 +467,17 @@ assert.ok(!source.includes('program-history-curve')&&!source.includes('curvePoin
   'the daily bars should stand on their own without a line connecting their tops');
 assert.ok(source.includes('stroke-dasharray:3 5')&&source.includes('BASELINE '),
   'a baseline should be rendered as a dotted white reference across the chart');
-assert.ok(source.includes("var actionName=hasActiveChange?'“'")&&source.includes('program-canonical-context')&&!source.includes('program-calendar-change-note'),
+assert.ok(source.includes('fox2ResolveProgressMessage')&&source.includes('program-canonical-context')&&!source.includes('program-calendar-change-note'),
   'the current change and result should read as one concise narrative rather than separate boxes');
 assert.ok(source.includes('background:rgba(255,140,0,.08)')&&source.includes('color:#ffc46f'),
   'previous change records should be visually emphasized without introducing a new chart');
 assert.ok(source.includes('program-canonical-summary'),
   'Progress should lead with a large plain-language summary');
-assert.ok(source.includes('Great—your Fat Use Score is rising.')&&source.includes('since starting '),
-  'the Progress summary should lead with a conversational interpretation and connect it to the current change');
+assert.ok(source.includes("summary='Great—'+action+' has increased your Fat Use Score by '+percent+'%.'"),
+  'the Progress summary should lead with a conversational interpretation that connects the current change to its result');
 assert.ok(!source.includes("summary='You have '+shownDays.length")&&!source.includes("summaryDetail='Keep measuring and sync again after your first completed day.'"),
   'Progress summaries should not report measurement or day counts');
-assert.ok(source.includes("actionLabel+' has already increased your Fat Use Score by '+earlyBaselinePercent+'%.")&&source.includes("earlyChangePercent+'% higher than where it started."),
+assert.ok(source.includes("action+' has already increased your Fat Use Score by '+percent+'%.")&&source.includes("percent+'% higher than where it started."),
   'an early Progress state should interpret the available result and report its actual percentage');
 assert.ok(source.includes('.program-previous-changes li { display:grid; grid-template-columns:8px minmax(0,1fr)')&&source.includes('font-size:15px'),
   'What you’ve learned should use large stacked phone-readable text');
