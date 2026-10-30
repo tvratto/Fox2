@@ -7035,13 +7035,15 @@ function fox2ProgressHtml(metrics){
     var earlyLatest=Number(completedShown[completedShown.length-1].score)||0;
     var earlyThreshold=Math.max(4,earlyFirst*.05);
     if(hasBaseline){
-      if(earlyLatest>baseline*1.05){earlySummary='It’s early, but your score is above baseline.';earlyDetail='So far, your fat use is higher than your starting point.';}
-      else if(earlyLatest<baseline*.95){earlySummary='It’s early, but your score is below baseline.';earlyDetail='So far, your fat use is lower than your starting point.';}
-      else{earlySummary='It’s early, and your score is near baseline.';earlyDetail='So far, your fat use is close to your starting point.';}
+      var earlyBaselinePercent=Math.round(Math.abs(earlyLatest-baseline)/baseline*100);
+      if(earlyLatest>baseline*1.05){earlySummary='It’s early, but your score is above baseline.';earlyDetail='Your latest completed score is '+earlyBaselinePercent+'% above your baseline.';}
+      else if(earlyLatest<baseline*.95){earlySummary='It’s early, but your score is below baseline.';earlyDetail='Your latest completed score is '+earlyBaselinePercent+'% below your baseline.';}
+      else{earlySummary='It’s early, and your score is near baseline.';earlyDetail='Your latest completed score is within '+earlyBaselinePercent+'% of your baseline.';}
     }else if(completedShown.length>=2){
-      if(earlyLatest-earlyFirst>earlyThreshold){earlySummary='It’s early, but your Fat Use Score is moving higher.';earlyDetail='Your latest completed score is above where you started.';}
-      else if(earlyFirst-earlyLatest>earlyThreshold){earlySummary='It’s early, but your Fat Use Score is moving lower.';earlyDetail='Your latest completed score is below where you started.';}
-      else{earlySummary='It’s early, and your Fat Use Score is holding steady.';earlyDetail='Your completed scores are staying in a similar range.';}
+      var earlyChangePercent=Math.round(Math.abs(earlyLatest-earlyFirst)/Math.max(1,earlyFirst)*100);
+      if(earlyLatest-earlyFirst>earlyThreshold){earlySummary='It’s early, but your Fat Use Score is moving higher.';earlyDetail='Your latest completed score is '+earlyChangePercent+'% higher than where you started.';}
+      else if(earlyFirst-earlyLatest>earlyThreshold){earlySummary='It’s early, but your Fat Use Score is moving lower.';earlyDetail='Your latest completed score is '+earlyChangePercent+'% lower than where you started.';}
+      else{earlySummary='It’s early, and your Fat Use Score is holding steady.';earlyDetail='Your latest completed score is within '+earlyChangePercent+'% of where you started.';}
     }
     if(hasActiveChange) earlyDetail+=' Keep tracking '+actionName+' to see if this result holds.';
   }

@@ -41,8 +41,8 @@ history chart. Both use orange for score data.
   visible outcome without stating how many measurements or days are present.
 - Before a reliable trend is available, say that it is early and interpret the
   result so far as moving higher, moving lower, steady, or relative to the
-  baseline. Do not merely repeat a score statistic or use vague language such
-  as `taking shape`.
+  baseline. Pair that interpretation with the actual percentage change; do not
+  merely repeat the raw score or use vague language such as `taking shape`.
 - Do not add a separate average value beneath the chart.
 - Without a baseline or active change, keep the chart useful: show the recent
   pattern without a baseline line or attributed result, omit `What you’ve
