@@ -19,6 +19,11 @@
 
   function rounded(value){return Math.round(Number(value)||0);}
 
+  function calendarGap(startIso,endIso){
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(startIso||'')||!/^\d{4}-\d{2}-\d{2}$/.test(endIso||'')) return null;
+    return Math.floor((Date.parse(endIso+'T00:00:00Z')-Date.parse(startIso+'T00:00:00Z'))/86400000);
+  }
+
   function validCompletedDays(days){
     return (Array.isArray(days)?days:[]).filter(function(day){
       return day&&!day.current&&isFinite(Number(day.score));
@@ -61,10 +66,12 @@
   function progress(input){
     input=input||{};
     var completed=validCompletedDays(input.completedDays);
-    var today=input.today&&isFinite(Number(input.today.score))?{score:Number(input.today.score)}:null;
+    var today=input.today&&isFinite(Number(input.today.score))?{date:String(input.today.date||''),score:Number(input.today.score)}:null;
     var baseline=Number(input.baseline),hasBaseline=isFinite(baseline)&&baseline>0;
     var action=String(input.action||'').trim(),hasAction=!!action;
     var neutralBand=isFinite(Number(input.neutralBandPercent))?Math.max(0,Number(input.neutralBandPercent)):3;
+    var asOfDate=String(input.asOfDate||(today&&today.date)||'');
+    var reentryAfterDays=isFinite(Number(input.reentryAfterDays))?Math.max(1,Number(input.reentryAfterDays)):4;
 
     if(!completed.length){
       if(today){
@@ -85,6 +92,27 @@
     }
 
     var latest=completed[completed.length-1];
+    var gapDays=calendarGap(latest.date,asOfDate);
+    if(gapDays!==null&&gapDays>=reentryAfterDays){
+      if(today){
+        return result(
+          'reentry-synced','reentry','unknown',
+          'Welcome back—today’s Fat Use Score is '+rounded(today.score)+' so far.',
+          'Keep measuring normally. FOX2 will finalize today’s Score tomorrow morning.',
+          {label:'Keep measuring',action:'measure'},
+          {basis:'calendar-gap',gapDays:gapDays,thresholdDays:reentryAfterDays},
+          'Your baseline, history, and previous results are still here.','supportive'
+        );
+      }
+      return result(
+        'reentry','reentry','unknown',
+        'Welcome back. One measurement today is enough to pick up where you left off.',
+        'Your baseline, history, and previous results are still here.',
+        {label:'Take a measurement',action:'measure'},
+        {basis:'calendar-gap',gapDays:gapDays,thresholdDays:reentryAfterDays},
+        'This welcome appears after at least '+reentryAfterDays+' calendar days without a completed Fat Use Score.','supportive'
+      );
+    }
     if(completed.length===1){
       return result(
         'first-result','starting','unknown',

@@ -53,6 +53,9 @@ history chart. Both use orange for score data.
 - Changes under 3% are treated as stable by default so small fluctuations are
   not celebrated as meaningful wins. Generated messages keep a calculation
   explanation available for a future `Why FOX2 says this` disclosure.
+- Gentle reentry begins after four calendar days without a completed Fat Use
+  Score. Preserve the baseline and history, welcome the person back without
+  stating how many days were missed, and ask only for one new measurement.
 - Do not add a separate average value beneath the chart.
 - Without a baseline or active change, keep the chart useful: show the recent
   pattern without a baseline line or attributed result, omit `What you’ve

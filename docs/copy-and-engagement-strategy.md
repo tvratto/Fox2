@@ -149,8 +149,9 @@ feel like acquired knowledge rather than an archive.
 
 ### 5. Use gentle re-entry instead of streak pressure
 
-After a gap: `Welcome back. One measurement today is enough to restart your
-pattern.` Do not mention a broken streak or lost progress.
+After four calendar days without a completed Fat Use Score: `Welcome back. One
+measurement today is enough to pick up where you left off.` Do not mention a
+broken streak, the number of missed days, or lost progress.
 
 ### 6. Time prompts to moments of utility
 

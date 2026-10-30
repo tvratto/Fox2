@@ -21,6 +21,19 @@ function days(scores){
   assert.ok(message.detail.includes('first result since starting Zepbound 0.25 mg'));
 })();
 
+(function gentleReentryStartsOnDayFour(){
+  const completed=[{date:'2026-10-25',score:85}];
+  const dayThree=copy.progress({completedDays:completed,asOfDate:'2026-10-28'});
+  assert.equal(dayThree.state,'first-result');
+  const dayFour=copy.progress({completedDays:completed,asOfDate:'2026-10-29'});
+  assert.equal(dayFour.state,'reentry');
+  assert.equal(dayFour.headline,'Welcome back. One measurement today is enough to pick up where you left off.');
+  assert.equal(dayFour.metric.gapDays,4);
+  const synced=copy.progress({completedDays:completed,today:{date:'2026-10-29',score:62},asOfDate:'2026-10-29'});
+  assert.equal(synced.state,'reentry-synced');
+  assert.equal(synced.headline,'Welcome back—today’s Fat Use Score is 62 so far.');
+})();
+
 (function earlyActionUsesCompletedAverageAndExcludesToday(){
   const message=copy.progress({completedDays:days([85,96]),today:{score:10},baseline:75,action:'Zepbound 0.25 mg'});
   assert.equal(message.state,'early-up-action');
