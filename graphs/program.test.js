@@ -534,6 +534,12 @@ assert.ok(source.includes('function fox2MeasureGuideHtml()')&&source.includes('f
   'the shared guide should include how to measure as the second of four slides');
 assert.ok(source.includes('Replay the complete four-part guide.')&&source.includes('fox2RenderWorksGuide'),
   'both guide entry points should reuse the same complete four-slide explanation');
+assert.ok(source.includes("close.className='program-guide-close'")&&source.includes("close.dataset.guideAction='close'")&&source.includes("close.setAttribute('aria-label','Close FOX2 guide')"),
+  'every slide in the shared guide should provide a persistent accessible close button');
+assert.ok(source.includes('#guide-modal-overlay.is-viewer .program-card-sequence { right:59px; }'),
+  'the four-slide progress indicator should leave room for the close button');
+assert.ok(source.includes('padding:calc(env(safe-area-inset-top) + 64px) 9px'),
+  'the guide controls should sit below the fixed navigation instead of being hidden behind it');
 assert.ok(source.includes('program-canonical-summary'),
   'Progress should lead with a large plain-language summary');
 assert.ok(source.includes('copy-generator.js')&&source.includes("Fox2CopyGenerator.generateCopy('progress',input)"),
