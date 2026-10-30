@@ -396,16 +396,18 @@ html, body {
 .program-canonical-recap-popover { width:50%; min-height:0; aspect-ratio:200/251; padding:clamp(12px,3.7vw,17px) clamp(10px,3.2vw,15px) clamp(11px,3.2vw,15px); border:1px solid rgba(255,140,0,.3); border-radius:clamp(18px,5vw,23px); background:radial-gradient(circle at 50% 42%,rgba(255,140,0,.14),transparent 58%),rgba(11,11,12,.94); box-shadow:0 16px 44px rgba(0,0,0,.52); display:flex; flex-direction:column; align-items:center; justify-content:center; transform:none; transform-origin:center; opacity:1; transition:transform 1.25s cubic-bezier(.22,.8,.2,1),border-color .3s ease,background .3s ease,box-shadow .3s ease; }
 .program-canonical-recap-popover .program-eyebrow { font-size:9px; }
 .program-canonical-recap-popover h1 { margin:5px 0 2px; font-size:17px; line-height:1.08; text-align:center; letter-spacing:-.025em; }
-.program-canonical-progress.is-bars .program-canonical-recap-popover { border-color:transparent; background:transparent; box-shadow:none; transform:translate(var(--recap-target-x),var(--recap-target-y)); }
-.program-canonical-progress-ring .program-today-ring { width:64%; height:auto; max-width:128px; margin:2px auto 0; transform:none; transform-origin:center; opacity:1; transition:transform 1.25s cubic-bezier(.22,.8,.2,1),opacity .18s 1.05s ease; }
+.program-canonical-progress-ring .program-today-ring { width:64%; height:auto; max-width:128px; margin:2px auto 0; transform:none; transform-origin:center; opacity:1; }
 .program-canonical-progress-ring .program-today-value { animation:program-today-fill 1.8s .4s cubic-bezier(.2,.8,.2,1) both; }
 .program-canonical-progress-ring .program-canonical-progress-copy { margin:2px 0 0; color:rgba(255,255,255,.58); font-size:10px; line-height:1.3; text-align:center; }
-.program-canonical-recap-popover .program-eyebrow,.program-canonical-recap-popover h1,.program-canonical-recap-popover .program-canonical-progress-copy { transition:opacity .24s ease; }
-.program-canonical-progress.is-bars .program-canonical-recap-popover .program-eyebrow,.program-canonical-progress.is-bars .program-canonical-recap-popover h1,.program-canonical-progress.is-bars .program-canonical-recap-popover .program-canonical-progress-copy { opacity:0; }
-.program-canonical-progress.is-bars .program-canonical-progress-ring .program-today-ring { transform:scale(.08,.6); opacity:0; }
-.program-canonical-progress-ring .program-today-score,.program-canonical-progress-ring .program-today-unit { transition:opacity .24s .82s ease; }
-.program-canonical-progress.is-bars .program-canonical-progress-ring .program-today-score,.program-canonical-progress.is-bars .program-canonical-progress-ring .program-today-unit { opacity:0; }
-.program-canonical-progress.is-bars .program-canonical-progress-ring .program-today-value { animation:program-recap-ring-unwind 1.15s cubic-bezier(.4,0,.7,.2) both; }
+.program-canonical-recap-popover,.program-canonical-recap-popover .program-eyebrow,.program-canonical-recap-popover h1,.program-canonical-recap-popover .program-canonical-progress-copy,.program-canonical-progress-ring .program-today-track,.program-canonical-progress-ring .program-today-score,.program-canonical-progress-ring .program-today-unit { transition:opacity .26s ease,border-color .26s ease,background .26s ease,box-shadow .26s ease; }
+.program-canonical-progress.is-preparing-morph .program-canonical-recap-popover { border-color:transparent; background:transparent; box-shadow:none; }
+.program-canonical-progress.is-preparing-morph .program-canonical-recap-popover .program-eyebrow,.program-canonical-progress.is-preparing-morph .program-canonical-recap-popover h1,.program-canonical-progress.is-preparing-morph .program-canonical-recap-popover .program-canonical-progress-copy,.program-canonical-progress.is-preparing-morph .program-canonical-progress-ring .program-today-score,.program-canonical-progress.is-preparing-morph .program-canonical-progress-ring .program-today-unit { opacity:0; }
+.program-canonical-progress.is-preparing-morph .program-canonical-progress-ring .program-today-track { opacity:0!important; }
+.program-canonical-progress.is-morphing .program-canonical-progress-ring .program-today-value { opacity:0; }
+.program-canonical-morph-layer { position:absolute; z-index:5; inset:0; width:100%; height:100%; overflow:visible; pointer-events:none; }
+.program-canonical-morph-stroke { fill:none; stroke:var(--program-orange); stroke-linecap:round; stroke-linejoin:round; filter:drop-shadow(0 0 5px rgba(255,140,0,.22)); }
+.program-canonical-progress.has-recap .program-history-bar.is-latest,.program-canonical-progress.has-recap .program-history-today-outline.is-latest { opacity:0; }
+.program-canonical-progress.has-recap.is-bars .program-history-bar.is-latest,.program-canonical-progress.has-recap.is-bars .program-history-today-outline.is-latest { opacity:1; }
 .program-canonical-progress-copy { width:100%; margin:8px 0 0; color:rgba(255,255,255,.65); font-size:15px; line-height:1.45; font-weight:650; }
 .program-calendar { width:100%; margin:8px 0 13px; padding:11px; border-radius:18px; background:#050505; }
 .program-history-chart { width:100%; }
@@ -430,7 +432,6 @@ html, body {
 .program-utility-link { min-height:36px; padding:0 2px; border:0; background:transparent; color:rgba(255,255,255,.58); font:800 13px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; cursor:pointer; }
 .program-options-link { margin-left:auto; }
 .program-utility-link:hover,.program-utility-link:focus-visible { color:var(--program-orange); }
-@keyframes program-recap-ring-unwind { from { stroke-dashoffset:var(--today-offset); } to { stroke-dashoffset:339.292; } }
 .program-awaiting-first { min-height:410px; padding:28px 20px; display:flex; flex-direction:column; justify-content:center; text-align:center; }
 .program-awaiting-first-mark { width:72px; height:72px; margin:0 auto 22px; border:9px solid rgba(255,140,0,.2); border-top-color:var(--program-orange); border-radius:50%; }
 @keyframes program-first-sync-ring { from{stroke-dashoffset:289.027} to{stroke-dashoffset:var(--first-sync-offset)} }
@@ -7102,8 +7103,9 @@ function fox2ProgressHtml(metrics){
       return;
     }
     var score=Math.max(0,Number(day.score)||0),top=plotBottom-Math.min(plotHeight,score/scaleMax*plotHeight);
-    if(slot.current) chartBars+='<line class="program-history-today-outline" x1="'+x.toFixed(1)+'" y1="'+top.toFixed(1)+'" x2="'+x.toFixed(1)+'" y2="'+plotBottom+'" aria-hidden="true"></line>';
-    chartBars+='<line class="program-history-bar'+(slot.current?' is-today':'')+(latest&&day.date===latest.date?' is-latest':'')+'" x1="'+x.toFixed(1)+'" y1="'+top.toFixed(1)+'" x2="'+x.toFixed(1)+'" y2="'+plotBottom+'" role="img" aria-label="'+fox2Escape(fox2ShortDate(day.date))+' Fat Use Score '+fox2Round(score)+(slot.current?' so far':'')+'"></line>';
+    var latestClass=latest&&day.date===latest.date?' is-latest':'';
+    if(slot.current) chartBars+='<line class="program-history-today-outline'+latestClass+'" x1="'+x.toFixed(1)+'" y1="'+top.toFixed(1)+'" x2="'+x.toFixed(1)+'" y2="'+plotBottom+'" aria-hidden="true"></line>';
+    chartBars+='<line class="program-history-bar'+(slot.current?' is-today':'')+latestClass+'" x1="'+x.toFixed(1)+'" y1="'+top.toFixed(1)+'" x2="'+x.toFixed(1)+'" y2="'+plotBottom+'" role="img" aria-label="'+fox2Escape(fox2ShortDate(day.date))+' Fat Use Score '+fox2Round(score)+(slot.current?' so far':'')+'"></line>';
   });
   var baselineMark=hasBaseline?'<line class="program-history-baseline" x1="'+chartLeft+'" y1="'+baselineY.toFixed(1)+'" x2="'+chartRight+'" y2="'+baselineY.toFixed(1)+'"></line><text class="program-history-baseline-label" x="'+chartRight+'" y="'+Math.max(29,baselineY-6).toFixed(1)+'" text-anchor="end">BASELINE '+fox2Round(baseline)+'</text>':'';
   var historyChart='<div class="program-history-chart"><svg viewBox="0 0 336 218" role="img" aria-label="Thirty days of Fat Use Scores, filling from left to right"><line class="program-history-axis" x1="'+chartLeft+'" y1="'+plotBottom+'" x2="'+chartRight+'" y2="'+plotBottom+'"></line>'+chartDates+chartSlots+baselineMark+chartBars+'</svg></div>';
@@ -7122,7 +7124,7 @@ function fox2ProgressHtml(metrics){
   var programUtilities=pastResultsLink||programOptionsLink?'<div class="program-utilities">'+pastResultsLink+programOptionsLink+'</div>':'';
   var barsView='<section class="program-canonical-progress-view program-canonical-progress-bars"'+(animate?' aria-hidden="true"':'')+'><div class="program-progress-heading"><div class="program-eyebrow">30-Day Progress</div><button type="button" class="program-how-link" onclick="openGuideModal();openFox2WorksGuide()">How this works</button></div><div class="program-canonical-summary">'+fox2Escape(summary)+'</div>'+heroHtml+'<div class="program-calendar">'+historyChart+'</div>'+programUtilities+(hasBaseline?'':'<div class="program-canonical-baseline-action"><strong>Want to see what affects your fat use?</strong><span>Set a starting point, try a change, and FOX2 will compare the results.</span><button type="button" data-program-action="start">Set up a baseline</button></div>')+'</section>';
   if(!latest) return '<section class="program-canonical-progress is-bars"><section class="program-canonical-progress-view program-canonical-progress-bars"><div class="program-eyebrow">Progress</div><h1>Your daily Scores will appear here.</h1><p class="program-canonical-progress-copy">Take a measurement and tap your phone to FOX2 to sync it.</p></section></section>';
-  return '<section class="program-canonical-progress'+(animate?' has-recap':' is-bars')+'" style="--recap-target-x:'+recapTargetX+'px;--recap-target-y:118px" data-progress-key="'+fox2Escape(key)+'" data-progress-animate="'+(animate?'1':'0')+'">'+barsView+ring+'</section>';
+  return '<section class="program-canonical-progress'+(animate?' has-recap':' is-bars')+'" style="--recap-target-x:'+recapTargetX+'px;--recap-target-y:118px" data-progress-key="'+fox2Escape(key)+'" data-progress-fill="'+visual.progress+'" data-progress-animate="'+(animate?'1':'0')+'">'+barsView+ring+'</section>';
 }
 
 function fox2SimpleProgressChartHtml(metrics){
@@ -7964,6 +7966,47 @@ function fox2TransitionWorksGuide(delta){
 var fox2ProgramEnterDirection='';
 var fox2ProgramTransitioning=false;
 
+function fox2MorphCanonicalProgressRing(root,done){
+  var ring=root.querySelector('.program-canonical-progress-ring .program-today-ring');
+  var target=root.querySelector('.program-history-bar.is-latest');
+  if(!ring||!target){done();return;}
+  var rootRect=root.getBoundingClientRect(),ringRect=ring.getBoundingClientRect(),targetRect=target.getBoundingClientRect();
+  if(!rootRect.width||!rootRect.height||!ringRect.width||!targetRect.height){done();return;}
+  var fill=Math.max(.02,Math.min(1,Number(root.dataset.progressFill)||0));
+  var count=48,source=[],destination=[],centerX=ringRect.left-rootRect.left+ringRect.width/2;
+  var centerY=ringRect.top-rootRect.top+ringRect.height/2,radius=ringRect.width*54/120;
+  var targetX=targetRect.left-rootRect.left+targetRect.width/2,targetTop=targetRect.top-rootRect.top,targetBottom=targetRect.bottom-rootRect.top;
+  for(var i=0;i<=count;i++){
+    var fraction=i/count,angle=-Math.PI/2+Math.PI*2*fill*fraction;
+    source.push({x:centerX+Math.cos(angle)*radius,y:centerY+Math.sin(angle)*radius});
+    destination.push({x:targetX,y:targetTop+(targetBottom-targetTop)*fraction});
+  }
+  var layer=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  layer.setAttribute('class','program-canonical-morph-layer');
+  layer.setAttribute('viewBox','0 0 '+rootRect.width+' '+rootRect.height);
+  layer.setAttribute('preserveAspectRatio','none');
+  var path=document.createElementNS('http://www.w3.org/2000/svg','path');
+  path.setAttribute('class','program-canonical-morph-stroke');
+  layer.appendChild(path); root.appendChild(layer);
+  function pathFor(points){return points.map(function(point,index){return (index?'L':'M')+point.x.toFixed(2)+' '+point.y.toFixed(2);}).join(' ');}
+  path.setAttribute('d',pathFor(source));
+  var sourceStroke=Math.max(6,ringRect.width*11/120),targetStroke=Math.max(4,target.ownerSVGElement.getBoundingClientRect().width/336*6);
+  path.setAttribute('stroke-width',sourceStroke.toFixed(2));
+  root.classList.add('is-morphing');
+  var start=performance.now(),duration=1450;
+  function frame(now){
+    var raw=Math.min(1,(now-start)/duration),ease=raw<.5?4*raw*raw*raw:1-Math.pow(-2*raw+2,3)/2;
+    var points=source.map(function(point,index){return {x:point.x+(destination[index].x-point.x)*ease,y:point.y+(destination[index].y-point.y)*ease};});
+    path.setAttribute('d',pathFor(points));
+    path.setAttribute('stroke-width',(sourceStroke+(targetStroke-sourceStroke)*ease).toFixed(2));
+    if(raw<1){window.requestAnimationFrame(frame);return;}
+    root.classList.add('is-bars');
+    if(layer.isConnected) layer.remove();
+    done();
+  }
+  window.requestAnimationFrame(frame);
+}
+
 function fox2RenderProgram(){
   var shell=document.getElementById('program-shell');
   if(!shell) return;
@@ -8037,12 +8080,16 @@ function fox2RenderProgram(){
   if(canonicalProgress){
     var progressKey=canonicalProgress.dataset.progressKey||'';
     window.setTimeout(function(){
-      canonicalProgress.classList.add('is-bars');
+      canonicalProgress.classList.add('is-preparing-morph');
       var progressBars=canonicalProgress.querySelector('.program-canonical-progress-bars');
       var recapOverlay=canonicalProgress.querySelector('.program-canonical-progress-ring');
       if(progressBars) progressBars.removeAttribute('aria-hidden');
-      if(recapOverlay) window.setTimeout(function(){if(recapOverlay.isConnected) recapOverlay.remove();},1300);
-      fox2LastProgressAnimationKey=progressKey;
+      window.setTimeout(function(){
+        fox2MorphCanonicalProgressRing(canonicalProgress,function(){
+          if(recapOverlay&&recapOverlay.isConnected) recapOverlay.remove();
+          fox2LastProgressAnimationKey=progressKey;
+        });
+      },320);
     },3100);
   }
   if(fox2ReplayFromToday){
