@@ -72,6 +72,9 @@ history chart. Both use orange for score data.
   current baseline and action, each with one `Change` control. Measuring a new
   baseline is not a top-level program option; it remains nested inside the
   baseline-change flow.
+- A quiet `How this works` link beside the `30-Day Progress` heading opens the
+  existing three-slide FOX2 explanation directly. Reuse that explanation; do
+  not create a second help flow or duplicate its copy inside Progress.
 - `Past results` uses phone-readable rows: a large change name with its date
   range and a prominent arrow percentage. Do not compress these fields into
   tiny text or add a second graph.

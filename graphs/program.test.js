@@ -487,6 +487,10 @@ assert.ok(source.includes('fox2ResolveProgressMessage')&&source.includes('progra
   'the current change and result should read as one concise narrative rather than separate boxes');
 assert.ok(source.includes('data-program-action="open-past-results">Past results</button>')&&source.includes('id="past-results-overlay"'),
   'completed changes should open from a quiet Past results link beneath the chart');
+assert.ok(source.includes('class="program-how-link" onclick="openGuideModal();openFox2WorksGuide()">How this works</button>'),
+  'Progress should link directly to the existing FOX2 explanation beside its heading');
+assert.ok(source.includes('Replay the three-part introduction.')&&source.includes('fox2RenderWorksGuide'),
+  'How this works should reuse the established three-slide explanation rather than duplicate it');
 assert.ok(source.includes('program-canonical-summary'),
   'Progress should lead with a large plain-language summary');
 assert.ok(source.includes('copy-generator.js')&&source.includes("Fox2CopyGenerator.generateCopy('progress',input)"),
