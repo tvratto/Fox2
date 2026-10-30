@@ -462,6 +462,9 @@ html, body {
 .program-center { text-align:center; }
 .program-status { min-height:18px; margin-top:13px; color:rgba(255,255,255,.42); font-size:12px; line-height:1.4; text-align:center; }
 .program-shared-banner { margin:0 0 13px; padding:9px 12px; border:1px solid rgba(255,140,0,.28); border-radius:13px; background:rgba(255,140,0,.08); color:rgba(255,255,255,.66); font-size:12px; font-weight:850; letter-spacing:.04em; text-align:center; text-transform:uppercase; }
+.program-demo-banner { margin:0 0 13px; padding:9px 12px; border:1px solid rgba(255,140,0,.28); border-radius:13px; background:rgba(255,140,0,.08); display:flex; align-items:center; justify-content:space-between; gap:12px; color:rgba(255,255,255,.72); font-size:12px; font-weight:850; letter-spacing:.04em; text-transform:uppercase; }
+.program-demo-reset { appearance:none; border:0; padding:3px 0; background:transparent; color:var(--program-orange); font:inherit; letter-spacing:inherit; text-transform:inherit; cursor:pointer; }
+.program-demo-reset:focus-visible { outline:2px solid var(--program-orange); outline-offset:4px; border-radius:3px; }
 .program-shell.is-shared [data-program-action] { display:none!important; }
 .program-shell.is-shared .program-input { pointer-events:none; }
 .fox2-shared .tags { opacity:.34; filter:grayscale(1); pointer-events:none!important; }
@@ -3035,8 +3038,8 @@ if (!fox2PayloadMeta.supported) {
   document.getElementById('no-data').style.display  = 'none';
 } else if ((!dParam || totalDays === 0) && !fox2IsSetupEntry) {
   document.getElementById('loading').style.display = 'none';
-  document.getElementById('scroller').style.display = 'none';
-  document.getElementById('no-data').style.display  = 'block';
+  document.getElementById('scroller').style.display = params.get('demo')==='1'?'flex':'none';
+  document.getElementById('no-data').style.display  = params.get('demo')==='1'?'none':'block';
 } else if (fox2IsSetupEntry) {
   // A new FOX2 has no measurement payload yet. Its first NFC tap must still
   // open the product introduction and Progress Tracking setup rather than the
@@ -6561,6 +6564,7 @@ var fox2BaselineEditorStep='choose';
 var fox2AnimatedMeasureDate='';
 var fox2ReplayFromToday=false;
 var fox2SharedProgramSnapshot=null;
+var fox2DemoMode=params.get('demo')==='1';
 var fox2ProgramDemoSnapshot=null;
 var fox2ProgramSnapshot=null;
 var fox2ProgramReadOnly=false;
@@ -6622,6 +6626,26 @@ function fox2IsoOrBlank(value){
   return /^\d{4}-\d{2}-\d{2}$/.test(value)?value:'';
 }
 
+function fox2BuildLiveDemoSnapshot(){
+  var today=fox2TodayIso(),measureStart=fox2AddIsoDays(today,-9);
+  var scores=[80,83,86,88,91,89,94,97,101];
+  return {
+    v:1,
+    program:{
+      screen:'measure', action:'Eat dinner before 7 pm', baselineMode:'default',
+      baselineStart:'', baselineValue:75, baselineSource:'default', baselineRange:'Default reference',
+      measureStart:measureStart, targetDays:30,
+      resultHistory:[
+        {id:fox2AddIsoDays(today,-120)+'|Walk after dinner',action:'Walk after dinner',before:75,after:92,change:23,date:fox2AddIsoDays(today,-91)},
+        {id:fox2AddIsoDays(today,-75)+'|Skip breakfast',action:'Skip breakfast',before:75,after:96,change:28,date:fox2AddIsoDays(today,-46)},
+        {id:fox2AddIsoDays(today,-44)+'|Zepbound 0.25 mg',action:'Zepbound 0.25 mg',before:75,after:101,change:34,date:fox2AddIsoDays(today,-15)}
+      ]
+    },
+    days:scores.map(function(score,index){return {date:fox2AddIsoDays(measureStart,index),score:score};}),
+    today:{date:today,score:98,readings:3}
+  };
+}
+
 function fox2NormalizeSharedProgram(snapshot){
   var defaults=fox2DefaultProgram(),raw=snapshot&&snapshot.program||{};
   var screens=['overview','zone-intro','day-intro','baseline-intro','compare-intro','intro','method','setup','first','baseline','measure','results','maintain'];
@@ -6643,7 +6667,7 @@ function fox2NormalizeSharedProgram(snapshot){
 }
 
 fox2SharedProgramSnapshot=fox2RemoteShareSnapshot||fox2DecodeProgramSnapshot(params.get('program_share')||'');
-fox2ProgramDemoSnapshot=fox2DecodeProgramSnapshot(params.get('program_demo')||'');
+fox2ProgramDemoSnapshot=fox2DemoMode?fox2BuildLiveDemoSnapshot():fox2DecodeProgramSnapshot(params.get('program_demo')||'');
 fox2ProgramSnapshot=fox2SharedProgramSnapshot||fox2ProgramDemoSnapshot;
 fox2ProgramReadOnly=!!fox2SharedProgramSnapshot;
 if(fox2ProgramSnapshot&&Array.isArray(fox2ProgramSnapshot.days)){
@@ -6765,7 +6789,7 @@ function fox2ApplyProgramRecoveryParam(){
 fox2ApplyProgramRecoveryParam();
 
 function fox2SaveProgram(){
-  if(fox2ProgramReadOnly) return;
+  if(fox2ProgramReadOnly||fox2DemoMode) return;
   try{ localStorage.setItem(fox2ProgramStorageKey(),JSON.stringify(fox2Program)); }catch(e){}
   fox2InvalidatePreparedShare();
   if(typeof fox2PrepareFrozenShare==='function') setTimeout(fox2PrepareFrozenShare,0);
@@ -6865,6 +6889,7 @@ function fox2FrozenShareUrl(token){
 }
 
 function fox2PrepareFrozenShare(){
+  if(fox2DemoMode) return Promise.resolve('');
   if(!fox2HasStartedProgram()) return Promise.resolve('');
   // A frozen shared page can be re-shared with the same immutable token.
   // Legacy shared pages are also allowed through below so they can be
@@ -7237,6 +7262,9 @@ function fox2SetupHtml(){
 
 function fox2TodayProgramDay(){
   try{
+    if(fox2DemoMode&&fox2ProgramDemoSnapshot&&fox2ProgramDemoSnapshot.today){
+      return Object.assign({},fox2ProgramDemoSnapshot.today);
+    }
     if(typeof DAYS==='undefined') return null;
     var today=fox2TodayIso(),match=null;
     DAYS.forEach(function(day){if(day&&day.isoDate===today) match=day;});
@@ -7905,6 +7933,7 @@ function fox2RenderProgram(){
   var shell=document.getElementById('program-shell');
   if(!shell) return;
   shell.classList.toggle('is-shared',fox2ProgramReadOnly);
+  shell.classList.toggle('is-demo',fox2DemoMode);
   var metrics=fox2ProgramMetrics(),screen=fox2AwaitingFirst?'awaiting':(fox2Program.screen||'overview'),body='';
   // Earlier prototypes had separate starting-point and summary cards. Fold
   // persisted visits to either of those states into the simpler final card.
@@ -7941,7 +7970,8 @@ function fox2RenderProgram(){
   else if(screen==='measure'||screen==='results') body='';
   else body=fox2OverviewHtml();
   var progress=(screen==='measure'||screen==='results')?fox2ProgressHtml(metrics):'';
-  shell.innerHTML=(fox2ProgramReadOnly?'<div class="program-shared-banner">Shared FOX2 progress</div>':'')+progress+body+'<div class="program-status" id="program-status"></div>';
+  var modeBanner=fox2ProgramReadOnly?'<div class="program-shared-banner">Shared FOX2 progress</div>':(fox2DemoMode?'<div class="program-demo-banner"><span>FOX2 demo</span><button type="button" class="program-demo-reset" onclick="fox2ResetDemo()">Reset demo</button></div>':'');
+  shell.innerHTML=modeBanner+progress+body+'<div class="program-status" id="program-status"></div>';
   var programPage=shell.closest('.program-page');
   if(programPage) programPage.scrollTop=0;
   var onboardingCard=shell.querySelector('.program-onboarding-card');
@@ -7986,6 +8016,21 @@ function fox2RenderProgram(){
     var options=shell.querySelector('.program-options');
     if(options) options.scrollIntoView({behavior:'smooth',block:'start',inline:'nearest'});
   },20);
+}
+
+function fox2ResetDemo(){
+  if(!fox2DemoMode) return;
+  fox2ProgramDemoSnapshot=fox2BuildLiveDemoSnapshot();
+  fox2ProgramSnapshot=fox2ProgramDemoSnapshot;
+  fox2ProgramHistoryDays=fox2ProgramDemoSnapshot.days.slice();
+  fox2Program=fox2NormalizeSharedProgram(fox2ProgramDemoSnapshot);
+  fox2ProgramOptionsOpen=false;
+  fox2PastResultsEditing=false;
+  fox2PastResultsUndo=null;
+  fox2LastProgressAnimationKey='';
+  fox2CloseProgramOptions();
+  fox2ClosePastResults();
+  fox2RenderProgram();
 }
 
 function fox2BeginProgramAction(action){

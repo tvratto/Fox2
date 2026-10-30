@@ -553,6 +553,16 @@ assert.ok(source.includes("params.get('program_share')||''"),
   'a shared program snapshot should load from its URL');
 assert.ok(source.includes("params.get('program_demo')||''"),
   'an interactive Progress Tracking demo should load from its URL');
+assert.ok(source.includes("var fox2DemoMode=params.get('demo')==='1'")&&source.includes('fox2BuildLiveDemoSnapshot()'),
+  'the live page should provide a short, stable demo URL without a large encoded payload');
+assert.ok(source.includes("action:'Walk after dinner'")&&source.includes("action:'Skip breakfast'")&&source.includes("action:'Zepbound 0.25 mg'"),
+  'the stable demo should include three practical prior changes');
+assert.ok(source.includes('change:23')&&source.includes('change:28')&&source.includes('change:34'),
+  'the demo prior changes should show distinct, believable impacts');
+assert.ok(source.includes('FOX2 demo')&&source.includes('Reset demo')&&source.includes('function fox2ResetDemo()'),
+  'demo mode should be clearly labeled and recoverable after an interactive presentation');
+assert.ok(source.includes('if(fox2ProgramReadOnly||fox2DemoMode) return;'),
+  'demo interactions must not overwrite a user\'s saved program');
 assert.ok(source.includes('fox2ProgramSnapshot=fox2SharedProgramSnapshot||fox2ProgramDemoSnapshot'),
   'shared and demo snapshots should use the same representative program state');
 assert.ok(source.includes('fox2ProgramReadOnly=!!fox2SharedProgramSnapshot'),
