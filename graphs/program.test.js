@@ -476,12 +476,14 @@ assert.ok(source.includes("bands=[60,120,180,240]"),
   'the web ring should use the same graduating score scales as the device');
 assert.ok(source.includes('class="program-canonical-progress')&&source.includes('class="program-history-chart"'),
   'Progress should use only the canonical Score ring and 30-day daily-score history');
-assert.ok(source.includes('data-progress-animate="')&&source.includes("},1600);"),
+assert.ok(source.includes('data-progress-animate="')&&source.includes("},1700);"),
   'the Score ring should transition automatically into the new bar');
 assert.ok(source.includes('program-canonical-recap-popover')&&source.includes("'+barsView+ring+'"),
   'the recap should appear as a temporary overlay while the 30-day Progress view remains underneath');
-assert.ok(source.includes('program-history-bar.is-latest')&&source.includes('program-recap-ring-unwind'),
-  'the ring should unwind into only the newest bar before the updated result settles');
+assert.ok(source.includes('program-history-latest-marker')&&source.includes('program-recap-ring-unwind'),
+  'the ring should unwind into a persistent marker beside the newest bar');
+assert.ok(!source.includes('program-history-bar-rise'),
+  'the newest bar should already be present underneath the recap instead of rising afterward');
 assert.ok(source.includes("progressBars.removeAttribute('aria-hidden')")&&source.includes('recapOverlay.remove()'),
   'the recap overlay should leave one clean, accessible Progress view after its animation');
 assert.ok(source.includes('program-history-bar')&&source.includes('stroke:var(--program-orange)'),

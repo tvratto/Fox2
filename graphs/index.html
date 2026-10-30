@@ -391,15 +391,17 @@ html, body {
 .program-canonical-hero-arrow { color:var(--program-orange); font-size:46px; line-height:.85; font-weight:950; }
 .program-canonical-hero-value { font-size:58px; line-height:.9; font-weight:950; letter-spacing:-.055em; }
 .program-canonical-hero-label { margin-left:3px; color:#ffc46f; font-size:10px; line-height:1.15; font-weight:900; letter-spacing:1.15px; text-transform:uppercase; }
-.program-canonical-progress-bars { z-index:1; opacity:1; pointer-events:auto; transition:filter .45s ease; }
-.program-canonical-progress-ring { z-index:3; inset:0; padding:18px; justify-content:center; background:rgba(2,2,2,.56); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); opacity:1; transition:opacity .34s ease,background .48s ease; }
-.program-canonical-recap-popover { width:min(100%,310px); min-height:390px; padding:24px 22px 20px; border:1px solid rgba(255,140,0,.24); border-radius:25px; background:radial-gradient(circle at 50% 34%,rgba(255,140,0,.13),transparent 54%),#0b0b0c; box-shadow:0 24px 70px rgba(0,0,0,.58); display:flex; flex-direction:column; align-items:center; justify-content:center; transform:none; transform-origin:center; opacity:1; transition:transform .66s cubic-bezier(.22,.8,.2,1),opacity .42s ease; }
-.program-canonical-progress.has-recap:not(.is-bars) .program-canonical-progress-bars { filter:brightness(.55); }
-.program-canonical-progress.is-bars .program-canonical-progress-ring { opacity:0; background:transparent; pointer-events:none; }
-.program-canonical-progress.is-bars .program-canonical-recap-popover { opacity:0; transform:translate(var(--recap-target-x),var(--recap-target-y)) scale(.07,.12); }
-.program-canonical-progress-ring .program-today-ring { width:230px; height:230px; margin:9px auto 0; }
-.program-canonical-progress-ring .program-today-value { animation-duration:1s; }
-.program-canonical-progress.is-bars .program-canonical-progress-ring .program-today-value { animation:program-recap-ring-unwind .58s cubic-bezier(.4,0,.7,.2) both; }
+.program-canonical-progress-bars { z-index:1; opacity:1; pointer-events:auto; }
+.program-canonical-progress-ring { z-index:3; inset:0; justify-content:center; background:transparent; pointer-events:none; opacity:1; transition:opacity .65s ease; }
+.program-canonical-recap-popover { width:174px; min-height:218px; padding:15px 13px 13px; border:1px solid rgba(255,140,0,.3); border-radius:21px; background:radial-gradient(circle at 50% 42%,rgba(255,140,0,.14),transparent 58%),rgba(11,11,12,.94); box-shadow:0 16px 44px rgba(0,0,0,.52); display:flex; flex-direction:column; align-items:center; justify-content:center; transform:none; transform-origin:center; opacity:1; transition:transform .7s cubic-bezier(.22,.8,.2,1),opacity .56s ease,border-color .4s ease,background .4s ease; }
+.program-canonical-recap-popover .program-eyebrow { font-size:9px; }
+.program-canonical-recap-popover h1 { margin:5px 0 2px; font-size:17px; line-height:1.08; text-align:center; letter-spacing:-.025em; }
+.program-canonical-progress.is-bars .program-canonical-progress-ring { opacity:0; }
+.program-canonical-progress.is-bars .program-canonical-recap-popover { opacity:0; border-color:transparent; background:transparent; transform:translate(var(--recap-target-x),var(--recap-target-y)) scale(.13); }
+.program-canonical-progress-ring .program-today-ring { width:112px; height:112px; margin:2px auto 0; }
+.program-canonical-progress-ring .program-today-value { animation:program-today-fill .9s .28s cubic-bezier(.2,.8,.2,1) both; }
+.program-canonical-progress-ring .program-canonical-progress-copy { margin:2px 0 0; color:rgba(255,255,255,.58); font-size:10px; line-height:1.3; text-align:center; }
+.program-canonical-progress.is-bars .program-canonical-progress-ring .program-today-value { animation:program-recap-ring-unwind .64s cubic-bezier(.4,0,.7,.2) both; }
 .program-canonical-progress-copy { width:100%; margin:8px 0 0; color:rgba(255,255,255,.65); font-size:15px; line-height:1.45; font-weight:650; }
 .program-calendar { width:100%; margin:8px 0 13px; padding:11px; border-radius:18px; background:#050505; }
 .program-history-chart { width:100%; }
@@ -412,9 +414,10 @@ html, body {
 .program-history-bar { stroke:var(--program-orange); stroke-width:6; stroke-linecap:round; transform:none; transform-origin:center 190px; }
 .program-history-today-outline { stroke:#ffd84d; stroke-width:10; stroke-linecap:round; transform:none; transform-origin:center 190px; }
 .program-canonical-summary,.program-canonical-hero { transition:opacity .45s ease,transform .55s cubic-bezier(.2,.8,.2,1); }
-.program-canonical-progress.has-recap:not(.is-bars) .program-canonical-summary,.program-canonical-progress.has-recap:not(.is-bars) .program-canonical-hero { opacity:.18; transform:translateY(5px); }
-.program-canonical-progress.has-recap:not(.is-bars) .program-history-bar.is-latest,.program-canonical-progress.has-recap:not(.is-bars) .program-history-today-outline { transform:scaleY(0); }
-.program-canonical-progress.has-recap.is-bars .program-history-bar.is-latest,.program-canonical-progress.has-recap.is-bars .program-history-today-outline { animation:program-history-bar-rise .62s .18s cubic-bezier(.2,.8,.2,1) forwards; }
+.program-canonical-progress.has-recap:not(.is-bars) .program-canonical-summary,.program-canonical-progress.has-recap:not(.is-bars) .program-canonical-hero { opacity:.58; }
+.program-history-latest-marker { fill:#050505; stroke:var(--program-orange); stroke-width:2.4; opacity:1; transition:opacity .18s ease; }
+.program-canonical-progress.has-recap:not(.is-bars) .program-history-latest-marker { opacity:0; }
+.program-canonical-progress.has-recap.is-bars .program-history-latest-marker { transition-delay:.5s; }
 .program-calendar-footer { display:flex; align-items:center; justify-content:space-between; gap:10px; padding-top:9px; color:rgba(255,255,255,.46); font-size:9px; font-weight:850; }
 .program-calendar-baseline-key::before { content:""; display:inline-block; width:22px; margin-right:5px; border-top:1px dotted rgba(255,255,255,.82); vertical-align:middle; }
 .program-canonical-baseline-action { width:100%; margin-top:16px; padding:16px; border:1px solid rgba(255,140,0,.24); border-radius:17px; background:rgba(255,140,0,.07); text-align:left; }
@@ -426,7 +429,6 @@ html, body {
 .program-utility-link { min-height:36px; padding:0 2px; border:0; background:transparent; color:rgba(255,255,255,.58); font:800 13px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; cursor:pointer; }
 .program-options-link { margin-left:auto; }
 .program-utility-link:hover,.program-utility-link:focus-visible { color:var(--program-orange); }
-@keyframes program-history-bar-rise { to { transform:scaleY(1); } }
 @keyframes program-recap-ring-unwind { from { stroke-dashoffset:var(--today-offset); } to { stroke-dashoffset:339.292; } }
 @media (prefers-reduced-motion:reduce){.program-canonical-progress-ring,.program-canonical-recap-popover,.program-canonical-progress-bars,.program-canonical-summary,.program-canonical-hero{transition:none}.program-history-bar,.program-history-today-outline,.program-canonical-progress-ring .program-today-value{animation:none!important;transform:none}}
 .program-awaiting-first { min-height:410px; padding:28px 20px; display:flex; flex-direction:column; justify-content:center; text-align:center; }
@@ -7088,7 +7090,7 @@ function fox2ProgressHtml(metrics){
   var scaleMax=Math.max(60,Math.ceil((maxValue*1.12)/30)*30);
   var chartLeft=10,chartRight=326,plotTop=18,plotBottom=190,plotHeight=plotBottom-plotTop;
   var baselineY=hasBaseline?plotBottom-Math.min(plotHeight,baseline/scaleMax*plotHeight):plotBottom;
-  var chartBars='',chartSlots='',chartDates='';
+  var chartBars='',chartSlots='',chartDates='',latestMarker='';
   slots.forEach(function(slot,index){
     var x=chartLeft+index*((chartRight-chartLeft)/(chartTarget-1)),day=slot.day;
     if((index%7===0&&index<chartTarget-2)||index===chartTarget-1){
@@ -7102,9 +7104,10 @@ function fox2ProgressHtml(metrics){
     var score=Math.max(0,Number(day.score)||0),top=plotBottom-Math.min(plotHeight,score/scaleMax*plotHeight);
     if(slot.current) chartBars+='<line class="program-history-today-outline" x1="'+x.toFixed(1)+'" y1="'+top.toFixed(1)+'" x2="'+x.toFixed(1)+'" y2="'+plotBottom+'" aria-hidden="true"></line>';
     chartBars+='<line class="program-history-bar'+(slot.current?' is-today':'')+(latest&&day.date===latest.date?' is-latest':'')+'" x1="'+x.toFixed(1)+'" y1="'+top.toFixed(1)+'" x2="'+x.toFixed(1)+'" y2="'+plotBottom+'" role="img" aria-label="'+fox2Escape(fox2ShortDate(day.date))+' Fat Use Score '+fox2Round(score)+(slot.current?' so far':'')+'"></line>';
+    if(latest&&day.date===latest.date) latestMarker='<circle class="program-history-latest-marker" cx="'+(x+7).toFixed(1)+'" cy="'+top.toFixed(1)+'" r="3.7" aria-hidden="true"></circle>';
   });
   var baselineMark=hasBaseline?'<line class="program-history-baseline" x1="'+chartLeft+'" y1="'+baselineY.toFixed(1)+'" x2="'+chartRight+'" y2="'+baselineY.toFixed(1)+'"></line><text class="program-history-baseline-label" x="'+chartRight+'" y="'+Math.max(29,baselineY-6).toFixed(1)+'" text-anchor="end">BASELINE '+fox2Round(baseline)+'</text>':'';
-  var historyChart='<div class="program-history-chart"><svg viewBox="0 0 336 218" role="img" aria-label="Thirty days of Fat Use Scores, filling from left to right"><line class="program-history-axis" x1="'+chartLeft+'" y1="'+plotBottom+'" x2="'+chartRight+'" y2="'+plotBottom+'"></line>'+chartDates+chartSlots+baselineMark+chartBars+'</svg></div>';
+  var historyChart='<div class="program-history-chart"><svg viewBox="0 0 336 218" role="img" aria-label="Thirty days of Fat Use Scores, filling from left to right"><line class="program-history-axis" x1="'+chartLeft+'" y1="'+plotBottom+'" x2="'+chartRight+'" y2="'+plotBottom+'"></line>'+chartDates+chartSlots+baselineMark+chartBars+latestMarker+'</svg></div>';
   var previousChangeRecords=Array.isArray(fox2Program.resultHistory)?fox2Program.resultHistory:[];
   var completedShown=shownDays.filter(function(day){return !day.current;});
   var hasActiveChange=!!(programStart&&fox2Program.action);
@@ -7120,7 +7123,7 @@ function fox2ProgressHtml(metrics){
   var programUtilities=pastResultsLink||programOptionsLink?'<div class="program-utilities">'+pastResultsLink+programOptionsLink+'</div>':'';
   var barsView='<section class="program-canonical-progress-view program-canonical-progress-bars"'+(animate?' aria-hidden="true"':'')+'><div class="program-progress-heading"><div class="program-eyebrow">30-Day Progress</div><button type="button" class="program-how-link" onclick="openGuideModal();openFox2WorksGuide()">How this works</button></div><div class="program-canonical-summary">'+fox2Escape(summary)+'</div>'+heroHtml+'<div class="program-calendar">'+historyChart+'</div>'+programUtilities+(hasBaseline?'':'<div class="program-canonical-baseline-action"><strong>Want to see what affects your fat use?</strong><span>Set a starting point, try a change, and FOX2 will compare the results.</span><button type="button" data-program-action="start">Set up a baseline</button></div>')+'</section>';
   if(!latest) return '<section class="program-canonical-progress is-bars"><section class="program-canonical-progress-view program-canonical-progress-bars"><div class="program-eyebrow">Progress</div><h1>Your daily Scores will appear here.</h1><p class="program-canonical-progress-copy">Take a measurement and tap your phone to FOX2 to sync it.</p></section></section>';
-  return '<section class="program-canonical-progress'+(animate?' has-recap':' is-bars')+'" style="--recap-target-x:'+recapTargetX+'px;--recap-target-y:112px" data-progress-key="'+fox2Escape(key)+'" data-progress-animate="'+(animate?'1':'0')+'">'+barsView+ring+'</section>';
+  return '<section class="program-canonical-progress'+(animate?' has-recap':' is-bars')+'" style="--recap-target-x:'+recapTargetX+'px;--recap-target-y:118px" data-progress-key="'+fox2Escape(key)+'" data-progress-animate="'+(animate?'1':'0')+'">'+barsView+ring+'</section>';
 }
 
 function fox2SimpleProgressChartHtml(metrics){
@@ -8041,7 +8044,7 @@ function fox2RenderProgram(){
       if(progressBars) progressBars.removeAttribute('aria-hidden');
       if(recapOverlay) window.setTimeout(function(){if(recapOverlay.isConnected) recapOverlay.remove();},720);
       fox2LastProgressAnimationKey=progressKey;
-    },1600);
+    },1700);
   }
   if(fox2ReplayFromToday){
     var replayRoot=shell.querySelector('.program-recap-sequence[data-latest-date]');
