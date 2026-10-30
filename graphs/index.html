@@ -424,6 +424,9 @@ html, body {
 .program-canonical-baseline-action strong { color:#fff; font-size:16px; line-height:1.25; font-weight:900; }
 .program-canonical-baseline-action span { margin-top:6px; color:rgba(255,255,255,.58); font-size:12px; line-height:1.4; font-weight:650; }
 .program-canonical-baseline-action button { width:100%; min-height:44px; margin-top:13px; border:0; border-radius:13px; background:var(--program-orange); color:#090909; font-size:13px; font-weight:950; }
+.program-options-access { width:100%; display:flex; justify-content:flex-end; margin:-5px 1px 5px; }
+.program-options-link { min-height:36px; padding:0 2px; border:0; background:transparent; color:rgba(255,255,255,.58); font:800 13px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; cursor:pointer; }
+.program-options-link:hover,.program-options-link:focus-visible { color:var(--program-orange); }
 @keyframes program-history-bar-rise { to { transform:scaleY(1); } }
 @media (prefers-reduced-motion:reduce){.program-canonical-progress-view{transition:none}.program-history-bar,.program-history-today-outline{animation:none!important;transform:none}}
 .program-awaiting-first { min-height:410px; padding:28px 20px; display:flex; flex-direction:column; justify-content:center; text-align:center; }
@@ -680,7 +683,8 @@ html, body {
 #export-modal-overlay,
 #guide-modal-overlay,
 #program-baseline-confirm-overlay,
-#program-baseline-editor-overlay {
+#program-baseline-editor-overlay,
+#program-options-overlay {
   display: none;
   position: fixed; inset: 0; z-index: 200;
   background: rgba(0,0,0,0.7);
@@ -691,12 +695,14 @@ html, body {
 #export-modal-overlay.open,
 #guide-modal-overlay.open,
 #program-baseline-confirm-overlay.open,
-#program-baseline-editor-overlay.open { display: flex; }
+#program-baseline-editor-overlay.open,
+#program-options-overlay.open { display: flex; }
 #info-modal,
 #export-modal,
 #guide-modal,
 #program-baseline-confirm,
-#program-baseline-editor {
+#program-baseline-editor,
+#program-options-dialog {
   position: relative;
   background: #111;
   border: 1px solid rgba(255,255,255,0.12);
@@ -718,7 +724,8 @@ html, body {
 #export-modal-title,
 #guide-modal-title,
 #program-baseline-confirm-title,
-#program-baseline-editor-title { padding-right: 38px; }
+#program-baseline-editor-title,
+#program-options-title { padding-right: 38px; }
 #info-modal-title {
   font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.32);
   letter-spacing: .12em; text-transform: uppercase;
@@ -754,6 +761,12 @@ html, body {
 .program-baseline-editor-review,.program-baseline-editor-new { width:100%; min-height:48px; border-radius:14px; font:850 14px/1.2 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; cursor:pointer; }
 .program-baseline-editor-review { margin-top:12px; border:0; background:#fff; color:#050505; }
 .program-baseline-editor-new { margin-top:4px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.045); color:#fff; }
+.program-options-content { margin-top:7px; border-top:1px solid rgba(255,255,255,.1); }
+.program-options-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:14px; align-items:center; padding:17px 0; border-bottom:1px solid rgba(255,255,255,.1); }
+.program-options-row-label,.program-options-row-value { display:block; }
+.program-options-row-label { color:rgba(255,255,255,.46); font-size:10px; font-weight:900; letter-spacing:.11em; text-transform:uppercase; }
+.program-options-row-value { margin-top:5px; color:#fff; font-size:17px; line-height:1.25; font-weight:850; overflow-wrap:anywhere; }
+.program-options-change { min-height:42px; padding:0 4px; border:0; background:transparent; color:var(--program-orange); font:850 14px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; cursor:pointer; }
 .export-choice {
   width: 100%; padding: 12px 13px; border-radius: 13px;
   border: 1px solid rgba(255,255,255,.10); background: rgba(255,255,255,.06);
@@ -2503,6 +2516,14 @@ html.payload-unsupported #update-banner { display: none !important; }
   <div id="program-baseline-editor" role="dialog" aria-modal="true" aria-labelledby="program-baseline-editor-title">
     <button type="button" class="modal-corner-close" onclick="fox2CloseBaselineEditor()" aria-label="Close baseline settings">×</button>
     <div id="program-baseline-editor-content"></div>
+  </div>
+</div>
+
+<div id="program-options-overlay" onclick="if(event.target===this)fox2CloseProgramOptions()">
+  <div id="program-options-dialog" role="dialog" aria-modal="true" aria-labelledby="program-options-title">
+    <button type="button" class="modal-corner-close" onclick="fox2CloseProgramOptions()" aria-label="Close Program options">×</button>
+    <div class="program-confirm-title" id="program-options-title">Program options</div>
+    <div class="program-options-content" id="program-options-content"></div>
   </div>
 </div>
 
@@ -7041,7 +7062,8 @@ function fox2ProgressHtml(metrics){
   var key=latest?[latest.date,fox2Round(latest.score),latest.readings||0].join('|'):'';
   var animate=!!(latest&&key!==fox2LastProgressAnimationKey);
   var ring=latest?'<section class="program-canonical-progress-view program-canonical-progress-ring"><div class="program-eyebrow">'+(latest.current?'Synced just now':'Morning recap')+'</div><h1>'+(latest.current?'Today’s Fat Use Score':'Yesterday’s Fat Use Score')+'</h1><svg class="program-today-ring" viewBox="0 0 120 120" role="img" aria-label="Fat Use Score '+visual.value+(latest.current?' so far':' final')+'"><circle class="program-today-track" cx="60" cy="60" r="54" style="stroke:var(--program-orange);opacity:.18"></circle><circle class="program-today-value" cx="60" cy="60" r="54" style="--today-color:var(--program-orange);--today-offset:'+(339.292*(1-visual.progress)).toFixed(3)+'"></circle><text class="program-today-score" x="60" y="64">'+visual.value+'</text><text class="program-today-unit" x="60" y="82">'+(latest.current?'TODAY SO FAR':'FINAL')+'</text></svg><p class="program-canonical-progress-copy">'+(latest.current?'This Score includes the reading you just synced and is still accumulating.':'This is the completed Score for your latest finished day.')+'</p></section>':'';
-  var barsView='<section class="program-canonical-progress-view program-canonical-progress-bars"><div class="program-eyebrow">30-Day Progress</div><div class="program-canonical-summary">'+fox2Escape(summary)+'</div>'+heroHtml+'<div class="program-calendar">'+historyChart+previousChanges+'</div>'+(hasBaseline?'':'<div class="program-canonical-baseline-action"><strong>Want to see what affects your fat use?</strong><span>Set a starting point, try a change, and FOX2 will compare the results.</span><button type="button" data-program-action="start">Set up a baseline</button></div>')+'</section>';
+  var programOptions=hasBaseline||fox2Program.action?'<div class="program-options-access"><button type="button" class="program-options-link" data-program-action="open-program-options">Program options</button></div>':'';
+  var barsView='<section class="program-canonical-progress-view program-canonical-progress-bars"><div class="program-eyebrow">30-Day Progress</div><div class="program-canonical-summary">'+fox2Escape(summary)+'</div>'+heroHtml+'<div class="program-calendar">'+historyChart+previousChanges+'</div>'+programOptions+(hasBaseline?'':'<div class="program-canonical-baseline-action"><strong>Want to see what affects your fat use?</strong><span>Set a starting point, try a change, and FOX2 will compare the results.</span><button type="button" data-program-action="start">Set up a baseline</button></div>')+'</section>';
   if(!latest) return '<section class="program-canonical-progress is-bars"><section class="program-canonical-progress-view program-canonical-progress-bars"><div class="program-eyebrow">Progress</div><h1>Your daily Scores will appear here.</h1><p class="program-canonical-progress-copy">Take a measurement and tap your phone to FOX2 to sync it.</p></section></section>';
   return '<section class="program-canonical-progress'+(previousChangeRecords.length?' has-learnings learnings-'+previousChangeRecords.length:'')+(animate?'':' is-bars')+'" data-progress-key="'+fox2Escape(key)+'" data-progress-animate="'+(animate?'1':'0')+'">'+ring+barsView+'</section>';
 }
@@ -8021,6 +8043,35 @@ function fox2CloseBaselineEditor(){
   if(overlay) overlay.classList.remove('open');
 }
 
+function fox2OpenProgramOptions(){
+  var overlay=document.getElementById('program-options-overlay');
+  var content=document.getElementById('program-options-content');
+  if(!overlay||!content) return;
+  var storedBaseline=Number(fox2Program.baselineValue);
+  var baseline=isFinite(storedBaseline)&&storedBaseline>0?fox2Round(storedBaseline):'Not set';
+  var action=String(fox2Program.action||'No action selected');
+  content.innerHTML='<div class="program-options-row"><div><span class="program-options-row-label">Baseline</span><span class="program-options-row-value">'+baseline+'</span></div><button type="button" class="program-options-change" onclick="fox2OpenBaselineFromProgramOptions()">Change</button></div>'
+    +'<div class="program-options-row"><div><span class="program-options-row-label">Action</span><span class="program-options-row-value">'+fox2Escape(action)+'</span></div><button type="button" class="program-options-change" onclick="fox2ChangeActionFromProgramOptions()">Change</button></div>';
+  overlay.classList.add('open');
+  var close=overlay.querySelector('.modal-corner-close');
+  if(close) close.focus();
+}
+
+function fox2CloseProgramOptions(){
+  var overlay=document.getElementById('program-options-overlay');
+  if(overlay) overlay.classList.remove('open');
+}
+
+function fox2OpenBaselineFromProgramOptions(){
+  fox2CloseProgramOptions();
+  fox2OpenBaselineEditor();
+}
+
+function fox2ChangeActionFromProgramOptions(){
+  fox2CloseProgramOptions();
+  fox2HandleProgramAction('change-actions');
+}
+
 function fox2SelectBaselineDefault(value){
   value=Math.round(Number(value));
   if(FOX2_DEFAULT_BASELINES.indexOf(value)<0) return;
@@ -8188,6 +8239,8 @@ function fox2HandleProgramAction(action){
     fox2Program.baselineStart=fox2TodayIso();fox2Program.baselineValue=null;fox2Program.baselineSource='';fox2Program.baselineRange='';fox2ProgramOptionsOpen=false;
   }else if(action==='change-baseline'){
     fox2OpenBaselineEditor(); return;
+  }else if(action==='open-program-options'){
+    fox2OpenProgramOptions(); return;
   }else if(action==='finish-measuring'){
     if(fox2FinalizeResult(metrics)){fox2Program.screen='results';fox2ProgramOptionsOpen=true;}
   }else if(action==='restart-measuring'){
@@ -8200,7 +8253,7 @@ function fox2HandleProgramAction(action){
     fox2Program.screen='measure';fox2ProgramOptionsOpen=false;
   }else if(action==='change-actions'){
     fox2SaveProgramBackup('change actions');
-    fox2ActionDraft='';fox2Program.setupMode='change';fox2Program.screen='setup';fox2ProgramOptionsOpen=false;
+    fox2ActionDraft=fox2Program.action||'';fox2Program.setupMode='change';fox2Program.screen='setup';fox2ProgramOptionsOpen=false;
   }else if(action==='start-over'){
     fox2SaveProgramBackup('start over');
     fox2ActionDraft='';fox2Program.setupMode='restart';fox2Program.baselineMode='personal';fox2Program.baselineStart='';fox2Program.baselineValue=null;fox2Program.baselineSource='';fox2Program.baselineRange='';fox2Program.measureStart='';fox2Program.targetDays=FOX2_MEASURE_DAYS;fox2Program.screen='method';fox2ProgramOptionsOpen=false;

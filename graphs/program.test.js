@@ -343,10 +343,20 @@ assert.ok(!source.includes("if(input) fox2Program.action=input.value.trim();"),
   'a draft action must not relabel the completed program');
 assert.ok(source.includes("fox2Program.action=(input?input.value:fox2ActionDraft).trim();"),
   'the new action should become current only when tracking is confirmed');
-assert.ok(source.includes("fox2ActionDraft='';fox2Program.setupMode='change';fox2Program.screen='setup'"),
-  'changing actions should open a clean draft while preserving the completed result');
+assert.ok(source.includes("fox2ActionDraft=fox2Program.action||'';fox2Program.setupMode='change';fox2Program.screen='setup'"),
+  'changing actions should prefill the current action without changing it before confirmation');
 assert.ok(source.includes('function fox2OpenBaselineEditor()'),
   'the active program should provide a focused baseline editor');
+assert.ok(source.includes('data-program-action="open-program-options">Program options</button>'),
+  'settled Progress should provide one quiet Program options link beneath the chart');
+assert.ok(source.includes('id="program-options-overlay"')&&source.includes('program-options-row-label">Baseline')&&source.includes('program-options-row-label">Action'),
+  'Program options should show the current baseline and action with focused change controls');
+assert.ok(source.includes('function fox2OpenBaselineFromProgramOptions(){')&&source.includes('fox2OpenBaselineEditor();'),
+  'changing the baseline from Program options should open the existing baseline editor');
+assert.ok(!functionSource('fox2OpenProgramOptions','fox2CloseProgramOptions').includes('measure a new baseline'),
+  'measuring a new baseline should not appear at the top level of Program options');
+assert.ok(functionSource('fox2RenderBaselineEditor','fox2ReviewBaselineChange').includes('measure a new baseline'),
+  'measuring a new baseline should remain nested inside the baseline-change menu');
 assert.ok(source.includes('Your program results will be recalculated.'),
   'changing a baseline should explain its effect on existing results');
 assert.ok(source.includes('function fox2BeginNewMeasuredBaseline()'),

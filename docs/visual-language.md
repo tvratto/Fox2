@@ -66,6 +66,10 @@ history chart. Both use orange for score data.
 - If one baseline choice is labeled `Recommended`, all three choices remain
   visible together. Present them as one compact grouped list rather than large
   standalone cards or a hidden alternatives disclosure.
+- A quiet `Program options` link beneath the chart opens a compact view of the
+  current baseline and action, each with one `Change` control. Measuring a new
+  baseline is not a top-level program option; it remains nested inside the
+  baseline-change flow.
 - `What you’ve learned` uses phone-readable stacked text: a large change name
   and date line followed by a clear result sentence. Do not compress these
   fields into tiny side-by-side columns.
