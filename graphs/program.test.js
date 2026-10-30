@@ -44,12 +44,12 @@ function functionSource(name,nextName){
     'Progress should move from the synced daily ring into the canonical daily bars');
   assert.ok(html.includes('BASELINE 75')&&html.includes('Oatmeal for breakfast'),
     'Progress should compare daily Scores directly while identifying the dated lifestyle change');
-  assert.ok(html.includes('What you’ve learned')&&html.includes('Add a walk after eating')&&html.includes('2026-10-26–2026-10-28')&&html.includes('Increased your Fat Use Score by 67%'),
+  assert.ok(html.includes('What you’ve learned')&&html.includes('Add a walk after eating')&&html.includes('2026-10-26–2026-10-28')&&html.includes('Your Fat Use Score was 67% higher.'),
     'Progress should retain a concise start-to-finish record of prior changes and their impact');
 
   context.fox2Program={measureStart:'',action:'',resultHistory:[]};
   const openHtml=context.fox2ProgressHtml({baseline:0,measureDays:[],elapsedDays:0,savedResult:null});
-  assert.ok(openHtml.includes('Here’s your recent Fat Use pattern.')&&openHtml.includes('Keep measuring to see a clearer trend.'),
+  assert.ok(openHtml.includes('Your progress is taking shape.')&&openHtml.includes('Keep measuring to reveal a clearer pattern.'),
     'measurements without a baseline or change should still produce a useful neutral Progress state');
   assert.ok(openHtml.includes('Want to see what affects your fat use?')&&openHtml.includes('Set up a baseline'),
     'the neutral Progress state should offer one clear baseline setup prompt');
@@ -448,14 +448,18 @@ assert.ok(!source.includes('program-history-curve')&&!source.includes('curvePoin
   'the daily bars should stand on their own without a line connecting their tops');
 assert.ok(source.includes('stroke-dasharray:3 5')&&source.includes('BASELINE '),
   'a baseline should be rendered as a dotted white reference across the chart');
-assert.ok(source.includes('You started “')&&source.includes('program-canonical-context')&&!source.includes('program-calendar-change-note'),
-  'the current change, start date, and result should read as one narrative rather than separate boxes');
-assert.ok(source.includes('background:rgba(255,140,0,.07)')&&source.includes('color:#ffc46f'),
+assert.ok(source.includes("var actionName=hasActiveChange?'“'")&&source.includes('program-canonical-context')&&!source.includes('program-calendar-change-note'),
+  'the current change and result should read as one concise narrative rather than separate boxes');
+assert.ok(source.includes('background:rgba(255,140,0,.08)')&&source.includes('color:#ffc46f'),
   'previous change records should be visually emphasized without introducing a new chart');
 assert.ok(source.includes('program-canonical-summary'),
   'Progress should lead with a large plain-language summary');
-assert.ok(source.includes('Great! Your fat use is trending higher.')&&source.includes('Since then, your Fat Use Score has increased about '),
+assert.ok(source.includes('Great—your Fat Use Score is rising.')&&source.includes('since starting '),
   'the Progress summary should lead with a conversational interpretation and connect it to the current change');
+assert.ok(!source.includes("summary='You have '+shownDays.length")&&!source.includes("summaryDetail='Keep measuring and sync again after your first completed day.'"),
+  'Progress summaries should not report measurement or day counts');
+assert.ok(source.includes('.program-previous-changes li { display:grid; grid-template-columns:8px minmax(0,1fr)')&&source.includes('font-size:15px'),
+  'What you’ve learned should use large stacked phone-readable text');
 assert.ok(!source.includes('program-canonical-average'),
   'Progress should not repeat the chart with a separate average value');
 assert.ok(source.includes('Want to see what affects your fat use?')&&source.includes('Set up a baseline'),

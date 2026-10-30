@@ -35,8 +35,10 @@ history chart. Both use orange for score data.
   visible trend conversationally. The supporting sentence keeps the current
   change, its start date, and its percentage impact together; do not isolate
   the current change in a separate box. Positive upward or above-baseline
-  summaries begin with `Great!` so users understand that greater fat use is
+  summaries begin with `Great—` so users understand that greater fat use is
   favorable in this context.
+- Progress summaries are short, specific, and encouraging. Describe the
+  visible outcome without stating how many measurements or days are present.
 - Do not add a separate average value beneath the chart.
 - Without a baseline or active change, keep the chart useful: show the recent
   pattern without a baseline line or attributed result, omit `What you’ve
@@ -47,6 +49,9 @@ history chart. Both use orange for score data.
 - If one baseline choice is labeled `Recommended`, all three choices remain
   visible together. Present them as one compact grouped list rather than large
   standalone cards or a hidden alternatives disclosure.
+- `What you’ve learned` uses phone-readable stacked text: a large change name
+  and date line followed by a clear result sentence. Do not compress these
+  fields into tiny side-by-side columns.
 - Do not introduce additional graphs, score-tier colors, or alternate visual
   objects in Progress.
 
