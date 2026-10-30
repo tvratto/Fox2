@@ -530,8 +530,10 @@ assert.ok(source.includes('data-program-action="open-past-results">Past results<
   'completed changes should open from a quiet Past results link beneath the chart');
 assert.ok(source.includes('class="program-how-link" onclick="openFox2WorksGuideFromHelp()">How this works</button>'),
   'Progress and persistent Help should share one guide entry point');
-assert.ok(source.includes('function fox2MeasureGuideHtml()')&&source.includes('fox2CardSequenceHtml(2,4)')&&source.includes('Math.min(4,fox2GuideReplayStep+delta)'),
-  'the shared guide should include how to measure as the second of four slides');
+assert.ok(source.includes('function fox2PurposeGuideHtml()')&&source.includes('What FOX2 is for')&&source.includes('See how changes in your life affect your fat use.')&&source.includes('Math.min(4,fox2GuideReplayStep+delta)'),
+  'the shared guide should preserve the original purpose screen as the first of four slides');
+assert.ok(source.includes("fox2GuideReplayStep===1?fox2PurposeGuideHtml():fox2GuideReplayStep===2?fox2OverviewHtml('guide')")&&!source.includes('function fox2MeasureGuideHtml()'),
+  'the four-slide guide should proceed from purpose to measurement meaning without replacing either screen with operating instructions');
 assert.ok(source.includes('Replay the complete four-part guide.')&&source.includes('fox2RenderWorksGuide'),
   'both guide entry points should reuse the same complete four-slide explanation');
 assert.ok(source.includes("close.className='program-guide-close'")&&source.includes("close.dataset.guideAction='close'")&&source.includes("close.setAttribute('aria-label','Close FOX2 guide')"),

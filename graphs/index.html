@@ -7206,6 +7206,13 @@ function fox2CardSequenceHtml(active,total){
   return '<div class="program-card-sequence" aria-label="Introduction '+active+' of '+total+'">'+dots+'</div>';
 }
 
+function fox2PurposeGuideHtml(){
+  return '<section class="program-onboarding-card">'+fox2CardSequenceHtml(1,4)+'<div class="program-eyebrow">What FOX2 is for</div><h1 class="program-title">See how changes in your life affect your fat use.</h1>'
+    +'<p class="program-copy">FOX2 compares your daily fat use before and after a change, so you can see how your body responded.</p>'
+    +'<div class="program-simple-steps"><div class="program-simple-step"><b>↗</b><span>Explore changes to food, fasting, or exercise.</span></div><div class="program-simple-step"><b>+</b><span>See how your Fat Use Score changes after starting or adjusting a GLP-1.</span></div><div class="program-simple-step"><b>✓</b><span>Track whether the changes you make continue over time.</span></div></div>'
+    +'<button type="button" class="program-primary" data-guide-action="next">Next</button><button type="button" class="program-secondary" data-guide-action="menu">More help</button></section>';
+}
+
 function fox2OverviewHtml(mode){
   var guide=mode==='guide';
   if(!guide){
@@ -7213,18 +7220,11 @@ function fox2OverviewHtml(mode){
       +'<div class="program-simple-steps"><div class="program-simple-step"><b>1</b><span>Set a Fat Use Score baseline.</span></div><div class="program-simple-step"><b>2</b><span>Choose one change to try.</span></div><div class="program-simple-step"><b>3</b><span>Compare your daily scores with your baseline.</span></div></div>'
       +'<button type="button" class="program-primary" data-program-action="start">Set up Progress</button><button type="button" class="program-secondary" data-program-action="opt-out">Use FOX2 without Progress</button></section>';
   }
-  return '<section class="program-onboarding-card">'+fox2CardSequenceHtml(1,4)+'<div class="program-eyebrow">What FOX2 Measures</div><h1 class="program-title">See when your body is using fat for energy.</h1>'
+  return '<section class="program-onboarding-card">'+fox2CardSequenceHtml(guide?2:1,guide?4:3)+'<div class="program-eyebrow">What FOX2 Measures</div><h1 class="program-title">See when your body is using fat for energy.</h1>'
     +fox2AcetoneMoleculeHtml()
     +'<p class="program-copy">When your body uses more fat, acetone in your breath rises. FOX2 measures that acetone and places your result on a Fat Use Zone scale from 1 to 10+. Higher zones mean more fat use.</p>'
     +'<button type="button" class="program-primary" '+(guide?'data-guide-action="next"':'data-program-action="continue-intro"')+'>Next</button>'
     +(guide?'<button type="button" class="program-secondary" data-guide-action="menu">More help</button>':'')+'</section>';
-}
-
-function fox2MeasureGuideHtml(){
-  return '<section class="program-onboarding-card">'+fox2CardSequenceHtml(2,4)+'<div class="program-eyebrow">How You Use FOX2</div><h1 class="program-title">Measure, review, then tap to sync.</h1>'
-    +'<div class="program-simple-steps"><div class="program-simple-step"><b>1</b><span>Turn on FOX2 and select <strong>Measure</strong>.</span></div><div class="program-simple-step"><b>2</b><span>Wait through Warmup, then take a deep breath and blow steadily until FOX2 finishes.</span></div><div class="program-simple-step"><b>3</b><span>Review your Fat Use Zone, daily pattern, and Fat Use Score on FOX2.</span></div><div class="program-simple-step"><b>4</b><span>When FOX2 shows <strong>Tap Phone</strong>, tap your phone to sync Progress.</span></div></div>'
-    +'<p class="program-copy">Use the same measurement cycle every time. Each synced reading contributes to your daily Fat Use Score.</p>'
-    +'<button type="button" class="program-primary" data-guide-action="next">Next</button><button type="button" class="program-secondary" data-guide-action="back">Back</button></section>';
 }
 
 function fox2IntroZoneGraphicHtml(){
@@ -7957,7 +7957,7 @@ function openFox2WorksGuide(){
 function fox2RenderWorksGuide(direction){
   var replay=document.getElementById('guide-replay');
   if(!replay) return;
-  replay.innerHTML=fox2GuideReplayStep===1?fox2OverviewHtml('guide'):fox2GuideReplayStep===2?fox2MeasureGuideHtml():fox2GuideReplayStep===3?fox2DayIntroHtml('guide'):fox2CompareIntroHtml('guide');
+  replay.innerHTML=fox2GuideReplayStep===1?fox2PurposeGuideHtml():fox2GuideReplayStep===2?fox2OverviewHtml('guide'):fox2GuideReplayStep===3?fox2DayIntroHtml('guide'):fox2CompareIntroHtml('guide');
   var card=replay.querySelector('.program-onboarding-card');
   if(card){
     var close=document.createElement('button');
@@ -7973,7 +7973,7 @@ function fox2RenderWorksGuide(direction){
       fox2TransitionWorksGuide(action==='back'?-1:1);
     });
   });
-  if(fox2GuideReplayStep===1) fox2StartAcetoneAnimation(replay);
+  if(fox2GuideReplayStep===2) fox2StartAcetoneAnimation(replay);
   else if(fox2GuideReplayStep===3) fox2StartDayIntroAnimation(replay);
   else if(fox2GuideReplayStep===4) fox2StartCompareIntroAnimation(replay);
   fox2GuideReplayTransitioning=false;
