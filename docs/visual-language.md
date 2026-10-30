@@ -78,6 +78,11 @@ history chart. Both use orange for score data.
 - `Past results` uses phone-readable rows: a large change name with its date
   range and a prominent arrow percentage. Do not compress these fields into
   tiny text or add a second graph.
+- Past results can be removed through a visible `Edit` mode or a swipe-left
+  shortcut. Keep Edit available for discoverability, allow repeated deletions
+  without leaving the mode, and offer `Undo` for seven seconds. Explain that
+  deletion removes only the saved comparison—not the underlying FOX2
+  measurements. Shared read-only results never expose deletion controls.
 - Do not introduce additional graphs, score-tier colors, or alternate visual
   objects in Progress.
 

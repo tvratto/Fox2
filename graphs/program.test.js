@@ -50,12 +50,19 @@ function functionSource(name,nextName){
     'an early result should name the active action and show its percentage impact as a directional hero result');
   assert.ok(html.includes('data-program-action="open-past-results">Past results</button>')&&!html.includes('Add a walk after eating'),
     'Progress should keep prior changes behind one quiet Past results link rather than lengthening the main card');
-  const content={innerHTML:''},overlay={classList:{add(){}},querySelector(){return null;}};
-  context.document={getElementById:id=>id==='past-results-content'?content:overlay};
-  vm.runInNewContext(functionSource('fox2OpenPastResults','fox2ClosePastResults'),context);
+  const content={innerHTML:'',querySelectorAll(){return[];}},edit={textContent:'',hidden:false,setAttribute(){}},undo={hidden:true};
+  const overlay={classList:{add(){}},querySelector(){return null;}};
+  context.document={getElementById:id=>id==='past-results-content'?content:id==='past-results-edit'?edit:id==='past-results-undo'?undo:overlay};
+  Object.assign(context,{fox2ProgramReadOnly:false,fox2PastResultsEditing:false,fox2PastResultsUndo:null,fox2PastResultsUndoTimer:0,
+    fox2SaveProgram(){},window:{clearTimeout(){},setTimeout(){return 1;}}});
+  vm.runInNewContext(functionSource('fox2RenderPastResults','fox2ClosePastResults'),context);
   context.fox2OpenPastResults();
   assert.ok(content.innerHTML.includes('Add a walk after eating')&&content.innerHTML.includes('2026-10-26–2026-10-28')&&content.innerHTML.includes('↑ 67%'),
     'Past results should retain each change, its full date range, and its directional percentage impact');
+  context.fox2DeletePastResult(0);
+  assert.strictEqual(context.fox2Program.resultHistory.length,0,'deleting a past result should remove only its saved comparison record');
+  context.fox2UndoPastResultDelete();
+  assert.strictEqual(context.fox2Program.resultHistory.length,1,'Undo should restore the deleted comparison in its original position');
 
   context.fox2Program={measureStart:'',action:'',resultHistory:[]};
   const openHtml=context.fox2ProgressHtml({baseline:0,measureDays:[],elapsedDays:0,savedResult:null});
@@ -503,6 +510,14 @@ assert.ok(source.includes('.past-results-action { color:#fff; font-size:17px')&&
   'Past results should use phone-readable change names and prominent percentage impacts');
 assert.ok(source.includes("arrow=change>0?'↑':(change<0?'↓':'→')")&&source.includes('.past-results-impact.is-up { color:var(--program-orange,#ff8c00); }'),
   'Past results should pair directional arrows with orange increases and neutral decreases');
+assert.ok(source.includes('onclick="fox2TogglePastResultsEdit()"')&&source.includes("row.addEventListener('touchstart'")&&source.includes("row.addEventListener('touchend'"),
+  'Past results should support both a discoverable Edit mode and swipe-left deletion');
+assert.ok(source.includes('Deleting a result removes the saved comparison, not your FOX2 measurements.'),
+  'deletion should explicitly preserve the underlying measurement history');
+assert.ok(source.includes('function fox2UndoPastResultDelete()')&&source.includes('Result deleted')&&source.includes('>Undo</button>'),
+  'a deleted result should remain recoverable through a brief Undo action');
+assert.ok(source.includes('edit.hidden=!canEdit')&&source.includes('if(!content||fox2ProgramReadOnly) return;'),
+  'shared read-only result views should not expose deletion controls');
 assert.ok(!source.includes('program-previous-changes')&&!source.includes('What you’ve learned'),
   'completed-change records should no longer expand the main Progress card');
 assert.ok(!source.includes('program-canonical-average'),

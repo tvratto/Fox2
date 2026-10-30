@@ -763,8 +763,16 @@ html, body {
 .program-options-row-label { color:rgba(255,255,255,.46); font-size:10px; font-weight:900; letter-spacing:.11em; text-transform:uppercase; }
 .program-options-row-value { margin-top:5px; color:#fff; font-size:17px; line-height:1.25; font-weight:850; overflow-wrap:anywhere; }
 .program-options-change { min-height:42px; padding:0 4px; border:0; background:transparent; color:var(--program-orange,#ff8c00); font:850 14px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; cursor:pointer; }
+.past-results-header { display:flex; align-items:center; justify-content:space-between; gap:14px; padding-right:42px; }
+.past-results-edit { min-height:36px; padding:0; border:0; background:transparent; color:var(--program-orange,#ff8c00); font:850 14px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; cursor:pointer; }
+.past-results-note { margin:7px 0 0; padding:10px 12px; border-radius:12px; background:rgba(255,255,255,.055); color:rgba(255,255,255,.58); font-size:12px; line-height:1.4; }
 .past-results-list { display:grid; gap:0; margin:7px 0 0; padding:0; border-top:1px solid rgba(255,255,255,.1); list-style:none; max-height:min(58vh,500px); overflow:auto; }
-.past-results-item { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:14px; align-items:center; padding:17px 0; border-bottom:1px solid rgba(255,255,255,.1); }
+.past-results-item { position:relative; overflow:hidden; border-bottom:1px solid rgba(255,255,255,.1); touch-action:pan-y; }
+.past-results-row { position:relative; z-index:2; display:grid; grid-template-columns:minmax(0,1fr) auto; gap:14px; align-items:center; min-height:76px; padding:14px 0; background:#111; transition:transform .2s ease; }
+.past-results-delete { position:absolute; z-index:1; inset:0 0 0 auto; width:78px; border:0; background:#b52828; color:#fff; font:850 13px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; cursor:pointer; }
+.past-results-item.is-swiped .past-results-row { transform:translateX(-78px); }
+.past-results-list.is-editing .past-results-item { padding-right:78px; }
+.past-results-list.is-editing .past-results-row { transform:none; }
 .past-results-action,.past-results-dates { display:block; }
 .past-results-action { color:#fff; font-size:17px; line-height:1.25; font-weight:900; overflow-wrap:anywhere; }
 .past-results-dates { margin-top:5px; color:rgba(255,255,255,.5); font-size:12px; line-height:1.25; font-weight:750; }
@@ -772,6 +780,9 @@ html, body {
 .past-results-impact.is-up { color:var(--program-orange,#ff8c00); }
 .past-results-impact.is-flat { color:rgba(255,255,255,.62); }
 .past-results-empty { margin:12px 0 4px; color:rgba(255,255,255,.58); font-size:14px; line-height:1.45; }
+.past-results-undo { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:10px; padding:11px 13px; border-radius:13px; background:#242424; color:#fff; font-size:13px; font-weight:800; }
+.past-results-undo[hidden] { display:none; }
+.past-results-undo button { min-height:34px; padding:0; border:0; background:transparent; color:var(--program-orange,#ff8c00); font-weight:900; cursor:pointer; }
 .export-choice {
   width: 100%; padding: 12px 13px; border-radius: 13px;
   border: 1px solid rgba(255,255,255,.10); background: rgba(255,255,255,.06);
@@ -2535,8 +2546,9 @@ html.payload-unsupported #update-banner { display: none !important; }
 <div id="past-results-overlay" onclick="if(event.target===this)fox2ClosePastResults()">
   <div id="past-results-dialog" role="dialog" aria-modal="true" aria-labelledby="past-results-title">
     <button type="button" class="modal-corner-close" onclick="fox2ClosePastResults()" aria-label="Close Past results">×</button>
-    <div class="program-confirm-title" id="past-results-title">Past results</div>
+    <div class="past-results-header"><div class="program-confirm-title" id="past-results-title">Past results</div><button type="button" class="past-results-edit" id="past-results-edit" onclick="fox2TogglePastResultsEdit()" aria-pressed="false">Edit</button></div>
     <div id="past-results-content"></div>
+    <div class="past-results-undo" id="past-results-undo" role="status" hidden><span>Result deleted</span><button type="button" onclick="fox2UndoPastResultDelete()">Undo</button></div>
   </div>
 </div>
 
@@ -8078,22 +8090,86 @@ function fox2ChangeActionFromProgramOptions(){
   fox2HandleProgramAction('change-actions');
 }
 
-function fox2OpenPastResults(){
-  var overlay=document.getElementById('past-results-overlay');
+var fox2PastResultsEditing=false;
+var fox2PastResultsUndo=null;
+var fox2PastResultsUndoTimer=0;
+
+function fox2RenderPastResults(){
   var content=document.getElementById('past-results-content');
-  if(!overlay||!content) return;
-  var history=Array.isArray(fox2Program.resultHistory)?fox2Program.resultHistory.slice().reverse():[];
+  var edit=document.getElementById('past-results-edit');
+  if(!content||!edit) return;
+  var canEdit=!fox2ProgramReadOnly;
+  if(!canEdit) fox2PastResultsEditing=false;
+  edit.hidden=!canEdit;
+  var source=Array.isArray(fox2Program.resultHistory)?fox2Program.resultHistory:[];
+  var history=source.map(function(item,index){return {item:item,index:index};}).reverse();
+  edit.textContent=fox2PastResultsEditing?'Done':'Edit';
+  edit.setAttribute('aria-pressed',String(fox2PastResultsEditing));
   if(!history.length){
     content.innerHTML='<p class="past-results-empty">Completed changes will appear here.</p>';
   }else{
-    content.innerHTML='<ul class="past-results-list">'+history.map(function(item){
+    content.innerHTML=(fox2PastResultsEditing?'<p class="past-results-note">Deleting a result removes the saved comparison, not your FOX2 measurements.</p>':'')+'<ul class="past-results-list'+(fox2PastResultsEditing?' is-editing':'')+'">'+history.map(function(record){
+      var item=record.item;
       var change=Math.round(Number(item.change)||0),arrow=change>0?'↑':(change<0?'↓':'→'),state=change>0?'is-up':(change===0?'is-flat':'is-down');
       var idStart=String(item.id||'').split('|')[0],start=fox2IsoOrBlank(item.startDate||idStart),end=fox2IsoOrBlank(item.date),dates='';
       if(start&&end) dates=fox2ShortDate(start)+'–'+fox2ShortDate(end);
       else if(start||end) dates=fox2ShortDate(start||end);
-      return '<li class="past-results-item"><div><span class="past-results-action">'+fox2Escape(item.action||'Lifestyle change')+'</span>'+(dates?'<span class="past-results-dates">'+fox2Escape(dates)+'</span>':'')+'</div><span class="past-results-impact '+state+'" aria-label="'+Math.abs(change)+' percent '+(change>0?'increase':(change<0?'decrease':'change'))+'">'+arrow+' '+Math.abs(change)+'%</span></li>';
+      var action=fox2Escape(item.action||'Lifestyle change');
+      return '<li class="past-results-item" data-result-index="'+record.index+'"><div class="past-results-row"><div><span class="past-results-action">'+action+'</span>'+(dates?'<span class="past-results-dates">'+fox2Escape(dates)+'</span>':'')+'</div><span class="past-results-impact '+state+'" aria-label="'+Math.abs(change)+' percent '+(change>0?'increase':(change<0?'decrease':'change'))+'">'+arrow+' '+Math.abs(change)+'%</span></div>'+(canEdit?'<button type="button" class="past-results-delete" onclick="fox2DeletePastResult('+record.index+')" aria-label="Delete '+action+' result">Delete</button>':'')+'</li>';
     }).join('')+'</ul>';
   }
+  fox2BindPastResultSwipe();
+}
+
+function fox2BindPastResultSwipe(){
+  var content=document.getElementById('past-results-content');
+  if(!content||fox2ProgramReadOnly) return;
+  content.querySelectorAll('.past-results-item').forEach(function(row){
+    var startX=0;
+    row.addEventListener('touchstart',function(event){startX=event.touches&&event.touches.length?event.touches[0].clientX:0;},{passive:true});
+    row.addEventListener('touchend',function(event){
+      var endX=event.changedTouches&&event.changedTouches.length?event.changedTouches[0].clientX:startX,delta=endX-startX;
+      if(delta<-35){content.querySelectorAll('.past-results-item.is-swiped').forEach(function(other){if(other!==row) other.classList.remove('is-swiped');});row.classList.add('is-swiped');}
+      else if(delta>35) row.classList.remove('is-swiped');
+    },{passive:true});
+  });
+}
+
+function fox2TogglePastResultsEdit(){
+  fox2PastResultsEditing=!fox2PastResultsEditing;
+  fox2RenderPastResults();
+}
+
+function fox2DeletePastResult(index){
+  if(fox2ProgramReadOnly||!Array.isArray(fox2Program.resultHistory)||index<0||index>=fox2Program.resultHistory.length) return;
+  var deleted=fox2Program.resultHistory.splice(index,1)[0];
+  fox2PastResultsUndo={item:deleted,index:index};
+  window.clearTimeout(fox2PastResultsUndoTimer);
+  fox2SaveProgram();
+  if(!fox2Program.resultHistory.length) fox2PastResultsEditing=false;
+  fox2RenderPastResults();
+  var undo=document.getElementById('past-results-undo');
+  if(undo) undo.hidden=false;
+  fox2PastResultsUndoTimer=window.setTimeout(function(){fox2PastResultsUndo=null;if(undo) undo.hidden=true;},7000);
+}
+
+function fox2UndoPastResultDelete(){
+  if(!fox2PastResultsUndo||fox2ProgramReadOnly) return;
+  var index=Math.max(0,Math.min(fox2Program.resultHistory.length,fox2PastResultsUndo.index));
+  fox2Program.resultHistory.splice(index,0,fox2PastResultsUndo.item);
+  fox2PastResultsUndo=null;
+  window.clearTimeout(fox2PastResultsUndoTimer);
+  fox2SaveProgram();
+  var undo=document.getElementById('past-results-undo');
+  if(undo) undo.hidden=true;
+  fox2RenderPastResults();
+}
+
+function fox2OpenPastResults(){
+  var overlay=document.getElementById('past-results-overlay');
+  if(!overlay) return;
+  fox2PastResultsEditing=false;
+  fox2RenderPastResults();
   overlay.classList.add('open');
   var close=overlay.querySelector('.modal-corner-close');
   if(close) close.focus();
@@ -8102,6 +8178,7 @@ function fox2OpenPastResults(){
 function fox2ClosePastResults(){
   var overlay=document.getElementById('past-results-overlay');
   if(overlay) overlay.classList.remove('open');
+  fox2PastResultsEditing=false;
 }
 
 function fox2SelectBaselineDefault(value){
