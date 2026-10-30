@@ -476,8 +476,14 @@ assert.ok(source.includes("bands=[60,120,180,240]"),
   'the web ring should use the same graduating score scales as the device');
 assert.ok(source.includes('class="program-canonical-progress')&&source.includes('class="program-history-chart"'),
   'Progress should use only the canonical Score ring and 30-day daily-score history');
-assert.ok(source.includes('data-progress-animate="')&&source.includes("},2100);"),
-  'the Score ring should transition automatically into the bar graph');
+assert.ok(source.includes('data-progress-animate="')&&source.includes("},1600);"),
+  'the Score ring should transition automatically into the new bar');
+assert.ok(source.includes('program-canonical-recap-popover')&&source.includes("'+barsView+ring+'"),
+  'the recap should appear as a temporary overlay while the 30-day Progress view remains underneath');
+assert.ok(source.includes('program-history-bar.is-latest')&&source.includes('program-recap-ring-unwind'),
+  'the ring should unwind into only the newest bar before the updated result settles');
+assert.ok(source.includes("progressBars.removeAttribute('aria-hidden')")&&source.includes('recapOverlay.remove()'),
+  'the recap overlay should leave one clean, accessible Progress view after its animation');
 assert.ok(source.includes('program-history-bar')&&source.includes('stroke:var(--program-orange)'),
   'every daily score bar should use the established FOX2 web orange');
 assert.ok(source.includes('program-history-today-outline')&&source.includes('stroke:#ffd84d'),
