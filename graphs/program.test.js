@@ -266,6 +266,12 @@ assert.ok(source.includes('onclick="openGuideModal()"'),
 assert.ok(source.includes('FOX2 Help'));
 assert.ok(source.includes('How FOX2 Works<span>Replay the three-part introduction.</span>'));
 assert.ok(source.includes('How to Measure<span>Warmup, blowing, and measurement tips.</span>'));
+assert.ok(source.includes('Demo Mode<span>Explore FOX2 with example progress and past results.</span>')&&source.includes('function openFox2DemoMode()'),
+  'Help should provide a clear entry into the live example-data demo');
+assert.ok(source.includes("sessionStorage.setItem('fox2-demo-return-url',window.location.href)"),
+  'opening Demo Mode should remember the exact live results page');
+assert.ok(source.includes('function fox2CloseDemo()')&&source.includes('>Close demo</button>'),
+  'the demo banner should offer a clear return to the saved live results page');
 assert.ok(source.includes('Restore Last Session<span>Undo the most recent restart or new-baseline choice.</span>'),
   'Help should expose recovery when a previous program session is available');
 assert.ok(!source.includes('<button type="button" class="export-modal-close" onclick="closeGuideModal()">Close</button>'),
@@ -559,7 +565,7 @@ assert.ok(source.includes("action:'Walk after dinner'")&&source.includes("action
   'the stable demo should include three practical prior changes');
 assert.ok(source.includes('change:23')&&source.includes('change:28')&&source.includes('change:34'),
   'the demo prior changes should show distinct, believable impacts');
-assert.ok(source.includes('FOX2 demo')&&source.includes('Reset demo')&&source.includes('function fox2ResetDemo()'),
+assert.ok(source.includes('FOX2 demo')&&source.includes('>Reset</button>')&&source.includes('function fox2ResetDemo()'),
   'demo mode should be clearly labeled and recoverable after an interactive presentation');
 assert.ok(source.includes('if(fox2ProgramReadOnly||fox2DemoMode) return;'),
   'demo interactions must not overwrite a user\'s saved program');

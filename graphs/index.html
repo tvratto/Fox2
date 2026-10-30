@@ -463,7 +463,9 @@ html, body {
 .program-status { min-height:18px; margin-top:13px; color:rgba(255,255,255,.42); font-size:12px; line-height:1.4; text-align:center; }
 .program-shared-banner { margin:0 0 13px; padding:9px 12px; border:1px solid rgba(255,140,0,.28); border-radius:13px; background:rgba(255,140,0,.08); color:rgba(255,255,255,.66); font-size:12px; font-weight:850; letter-spacing:.04em; text-align:center; text-transform:uppercase; }
 .program-demo-banner { margin:0 0 13px; padding:9px 12px; border:1px solid rgba(255,140,0,.28); border-radius:13px; background:rgba(255,140,0,.08); display:flex; align-items:center; justify-content:space-between; gap:12px; color:rgba(255,255,255,.72); font-size:12px; font-weight:850; letter-spacing:.04em; text-transform:uppercase; }
+.program-demo-actions { display:flex; align-items:center; gap:14px; }
 .program-demo-reset { appearance:none; border:0; padding:3px 0; background:transparent; color:var(--program-orange); font:inherit; letter-spacing:inherit; text-transform:inherit; cursor:pointer; }
+.program-demo-close { color:#fff; }
 .program-demo-reset:focus-visible { outline:2px solid var(--program-orange); outline-offset:4px; border-radius:3px; }
 .program-shell.is-shared [data-program-action] { display:none!important; }
 .program-shell.is-shared .program-input { pointer-events:none; }
@@ -2507,6 +2509,7 @@ html.payload-unsupported #update-banner { display: none !important; }
         <div class="export-modal-copy">Review how FOX2 works or see how to take a measurement.</div>
         <button type="button" class="guide-choice" onclick="openFox2WorksGuide()">How FOX2 Works<span>Replay the three-part introduction.</span></button>
         <a class="guide-choice" href="/guide/" target="_self">How to Measure<span>Warmup, blowing, and measurement tips.</span></a>
+        <button type="button" class="guide-choice" id="guide-demo-mode" onclick="openFox2DemoMode()">Demo Mode<span>Explore FOX2 with example progress and past results.</span></button>
         <button type="button" class="guide-choice" id="guide-restore-session" onclick="openFox2RestoreGuideConfirm()" hidden>Restore Last Session<span>Undo the most recent restart or new-baseline choice.</span></button>
       </div>
       <div id="guide-restore-confirm" hidden>
@@ -7842,6 +7845,7 @@ function openGuideModal(){
   var main=document.getElementById('guide-menu-main');
   var confirm=document.getElementById('guide-restore-confirm');
   var restore=document.getElementById('guide-restore-session');
+  var demo=document.getElementById('guide-demo-mode');
   var replay=document.getElementById('guide-replay');
   if(!overlay||!menu||!replay) return;
   overlay.classList.remove('is-viewer');
@@ -7849,9 +7853,29 @@ function openGuideModal(){
   if(main) main.hidden=false;
   if(confirm) confirm.hidden=true;
   if(restore) restore.hidden=fox2ProgramReadOnly||!fox2LoadProgramBackup();
+  if(demo) demo.hidden=fox2DemoMode;
   replay.hidden=true;
   replay.innerHTML='';
   overlay.classList.add('open');
+}
+
+function openFox2DemoMode(){
+  try{
+    if(!fox2DemoMode) sessionStorage.setItem('fox2-demo-return-url',window.location.href);
+  }catch(e){}
+  window.location.href='/graphs/?demo=1';
+}
+
+function fox2CloseDemo(){
+  if(!fox2DemoMode) return;
+  var destination='/';
+  try{
+    var stored=sessionStorage.getItem('fox2-demo-return-url')||'';
+    var url=new URL(stored,window.location.origin);
+    if(url.origin===window.location.origin&&url.pathname.indexOf('/graphs/')===0&&url.searchParams.get('demo')!=='1') destination=url.href;
+    sessionStorage.removeItem('fox2-demo-return-url');
+  }catch(e){}
+  window.location.href=destination;
 }
 
 function openFox2RestoreGuideConfirm(){
@@ -7970,7 +7994,7 @@ function fox2RenderProgram(){
   else if(screen==='measure'||screen==='results') body='';
   else body=fox2OverviewHtml();
   var progress=(screen==='measure'||screen==='results')?fox2ProgressHtml(metrics):'';
-  var modeBanner=fox2ProgramReadOnly?'<div class="program-shared-banner">Shared FOX2 progress</div>':(fox2DemoMode?'<div class="program-demo-banner"><span>FOX2 demo</span><button type="button" class="program-demo-reset" onclick="fox2ResetDemo()">Reset demo</button></div>':'');
+  var modeBanner=fox2ProgramReadOnly?'<div class="program-shared-banner">Shared FOX2 progress</div>':(fox2DemoMode?'<div class="program-demo-banner"><span>FOX2 demo</span><span class="program-demo-actions"><button type="button" class="program-demo-reset" onclick="fox2ResetDemo()">Reset</button><button type="button" class="program-demo-reset program-demo-close" onclick="fox2CloseDemo()">Close demo</button></span></div>':'');
   shell.innerHTML=modeBanner+progress+body+'<div class="program-status" id="program-status"></div>';
   var programPage=shell.closest('.program-page');
   if(programPage) programPage.scrollTop=0;
