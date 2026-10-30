@@ -480,8 +480,12 @@ assert.ok(source.includes('data-progress-animate="')&&source.includes("},3100);"
   'the Score ring should transition automatically into the new bar');
 assert.ok(source.includes('program-canonical-recap-popover')&&source.includes("'+barsView+ring+'"),
   'the recap should appear as a temporary overlay while the 30-day Progress view remains underneath');
+assert.ok(source.includes('width:200px')&&source.includes('min-height:251px'),
+  'the compact recap window should be about fifteen percent larger than the first small version');
 assert.ok(source.includes('program-recap-ring-unwind')&&!source.includes('program-history-latest-marker'),
   'the ring should unwind toward the newest bar without leaving a second orange marker');
+assert.ok(source.includes('transform:scale(.08,.6)')&&source.includes('box-shadow:none'),
+  'the popup chrome and copy should disappear before the numbered ring narrows into the newest bar');
 assert.ok(!source.includes('program-history-bar-rise'),
   'the newest bar should already be present underneath the recap instead of rising afterward');
 assert.ok(!source.includes('.program-canonical-progress-ring .program-today-value{animation:none'),

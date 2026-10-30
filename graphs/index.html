@@ -392,15 +392,19 @@ html, body {
 .program-canonical-hero-value { font-size:58px; line-height:.9; font-weight:950; letter-spacing:-.055em; }
 .program-canonical-hero-label { margin-left:3px; color:#ffc46f; font-size:10px; line-height:1.15; font-weight:900; letter-spacing:1.15px; text-transform:uppercase; }
 .program-canonical-progress-bars { z-index:1; opacity:1; pointer-events:auto; }
-.program-canonical-progress-ring { z-index:3; inset:0; justify-content:center; background:transparent; pointer-events:none; opacity:1; transition:opacity 1.15s ease; }
-.program-canonical-recap-popover { width:174px; min-height:218px; padding:15px 13px 13px; border:1px solid rgba(255,140,0,.3); border-radius:21px; background:radial-gradient(circle at 50% 42%,rgba(255,140,0,.14),transparent 58%),rgba(11,11,12,.94); box-shadow:0 16px 44px rgba(0,0,0,.52); display:flex; flex-direction:column; align-items:center; justify-content:center; transform:none; transform-origin:center; opacity:1; transition:transform 1.25s cubic-bezier(.22,.8,.2,1),opacity 1s ease,border-color .75s ease,background .75s ease; }
+.program-canonical-progress-ring { z-index:3; inset:0; justify-content:center; background:transparent; pointer-events:none; opacity:1; }
+.program-canonical-recap-popover { width:200px; min-height:251px; padding:17px 15px 15px; border:1px solid rgba(255,140,0,.3); border-radius:23px; background:radial-gradient(circle at 50% 42%,rgba(255,140,0,.14),transparent 58%),rgba(11,11,12,.94); box-shadow:0 16px 44px rgba(0,0,0,.52); display:flex; flex-direction:column; align-items:center; justify-content:center; transform:none; transform-origin:center; opacity:1; transition:transform 1.25s cubic-bezier(.22,.8,.2,1),border-color .3s ease,background .3s ease,box-shadow .3s ease; }
 .program-canonical-recap-popover .program-eyebrow { font-size:9px; }
 .program-canonical-recap-popover h1 { margin:5px 0 2px; font-size:17px; line-height:1.08; text-align:center; letter-spacing:-.025em; }
-.program-canonical-progress.is-bars .program-canonical-progress-ring { opacity:0; }
-.program-canonical-progress.is-bars .program-canonical-recap-popover { opacity:0; border-color:transparent; background:transparent; transform:translate(var(--recap-target-x),var(--recap-target-y)) scale(.13); }
-.program-canonical-progress-ring .program-today-ring { width:112px; height:112px; margin:2px auto 0; }
+.program-canonical-progress.is-bars .program-canonical-recap-popover { border-color:transparent; background:transparent; box-shadow:none; transform:translate(var(--recap-target-x),var(--recap-target-y)); }
+.program-canonical-progress-ring .program-today-ring { width:128px; height:128px; margin:2px auto 0; transform:none; transform-origin:center; opacity:1; transition:transform 1.25s cubic-bezier(.22,.8,.2,1),opacity .18s 1.05s ease; }
 .program-canonical-progress-ring .program-today-value { animation:program-today-fill 1.8s .4s cubic-bezier(.2,.8,.2,1) both; }
 .program-canonical-progress-ring .program-canonical-progress-copy { margin:2px 0 0; color:rgba(255,255,255,.58); font-size:10px; line-height:1.3; text-align:center; }
+.program-canonical-recap-popover .program-eyebrow,.program-canonical-recap-popover h1,.program-canonical-recap-popover .program-canonical-progress-copy { transition:opacity .24s ease; }
+.program-canonical-progress.is-bars .program-canonical-recap-popover .program-eyebrow,.program-canonical-progress.is-bars .program-canonical-recap-popover h1,.program-canonical-progress.is-bars .program-canonical-recap-popover .program-canonical-progress-copy { opacity:0; }
+.program-canonical-progress.is-bars .program-canonical-progress-ring .program-today-ring { transform:scale(.08,.6); opacity:0; }
+.program-canonical-progress-ring .program-today-score,.program-canonical-progress-ring .program-today-unit { transition:opacity .24s .82s ease; }
+.program-canonical-progress.is-bars .program-canonical-progress-ring .program-today-score,.program-canonical-progress.is-bars .program-canonical-progress-ring .program-today-unit { opacity:0; }
 .program-canonical-progress.is-bars .program-canonical-progress-ring .program-today-value { animation:program-recap-ring-unwind 1.15s cubic-bezier(.4,0,.7,.2) both; }
 .program-canonical-progress-copy { width:100%; margin:8px 0 0; color:rgba(255,255,255,.65); font-size:15px; line-height:1.45; font-weight:650; }
 .program-calendar { width:100%; margin:8px 0 13px; padding:11px; border-radius:18px; background:#050505; }
