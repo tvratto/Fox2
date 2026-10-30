@@ -383,12 +383,15 @@ html, body {
 .program-canonical-progress-view { position:absolute; inset:20px 18px 22px; display:flex; flex-direction:column; align-items:center; transition:opacity .46s ease,transform .68s cubic-bezier(.2,.8,.2,1); }
 .program-canonical-progress-view h1 { width:100%; margin:8px 0 12px; color:#fff; font-size:29px; line-height:1.05; font-weight:950; letter-spacing:-.045em; }
 .program-canonical-summary { width:100%; margin:1px 0 12px; color:#fff; font-size:23px; line-height:1.16; font-weight:900; letter-spacing:-.035em; }
+.program-canonical-hero { width:100%; display:flex; align-items:baseline; gap:8px; margin:-2px 0 10px; color:#fff; }
+.program-canonical-hero-arrow { color:var(--program-orange); font-size:46px; line-height:.85; font-weight:950; }
+.program-canonical-hero-value { font-size:58px; line-height:.9; font-weight:950; letter-spacing:-.055em; }
+.program-canonical-hero-label { margin-left:3px; color:#ffc46f; font-size:10px; line-height:1.15; font-weight:900; letter-spacing:1.15px; text-transform:uppercase; }
 .program-canonical-progress-ring { opacity:1; transform:none; }
 .program-canonical-progress-bars { opacity:0; transform:translateY(22px); pointer-events:none; }
 .program-canonical-progress.is-bars .program-canonical-progress-ring { opacity:0; transform:translate(118px,72px) scale(.16); pointer-events:none; }
 .program-canonical-progress.is-bars .program-canonical-progress-bars { opacity:1; transform:none; pointer-events:auto; }
 .program-canonical-progress-ring .program-today-ring { width:230px; height:230px; margin:9px auto 0; }
-.program-canonical-context { width:100%; margin:-3px 0 12px; color:rgba(255,255,255,.72); font-size:15px; line-height:1.42; font-weight:650; }
 .program-canonical-progress-copy { width:100%; margin:8px 0 0; color:rgba(255,255,255,.65); font-size:15px; line-height:1.45; font-weight:650; }
 .program-calendar { width:100%; margin:8px 0 13px; padding:11px; border-radius:18px; background:#050505; }
 .program-history-chart { width:100%; }
@@ -2526,7 +2529,7 @@ html.payload-unsupported #update-banner { display: none !important; }
 
 <script src="data-fetch.js?v=20260930-11"></script>
 <script src="payload-codec.js?v=20261029-01"></script>
-<script src="copy-generator.js?v=20261029-02"></script>
+<script src="copy-generator.js?v=20261030-03"></script>
 <script>
 
 // ─── Parse URL params ─────────────────────────────────────────────
@@ -7033,11 +7036,12 @@ function fox2ProgressHtml(metrics){
   var completedShown=shownDays.filter(function(day){return !day.current;});
   var hasActiveChange=!!(programStart&&fox2Program.action);
   var message=fox2ResolveProgressMessage({completedDays:completedShown,today:today,asOfDate:todayIso,reentryAfterDays:4,baseline:hasBaseline?baseline:0,action:hasActiveChange?fox2Program.action:''});
-  var summary=message.summary,summaryDetail=message.detail;
+  var summary=message.summary;
+  var heroHtml=message.hero?'<div class="program-canonical-hero" role="img" aria-label="'+fox2Escape(message.hero.accessibleLabel)+'"><span class="program-canonical-hero-arrow">'+fox2Escape(message.hero.arrow)+'</span><span class="program-canonical-hero-value">'+fox2Escape(message.hero.value)+'</span><span class="program-canonical-hero-label">'+fox2Escape(message.hero.label)+'</span></div>':'';
   var key=latest?[latest.date,fox2Round(latest.score),latest.readings||0].join('|'):'';
   var animate=!!(latest&&key!==fox2LastProgressAnimationKey);
   var ring=latest?'<section class="program-canonical-progress-view program-canonical-progress-ring"><div class="program-eyebrow">'+(latest.current?'Synced just now':'Morning recap')+'</div><h1>'+(latest.current?'Today’s Fat Use Score':'Yesterday’s Fat Use Score')+'</h1><svg class="program-today-ring" viewBox="0 0 120 120" role="img" aria-label="Fat Use Score '+visual.value+(latest.current?' so far':' final')+'"><circle class="program-today-track" cx="60" cy="60" r="54" style="stroke:var(--program-orange);opacity:.18"></circle><circle class="program-today-value" cx="60" cy="60" r="54" style="--today-color:var(--program-orange);--today-offset:'+(339.292*(1-visual.progress)).toFixed(3)+'"></circle><text class="program-today-score" x="60" y="64">'+visual.value+'</text><text class="program-today-unit" x="60" y="82">'+(latest.current?'TODAY SO FAR':'FINAL')+'</text></svg><p class="program-canonical-progress-copy">'+(latest.current?'This Score includes the reading you just synced and is still accumulating.':'This is the completed Score for your latest finished day.')+'</p></section>':'';
-  var barsView='<section class="program-canonical-progress-view program-canonical-progress-bars"><div class="program-eyebrow">30-Day Progress</div><div class="program-canonical-summary">'+fox2Escape(summary)+'</div>'+(summaryDetail?'<p class="program-canonical-context">'+fox2Escape(summaryDetail)+'</p>':'')+'<div class="program-calendar">'+historyChart+previousChanges+'</div>'+(hasBaseline?'':'<div class="program-canonical-baseline-action"><strong>Want to see what affects your fat use?</strong><span>Set a starting point, try a change, and FOX2 will compare the results.</span><button type="button" data-program-action="start">Set up a baseline</button></div>')+'</section>';
+  var barsView='<section class="program-canonical-progress-view program-canonical-progress-bars"><div class="program-eyebrow">30-Day Progress</div><div class="program-canonical-summary">'+fox2Escape(summary)+'</div>'+heroHtml+'<div class="program-calendar">'+historyChart+previousChanges+'</div>'+(hasBaseline?'':'<div class="program-canonical-baseline-action"><strong>Want to see what affects your fat use?</strong><span>Set a starting point, try a change, and FOX2 will compare the results.</span><button type="button" data-program-action="start">Set up a baseline</button></div>')+'</section>';
   if(!latest) return '<section class="program-canonical-progress is-bars"><section class="program-canonical-progress-view program-canonical-progress-bars"><div class="program-eyebrow">Progress</div><h1>Your daily Scores will appear here.</h1><p class="program-canonical-progress-copy">Take a measurement and tap your phone to FOX2 to sync it.</p></section></section>';
   return '<section class="program-canonical-progress'+(previousChangeRecords.length?' has-learnings learnings-'+previousChangeRecords.length:'')+(animate?'':' is-bars')+'" data-progress-key="'+fox2Escape(key)+'" data-progress-animate="'+(animate?'1':'0')+'">'+ring+barsView+'</section>';
 }

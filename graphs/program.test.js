@@ -46,14 +46,14 @@ function functionSource(name,nextName){
     'Progress should move from the synced daily ring into the canonical daily bars');
   assert.ok(html.includes('BASELINE 75')&&html.includes('Oatmeal for breakfast'),
     'Progress should compare daily Scores directly while identifying the dated lifestyle change');
-  assert.ok(html.includes('It’s only been a few days, but since starting Oatmeal for breakfast, your Fat Use Score is already 12% higher.'),
-    'an early result should name the active action and report its percentage impact in one sentence');
+  assert.ok(html.includes('It’s only been a few days, but since starting Oatmeal for breakfast, your Fat Use Score is already higher.')&&html.includes('program-canonical-hero-value">12%')&&html.includes('program-canonical-hero-label">ABOVE BASELINE'),
+    'an early result should name the active action and show its percentage impact as a directional hero result');
   assert.ok(html.includes('What you’ve learned')&&html.includes('Add a walk after eating')&&html.includes('2026-10-26–2026-10-28')&&html.includes('Your Fat Use Score was 67% higher.'),
     'Progress should retain a concise start-to-finish record of prior changes and their impact');
 
   context.fox2Program={measureStart:'',action:'',resultHistory:[]};
   const openHtml=context.fox2ProgressHtml({baseline:0,measureDays:[],elapsedDays:0,savedResult:null});
-  assert.ok(openHtml.includes('It’s still early, but your recent Fat Use Score is 33% higher than your first completed Score.'),
+  assert.ok(openHtml.includes('It’s still early, but your recent Fat Use Score is higher than your first completed Score.')&&openHtml.includes('program-canonical-hero-value">33%'),
     'measurements without a baseline or change should still produce a useful neutral Progress state');
   assert.ok(openHtml.includes('Want to see what affects your fat use?')&&openHtml.includes('Set up a baseline'),
     'the neutral Progress state should offer one clear baseline setup prompt');
@@ -69,11 +69,11 @@ function functionSource(name,nextName){
   assert.strictEqual(resolve({completedDays:[],today:{score:62},baseline:75}).state,'accumulating');
   assert.strictEqual(resolve({completedDays:[{score:85}],action:'Zepbound 0.25 mg'}).state,'first-result');
   assert.strictEqual(resolve({completedDays:[{score:72},{score:96}],baseline:75,action:'Zepbound 0.25 mg'}).summary,
-    'It’s only been a few days, but since starting Zepbound 0.25 mg, your Fat Use Score is already 12% higher.');
+    'It’s only been a few days, but since starting Zepbound 0.25 mg, your Fat Use Score is already higher.');
   assert.strictEqual(resolve({completedDays:[{score:90},{score:96},{score:102},{score:108}],baseline:75,action:'Zepbound 0.25 mg'}).summary,
-    'Great—since starting Zepbound 0.25 mg, your Fat Use Score has averaged 32% higher than your baseline.');
+    'Great—your Fat Use Score is averaging higher since starting Zepbound 0.25 mg.');
   assert.strictEqual(resolve({completedDays:[{score:80},{score:100}],baseline:0,action:''}).summary,
-    'It’s still early, but your recent Fat Use Score is 25% higher than your first completed Score.');
+    'It’s still early, but your recent Fat Use Score is higher than your first completed Score.');
 })();
 
 (function newActionStartsOnlyWhenConfirmed(){
@@ -467,7 +467,7 @@ assert.ok(!source.includes('program-history-curve')&&!source.includes('curvePoin
   'the daily bars should stand on their own without a line connecting their tops');
 assert.ok(source.includes('stroke-dasharray:3 5')&&source.includes('BASELINE '),
   'a baseline should be rendered as a dotted white reference across the chart');
-assert.ok(source.includes('fox2ResolveProgressMessage')&&source.includes('program-canonical-context')&&!source.includes('program-calendar-change-note'),
+assert.ok(source.includes('fox2ResolveProgressMessage')&&source.includes('program-canonical-hero')&&!source.includes('program-canonical-context')&&!source.includes('program-calendar-change-note'),
   'the current change and result should read as one concise narrative rather than separate boxes');
 assert.ok(source.includes('background:rgba(255,140,0,.08)')&&source.includes('color:#ffc46f'),
   'previous change records should be visually emphasized without introducing a new chart');

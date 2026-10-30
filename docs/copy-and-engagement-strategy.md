@@ -94,18 +94,22 @@ walk after dinner, your Fat Use Score has averaged 18% higher than baseline.`
 Every generated message may contain four layers, in this order:
 
 1. **Headline:** the result and why it matters.
-2. **Detail:** one useful interpretation or next step; omit it if redundant.
+2. **Hero result:** a large direction arrow, percentage, and comparison label.
 3. **CTA metadata:** one optional next action for the interface.
 4. **Evidence:** a concise calculation explanation for `Why FOX2 says this`.
+
+The customer Progress card displays only the headline and hero result above the
+chart. It does not display a smaller coaching subheading.
 
 Examples:
 
 - **Accumulating:** `Today’s Fat Use Score is 62 so far.`
 - **First completed day:** `Your first completed Fat Use Score is 85.`
 - **Early positive experiment:** `It’s only been a few days, but since starting
-  Zepbound 0.25 mg, your Fat Use Score is already 21% higher.`
-- **Established positive experiment:** `Great—since starting Zepbound 0.25 mg,
-  your Fat Use Score has averaged 32% higher than your baseline.`
+  Zepbound 0.25 mg, your Fat Use Score is already higher.` + `↑ 21% ABOVE
+  BASELINE`
+- **Established positive experiment:** `Great—your Fat Use Score is averaging
+  higher since starting Zepbound 0.25 mg.` + `↑ 32% ABOVE BASELINE`
 - **Early inconclusive experiment:** `No clear shift yet—since starting Walk
   after dinner, your Fat Use Score is within 1% of your baseline.`
 - **Lower result:** `Since starting Earlier dinner, your Fat Use Score has

@@ -29,6 +29,7 @@
     .state{flex:none;border:1px solid rgba(255,140,0,.3);border-radius:999px;background:rgba(255,140,0,.09);color:#ffc46f;padding:6px 9px;font:750 10px/1 ui-monospace,SFMono-Regular,Menlo,monospace;text-transform:uppercase}
     .message{padding:22px 0 18px}
     .headline{font-size:clamp(23px,3.2vw,34px);line-height:1.05;letter-spacing:-1.25px;font-weight:950}
+    .hero-result{display:flex;align-items:baseline;gap:9px;margin-top:17px}.hero-arrow{color:var(--orange);font-size:48px;line-height:.85;font-weight:950}.hero-value{font-size:60px;line-height:.9;font-weight:950;letter-spacing:-3px}.hero-label{color:#ffc46f;font-size:10px;font-weight:900;letter-spacing:1.1px;text-transform:uppercase}
     .detail{margin-top:12px;color:rgba(255,255,255,.65);font-size:15px;line-height:1.45}
     .meta{display:grid;gap:10px;margin-top:auto}
     .meta-row{border-radius:13px;background:rgba(255,255,255,.045);padding:11px 12px}
@@ -56,7 +57,7 @@
     <section class="grid" id="cards" aria-live="polite"></section>
   </main>
 
-  <script src="copy-generator.js?v=20261029-02"></script>
+  <script src="copy-generator.js?v=20261030-03"></script>
   <script>
     (function(){
       'use strict';
@@ -103,7 +104,8 @@
             var message=Fox2CopyGenerator.generateCopy('progress',row.input);
             var cta=message.cta?'<span class="cta">'+escapeHtml(message.cta.label)+'</span>':'None';
             var basis=message.metric&&message.metric.basis?message.metric.basis:'No comparison';
-            return '<article class="card" data-scenario="'+escapeHtml(row.id)+'"><div class="card-top"><div><div class="scenario">'+escapeHtml(row.label)+'</div><div class="purpose">'+escapeHtml(row.purpose)+'</div></div><span class="state">'+escapeHtml(message.state)+'</span></div><div class="message"><div class="headline">'+escapeHtml(message.headline)+'</div>'+(message.detail?'<div class="detail">'+escapeHtml(message.detail)+'</div>':'')+'</div><div class="meta"><div class="meta-row"><span class="meta-label">Why FOX2 says this</span><span class="meta-value">'+escapeHtml(message.evidence||'No comparison is available yet.')+'</span></div><div class="meta-row"><span class="meta-label">CTA · '+escapeHtml(basis)+'</span><span class="meta-value">'+cta+'</span></div></div></article>';
+            var hero=message.hero?'<div class="hero-result" role="img" aria-label="'+escapeHtml(message.hero.accessibleLabel)+'"><span class="hero-arrow">'+escapeHtml(message.hero.arrow)+'</span><span class="hero-value">'+escapeHtml(message.hero.value)+'</span><span class="hero-label">'+escapeHtml(message.hero.label)+'</span></div>':'';
+            return '<article class="card" data-scenario="'+escapeHtml(row.id)+'"><div class="card-top"><div><div class="scenario">'+escapeHtml(row.label)+'</div><div class="purpose">'+escapeHtml(row.purpose)+'</div></div><span class="state">'+escapeHtml(message.state)+'</span></div><div class="message"><div class="headline">'+escapeHtml(message.headline)+'</div>'+hero+'</div><div class="meta"><div class="meta-row"><span class="meta-label">Why FOX2 says this</span><span class="meta-value">'+escapeHtml(message.evidence||'No comparison is available yet.')+'</span></div><div class="meta-row"><span class="meta-label">CTA · '+escapeHtml(basis)+'</span><span class="meta-value">'+cta+'</span></div></div></article>';
           }catch(error){
             return '<article class="card error"><div class="scenario">'+escapeHtml(row.label)+'</div><div class="detail">'+escapeHtml(error.message)+'</div></article>';
           }

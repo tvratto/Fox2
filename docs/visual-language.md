@@ -31,19 +31,19 @@ history chart. Both use orange for score data.
   value and comparison; bar color does not encode score tiers.
 - The baseline uses one dotted white reference across the chart so it remains
   subordinate to the orange score data.
-- A large plain-language summary appears before the graph. It describes the
-  visible trend conversationally. The supporting sentence keeps the current
-  change, its start date, and its percentage impact together; do not isolate
-  the current change in a separate box. Positive upward or above-baseline
-  summaries begin with `Great—` so users understand that greater fat use is
-  favorable in this context.
+- A large plain-language summary appears before the graph and describes the
+  visible result conversationally. Do not place a smaller explanatory
+  subheading beneath it. When a comparison exists, follow the summary with one
+  large typographic hero result: an arrow, the percentage, and a short reference
+  label such as `ABOVE BASELINE`. This is not a new graph. Positive upward or
+  above-baseline summaries begin with `Great—` when the result is established.
 - Progress summaries are short, specific, and encouraging. Describe the
   visible outcome without stating how many measurements or days are present.
 - Before a reliable trend is available, use one conversational sentence that
-  names the action and states its actual percentage impact (for example: “It’s
-  only been a few days, but Zepbound 0.25 mg has already increased your Fat Use
-  Score by 12%.”). Do not separate the action from its result or use vague
-  language such as `taking shape`.
+  names the action, then show the actual percentage as the hero result (for
+  example: “It’s only been a few days, but since starting Zepbound 0.25 mg,
+  your Fat Use Score is already higher.” followed by `↑ 12% ABOVE BASELINE`).
+  Do not use vague language such as `taking shape`.
 - Resolve Progress copy through `graphs/copy-generator.js`: empty,
   accumulating, first result, early comparison, or established comparison.
   Baseline comparisons use the average of completed post-change daily Scores;
