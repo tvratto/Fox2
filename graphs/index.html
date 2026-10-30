@@ -7255,9 +7255,9 @@ function fox2MethodHtml(){
   return '<section class="program-onboarding-card"><div class="program-eyebrow">Set up your program</div><h1 class="program-title">Choose your Fat Use Baseline.</h1><p class="program-copy">FOX2 uses this reference to show how your Fat Use Score changes during the program.</p>'
     +'<div class="program-methods">'
       +'<div class="program-method-group"><button type="button" class="program-method '+(mode==='personal'?'is-selected':'')+'" data-program-action="method-personal"><span class="program-method-choice"><i class="program-method-radio" aria-hidden="true"></i><span><span class="program-method-title-row"><strong>Measure my baseline</strong><em class="program-method-badge">Recommended</em></span><span class="program-method-copy">Measure for about a week before beginning your action.</span></span></span></button></div>'
-      +'<div class="program-method-group"><button type="button" class="program-method '+(mode==='default'?'is-selected':'')+'" data-program-action="method-default"><span class="program-method-choice"><i class="program-method-radio" aria-hidden="true"></i><span><strong>Choose a default baseline</strong><span class="program-method-copy">Choose a reference score and begin now.</span></span></span></button>'+(mode==='default'?'<div class="program-method-detail"><div class="program-baseline-defaults">'+defaults+'</div><div class="program-baseline-reference-note">Reference values—not goals.</div></div>':'')+'</div>'
+      +'<div class="program-method-group"><button type="button" class="program-method '+(mode==='default'?'is-selected':'')+'" data-program-action="method-default"><span class="program-method-choice"><i class="program-method-radio" aria-hidden="true"></i><span><strong>Choose a default baseline</strong><span class="program-method-copy">Apply a reference score to the data you already have.</span></span></span></button>'+(mode==='default'?'<div class="program-method-detail"><div class="program-baseline-defaults">'+defaults+'</div><div class="program-baseline-reference-note">Reference values—not goals.</div></div>':'')+'</div>'
       +'<div class="program-method-group"><button type="button" class="program-method '+(mode==='manual'?'is-selected':'')+'" data-program-action="method-manual"><span class="program-method-choice"><i class="program-method-radio" aria-hidden="true"></i><span><strong>Enter another score</strong><span class="program-method-copy">Use a Fat Use Score you already know.</span></span></span></button>'+(mode==='manual'?'<div class="program-method-detail"><label class="program-baseline-manual"><span class="sr-only">Manual Fat Use Baseline</span><input id="program-baseline-manual-input" type="number" min="1" max="999" inputmode="numeric" value="'+(storedValue||'')+'" placeholder="Fat Use Score"></label></div>':'')+'</div>'
-    +'</div><button type="button" class="program-primary" data-program-action="method-next">Next</button><button type="button" class="program-secondary" data-program-action="cancel-baseline">Cancel setup</button></section>';
+    +'</div><button type="button" class="program-primary" data-program-action="method-next">'+(mode==='personal'?'Next':'Apply baseline')+'</button><button type="button" class="program-secondary" data-program-action="cancel-baseline">Cancel setup</button></section>';
 }
 
 function fox2SetupHtml(){
@@ -8398,7 +8398,19 @@ function fox2HandleProgramAction(action){
       var manualField=document.getElementById('program-baseline-manual-input'); if(manualField) manualField.focus();
       return;
     }
-    fox2Program.setupMode='new'; fox2ActionDraft=''; fox2Program.screen='setup';
+    fox2Program.setupMode='new'; fox2ActionDraft='';
+    if(fox2Program.baselineMode==='personal'){
+      fox2Program.screen='setup';
+    }else{
+      fox2Program.baselineValue=fox2Round(fox2Program.baselineValue)||FOX2_STANDARD_BASELINE;
+      fox2Program.baselineSource=fox2Program.baselineMode==='manual'?'manual':'default';
+      fox2Program.baselineRange=fox2Program.baselineMode==='manual'?'Entered manually':'Default reference';
+      fox2Program.baselineStart='';
+      fox2Program.measureStart='';
+      fox2Program.action='';
+      fox2Program.screen='measure';
+      fox2ProgramOptionsOpen=false;
+    }
   }else if(action==='opt-out'){
     fox2Program.optedOut=true; fox2Program.screen='overview'; fox2SaveProgram(); fox2RenderProgram();
     if(window.fox2GoToPage) window.fox2GoToPage(1,true);

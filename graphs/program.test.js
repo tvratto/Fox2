@@ -340,6 +340,10 @@ assert.ok(!source.includes('Array.isArray(day.pts)&&day.pts.length<2'),
   'compressed NFC point counts must not invalidate a saved daily score');
 assert.ok(source.includes("data-program-action=\"method-next\""),
   'choosing a baseline should be distinct from continuing onboarding');
+assert.ok(source.includes('Apply a reference score to the data you already have.'),
+  'the reference-baseline choice should explain that existing Scores are included');
+assert.ok(source.includes("fox2Program.measureStart='';")&&source.includes("fox2Program.screen='measure';"),
+  'applying a reference baseline should show existing history instead of starting the chart today');
 assert.ok(source.includes('data-program-action="cancel-baseline">Cancel setup</button>'),
   'baseline setup should expose an explicit cancellation path');
 assert.ok(source.includes("}else if(action==='cancel-baseline'){"),
