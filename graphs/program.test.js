@@ -476,6 +476,8 @@ assert.ok(source.includes("bands=[60,120,180,240]"),
   'the web ring should use the same graduating score scales as the device');
 assert.ok(source.includes('class="program-canonical-progress')&&source.includes('class="program-history-chart"'),
   'Progress should use only the canonical Score ring and 30-day daily-score history');
+assert.ok(source.includes('.program-canonical-progress-bars { position:relative; inset:auto;'),
+  'the settled Progress content should determine the card height instead of being clipped inside a fixed animation stage');
 assert.ok(source.includes('data-progress-animate="')&&source.includes("},3100);"),
   'the Score ring should transition automatically into the new bar');
 assert.ok(source.includes('program-canonical-recap-popover')&&source.includes("'+barsView+ring+'"),
