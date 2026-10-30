@@ -6,6 +6,10 @@ language system. The goal is useful return behavior: people come back because
 FOX2 helps them understand their own response, not because the product creates
 anxiety or punishes a missed day.
 
+The internal review surface at `graphs/copy-review.html` renders every Progress
+message from the production generator. It is intentionally absent from customer
+navigation and marked `noindex,nofollow`.
+
 ## What leading products do
 
 ### Make the score answer a human question
