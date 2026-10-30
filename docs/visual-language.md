@@ -39,10 +39,11 @@ history chart. Both use orange for score data.
   favorable in this context.
 - Progress summaries are short, specific, and encouraging. Describe the
   visible outcome without stating how many measurements or days are present.
-- Before a reliable trend is available, say that it is early and interpret the
-  result so far as moving higher, moving lower, steady, or relative to the
-  baseline. Pair that interpretation with the actual percentage change; do not
-  merely repeat the raw score or use vague language such as `taking shape`.
+- Before a reliable trend is available, use one conversational sentence that
+  names the action and states its actual percentage impact (for example: “It’s
+  only been a few days, but Zepbound 0.25 mg has already increased your Fat Use
+  Score by 28%.”). Do not separate the action from its result or use vague
+  language such as `taking shape`.
 - Do not add a separate average value beneath the chart.
 - Without a baseline or active change, keep the chart useful: show the recent
   pattern without a baseline line or attributed result, omit `What you’ve

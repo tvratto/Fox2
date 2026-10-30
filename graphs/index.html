@@ -7027,25 +7027,34 @@ function fox2ProgressHtml(metrics){
   var average=summaryDays.length?Math.round(summaryDays.reduce(function(sum,day){return sum+Number(day.score||0);},0)/summaryDays.length):0;
   var summary='Your progress will appear here soon.',summaryDetail='';
   var hasActiveChange=!!(programStart&&fox2Program.action);
+  var actionLabel=hasActiveChange?fox2Program.action:'';
   var actionName=hasActiveChange?'“'+fox2Program.action+'”':'';
-  var earlySummary='It’s early—your first result is in.';
-  var earlyDetail='Keep measuring to see which direction your Fat Use Score moves.';
+  var earlySummary='It’s only been a few days—your first result is in.';
+  var earlyDetail=hasActiveChange?'Keep measuring to see how '+actionLabel+' affects your Fat Use Score.':'Keep measuring to see which direction your Fat Use Score moves.';
   if(completedShown.length){
     var earlyFirst=Number(completedShown[0].score)||0;
     var earlyLatest=Number(completedShown[completedShown.length-1].score)||0;
-    var earlyThreshold=Math.max(4,earlyFirst*.05);
     if(hasBaseline){
       var earlyBaselinePercent=Math.round(Math.abs(earlyLatest-baseline)/baseline*100);
-      if(earlyLatest>baseline*1.05){earlySummary='It’s early, but your score is above baseline.';earlyDetail='Your latest completed score is '+earlyBaselinePercent+'% above your baseline.';}
-      else if(earlyLatest<baseline*.95){earlySummary='It’s early, but your score is below baseline.';earlyDetail='Your latest completed score is '+earlyBaselinePercent+'% below your baseline.';}
-      else{earlySummary='It’s early, and your score is near baseline.';earlyDetail='Your latest completed score is within '+earlyBaselinePercent+'% of your baseline.';}
+      if(hasActiveChange){
+        if(earlyLatest>baseline){earlySummary='It’s only been a few days, but '+actionLabel+' has already increased your Fat Use Score by '+earlyBaselinePercent+'%.';}
+        else if(earlyLatest<baseline){earlySummary='It’s only been a few days, but '+actionLabel+' has decreased your Fat Use Score by '+earlyBaselinePercent+'% so far.';}
+        else{earlySummary='It’s only been a few days, and '+actionLabel+' has not changed your Fat Use Score yet.';}
+      }else if(earlyLatest>baseline){earlySummary='It’s only been a few days, but your Fat Use Score is already '+earlyBaselinePercent+'% above your baseline.';}
+      else if(earlyLatest<baseline){earlySummary='It’s only been a few days, and your Fat Use Score is '+earlyBaselinePercent+'% below your baseline so far.';}
+      else{earlySummary='It’s only been a few days, and your Fat Use Score is unchanged from your baseline so far.';}
+      earlyDetail='';
     }else if(completedShown.length>=2){
       var earlyChangePercent=Math.round(Math.abs(earlyLatest-earlyFirst)/Math.max(1,earlyFirst)*100);
-      if(earlyLatest-earlyFirst>earlyThreshold){earlySummary='It’s early, but your Fat Use Score is moving higher.';earlyDetail='Your latest completed score is '+earlyChangePercent+'% higher than where you started.';}
-      else if(earlyFirst-earlyLatest>earlyThreshold){earlySummary='It’s early, but your Fat Use Score is moving lower.';earlyDetail='Your latest completed score is '+earlyChangePercent+'% lower than where you started.';}
-      else{earlySummary='It’s early, and your Fat Use Score is holding steady.';earlyDetail='Your latest completed score is within '+earlyChangePercent+'% of where you started.';}
+      if(hasActiveChange){
+        if(earlyLatest>earlyFirst){earlySummary='It’s only been a few days, but '+actionLabel+' has already increased your Fat Use Score by '+earlyChangePercent+'%.';}
+        else if(earlyLatest<earlyFirst){earlySummary='It’s only been a few days, but '+actionLabel+' has decreased your Fat Use Score by '+earlyChangePercent+'% so far.';}
+        else{earlySummary='It’s only been a few days, and '+actionLabel+' has not changed your Fat Use Score yet.';}
+      }else if(earlyLatest>earlyFirst){earlySummary='It’s only been a few days, but your Fat Use Score is already '+earlyChangePercent+'% higher than where it started.';}
+      else if(earlyLatest<earlyFirst){earlySummary='It’s only been a few days, and your Fat Use Score is '+earlyChangePercent+'% lower than where it started so far.';}
+      else{earlySummary='It’s only been a few days, and your Fat Use Score is unchanged so far.';}
+      earlyDetail='';
     }
-    if(hasActiveChange) earlyDetail+=' Keep tracking '+actionName+' to see if this result holds.';
   }
   if(completedShown.length>=4){
     var trendStart=completedShown[0].date;
@@ -7109,7 +7118,7 @@ function fox2ProgressHtml(metrics){
       summaryDetail='Measure and sync to get started.';
     }
   }
-  if(!summaryDetail&&hasActiveChange) summaryDetail='Keep measuring to see how '+actionName+' affects your Fat Use Score.';
+  if(!summaryDetail&&hasActiveChange&&!completedShown.length) summaryDetail='Keep measuring to see how '+actionName+' affects your Fat Use Score.';
   var key=latest?[latest.date,fox2Round(latest.score),latest.readings||0].join('|'):'';
   var animate=!!(latest&&key!==fox2LastProgressAnimationKey);
   var ring=latest?'<section class="program-canonical-progress-view program-canonical-progress-ring"><div class="program-eyebrow">'+(latest.current?'Synced just now':'Morning recap')+'</div><h1>'+(latest.current?'Today’s Fat Use Score':'Yesterday’s Fat Use Score')+'</h1><svg class="program-today-ring" viewBox="0 0 120 120" role="img" aria-label="Fat Use Score '+visual.value+(latest.current?' so far':' final')+'"><circle class="program-today-track" cx="60" cy="60" r="54" style="stroke:var(--program-orange);opacity:.18"></circle><circle class="program-today-value" cx="60" cy="60" r="54" style="--today-color:var(--program-orange);--today-offset:'+(339.292*(1-visual.progress)).toFixed(3)+'"></circle><text class="program-today-score" x="60" y="64">'+visual.value+'</text><text class="program-today-unit" x="60" y="82">'+(latest.current?'TODAY SO FAR':'FINAL')+'</text></svg><p class="program-canonical-progress-copy">'+(latest.current?'This Score includes the reading you just synced and is still accumulating.':'This is the completed Score for your latest finished day.')+'</p></section>':'';

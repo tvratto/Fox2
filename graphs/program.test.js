@@ -44,12 +44,14 @@ function functionSource(name,nextName){
     'Progress should move from the synced daily ring into the canonical daily bars');
   assert.ok(html.includes('BASELINE 75')&&html.includes('Oatmeal for breakfast'),
     'Progress should compare daily Scores directly while identifying the dated lifestyle change');
+  assert.ok(html.includes('It’s only been a few days, but Oatmeal for breakfast has already increased your Fat Use Score by 28%.'),
+    'an early result should name the active action and report its percentage impact in one sentence');
   assert.ok(html.includes('What you’ve learned')&&html.includes('Add a walk after eating')&&html.includes('2026-10-26–2026-10-28')&&html.includes('Your Fat Use Score was 67% higher.'),
     'Progress should retain a concise start-to-finish record of prior changes and their impact');
 
   context.fox2Program={measureStart:'',action:'',resultHistory:[]};
   const openHtml=context.fox2ProgressHtml({baseline:0,measureDays:[],elapsedDays:0,savedResult:null});
-  assert.ok(openHtml.includes('It’s early, but your Fat Use Score is moving higher.')&&openHtml.includes('Your latest completed score is 33% higher than where you started.'),
+  assert.ok(openHtml.includes('It’s only been a few days, but your Fat Use Score is already 33% higher than where it started.'),
     'measurements without a baseline or change should still produce a useful neutral Progress state');
   assert.ok(openHtml.includes('Want to see what affects your fat use?')&&openHtml.includes('Set up a baseline'),
     'the neutral Progress state should offer one clear baseline setup prompt');
@@ -458,7 +460,7 @@ assert.ok(source.includes('Great—your Fat Use Score is rising.')&&source.inclu
   'the Progress summary should lead with a conversational interpretation and connect it to the current change');
 assert.ok(!source.includes("summary='You have '+shownDays.length")&&!source.includes("summaryDetail='Keep measuring and sync again after your first completed day.'"),
   'Progress summaries should not report measurement or day counts');
-assert.ok(source.includes('It’s early, but your Fat Use Score is moving higher.')&&source.includes("earlyChangePercent+'% higher than where you started."),
+assert.ok(source.includes("actionLabel+' has already increased your Fat Use Score by '+earlyBaselinePercent+'%.")&&source.includes("earlyChangePercent+'% higher than where it started."),
   'an early Progress state should interpret the available result and report its actual percentage');
 assert.ok(source.includes('.program-previous-changes li { display:grid; grid-template-columns:8px minmax(0,1fr)')&&source.includes('font-size:15px'),
   'What you’ve learned should use large stacked phone-readable text');
