@@ -421,6 +421,9 @@ html, body {
 .program-history-today-outline { stroke:#ffd84d; stroke-width:12; stroke-linecap:round; filter:drop-shadow(0 0 2px rgba(255,216,77,.55)); transform:none; transform-origin:center 190px; }
 .program-canonical-summary,.program-canonical-hero { transition:opacity .45s ease,transform .55s cubic-bezier(.2,.8,.2,1); }
 .program-canonical-progress.has-recap:not(.is-bars) .program-canonical-summary,.program-canonical-progress.has-recap:not(.is-bars) .program-canonical-hero { opacity:.58; }
+.program-canonical-hero.is-pending-result { opacity:0!important; transform:translateY(7px); }
+.program-canonical-progress.is-result-updating .program-canonical-summary,.program-canonical-progress.is-result-updating .program-canonical-hero { animation:program-canonical-result-update .72s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes program-canonical-result-update { 0%{opacity:.25;transform:translateY(7px)} 100%{opacity:1;transform:none} }
 .program-calendar-footer { display:flex; align-items:center; justify-content:space-between; gap:10px; padding-top:9px; color:rgba(255,255,255,.46); font-size:9px; font-weight:850; }
 .program-calendar-baseline-key::before { content:""; display:inline-block; width:22px; margin-right:5px; border-top:1px dotted rgba(255,255,255,.82); vertical-align:middle; }
 .program-canonical-baseline-action { width:100%; margin-top:16px; padding:16px; border:1px solid rgba(255,140,0,.24); border-radius:17px; background:rgba(255,140,0,.07); text-align:left; }
@@ -7110,19 +7113,22 @@ function fox2ProgressHtml(metrics){
   var baselineMark=hasBaseline?'<line class="program-history-baseline" x1="'+chartLeft+'" y1="'+baselineY.toFixed(1)+'" x2="'+chartRight+'" y2="'+baselineY.toFixed(1)+'"></line><text class="program-history-baseline-label" x="'+chartRight+'" y="'+Math.max(29,baselineY-6).toFixed(1)+'" text-anchor="end">BASELINE '+fox2Round(baseline)+'</text>':'';
   var historyChart='<div class="program-history-chart"><svg viewBox="0 0 336 218" role="img" aria-label="Thirty days of Fat Use Scores, filling from left to right"><line class="program-history-axis" x1="'+chartLeft+'" y1="'+plotBottom+'" x2="'+chartRight+'" y2="'+plotBottom+'"></line>'+chartDates+chartSlots+baselineMark+chartBars+'</svg></div>';
   var previousChangeRecords=Array.isArray(fox2Program.resultHistory)?fox2Program.resultHistory:[];
-  var completedShown=shownDays.filter(function(day){return !day.current;});
   var hasActiveChange=!!(programStart&&fox2Program.action);
-  var message=fox2ResolveProgressMessage({completedDays:completedShown,today:today,asOfDate:todayIso,reentryAfterDays:4,baseline:hasBaseline?baseline:0,action:hasActiveChange?fox2Program.action:''});
-  var summary=message.summary;
-  var heroHtml=message.hero?'<div class="program-canonical-hero" role="img" aria-label="'+fox2Escape(message.hero.accessibleLabel)+'"><span class="program-canonical-hero-arrow">'+fox2Escape(message.hero.arrow)+'</span><span class="program-canonical-hero-value">'+fox2Escape(message.hero.value)+'</span><span class="program-canonical-hero-label">'+fox2Escape(message.hero.label)+'</span></div>':'';
   var key=latest?[latest.date,fox2Round(latest.score),latest.readings||0].join('|'):'';
   var animate=!!(latest&&key!==fox2LastProgressAnimationKey);
+  var comparisonDays=shownDays.map(function(day){return {date:day.date,score:day.score};});
+  var finalMessage=fox2ResolveProgressMessage({completedDays:comparisonDays,today:null,asOfDate:todayIso,reentryAfterDays:4,baseline:hasBaseline?baseline:0,action:hasActiveChange?fox2Program.action:''});
+  var previousComparisonDays=animate&&comparisonDays.length>1?comparisonDays.slice(0,-1):comparisonDays;
+  var message=animate?fox2ResolveProgressMessage({completedDays:previousComparisonDays,today:null,asOfDate:todayIso,reentryAfterDays:4,baseline:hasBaseline?baseline:0,action:hasActiveChange?fox2Program.action:''}):finalMessage;
+  var summary=message.summary;
+  var shownHero=message.hero||finalMessage.hero,finalHero=finalMessage.hero;
+  var heroHtml=shownHero?'<div class="program-canonical-hero'+(!message.hero?' is-pending-result':'')+'" role="img" aria-label="'+fox2Escape(shownHero.accessibleLabel)+'" data-final-label="'+fox2Escape(finalHero?finalHero.accessibleLabel:shownHero.accessibleLabel)+'"><span class="program-canonical-hero-arrow" data-final-value="'+fox2Escape(finalHero?finalHero.arrow:shownHero.arrow)+'">'+fox2Escape(shownHero.arrow)+'</span><span class="program-canonical-hero-value" data-final-value="'+fox2Escape(finalHero?finalHero.value:shownHero.value)+'">'+fox2Escape(message.hero?shownHero.value:'0%')+'</span><span class="program-canonical-hero-label" data-final-value="'+fox2Escape(finalHero?finalHero.label:shownHero.label)+'">'+fox2Escape(shownHero.label)+'</span></div>':'';
   var latestSlotIndex=Math.max(0,shownDays.length-1),recapTargetX=Math.round((latestSlotIndex/(chartTarget-1)-.5)*280);
   var ring=animate?'<section class="program-canonical-progress-view program-canonical-progress-ring" aria-live="polite"><div class="program-canonical-recap-popover"><div class="program-eyebrow">'+(latest.current?'Synced just now':'Morning recap')+'</div><h1>'+(latest.current?'Today’s Fat Use Score':'Yesterday’s Fat Use Score')+'</h1><svg class="program-today-ring" viewBox="0 0 120 120" role="img" aria-label="Fat Use Score '+visual.value+(latest.current?' so far':' final')+'"><circle class="program-today-track" cx="60" cy="60" r="54" style="stroke:var(--program-orange);opacity:.18"></circle><circle class="program-today-value" cx="60" cy="60" r="54" style="--today-color:var(--program-orange);--today-offset:'+(339.292*(1-visual.progress)).toFixed(3)+'"></circle><text class="program-today-score" x="60" y="64">'+visual.value+'</text><text class="program-today-unit" x="60" y="82">'+(latest.current?'TODAY SO FAR':'FINAL')+'</text></svg><p class="program-canonical-progress-copy">'+(latest.current?'This Score includes the reading you just synced and is still accumulating.':'This is the completed Score for your latest finished day.')+'</p></div></section>':'';
   var pastResultsLink=previousChangeRecords.length?'<button type="button" class="program-utility-link" data-program-action="open-past-results">Past results</button>':'';
   var programOptionsLink=hasBaseline||fox2Program.action?'<button type="button" class="program-utility-link program-options-link" data-program-action="open-program-options">Program options</button>':'';
   var programUtilities=pastResultsLink||programOptionsLink?'<div class="program-utilities">'+pastResultsLink+programOptionsLink+'</div>':'';
-  var barsView='<section class="program-canonical-progress-view program-canonical-progress-bars"'+(animate?' aria-hidden="true"':'')+'><div class="program-progress-heading"><div class="program-eyebrow">30-Day Progress</div><button type="button" class="program-how-link" onclick="openGuideModal();openFox2WorksGuide()">How this works</button></div><div class="program-canonical-summary">'+fox2Escape(summary)+'</div>'+heroHtml+'<div class="program-calendar">'+historyChart+'</div>'+programUtilities+(hasBaseline?'':'<div class="program-canonical-baseline-action"><strong>Want to see what affects your fat use?</strong><span>Set a starting point, try a change, and FOX2 will compare the results.</span><button type="button" data-program-action="start">Set up a baseline</button></div>')+'</section>';
+  var barsView='<section class="program-canonical-progress-view program-canonical-progress-bars"'+(animate?' aria-hidden="true"':'')+'><div class="program-progress-heading"><div class="program-eyebrow">30-Day Progress</div><button type="button" class="program-how-link" onclick="openGuideModal();openFox2WorksGuide()">How this works</button></div><div class="program-canonical-summary" data-final-summary="'+fox2Escape(finalMessage.summary)+'">'+fox2Escape(summary)+'</div>'+heroHtml+'<div class="program-calendar">'+historyChart+'</div>'+programUtilities+(hasBaseline?'':'<div class="program-canonical-baseline-action"><strong>Want to see what affects your fat use?</strong><span>Set a starting point, try a change, and FOX2 will compare the results.</span><button type="button" data-program-action="start">Set up a baseline</button></div>')+'</section>';
   if(!latest) return '<section class="program-canonical-progress is-bars"><section class="program-canonical-progress-view program-canonical-progress-bars"><div class="program-eyebrow">Progress</div><h1>Your daily Scores will appear here.</h1><p class="program-canonical-progress-copy">Take a measurement and tap your phone to FOX2 to sync it.</p></section></section>';
   return '<section class="program-canonical-progress'+(animate?' has-recap':' is-bars')+'" style="--recap-target-x:'+recapTargetX+'px;--recap-target-y:118px" data-progress-key="'+fox2Escape(key)+'" data-progress-fill="'+visual.progress+'" data-progress-animate="'+(animate?'1':'0')+'">'+barsView+ring+'</section>';
 }
@@ -7966,6 +7972,36 @@ function fox2TransitionWorksGuide(delta){
 var fox2ProgramEnterDirection='';
 var fox2ProgramTransitioning=false;
 
+function fox2CommitCanonicalProgressResult(root){
+  var summary=root.querySelector('.program-canonical-summary');
+  var hero=root.querySelector('.program-canonical-hero');
+  if(summary&&summary.dataset.finalSummary) summary.textContent=summary.dataset.finalSummary;
+  if(hero){
+    var arrow=hero.querySelector('.program-canonical-hero-arrow');
+    var value=hero.querySelector('.program-canonical-hero-value');
+    var label=hero.querySelector('.program-canonical-hero-label');
+    var startValue=value?Number(String(value.textContent||'').replace(/[^0-9.-]/g,''))||0:0;
+    var finalValue=value?Number(String(value.dataset.finalValue||'').replace(/[^0-9.-]/g,''))||0:0;
+    if(arrow&&arrow.dataset.finalValue) arrow.textContent=arrow.dataset.finalValue;
+    if(label&&label.dataset.finalValue) label.textContent=label.dataset.finalValue;
+    if(hero.dataset.finalLabel) hero.setAttribute('aria-label',hero.dataset.finalLabel);
+    hero.classList.remove('is-pending-result');
+    if(value){
+      var started=performance.now(),duration=680;
+      function count(now){
+        var raw=Math.min(1,(now-started)/duration),ease=1-Math.pow(1-raw,3);
+        value.textContent=Math.round(startValue+(finalValue-startValue)*ease)+'%';
+        if(raw<1) window.requestAnimationFrame(count);
+      }
+      window.requestAnimationFrame(count);
+    }
+  }
+  root.classList.remove('is-result-updating');
+  void root.offsetWidth;
+  root.classList.add('is-result-updating');
+  window.setTimeout(function(){root.classList.remove('is-result-updating');},760);
+}
+
 function fox2MorphCanonicalProgressRing(root,done){
   var ring=root.querySelector('.program-canonical-progress-ring .program-today-ring');
   var target=root.querySelector('.program-history-bar.is-latest');
@@ -8001,6 +8037,7 @@ function fox2MorphCanonicalProgressRing(root,done){
     path.setAttribute('stroke-width',(sourceStroke+(targetStroke-sourceStroke)*ease).toFixed(2));
     if(raw<1){window.requestAnimationFrame(frame);return;}
     root.classList.add('is-bars');
+    fox2CommitCanonicalProgressResult(root);
     if(layer.isConnected) layer.remove();
     done();
   }

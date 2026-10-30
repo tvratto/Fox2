@@ -46,8 +46,8 @@ function functionSource(name,nextName){
     'Progress should move from the synced daily ring into the canonical daily bars');
   assert.ok(html.includes('BASELINE 75')&&html.includes('Oatmeal for breakfast'),
     'Progress should compare daily Scores directly while identifying the dated lifestyle change');
-  assert.ok(html.includes('It’s only been a few days, but since starting Oatmeal for breakfast, your Fat Use Score is already higher.')&&html.includes('program-canonical-hero-value">12%')&&html.includes('program-canonical-hero-label">ABOVE BASELINE'),
-    'an early result should name the active action and show its percentage impact as a directional hero result');
+  assert.ok(html.includes('It’s only been a few days, but since starting Oatmeal for breakfast, your Fat Use Score is already higher.')&&html.includes('data-final-value="16%">12%')&&html.includes('program-canonical-hero-label'),
+    'an early result should name the active action, retain the prior percentage during replay, and provide the recalculated result');
   assert.ok(html.includes('data-program-action="open-past-results">Past results</button>')&&!html.includes('Add a walk after eating'),
     'Progress should keep prior changes behind one quiet Past results link rather than lengthening the main card');
   const content={innerHTML:'',querySelectorAll(){return[];}},edit={textContent:'',hidden:false,setAttribute(){}},undo={hidden:true};
@@ -66,8 +66,8 @@ function functionSource(name,nextName){
 
   context.fox2Program={measureStart:'',action:'',resultHistory:[]};
   const openHtml=context.fox2ProgressHtml({baseline:0,measureDays:[],elapsedDays:0,savedResult:null});
-  assert.ok(openHtml.includes('It’s still early, but your recent Fat Use Score is higher than your first completed Score.')&&openHtml.includes('program-canonical-hero-value">33%'),
-    'measurements without a baseline or change should still produce a useful neutral Progress state');
+  assert.ok(openHtml.includes('It’s still early, but your recent Fat Use Score is higher than your first completed Score.')&&openHtml.includes('data-final-value="31%">33%'),
+    'measurements without a baseline or change should still replay from the prior comparison to the recalculated result');
   assert.ok(openHtml.includes('Want to see what affects your fat use?')&&openHtml.includes('Set up a baseline'),
     'the neutral Progress state should offer one clear baseline setup prompt');
   assert.ok(!openHtml.includes('BASELINE ')&&!openHtml.includes('Past results'),
@@ -494,6 +494,12 @@ assert.ok(source.includes("canonicalProgress.classList.add('is-preparing-morph')
   'the recap labels and number should disappear before the ring stroke starts becoming the bar');
 assert.ok(source.includes('destination.push({x:targetX,y:targetTop+(targetBottom-targetTop)*fraction})'),
   'the ring arc should straighten directly into the complete newest-bar geometry');
+assert.ok(source.includes('function fox2CommitCanonicalProgressResult(root)')&&source.includes('data-final-summary='),
+  'the settled headline and percentage should be recomputed after the newest bar lands');
+assert.ok(source.includes('previousComparisonDays=animate&&comparisonDays.length>1?comparisonDays.slice(0,-1):comparisonDays'),
+  'a replay should begin with the comparison from before the newest bar');
+assert.ok(source.includes('value.textContent=Math.round(startValue+(finalValue-startValue)*ease)+\'%\''),
+  'the hero percentage should count smoothly to the recalculated result');
 assert.ok(!source.includes('program-history-bar-rise'),
   'the newest bar should already be present underneath the recap instead of rising afterward');
 assert.ok(!source.includes('.program-canonical-progress-ring .program-today-value{animation:none'),
