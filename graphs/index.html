@@ -2470,7 +2470,7 @@ html.payload-unsupported #update-banner { display: none !important; }
     Squad
     <span id="squad-dot"></span>
   </button>
-  <button class="bar-btn" type="button" onclick="openGuideModal()">
+  <button class="bar-btn" type="button" onclick="openFox2WorksGuideFromHelp()">
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
       <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.8"/>
       <path d="M8 7v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
@@ -2521,7 +2521,7 @@ html.payload-unsupported #update-banner { display: none !important; }
       <div id="guide-menu-main">
         <div class="export-modal-title" id="guide-modal-title">FOX2 Help</div>
         <div class="export-modal-copy">Review how FOX2 works or see how to take a measurement.</div>
-        <button type="button" class="guide-choice" onclick="openFox2WorksGuide()">How FOX2 Works<span>Replay the three-part introduction.</span></button>
+        <button type="button" class="guide-choice" onclick="openFox2WorksGuide()">How FOX2 Works<span>Replay the complete four-part guide.</span></button>
         <a class="guide-choice" href="/guide/" target="_self">How to Measure<span>Warmup, blowing, and measurement tips.</span></a>
         <button type="button" class="guide-choice" id="guide-demo-mode" onclick="openFox2DemoMode()">Demo Mode<span>Explore FOX2 with example progress and past results.</span></button>
         <button type="button" class="guide-choice" id="guide-restore-session" onclick="openFox2RestoreGuideConfirm()" hidden>Restore Last Session<span>Undo the most recent restart or new-baseline choice.</span></button>
@@ -7128,7 +7128,7 @@ function fox2ProgressHtml(metrics){
   var pastResultsLink=previousChangeRecords.length?'<button type="button" class="program-utility-link" data-program-action="open-past-results">Past results</button>':'';
   var programOptionsLink=hasBaseline||fox2Program.action?'<button type="button" class="program-utility-link program-options-link" data-program-action="open-program-options">Program options</button>':'';
   var programUtilities=pastResultsLink||programOptionsLink?'<div class="program-utilities">'+pastResultsLink+programOptionsLink+'</div>':'';
-  var barsView='<section class="program-canonical-progress-view program-canonical-progress-bars"'+(animate?' aria-hidden="true"':'')+'><div class="program-progress-heading"><div class="program-eyebrow">30-Day Progress</div><button type="button" class="program-how-link" onclick="openGuideModal();openFox2WorksGuide()">How this works</button></div><div class="program-canonical-summary" data-final-summary="'+fox2Escape(finalMessage.summary)+'">'+fox2Escape(summary)+'</div>'+heroHtml+'<div class="program-calendar">'+historyChart+'</div>'+programUtilities+(hasBaseline?'':'<div class="program-canonical-baseline-action"><strong>Want to see what affects your fat use?</strong><span>Set a starting point, try a change, and FOX2 will compare the results.</span><button type="button" data-program-action="start">Set up a baseline</button></div>')+'</section>';
+  var barsView='<section class="program-canonical-progress-view program-canonical-progress-bars"'+(animate?' aria-hidden="true"':'')+'><div class="program-progress-heading"><div class="program-eyebrow">30-Day Progress</div><button type="button" class="program-how-link" onclick="openFox2WorksGuideFromHelp()">How this works</button></div><div class="program-canonical-summary" data-final-summary="'+fox2Escape(finalMessage.summary)+'">'+fox2Escape(summary)+'</div>'+heroHtml+'<div class="program-calendar">'+historyChart+'</div>'+programUtilities+(hasBaseline?'':'<div class="program-canonical-baseline-action"><strong>Want to see what affects your fat use?</strong><span>Set a starting point, try a change, and FOX2 will compare the results.</span><button type="button" data-program-action="start">Set up a baseline</button></div>')+'</section>';
   if(!latest) return '<section class="program-canonical-progress is-bars"><section class="program-canonical-progress-view program-canonical-progress-bars"><div class="program-eyebrow">Progress</div><h1>Your daily Scores will appear here.</h1><p class="program-canonical-progress-copy">Take a measurement and tap your phone to FOX2 to sync it.</p></section></section>';
   return '<section class="program-canonical-progress'+(animate?' has-recap':' is-bars')+'" style="--recap-target-x:'+recapTargetX+'px;--recap-target-y:118px" data-progress-key="'+fox2Escape(key)+'" data-progress-fill="'+visual.progress+'" data-progress-animate="'+(animate?'1':'0')+'">'+barsView+ring+'</section>';
 }
@@ -7195,10 +7195,11 @@ function fox2AcetoneMoleculeHtml(){
     +'</g></svg><canvas class="program-breath-zone-demo" id="program-breath-zone-canvas" width="618" height="420" role="img" aria-label="Animated FOX2 Fat Use Zone scale"></canvas></div>';
 }
 
-function fox2CardSequenceHtml(active){
+function fox2CardSequenceHtml(active,total){
+  total=total||3;
   var dots='';
-  for(var i=1;i<=3;i++) dots+='<i'+(i===active?' class="is-active"':'')+'></i>';
-  return '<div class="program-card-sequence" aria-label="Introduction '+active+' of 3">'+dots+'</div>';
+  for(var i=1;i<=total;i++) dots+='<i'+(i===active?' class="is-active"':'')+'></i>';
+  return '<div class="program-card-sequence" aria-label="Introduction '+active+' of '+total+'">'+dots+'</div>';
 }
 
 function fox2OverviewHtml(mode){
@@ -7208,11 +7209,18 @@ function fox2OverviewHtml(mode){
       +'<div class="program-simple-steps"><div class="program-simple-step"><b>1</b><span>Set a Fat Use Score baseline.</span></div><div class="program-simple-step"><b>2</b><span>Choose one change to try.</span></div><div class="program-simple-step"><b>3</b><span>Compare your daily scores with your baseline.</span></div></div>'
       +'<button type="button" class="program-primary" data-program-action="start">Set up Progress</button><button type="button" class="program-secondary" data-program-action="opt-out">Use FOX2 without Progress</button></section>';
   }
-  return '<section class="program-onboarding-card">'+fox2CardSequenceHtml(1)+'<div class="program-eyebrow">What FOX2 Measures</div><h1 class="program-title">See when your body is using fat for energy.</h1>'
+  return '<section class="program-onboarding-card">'+fox2CardSequenceHtml(1,4)+'<div class="program-eyebrow">What FOX2 Measures</div><h1 class="program-title">See when your body is using fat for energy.</h1>'
     +fox2AcetoneMoleculeHtml()
     +'<p class="program-copy">When your body uses more fat, acetone in your breath rises. FOX2 measures that acetone and places your result on a Fat Use Zone scale from 1 to 10+. Higher zones mean more fat use.</p>'
     +'<button type="button" class="program-primary" '+(guide?'data-guide-action="next"':'data-program-action="continue-intro"')+'>Next</button>'
-    +(guide?'<button type="button" class="program-secondary" data-guide-action="close">Close</button>':'')+'</section>';
+    +(guide?'<button type="button" class="program-secondary" data-guide-action="menu">More help</button>':'')+'</section>';
+}
+
+function fox2MeasureGuideHtml(){
+  return '<section class="program-onboarding-card">'+fox2CardSequenceHtml(2,4)+'<div class="program-eyebrow">How You Use FOX2</div><h1 class="program-title">Measure, review, then tap to sync.</h1>'
+    +'<div class="program-simple-steps"><div class="program-simple-step"><b>1</b><span>Turn on FOX2 and select <strong>Measure</strong>.</span></div><div class="program-simple-step"><b>2</b><span>Wait through Warmup, then take a deep breath and blow steadily until FOX2 finishes.</span></div><div class="program-simple-step"><b>3</b><span>Review your Fat Use Zone, daily pattern, and Fat Use Score on FOX2.</span></div><div class="program-simple-step"><b>4</b><span>When FOX2 shows <strong>Tap Phone</strong>, tap your phone to sync Progress.</span></div></div>'
+    +'<p class="program-copy">Use the same measurement cycle every time. Each synced reading contributes to your daily Fat Use Score.</p>'
+    +'<button type="button" class="program-primary" data-guide-action="next">Next</button><button type="button" class="program-secondary" data-guide-action="back">Back</button></section>';
 }
 
 function fox2IntroZoneGraphicHtml(){
@@ -7228,7 +7236,7 @@ function fox2IntroZoneGraphicHtml(){
 
 function fox2DayIntroHtml(mode){
   var guide=mode==='guide';
-  return '<section class="program-onboarding-card">'+fox2CardSequenceHtml(2)+'<div class="program-eyebrow">Your Daily Pattern</div><h1 class="program-title">Map how your fat use changes through the day.</h1>'
+  return '<section class="program-onboarding-card">'+fox2CardSequenceHtml(guide?3:2,guide?4:3)+'<div class="program-eyebrow">Your Daily Pattern</div><h1 class="program-title">Map how your fat use changes through the day.</h1>'
     +'<div class="program-day-stage"><svg class="program-day-demo" viewBox="0 0 320 210" role="img" aria-label="Measurements building a daily graph and Fat Use Score">'
       +'<defs><linearGradient id="program-day-zone-gradient" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#22d3ee"/><stop offset=".38" stop-color="#4ade80"/><stop offset=".68" stop-color="#d946c7"/><stop offset="1" stop-color="#ff8c00"/></linearGradient></defs>'
       +fox2IntroZoneGraphicHtml()
@@ -7243,7 +7251,7 @@ function fox2DayIntroHtml(mode){
 
 function fox2CompareIntroHtml(mode){
   var guide=mode==='guide';
-  return '<section class="program-onboarding-card">'+fox2CardSequenceHtml(3)+'<div class="program-eyebrow">Your Fat Use Baseline</div><h1 class="program-title">See what changes your fat use.</h1><div class="program-compare-intro-stage"><svg viewBox="0 0 320 190" role="img" aria-label="Fat Use Scores compared with a Fat Use Baseline">'
+  return '<section class="program-onboarding-card">'+fox2CardSequenceHtml(guide?4:3,guide?4:3)+'<div class="program-eyebrow">Your Fat Use Baseline</div><h1 class="program-title">See what changes your fat use.</h1><div class="program-compare-intro-stage"><svg viewBox="0 0 320 190" role="img" aria-label="Fat Use Scores compared with a Fat Use Baseline">'
     +'<line x1="42" y1="142" x2="278" y2="142" stroke="rgba(255,255,255,.2)"/>'
     +'<g class="program-comparison-bar" data-compare-bar="0"><rect x="68" y="72" width="62" height="70" rx="20" fill="rgba(255,140,0,.42)"/><text x="99" y="165" fill="rgba(255,255,255,.48)" font-size="10" font-weight="850" text-anchor="middle">BASELINE</text><text x="99" y="63" fill="#fff" font-size="19" font-weight="950" text-anchor="middle">96</text></g>'
     +'<g class="program-comparison-bar" data-compare-bar="1"><rect x="190" y="44" width="62" height="98" rx="20" fill="#ff8c00"/><text x="221" y="165" fill="rgba(255,255,255,.48)" font-size="10" font-weight="850" text-anchor="middle">AFTER</text><text x="221" y="35" fill="#fff" font-size="19" font-weight="950" text-anchor="middle">108</text></g>'
@@ -7878,6 +7886,11 @@ function openGuideModal(){
   overlay.classList.add('open');
 }
 
+function openFox2WorksGuideFromHelp(){
+  openGuideModal();
+  openFox2WorksGuide();
+}
+
 function openFox2DemoMode(){
   try{
     if(!fox2DemoMode) sessionStorage.setItem('fox2-demo-return-url',window.location.href);
@@ -7940,19 +7953,20 @@ function openFox2WorksGuide(){
 function fox2RenderWorksGuide(direction){
   var replay=document.getElementById('guide-replay');
   if(!replay) return;
-  replay.innerHTML=fox2GuideReplayStep===1?fox2OverviewHtml('guide'):fox2GuideReplayStep===2?fox2DayIntroHtml('guide'):fox2CompareIntroHtml('guide');
+  replay.innerHTML=fox2GuideReplayStep===1?fox2OverviewHtml('guide'):fox2GuideReplayStep===2?fox2MeasureGuideHtml():fox2GuideReplayStep===3?fox2DayIntroHtml('guide'):fox2CompareIntroHtml('guide');
   var card=replay.querySelector('.program-onboarding-card');
   if(card&&direction) card.classList.add(direction==='back'?'is-entering-back':'is-entering-forward');
   replay.querySelectorAll('[data-guide-action]').forEach(function(button){
     button.addEventListener('click',function(){
       var action=button.dataset.guideAction;
+      if(action==='menu'){openGuideModal();return;}
       if(action==='close'||action==='done'){closeGuideModal();return;}
       fox2TransitionWorksGuide(action==='back'?-1:1);
     });
   });
   if(fox2GuideReplayStep===1) fox2StartAcetoneAnimation(replay);
-  else if(fox2GuideReplayStep===2) fox2StartDayIntroAnimation(replay);
-  else fox2StartCompareIntroAnimation(replay);
+  else if(fox2GuideReplayStep===3) fox2StartDayIntroAnimation(replay);
+  else if(fox2GuideReplayStep===4) fox2StartCompareIntroAnimation(replay);
   fox2GuideReplayTransitioning=false;
 }
 
@@ -7964,7 +7978,7 @@ function fox2TransitionWorksGuide(delta){
   fox2GuideReplayTransitioning=true;
   card.classList.add(delta<0?'is-leaving-back':'is-leaving-forward');
   window.setTimeout(function(){
-    fox2GuideReplayStep=Math.max(1,Math.min(3,fox2GuideReplayStep+delta));
+    fox2GuideReplayStep=Math.max(1,Math.min(4,fox2GuideReplayStep+delta));
     fox2RenderWorksGuide(delta<0?'back':'forward');
   },160);
 }

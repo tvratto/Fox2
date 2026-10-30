@@ -204,8 +204,8 @@ assert.ok(source.includes('Higher zones mean more fat use.'),
 assert.ok(source.includes('Use FOX2 without tracking'),
   'intro should expose a clear path outside Progress Tracking');
 assert.ok(source.includes('Start Progress Tracking'));
-assert.ok(source.includes("aria-label=\"Introduction '+active+' of 3\""),
-  'the product story should use three focused cards');
+assert.ok(source.includes('total=total||3;')&&source.includes("aria-label=\"Introduction '+active+' of '+total+'\""),
+  'the initial product story should retain three cards while the reusable guide can show four');
 assert.ok(source.includes('program-onboarding-card'),
   'the introduction should use card-based onboarding surfaces');
 assert.ok(source.includes('program-card-leave-left'),
@@ -261,10 +261,10 @@ assert.ok(source.includes("}else if(action==='continue-day'){\n    fox2Program.s
   'the daily score card should lead directly to the before-and-after card');
 assert.ok(source.includes("if(programPage) programPage.scrollTop=0;"),
   'each onboarding card should begin at the top of the Progress page');
-assert.ok(source.includes('onclick="openGuideModal()"'),
-  'the persistent Help control should open reusable help choices');
+assert.ok(source.includes('onclick="openFox2WorksGuideFromHelp()"'),
+  'the persistent Help control should open the same complete guide as How this works');
 assert.ok(source.includes('FOX2 Help'));
-assert.ok(source.includes('How FOX2 Works<span>Replay the three-part introduction.</span>'));
+assert.ok(source.includes('How FOX2 Works<span>Replay the complete four-part guide.</span>'));
 assert.ok(source.includes('How to Measure<span>Warmup, blowing, and measurement tips.</span>'));
 assert.ok(source.includes('Demo Mode<span>Explore FOX2 with example progress and past results.</span>')&&source.includes('function openFox2DemoMode()'),
   'Help should provide a clear entry into the live example-data demo');
@@ -528,10 +528,12 @@ assert.ok(source.includes('fox2ResolveProgressMessage')&&source.includes('progra
   'the current change and result should read as one concise narrative rather than separate boxes');
 assert.ok(source.includes('data-program-action="open-past-results">Past results</button>')&&source.includes('id="past-results-overlay"'),
   'completed changes should open from a quiet Past results link beneath the chart');
-assert.ok(source.includes('class="program-how-link" onclick="openGuideModal();openFox2WorksGuide()">How this works</button>'),
-  'Progress should link directly to the existing FOX2 explanation beside its heading');
-assert.ok(source.includes('Replay the three-part introduction.')&&source.includes('fox2RenderWorksGuide'),
-  'How this works should reuse the established three-slide explanation rather than duplicate it');
+assert.ok(source.includes('class="program-how-link" onclick="openFox2WorksGuideFromHelp()">How this works</button>'),
+  'Progress and persistent Help should share one guide entry point');
+assert.ok(source.includes('function fox2MeasureGuideHtml()')&&source.includes('fox2CardSequenceHtml(2,4)')&&source.includes('Math.min(4,fox2GuideReplayStep+delta)'),
+  'the shared guide should include how to measure as the second of four slides');
+assert.ok(source.includes('Replay the complete four-part guide.')&&source.includes('fox2RenderWorksGuide'),
+  'both guide entry points should reuse the same complete four-slide explanation');
 assert.ok(source.includes('program-canonical-summary'),
   'Progress should lead with a large plain-language summary');
 assert.ok(source.includes('copy-generator.js')&&source.includes("Fox2CopyGenerator.generateCopy('progress',input)"),
