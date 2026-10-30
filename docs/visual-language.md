@@ -44,11 +44,15 @@ history chart. Both use orange for score data.
   only been a few days, but Zepbound 0.25 mg has already increased your Fat Use
   Score by 12%.”). Do not separate the action from its result or use vague
   language such as `taking shape`.
-- Resolve Progress copy from one deterministic message state: empty,
+- Resolve Progress copy through `graphs/copy-generator.js`: empty,
   accumulating, first result, early comparison, or established comparison.
   Baseline comparisons use the average of completed post-change daily Scores;
   today’s unfinished Score is never included. Without a baseline, compare the
-  latest completed Score with the first completed Score.
+  latest completed Score with the first for early results, then compare recent
+  completed Scores with earlier completed Scores once more history is present.
+- Changes under 3% are treated as stable by default so small fluctuations are
+  not celebrated as meaningful wins. Generated messages keep a calculation
+  explanation available for a future `Why FOX2 says this` disclosure.
 - Do not add a separate average value beneath the chart.
 - Without a baseline or active change, keep the chart useful: show the recent
   pattern without a baseline line or attributed result, omit `What you’ve

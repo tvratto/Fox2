@@ -1,6 +1,7 @@
 const assert=require('assert');
 const fs=require('fs');
 const vm=require('vm');
+const copyGenerator=require('./copy-generator.js');
 
 const source=fs.readFileSync(__dirname+'/index.html','utf8');
 
@@ -37,7 +38,7 @@ function functionSource(name,nextName){
     fox2TodayProgramDay:()=>({date:'2026-10-29',score:94,readings:3}),
     fox2AllCompletedScoreDays:()=>[{date:'2026-10-27',score:72},{date:'2026-10-28',score:96}],
     fox2RingVisual:score=>({value:Math.round(score),color:'#4ADE80',progress:Math.min(1,score/120)}),
-    Math,Date,isFinite});
+    Fox2CopyGenerator:copyGenerator,Math,Date,isFinite});
   vm.runInNewContext(functionSource('fox2ResolveProgressMessage','fox2ProgressHtml'),context);
   vm.runInNewContext(functionSource('fox2ProgressHtml','fox2SimpleProgressChartHtml'),context);
   const html=context.fox2ProgressHtml({baseline:75,after:125,measureDays:[{score:125}],elapsedDays:3,savedResult:context.fox2CurrentProgramResult()});
@@ -45,14 +46,14 @@ function functionSource(name,nextName){
     'Progress should move from the synced daily ring into the canonical daily bars');
   assert.ok(html.includes('BASELINE 75')&&html.includes('Oatmeal for breakfast'),
     'Progress should compare daily Scores directly while identifying the dated lifestyle change');
-  assert.ok(html.includes('It’s only been a few days, but Oatmeal for breakfast has already increased your Fat Use Score by 12%.'),
+  assert.ok(html.includes('It’s only been a few days, but since starting Oatmeal for breakfast, your Fat Use Score is already 12% higher.'),
     'an early result should name the active action and report its percentage impact in one sentence');
   assert.ok(html.includes('What you’ve learned')&&html.includes('Add a walk after eating')&&html.includes('2026-10-26–2026-10-28')&&html.includes('Your Fat Use Score was 67% higher.'),
     'Progress should retain a concise start-to-finish record of prior changes and their impact');
 
   context.fox2Program={measureStart:'',action:'',resultHistory:[]};
   const openHtml=context.fox2ProgressHtml({baseline:0,measureDays:[],elapsedDays:0,savedResult:null});
-  assert.ok(openHtml.includes('It’s only been a few days, but your Fat Use Score is already 33% higher than where it started.'),
+  assert.ok(openHtml.includes('It’s still early, but your recent Fat Use Score is 33% higher than your first completed Score.'),
     'measurements without a baseline or change should still produce a useful neutral Progress state');
   assert.ok(openHtml.includes('Want to see what affects your fat use?')&&openHtml.includes('Set up a baseline'),
     'the neutral Progress state should offer one clear baseline setup prompt');
@@ -61,19 +62,18 @@ function functionSource(name,nextName){
 })();
 
 (function progressMessageStateMachineCoversCoreStates(){
-  const context={fox2Mean:values=>values.reduce((sum,value)=>sum+Number(value||0),0)/values.length,
-    fox2Round:value=>Math.round(value),Math,isFinite};
+  const context={Fox2CopyGenerator:copyGenerator};
   vm.runInNewContext(functionSource('fox2ResolveProgressMessage','fox2ProgressHtml'),context);
   const resolve=context.fox2ResolveProgressMessage;
   assert.strictEqual(resolve({completedDays:[],today:null}).state,'empty');
   assert.strictEqual(resolve({completedDays:[],today:{score:62},baseline:75}).state,'accumulating');
   assert.strictEqual(resolve({completedDays:[{score:85}],action:'Zepbound 0.25 mg'}).state,'first-result');
   assert.strictEqual(resolve({completedDays:[{score:72},{score:96}],baseline:75,action:'Zepbound 0.25 mg'}).summary,
-    'It’s only been a few days, but Zepbound 0.25 mg has already increased your Fat Use Score by 12%.');
+    'It’s only been a few days, but since starting Zepbound 0.25 mg, your Fat Use Score is already 12% higher.');
   assert.strictEqual(resolve({completedDays:[{score:90},{score:96},{score:102},{score:108}],baseline:75,action:'Zepbound 0.25 mg'}).summary,
-    'Great—Zepbound 0.25 mg has increased your Fat Use Score by 32%.');
+    'Great—since starting Zepbound 0.25 mg, your Fat Use Score has averaged 32% higher than your baseline.');
   assert.strictEqual(resolve({completedDays:[{score:80},{score:100}],baseline:0,action:''}).summary,
-    'It’s only been a few days, but your Fat Use Score is already 25% higher than where it started.');
+    'It’s still early, but your recent Fat Use Score is 25% higher than your first completed Score.');
 })();
 
 (function newActionStartsOnlyWhenConfirmed(){
@@ -473,12 +473,12 @@ assert.ok(source.includes('background:rgba(255,140,0,.08)')&&source.includes('co
   'previous change records should be visually emphasized without introducing a new chart');
 assert.ok(source.includes('program-canonical-summary'),
   'Progress should lead with a large plain-language summary');
-assert.ok(source.includes("summary='Great—'+action+' has increased your Fat Use Score by '+percent+'%.'"),
-  'the Progress summary should lead with a conversational interpretation that connects the current change to its result');
+assert.ok(source.includes('copy-generator.js')&&source.includes("Fox2CopyGenerator.generateCopy('progress',input)"),
+  'Progress should use the shared deterministic copy generator');
 assert.ok(!source.includes("summary='You have '+shownDays.length")&&!source.includes("summaryDetail='Keep measuring and sync again after your first completed day.'"),
   'Progress summaries should not report measurement or day counts');
-assert.ok(source.includes("action+' has already increased your Fat Use Score by '+percent+'%.")&&source.includes("percent+'% higher than where it started."),
-  'an early Progress state should interpret the available result and report its actual percentage');
+assert.ok(!source.includes('function fox2ResolveProgressMessage(input){\n  input=input||{};'),
+  'Progress message rules should not be duplicated inside the page');
 assert.ok(source.includes('.program-previous-changes li { display:grid; grid-template-columns:8px minmax(0,1fr)')&&source.includes('font-size:15px'),
   'What you’ve learned should use large stacked phone-readable text');
 assert.ok(!source.includes('program-canonical-average'),
