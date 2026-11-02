@@ -506,8 +506,10 @@ assert.ok(source.includes('data-progress-animate="')&&source.includes("},3100);"
   'the Score ring should transition automatically into the new bar');
 assert.ok(source.includes('program-canonical-recap-popover')&&source.includes("'+barsView+ring+'"),
   'the recap should appear as a temporary overlay while the 30-day Progress view remains underneath');
-assert.ok(source.includes("latestRecapDate==='Yesterday'?'Yesterday’s Fat Use Score':latestRecapDate"),
-  'a replayed recap should use the actual completed date unless it truly was yesterday');
+assert.ok(source.includes("latest.current?'Synced just now':'Final Daily Score'")&&source.includes("latest&&latest.current?'Today’s Fat Use Score':latestRecapDate"),
+  'a completed recap should be labeled Final Daily Score with Yesterday or its actual date underneath');
+assert.ok(!source.includes('Morning recap')&&!source.includes('Morning Recap')&&!source.includes('Replay morning recap'),
+  'the recap should not use a time-of-day-specific name');
 assert.ok(source.includes('.program-canonical-recap-popover { width:50%;')&&source.includes('aspect-ratio:200/251;'),
   'the recap overlay should remain half the Progress-card width while preserving its proportions');
 assert.ok(source.includes('function fox2MorphCanonicalProgressRing(root,done)')&&source.includes("root.querySelector('.program-history-bar.is-latest')"),
