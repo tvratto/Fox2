@@ -45,6 +45,13 @@ function days(scores){
   assert.ok(message.evidence.includes('unfinished Score is not included'));
 })();
 
+(function earlyLowerActionDoesNotRepeatTheProvisionalQualifier(){
+  const message=copy.progress({completedDays:days([65,68]),baseline:75,action:'Walk after dinner'});
+  assert.equal(message.state,'early-down-action');
+  assert.equal(message.headline,'It’s still early, but since starting Walk after dinner, your Fat Use Score is lower.');
+  assert.ok(!message.headline.includes('so far'));
+})();
+
 (function smallChangesStayNeutral(){
   const message=copy.progress({completedDays:days([75,77]),baseline:75,action:'Walk after dinner'});
   assert.equal(message.direction,'stable');

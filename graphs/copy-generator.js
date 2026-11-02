@@ -171,7 +171,7 @@
         detail='Keep measuring normally to see if this early result holds.';
         tone='positive';
       }else if(direction==='down'){
-        headline='It’s still early, but since starting '+action+', your Fat Use Score is lower so far.';
+        headline='It’s still early, but since starting '+action+', your Fat Use Score is lower.';
         detail='That’s useful to know. Keep measuring normally to see whether this holds.';
         tone='supportive';
       }else{
