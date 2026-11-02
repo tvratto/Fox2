@@ -416,6 +416,8 @@ html, body {
 .program-calendar { width:100%; margin:8px 0 13px; padding:11px; border-radius:18px; background:#050505; }
 .program-history-chart { width:100%; }
 .program-history-chart svg { display:block; width:100%; height:auto; overflow:visible; }
+.program-current-day-note { margin:8px 4px 2px; color:rgba(255,255,255,.62); font-size:13px; line-height:1.38; font-weight:650; }
+.program-current-day-note strong { color:#fff; font-weight:900; }
 .program-history-date { fill:rgba(255,255,255,.58); font:850 10px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; }
 .program-history-axis { stroke:rgba(255,255,255,.15); stroke-width:1.3; }
 .program-history-today-dot { fill:var(--program-orange,#ff8c00); filter:drop-shadow(0 0 3px rgba(255,140,0,.62)); }
@@ -7136,6 +7138,7 @@ function fox2ProgressHtml(metrics){
   }
   var baselineMark=hasBaseline?'<line class="program-history-baseline" x1="'+chartLeft+'" y1="'+baselineY.toFixed(1)+'" x2="'+chartRight+'" y2="'+baselineY.toFixed(1)+'"></line><text class="program-history-baseline-label" x="'+chartRight+'" y="'+Math.max(29,baselineY-6).toFixed(1)+'" text-anchor="end">BASELINE '+fox2Round(baseline)+'</text>':'';
   var historyChart='<div class="program-history-chart"><svg viewBox="0 0 336 218" role="img" aria-label="Thirty days of Fat Use Scores, filling from left to right"><line class="program-history-axis" x1="'+chartLeft+'" y1="'+plotBottom+'" x2="'+chartRight+'" y2="'+plotBottom+'"></line>'+chartDates+chartSlots+baselineMark+chartBars+todayMarker+'</svg></div>';
+  var currentDayNote=today?'<p class="program-current-day-note"><strong>Today is still accumulating.</strong> It will be included in your progress after the day is complete.</p>':'';
   var previousChangeRecords=Array.isArray(fox2Program.resultHistory)?fox2Program.resultHistory:[];
   var hasActiveChange=!!(programStart&&fox2Program.action);
   var key=latest?[latest.date,fox2Round(latest.score),latest.readings||0].join('|'):'';
@@ -7158,7 +7161,7 @@ function fox2ProgressHtml(metrics){
   var pastResultsLink=previousChangeRecords.length?'<button type="button" class="program-utility-link" data-program-action="open-past-results">Past results</button>':'';
   var programOptionsLink=hasBaseline||fox2Program.action?'<button type="button" class="program-utility-link program-options-link" data-program-action="open-program-options">Program options</button>':'';
   var programUtilities=pastResultsLink||programOptionsLink?'<div class="program-utilities">'+pastResultsLink+programOptionsLink+'</div>':'';
-  var barsView='<section class="program-canonical-progress-view program-canonical-progress-bars"'+(animate?' aria-hidden="true"':'')+'><div class="program-progress-heading"><div class="program-eyebrow">30-Day Progress</div><button type="button" class="program-how-link" onclick="openFox2WorksGuideFromHelp()">How this works</button></div><div class="program-canonical-summary" data-final-summary="'+fox2Escape(finalMessage.summary)+'">'+fox2Escape(summary)+'</div>'+heroHtml+'<div class="program-calendar">'+historyChart+'</div>'+programUtilities+(hasBaseline?'':'<div class="program-canonical-baseline-action"><strong>Want to see what affects your fat use?</strong><span>Set a starting point, try a change, and FOX2 will compare the results.</span><button type="button" data-program-action="start">Set up a baseline</button></div>')+'</section>';
+  var barsView='<section class="program-canonical-progress-view program-canonical-progress-bars"'+(animate?' aria-hidden="true"':'')+'><div class="program-progress-heading"><div class="program-eyebrow">30-Day Progress</div><button type="button" class="program-how-link" onclick="openFox2WorksGuideFromHelp()">How this works</button></div><div class="program-canonical-summary" data-final-summary="'+fox2Escape(finalMessage.summary)+'">'+fox2Escape(summary)+'</div>'+heroHtml+'<div class="program-calendar">'+historyChart+currentDayNote+'</div>'+programUtilities+(hasBaseline?'':'<div class="program-canonical-baseline-action"><strong>Want to see what affects your fat use?</strong><span>Set a starting point, try a change, and FOX2 will compare the results.</span><button type="button" data-program-action="start">Set up a baseline</button></div>')+'</section>';
   if(!latest) return '<section class="program-canonical-progress is-bars"><section class="program-canonical-progress-view program-canonical-progress-bars"><div class="program-eyebrow">Progress</div><h1>Your daily Scores will appear here.</h1><p class="program-canonical-progress-copy">Take a measurement and tap your phone to FOX2 to sync it.</p></section></section>';
   return '<section class="program-canonical-progress'+(animate?' has-recap':' is-bars')+'" style="--recap-target-x:'+recapTargetX+'px;--recap-target-y:118px" data-progress-key="'+fox2Escape(key)+'" data-progress-fill="'+visual.progress+'" data-progress-animate="'+(animate?'1':'0')+'">'+barsView+ring+'</section>';
 }

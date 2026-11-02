@@ -94,17 +94,7 @@
 
     var latest=completed[completed.length-1];
     var gapDays=calendarGap(latest.date,asOfDate);
-    if(gapDays!==null&&gapDays>=reentryAfterDays){
-      if(today){
-        return result(
-          'reentry-synced','reentry','unknown',
-          'Today’s Fat Use Score is '+rounded(today.score)+' so far.',
-          'Keep measuring normally. FOX2 will finalize today’s Score tomorrow morning.',
-          {label:'Keep measuring',action:'measure'},
-          {basis:'calendar-gap',gapDays:gapDays,thresholdDays:reentryAfterDays},
-          'Your baseline, history, and previous results are still here.','supportive'
-        );
-      }
+    if(gapDays!==null&&gapDays>=reentryAfterDays&&!today){
       return result(
         'reentry','reentry','unknown',
         'Welcome back. One measurement today is enough to pick up where you left off.',

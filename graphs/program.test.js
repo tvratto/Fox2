@@ -84,6 +84,15 @@ function functionSource(name,nextName){
     'the neutral Progress state should offer one clear baseline setup prompt');
   assert.ok(!openHtml.includes('BASELINE ')&&!openHtml.includes('Past results'),
     'the neutral state should not invent a baseline or attributed change result');
+
+  context.fox2Program={measureStart:'2026-10-24',action:'Walk after dinner',resultHistory:[]};
+  context.fox2AllCompletedScoreDays=()=>[{date:'2026-10-24',score:80},{date:'2026-10-25',score:100}];
+  context.fox2TodayProgramDay=()=>({date:'2026-10-29',score:62,readings:1});
+  const reentrySyncedHtml=context.fox2ProgressHtml({baseline:75,measureDays:[{score:80},{score:100}],elapsedDays:6,savedResult:null});
+  assert.ok(reentrySyncedHtml.includes('It’s only been a few days, but since starting Walk after dinner, your Fat Use Score is already higher.')&&reentrySyncedHtml.includes('data-final-value="20%">20%')&&!reentrySyncedHtml.includes('Welcome back'),
+    'syncing a current-day measurement should restore the completed-day progress result');
+  assert.ok(reentrySyncedHtml.includes('<strong>Today is still accumulating.</strong> It will be included in your progress after the day is complete.'),
+    'the current outlined bar should explain why it is not part of the progress percentage yet');
 })();
 
 (function progressMessageStateMachineCoversCoreStates(){
