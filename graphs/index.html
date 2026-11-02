@@ -7140,9 +7140,12 @@ function fox2ProgressHtml(metrics){
   var hasActiveChange=!!(programStart&&fox2Program.action);
   var key=latest?[latest.date,fox2Round(latest.score),latest.readings||0].join('|'):'';
   var animate=!!(latest&&key!==fox2LastProgressAnimationKey);
-  var comparisonDays=shownDays.map(function(day){return {date:day.date,score:day.score};});
+  // The chart includes today's live, outlined bar, but Progress comparisons
+  // are based only on finalized daily Scores. A daytime sync may move today's
+  // bar without changing the headline percentage.
+  var comparisonDays=shownDays.filter(function(day){return !day.current;}).map(function(day){return {date:day.date,score:day.score};});
   var finalMessage=fox2ResolveProgressMessage({completedDays:comparisonDays,today:null,asOfDate:todayIso,reentryAfterDays:4,baseline:hasBaseline?baseline:0,action:hasActiveChange?fox2Program.action:''});
-  var previousComparisonDays=animate&&comparisonDays.length>1?comparisonDays.slice(0,-1):comparisonDays;
+  var previousComparisonDays=animate&&latest&&!latest.current&&comparisonDays.length>1?comparisonDays.slice(0,-1):comparisonDays;
   var message=animate?fox2ResolveProgressMessage({completedDays:previousComparisonDays,today:null,asOfDate:todayIso,reentryAfterDays:4,baseline:hasBaseline?baseline:0,action:hasActiveChange?fox2Program.action:''}):finalMessage;
   var summary=message.summary;
   var shownHero=message.hero||finalMessage.hero,finalHero=finalMessage.hero;
