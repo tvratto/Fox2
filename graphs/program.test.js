@@ -239,6 +239,8 @@ assert.ok(source.includes('id="program-day-zone-source"'),
   'the NOW result should collapse into a point in the daily graph');
 assert.ok(source.includes('id="program-day-next-zones"'),
   'later daily graph points should appear with miniature NOW arcs');
+assert.ok(source.includes("var paths='',radius=19.5;"),
+  'miniature NOW arcs should remain large enough to read clearly');
 assert.ok(source.includes('var zoneX=-136*move,zoneY=-36+61*move;'),
   'the current NOW arc should shrink and fly down to the first graph point');
 assert.ok(source.includes('id="program-day-ring-value"'),

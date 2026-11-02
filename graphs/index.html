@@ -7246,14 +7246,14 @@ function fox2IntroZoneGraphicHtml(){
 
 function fox2IntroMiniZoneArcHtml(cx,cy,value){
   var colors=['#22d3ee','#22d3ee','#4ade80','#4ade80','#d946c7','#35142f','#35142f','#35142f','#452509','#452509'];
-  var paths='',radius=13;
+  var paths='',radius=19.5;
   for(var i=0;i<10;i++){
     var a1=Math.PI+i*Math.PI/10+.035,a2=Math.PI+(i+1)*Math.PI/10-.035;
     var x1=cx+radius*Math.cos(a1),y1=cy+radius*Math.sin(a1),x2=cx+radius*Math.cos(a2),y2=cy+radius*Math.sin(a2);
-    paths+='<path d="M'+x1.toFixed(2)+' '+y1.toFixed(2)+' A'+radius+' '+radius+' 0 0 1 '+x2.toFixed(2)+' '+y2.toFixed(2)+'" fill="none" stroke="'+colors[i]+'" stroke-width="4.4"/>';
+    paths+='<path d="M'+x1.toFixed(2)+' '+y1.toFixed(2)+' A'+radius+' '+radius+' 0 0 1 '+x2.toFixed(2)+' '+y2.toFixed(2)+'" fill="none" stroke="'+colors[i]+'" stroke-width="6.6"/>';
   }
   var valueColor=value<=2?'#22d3ee':value<=4?'#4ade80':value<=7?'#d946c7':'#ff8c00';
-  return '<g class="program-day-mini-zone" data-zone="'+value+'">'+paths+'<text x="'+cx+'" y="'+(cy-1)+'" fill="'+valueColor+'" font-size="8" font-weight="950" text-anchor="middle">'+value+'</text></g>';
+  return '<g class="program-day-mini-zone" data-zone="'+value+'">'+paths+'<text x="'+cx+'" y="'+(cy-2)+'" fill="'+valueColor+'" font-size="12" font-weight="950" text-anchor="middle">'+value+'</text></g>';
 }
 
 function fox2DayIntroHtml(mode){
@@ -7855,7 +7855,7 @@ function fox2StartDayIntroAnimation(root){
     var move=ease(collapse),secondMove=ease(second),thirdMove=ease(third);
     var transfer=Math.max(0,Math.min(1,(phase-fox2OnboardingTime(5900))/fox2OnboardingTime(1250)));
     var reset=Math.max(0,Math.min(1,(phase-fox2OnboardingTime(8500))/fox2OnboardingTime(650)));
-    var zoneScale=1-.78*move;
+    var zoneScale=1-.67*move;
     var zoneX=-136*move,zoneY=-36+61*move;
     zone.setAttribute('transform','translate('+zoneX.toFixed(2)+' '+zoneY.toFixed(2)+') translate(160 96) scale('+zoneScale.toFixed(3)+') translate(-160 -96)');
     zone.style.opacity=String((1-transfer)*(1-reset));
