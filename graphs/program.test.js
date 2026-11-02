@@ -241,8 +241,10 @@ assert.ok(source.includes('id="program-day-next-zones"'),
   'later daily graph points should appear with miniature NOW arcs');
 assert.ok(source.includes("var paths='',radius=19.5;"),
   'miniature NOW arcs should remain large enough to read clearly');
-assert.ok(source.includes('var zoneX=-136*move,zoneY=-36+61*move;'),
+assert.ok(source.includes('var zoneX=-136*move,zoneY=-36+33*move;'),
   'the current NOW arc should shrink and fly down to the first graph point');
+assert.ok(source.includes('fox2IntroMiniZoneArcHtml(160,121,2)+fox2IntroMiniZoneArcHtml(294,24,8)'),
+  'the daily example should show the requested 5, 2, 8 measurement pattern');
 assert.ok(source.includes('id="program-day-ring-value"'),
   'the daily graph animation should resolve into a score ring');
 assert.ok(source.includes('function fox2CompareIntroHtml('),
