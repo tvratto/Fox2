@@ -7241,7 +7241,7 @@ function fox2IntroZoneGraphicHtml(){
     var x1=160+59*Math.cos(a1),y1=96+59*Math.sin(a1),x2=160+59*Math.cos(a2),y2=96+59*Math.sin(a2);
     paths+='<path d="M'+x1.toFixed(2)+' '+y1.toFixed(2)+' A59 59 0 0 1 '+x2.toFixed(2)+' '+y2.toFixed(2)+'" fill="none" stroke="'+colors[i]+'" stroke-width="17"/>';
   }
-  return '<g id="program-day-zone-source">'+paths+'<path d="M106 96 A54 54 0 0 1 214 96" fill="none" stroke="rgba(255,255,255,.58)" stroke-width="1.5"/><text x="160" y="91" fill="#ff8c00" font-size="47" font-weight="950" text-anchor="middle">8</text><text x="101" y="120" fill="rgba(255,255,255,.46)" font-size="9" font-weight="850">1</text><text x="219" y="120" fill="rgba(255,255,255,.46)" font-size="9" font-weight="850" text-anchor="end">10+</text></g>';
+  return '<g id="program-day-zone-source">'+paths+'<path d="M106 96 A54 54 0 0 1 214 96" fill="none" stroke="rgba(255,255,255,.58)" stroke-width="1.5"/><text x="160" y="91" fill="#22d3ee" font-size="47" font-weight="950" text-anchor="middle">2</text><text x="101" y="120" fill="rgba(255,255,255,.46)" font-size="9" font-weight="850">1</text><text x="219" y="120" fill="rgba(255,255,255,.46)" font-size="9" font-weight="850" text-anchor="end">10+</text></g>';
 }
 
 function fox2IntroMiniZoneArcHtml(cx,cy,value){
@@ -7263,7 +7263,7 @@ function fox2DayIntroHtml(mode){
       +'<defs><linearGradient id="program-day-zone-gradient" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#22d3ee"/><stop offset=".38" stop-color="#4ade80"/><stop offset=".68" stop-color="#d946c7"/><stop offset="1" stop-color="#ff8c00"/></linearGradient></defs>'
       +'<g id="program-day-graph" opacity="0"><g opacity=".55" stroke="rgba(255,255,255,.09)" stroke-width="1"><line x1="18" y1="42" x2="302" y2="42"/><line x1="18" y1="79" x2="302" y2="79"/><line x1="18" y1="116" x2="302" y2="116"/></g>'
         +'<clipPath id="program-day-reveal"><rect id="program-day-reveal-rect" x="18" y="20" width="0" height="132"/></clipPath><g clip-path="url(#program-day-reveal)"><path class="program-day-area" d="M24 133 C82 132 101 76 160 75 S238 69 294 36 L294 140 L24 140 Z" fill="#ff8c00" opacity=".42"/><path class="program-day-line" d="M24 133 C82 132 101 76 160 75 S238 69 294 36" fill="none" stroke="url(#program-day-zone-gradient)" stroke-width="5" stroke-linecap="round"/></g>'
-        +'<g id="program-day-prior-zones">'+fox2IntroMiniZoneArcHtml(24,121,2)+fox2IntroMiniZoneArcHtml(160,63,5)+'</g>'
+        +'<g id="program-day-next-zones">'+fox2IntroMiniZoneArcHtml(160,63,5)+fox2IntroMiniZoneArcHtml(294,24,8)+'</g>'
         +'<g id="program-day-points" stroke="#070707" stroke-width="4"><circle cx="24" cy="133" r="7" fill="#22d3ee"/><circle cx="160" cy="75" r="7" fill="#d946c7"/><circle cx="294" cy="36" r="7" fill="#ff8c00"/></g>'
         +'<line x1="18" y1="140" x2="302" y2="140" stroke="rgba(255,255,255,.55)"/><g fill="rgba(255,255,255,.44)" font-size="10" font-weight="750"><text x="18" y="155">12a</text><text x="160" y="155" text-anchor="middle">12p</text><text x="302" y="155" text-anchor="end">12a</text></g><text x="18" y="190" fill="rgba(255,255,255,.48)" font-size="10" font-weight="850" letter-spacing="1.2">FAT USE SCORE</text><text id="program-day-running-score" x="301" y="195" fill="#ff8c00" font-size="40" font-weight="950" text-anchor="end">0</text></g>'
       +fox2IntroZoneGraphicHtml()
@@ -7831,7 +7831,7 @@ function fox2StartAcetoneAnimation(root){
     svg.style.opacity=String((1-handoff)*(1-reset));
     svg.style.transform='scale('+(1-.13*handoff).toFixed(3)+')';
     zone.style.opacity=String(Math.min(1,handoff*1.35)*(1-reset));
-    fox2DrawZoneCanvas(zone,1+zoneProgress*7);
+    fox2DrawZoneCanvas(zone,1+zoneProgress);
     window.requestAnimationFrame(draw);
   }
   window.requestAnimationFrame(draw);
@@ -7842,35 +7842,43 @@ function fox2StartDayIntroAnimation(root){
   var svg=root.querySelector('.program-day-demo'),graph=root.querySelector('#program-day-graph');
   var zone=root.querySelector('#program-day-zone-source');
   var reveal=root.querySelector('#program-day-reveal-rect'),points=Array.from(root.querySelectorAll('#program-day-points circle'));
+  var nextZones=Array.from(root.querySelectorAll('#program-day-next-zones .program-day-mini-zone'));
   var running=root.querySelector('#program-day-running-score'),ring=root.querySelector('#program-day-ring-result');
   var ringValue=root.querySelector('#program-day-ring-value');
   if(!svg||!zone||!graph||!reveal||!running||!ring||!ringValue) return;
   var circumference=389.56,targetOffset=circumference*(1-.8);
+  function ease(value){return value<.5?2*value*value:1-Math.pow(-2*value+2,2)/2;}
   function render(phase){
-    var collapse=Math.max(0,Math.min(1,(phase-fox2OnboardingTime(700))/fox2OnboardingTime(1400)));
-    var move=collapse<.5?2*collapse*collapse:1-Math.pow(-2*collapse+2,2)/2;
-    var graphProgress=.5+.5*move;
-    var transfer=Math.max(0,Math.min(1,(phase-fox2OnboardingTime(5000))/fox2OnboardingTime(1200)));
-    var reset=Math.max(0,Math.min(1,(phase-fox2OnboardingTime(7600))/fox2OnboardingTime(700)));
+    var collapse=Math.max(0,Math.min(1,(phase-fox2OnboardingTime(650))/fox2OnboardingTime(1450)));
+    var second=Math.max(0,Math.min(1,(phase-fox2OnboardingTime(2250))/fox2OnboardingTime(1250)));
+    var third=Math.max(0,Math.min(1,(phase-fox2OnboardingTime(3650))/fox2OnboardingTime(1250)));
+    var move=ease(collapse),secondMove=ease(second),thirdMove=ease(third);
+    var transfer=Math.max(0,Math.min(1,(phase-fox2OnboardingTime(5900))/fox2OnboardingTime(1250)));
+    var reset=Math.max(0,Math.min(1,(phase-fox2OnboardingTime(8500))/fox2OnboardingTime(650)));
     var zoneScale=1-.78*move;
-    var zoneX=85+49*move,zoneY=-72*move;
+    var zoneX=-136*move,zoneY=-36+61*move;
     zone.setAttribute('transform','translate('+zoneX.toFixed(2)+' '+zoneY.toFixed(2)+') translate(160 96) scale('+zoneScale.toFixed(3)+') translate(-160 -96)');
     zone.style.opacity=String((1-transfer)*(1-reset));
-    reveal.setAttribute('width',(284*graphProgress).toFixed(1));
+    reveal.setAttribute('width',(6+136*secondMove+142*thirdMove).toFixed(1));
     points.forEach(function(point,index){
-      point.style.opacity=index<2||move>.72?'1':'0';
+      var visible=index===0?move:index===1?secondMove:thirdMove;
+      point.style.opacity=String(Math.max(0,Math.min(1,(visible-.8)/.2)));
     });
-    running.textContent=String(Math.round(64+32*move));
+    nextZones.forEach(function(arc,index){
+      var visible=index===0?secondMove:thirdMove;
+      arc.style.opacity=String(Math.max(0,Math.min(1,(visible-.8)/.2)));
+    });
+    running.textContent=String(Math.round(32*move+30*secondMove+34*thirdMove));
     var graphScale=1-.72*transfer;
     graph.setAttribute('transform','translate(160 98) scale('+graphScale.toFixed(3)+') translate(-160 -98)');
-    graph.style.opacity=String((1-transfer)*(1-reset));
+    graph.style.opacity=String((.18+.82*move)*(1-transfer)*(1-reset));
     ring.style.opacity=String(Math.min(1,transfer*1.35)*(1-reset));
     ringValue.setAttribute('stroke-dashoffset',(circumference-(circumference-targetOffset)*transfer).toFixed(2));
   }
   var started=performance.now();
   function frame(now){
     if(!svg.isConnected) return;
-    render((now-started)%fox2OnboardingTime(8400));
+    render((now-started)%fox2OnboardingTime(9200));
     window.requestAnimationFrame(frame);
   }
   window.requestAnimationFrame(frame);

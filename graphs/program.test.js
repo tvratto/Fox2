@@ -237,10 +237,10 @@ assert.ok(source.includes('Measure a few times a day, and FOX2 combines those re
   'the combined daily card should actively explain how readings become a daily score');
 assert.ok(source.includes('id="program-day-zone-source"'),
   'the NOW result should collapse into a point in the daily graph');
-assert.ok(source.includes('id="program-day-prior-zones"'),
-  'the daily graph should retain miniature NOW arcs above earlier measurements');
-assert.ok(source.includes('var zoneX=85+49*move,zoneY=-72*move;'),
-  'the current NOW arc should shrink and fly to the final graph point');
+assert.ok(source.includes('id="program-day-next-zones"'),
+  'later daily graph points should appear with miniature NOW arcs');
+assert.ok(source.includes('var zoneX=-136*move,zoneY=-36+61*move;'),
+  'the current NOW arc should shrink and fly down to the first graph point');
 assert.ok(source.includes('id="program-day-ring-value"'),
   'the daily graph animation should resolve into a score ring');
 assert.ok(source.includes('function fox2CompareIntroHtml('),
