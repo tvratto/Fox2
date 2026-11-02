@@ -508,6 +508,8 @@ assert.ok(source.includes('program-canonical-recap-popover')&&source.includes("'
   'the recap should appear as a temporary overlay while the 30-day Progress view remains underneath');
 assert.ok(source.includes("latest.current?'Synced just now':'Final Daily Score'")&&source.includes("latest&&latest.current?'Today’s Fat Use Score':latestRecapDate"),
   'a completed recap should be labeled Final Daily Score with Yesterday or its actual date underneath');
+assert.ok(source.includes('<div class="program-recap-for">for</div>')&&source.includes('<span class="program-recap-for">for</span>'),
+  'both recap layouts should explicitly connect the final daily score to its date');
 assert.ok(!source.includes('Morning recap')&&!source.includes('Morning Recap')&&!source.includes('Replay morning recap'),
   'the recap should not use a time-of-day-specific name');
 assert.ok(source.includes('.program-canonical-recap-popover { width:50%;')&&source.includes('aspect-ratio:200/251;'),
