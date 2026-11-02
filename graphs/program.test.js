@@ -510,6 +510,8 @@ assert.ok(source.includes("latest.current?'Synced just now':'Final Daily Score'"
   'a completed recap should be labeled Final Daily Score with Yesterday or its actual date underneath');
 assert.ok(source.includes('<div class="program-recap-for">for</div>')&&source.includes('<span class="program-recap-for">for</span>'),
   'both recap layouts should explicitly connect the final daily score to its date');
+assert.ok(source.includes('.program-recap-for { display:block; width:100%; margin-top:5px;')&&source.includes('font-size:10px; line-height:1; font-weight:900;')&&source.includes('.program-canonical-recap-popover .program-recap-for { margin-top:5px; font-size:9px; }'),
+  'FOR should match the Final Daily Score label size and remain centered between the label and date');
 assert.ok(!source.includes('Morning recap')&&!source.includes('Morning Recap')&&!source.includes('Replay morning recap'),
   'the recap should not use a time-of-day-specific name');
 assert.ok(source.includes('.program-canonical-recap-popover { width:50%;')&&source.includes('aspect-ratio:200/251;'),
