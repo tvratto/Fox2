@@ -91,7 +91,7 @@
           {id:'personal-established',label:'No baseline · established',purpose:'Compares recent and earlier completed results.',input:{completedDays:scoreDays([70,74,90,94])}},
           {id:'day-three',label:'Three days since last Score',purpose:'Boundary check: normal messaging remains.',input:{completedDays:[{date:'2026-10-26',score:85}],asOfDate:'2026-10-29',baseline:baseline,action:action,reentryAfterDays:4}},
           {id:'reentry',label:'Four-day reentry · before sync',purpose:'One low-pressure action; nothing was lost.',input:{completedDays:[{date:'2026-10-25',score:85}],asOfDate:'2026-10-29',baseline:baseline,action:action,reentryAfterDays:4}},
-          {id:'reentry-synced',label:'Four-day reentry · after sync',purpose:'Welcomes the person back with today’s real result.',input:{completedDays:[{date:'2026-10-25',score:85}],today:{date:'2026-10-29',score:62},asOfDate:'2026-10-29',baseline:baseline,action:action,reentryAfterDays:4}}
+          {id:'reentry-synced',label:'Four-day reentry · after sync',purpose:'Ends the re-entry prompt and reports today’s real result.',input:{completedDays:[{date:'2026-10-25',score:85}],today:{date:'2026-10-29',score:62},asOfDate:'2026-10-29',baseline:baseline,action:action,reentryAfterDays:4}}
         ];
       }
       function render(){

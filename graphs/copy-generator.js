@@ -98,7 +98,7 @@
       if(today){
         return result(
           'reentry-synced','reentry','unknown',
-          'Welcome back—today’s Fat Use Score is '+rounded(today.score)+' so far.',
+          'Today’s Fat Use Score is '+rounded(today.score)+' so far.',
           'Keep measuring normally. FOX2 will finalize today’s Score tomorrow morning.',
           {label:'Keep measuring',action:'measure'},
           {basis:'calendar-gap',gapDays:gapDays,thresholdDays:reentryAfterDays},

@@ -31,7 +31,8 @@ function days(scores){
   assert.equal(dayFour.metric.gapDays,4);
   const synced=copy.progress({completedDays:completed,today:{date:'2026-10-29',score:62},asOfDate:'2026-10-29'});
   assert.equal(synced.state,'reentry-synced');
-  assert.equal(synced.headline,'Welcome back—today’s Fat Use Score is 62 so far.');
+  assert.equal(synced.headline,'Today’s Fat Use Score is 62 so far.');
+  assert.ok(!synced.headline.includes('Welcome back'),'the re-entry prompt should end as soon as today’s measurement is synced');
 })();
 
 (function earlyActionUsesCompletedAverageAndExcludesToday(){

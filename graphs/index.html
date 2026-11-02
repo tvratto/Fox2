@@ -7144,9 +7144,10 @@ function fox2ProgressHtml(metrics){
   // are based only on finalized daily Scores. A daytime sync may move today's
   // bar without changing the headline percentage.
   var comparisonDays=shownDays.filter(function(day){return !day.current;}).map(function(day){return {date:day.date,score:day.score};});
-  var finalMessage=fox2ResolveProgressMessage({completedDays:comparisonDays,today:null,asOfDate:todayIso,reentryAfterDays:4,baseline:hasBaseline?baseline:0,action:hasActiveChange?fox2Program.action:''});
+  var todayForMessage=today?{date:today.date,score:today.score}:null;
+  var finalMessage=fox2ResolveProgressMessage({completedDays:comparisonDays,today:todayForMessage,asOfDate:todayIso,reentryAfterDays:4,baseline:hasBaseline?baseline:0,action:hasActiveChange?fox2Program.action:''});
   var previousComparisonDays=animate&&latest&&!latest.current&&comparisonDays.length>1?comparisonDays.slice(0,-1):comparisonDays;
-  var message=animate?fox2ResolveProgressMessage({completedDays:previousComparisonDays,today:null,asOfDate:todayIso,reentryAfterDays:4,baseline:hasBaseline?baseline:0,action:hasActiveChange?fox2Program.action:''}):finalMessage;
+  var message=animate?fox2ResolveProgressMessage({completedDays:previousComparisonDays,today:todayForMessage,asOfDate:todayIso,reentryAfterDays:4,baseline:hasBaseline?baseline:0,action:hasActiveChange?fox2Program.action:''}):finalMessage;
   var summary=message.summary;
   var shownHero=message.hero||finalMessage.hero,finalHero=finalMessage.hero;
   var heroHtml=shownHero?'<div class="program-canonical-hero'+(!message.hero?' is-pending-result':'')+'" role="img" aria-label="'+fox2Escape(shownHero.accessibleLabel)+'" data-final-label="'+fox2Escape(finalHero?finalHero.accessibleLabel:shownHero.accessibleLabel)+'"><span class="program-canonical-hero-arrow" data-final-value="'+fox2Escape(finalHero?finalHero.arrow:shownHero.arrow)+'">'+fox2Escape(shownHero.arrow)+'</span><span class="program-canonical-hero-value" data-final-value="'+fox2Escape(finalHero?finalHero.value:shownHero.value)+'">'+fox2Escape(message.hero?shownHero.value:'0%')+'</span><span class="program-canonical-hero-label" data-final-value="'+fox2Escape(finalHero?finalHero.label:shownHero.label)+'">'+fox2Escape(shownHero.label)+'</span></div>':'';
