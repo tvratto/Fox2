@@ -414,6 +414,7 @@ html, body {
 .program-history-chart svg { display:block; width:100%; height:auto; overflow:visible; }
 .program-history-date { fill:rgba(255,255,255,.58); font:850 10px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; }
 .program-history-axis { stroke:rgba(255,255,255,.15); stroke-width:1.3; }
+.program-history-today-dot { fill:var(--program-orange,#ff8c00); filter:drop-shadow(0 0 3px rgba(255,140,0,.62)); }
 .program-history-baseline { stroke:rgba(255,255,255,.75); stroke-width:1.5; stroke-dasharray:3 5; }
 .program-history-baseline-label { fill:rgba(255,255,255,.56); font:850 8px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; letter-spacing:.04em; }
 .program-history-slot { stroke:rgba(255,255,255,.13); stroke-width:3; stroke-linecap:round; }
@@ -7114,8 +7115,13 @@ function fox2ProgressHtml(metrics){
     if(slot.current) chartBars+='<line class="program-history-today-outline'+latestClass+'" x1="'+x.toFixed(1)+'" y1="'+top.toFixed(1)+'" x2="'+x.toFixed(1)+'" y2="'+plotBottom+'" aria-hidden="true"></line>';
     chartBars+='<line class="program-history-bar'+(slot.current?' is-today':'')+latestClass+'" x1="'+x.toFixed(1)+'" y1="'+top.toFixed(1)+'" x2="'+x.toFixed(1)+'" y2="'+plotBottom+'" role="img" aria-label="'+fox2Escape(fox2ShortDate(day.date))+' Fat Use Score '+fox2Round(score)+(slot.current?' so far':'')+'"></line>';
   });
+  var todayOffset=fox2DaysBetween(graphStart,todayIso),todayMarker='';
+  if(todayOffset>=0&&todayOffset<chartTarget){
+    var todayX=chartLeft+todayOffset*((chartRight-chartLeft)/(chartTarget-1));
+    todayMarker='<circle class="program-history-today-dot" cx="'+todayX.toFixed(1)+'" cy="199" r="4" role="img" aria-label="Today, '+fox2Escape(fox2ShortDate(todayIso))+'"></circle>';
+  }
   var baselineMark=hasBaseline?'<line class="program-history-baseline" x1="'+chartLeft+'" y1="'+baselineY.toFixed(1)+'" x2="'+chartRight+'" y2="'+baselineY.toFixed(1)+'"></line><text class="program-history-baseline-label" x="'+chartRight+'" y="'+Math.max(29,baselineY-6).toFixed(1)+'" text-anchor="end">BASELINE '+fox2Round(baseline)+'</text>':'';
-  var historyChart='<div class="program-history-chart"><svg viewBox="0 0 336 218" role="img" aria-label="Thirty days of Fat Use Scores, filling from left to right"><line class="program-history-axis" x1="'+chartLeft+'" y1="'+plotBottom+'" x2="'+chartRight+'" y2="'+plotBottom+'"></line>'+chartDates+chartSlots+baselineMark+chartBars+'</svg></div>';
+  var historyChart='<div class="program-history-chart"><svg viewBox="0 0 336 218" role="img" aria-label="Thirty days of Fat Use Scores, filling from left to right"><line class="program-history-axis" x1="'+chartLeft+'" y1="'+plotBottom+'" x2="'+chartRight+'" y2="'+plotBottom+'"></line>'+chartDates+chartSlots+baselineMark+chartBars+todayMarker+'</svg></div>';
   var previousChangeRecords=Array.isArray(fox2Program.resultHistory)?fox2Program.resultHistory:[];
   var hasActiveChange=!!(programStart&&fox2Program.action);
   var key=latest?[latest.date,fox2Round(latest.score),latest.readings||0].join('|'):'';

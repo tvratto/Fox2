@@ -520,6 +520,8 @@ assert.ok(source.includes('var slotDay=chartDays[slotIndex]||null'),
   'daily scores should fill the 30-day chart from left to right');
 assert.ok(source.includes('y="211"')&&source.includes('viewBox="0 0 336 218"'),
   'the 30-day date labels should sit on the X-axis beneath the bars');
+assert.ok(source.includes('class="program-history-today-dot"')&&source.includes('todayOffset=fox2DaysBetween(graphStart,todayIso)')&&source.includes('aria-label="Today, '),
+  'the 30-day chart should mark today on its date axis even when today has no measurement');
 assert.ok(!source.includes('program-history-curve')&&!source.includes('curvePoints'),
   'the daily bars should stand on their own without a line connecting their tops');
 assert.ok(source.includes('stroke-dasharray:3 5')&&source.includes('BASELINE '),
