@@ -93,6 +93,8 @@ function functionSource(name,nextName){
     'syncing a current-day measurement should restore the completed-day progress result');
   assert.ok(reentrySyncedHtml.includes('<strong>Today is still accumulating.</strong> It will be included in your progress after the day is complete.'),
     'the current outlined bar should explain why it is not part of the progress percentage yet');
+  assert.ok(reentrySyncedHtml.includes('program-canonical-progress has-current-day'),
+    'the current-day note should expand the Progress card so utility links remain visible');
 })();
 
 (function progressMessageStateMachineCoversCoreStates(){
@@ -568,7 +570,7 @@ assert.ok(source.includes('stroke-dasharray:3 5')&&source.includes('BASELINE '),
 assert.ok(source.includes('fox2ResolveProgressMessage')&&source.includes('program-canonical-hero')&&!source.includes('program-canonical-context')&&!source.includes('program-calendar-change-note'),
   'the current change and result should read as one concise narrative rather than separate boxes');
 assert.ok(source.includes('data-program-action="open-past-results">Past results</button>')&&source.includes('id="past-results-overlay"'),
-  'completed changes should open from a quiet Past results link beneath the chart');
+  'completed changes should open from a visible, quiet Past results link on the Progress card');
 assert.ok(source.includes('class="program-how-link" onclick="openFox2WorksGuideFromHelp()">How this works</button>'),
   'Progress and persistent Help should share one guide entry point');
 assert.ok(source.includes('function fox2PurposeGuideHtml()')&&source.includes('What FOX2 is for')&&source.includes('See how changes in your life affect your fat use.')&&source.includes('Math.min(4,fox2GuideReplayStep+delta)'),
