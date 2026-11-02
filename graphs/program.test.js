@@ -11,6 +11,18 @@ function functionSource(name,nextName){
   return source.slice(start,end);
 }
 
+(function recapDateLabelsAreCalendarAware(){
+  const context={Date,isFinite,
+    fox2TodayIso:()=> '2027-06-20',
+    fox2AddIsoDays:(iso,amount)=>new Date(Date.parse(iso+'T00:00:00Z')+amount*86400000).toISOString().slice(0,10),
+    fox2ShortDate:iso=>iso};
+  vm.runInNewContext(functionSource('fox2RecapDateLabel','fox2DateRange'),context);
+  assert.strictEqual(context.fox2RecapDateLabel('2027-06-14'),'Monday, June 14',
+    'an older recap should show its actual weekday and date');
+  assert.strictEqual(context.fox2RecapDateLabel('2027-06-19'),'Yesterday',
+    'Yesterday should be reserved for the immediately preceding calendar day');
+})();
+
 (function snapshotCodecWorksWithoutTextEncoder(){
   const codecSource=functionSource('fox2EncodeProgramSnapshot','fox2IsoOrBlank');
   const context={btoa,atob,encodeURIComponent,decodeURIComponent,JSON,parseInt};
@@ -494,6 +506,8 @@ assert.ok(source.includes('data-progress-animate="')&&source.includes("},3100);"
   'the Score ring should transition automatically into the new bar');
 assert.ok(source.includes('program-canonical-recap-popover')&&source.includes("'+barsView+ring+'"),
   'the recap should appear as a temporary overlay while the 30-day Progress view remains underneath');
+assert.ok(source.includes("latestRecapDate==='Yesterday'?'Yesterday’s Fat Use Score':latestRecapDate"),
+  'a replayed recap should use the actual completed date unless it truly was yesterday');
 assert.ok(source.includes('.program-canonical-recap-popover { width:50%;')&&source.includes('aspect-ratio:200/251;'),
   'the recap overlay should remain half the Progress-card width while preserving its proportions');
 assert.ok(source.includes('function fox2MorphCanonicalProgressRing(root,done)')&&source.includes("root.querySelector('.program-history-bar.is-latest')"),

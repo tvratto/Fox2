@@ -7018,6 +7018,16 @@ function fox2ShortDate(iso){
   return date.toLocaleDateString(undefined,{month:'short',day:'numeric'});
 }
 
+function fox2RecapDateLabel(iso,todayIso){
+  if(!iso) return '';
+  var today=todayIso||fox2TodayIso();
+  if(fox2AddIsoDays(today,-1)===iso) return 'Yesterday';
+  var parts=iso.split('-');
+  var date=new Date(Number(parts[0]),Number(parts[1])-1,Number(parts[2]));
+  if(!isFinite(date.getTime())) return fox2ShortDate(iso);
+  return date.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+}
+
 function fox2DateRange(days){
   if(!days||!days.length) return '';
   return fox2ShortDate(days[0].date)+'–'+fox2ShortDate(days[days.length-1].date);
@@ -7134,7 +7144,9 @@ function fox2ProgressHtml(metrics){
   var shownHero=message.hero||finalMessage.hero,finalHero=finalMessage.hero;
   var heroHtml=shownHero?'<div class="program-canonical-hero'+(!message.hero?' is-pending-result':'')+'" role="img" aria-label="'+fox2Escape(shownHero.accessibleLabel)+'" data-final-label="'+fox2Escape(finalHero?finalHero.accessibleLabel:shownHero.accessibleLabel)+'"><span class="program-canonical-hero-arrow" data-final-value="'+fox2Escape(finalHero?finalHero.arrow:shownHero.arrow)+'">'+fox2Escape(shownHero.arrow)+'</span><span class="program-canonical-hero-value" data-final-value="'+fox2Escape(finalHero?finalHero.value:shownHero.value)+'">'+fox2Escape(message.hero?shownHero.value:'0%')+'</span><span class="program-canonical-hero-label" data-final-value="'+fox2Escape(finalHero?finalHero.label:shownHero.label)+'">'+fox2Escape(shownHero.label)+'</span></div>':'';
   var latestSlotIndex=Math.max(0,shownDays.length-1),recapTargetX=Math.round((latestSlotIndex/(chartTarget-1)-.5)*280);
-  var ring=animate?'<section class="program-canonical-progress-view program-canonical-progress-ring" aria-live="polite"><div class="program-canonical-recap-popover"><div class="program-eyebrow">'+(latest.current?'Synced just now':'Morning recap')+'</div><h1>'+(latest.current?'Today’s Fat Use Score':'Yesterday’s Fat Use Score')+'</h1><svg class="program-today-ring" viewBox="0 0 120 120" role="img" aria-label="Fat Use Score '+visual.value+(latest.current?' so far':' final')+'"><circle class="program-today-track" cx="60" cy="60" r="54" style="stroke:var(--program-orange);opacity:.18"></circle><circle class="program-today-value" cx="60" cy="60" r="54" style="--today-color:var(--program-orange);--today-offset:'+(339.292*(1-visual.progress)).toFixed(3)+'"></circle><text class="program-today-score" x="60" y="64">'+visual.value+'</text><text class="program-today-unit" x="60" y="82">'+(latest.current?'TODAY SO FAR':'FINAL')+'</text></svg><p class="program-canonical-progress-copy">'+(latest.current?'This Score includes the reading you just synced and is still accumulating.':'This is the completed Score for your latest finished day.')+'</p></div></section>':'';
+  var latestRecapDate=latest&&!latest.current?fox2RecapDateLabel(latest.date,todayIso):'';
+  var latestRecapHeading=latest&&latest.current?'Today’s Fat Use Score':(latestRecapDate==='Yesterday'?'Yesterday’s Fat Use Score':latestRecapDate);
+  var ring=animate?'<section class="program-canonical-progress-view program-canonical-progress-ring" aria-live="polite"><div class="program-canonical-recap-popover"><div class="program-eyebrow">'+(latest.current?'Synced just now':'Morning recap')+'</div><h1>'+fox2Escape(latestRecapHeading)+'</h1><svg class="program-today-ring" viewBox="0 0 120 120" role="img" aria-label="Fat Use Score '+visual.value+(latest.current?' so far':' final')+'"><circle class="program-today-track" cx="60" cy="60" r="54" style="stroke:var(--program-orange);opacity:.18"></circle><circle class="program-today-value" cx="60" cy="60" r="54" style="--today-color:var(--program-orange);--today-offset:'+(339.292*(1-visual.progress)).toFixed(3)+'"></circle><text class="program-today-score" x="60" y="64">'+visual.value+'</text><text class="program-today-unit" x="60" y="82">'+(latest.current?'TODAY SO FAR':'FINAL')+'</text></svg><p class="program-canonical-progress-copy">'+(latest.current?'This Score includes the reading you just synced and is still accumulating.':'This is the completed Score for your latest finished day.')+'</p></div></section>':'';
   var pastResultsLink=previousChangeRecords.length?'<button type="button" class="program-utility-link" data-program-action="open-past-results">Past results</button>':'';
   var programOptionsLink=hasBaseline||fox2Program.action?'<button type="button" class="program-utility-link program-options-link" data-program-action="open-program-options">Program options</button>':'';
   var programUtilities=pastResultsLink||programOptionsLink?'<div class="program-utilities">'+pastResultsLink+programOptionsLink+'</div>':'';
@@ -7580,7 +7592,7 @@ function fox2MeasureDashboardHtml(metrics,options){
     return '<section class="program-measure-dashboard"><div class="program-recap-sequence is-settled"><div class="program-recap-empty"><strong>Results So Far</strong><span>Your first completed day will appear here after you sync.</span></div></div></section>';
   }
   var animate=forceReplay||recapPending,settledClass=animate?'':' is-history-visible is-bar-landed is-settled';
-  var latestDateLabel=fox2AddIsoDays(fox2TodayIso(),-1)===model.latest.date?'Yesterday':fox2ShortDate(model.latest.date);
+  var latestDateLabel=fox2RecapDateLabel(model.latest.date);
   var path=fox2RecapMorphPath(model.latestVisual.progress,animate?0:1,model.latestSlot.x,model.latestSlot.top,model.plotBottom);
   var scoreText=fox2Round(model.latest.score);
   return '<section class="program-measure-dashboard"><div class="program-recap-sequence'+settledClass+'" style="--recap-color:'+model.latestVisual.color+'" data-recap-animate="'+(animate?'1':'0')+'" data-latest-date="'+fox2Escape(model.latest.date)+'" data-score="'+scoreText+'" data-fill="'+model.latestVisual.progress+'" data-target-x="'+model.latestSlot.x+'" data-target-top="'+model.latestSlot.top.toFixed(1)+'" data-target-bottom="'+model.plotBottom+'" data-from="'+model.priorChange+'" data-to="'+model.change+'">'
