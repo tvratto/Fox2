@@ -387,7 +387,7 @@ html, body {
 .program-canonical-progress-view { position:absolute; inset:20px 18px 22px; display:flex; flex-direction:column; align-items:center; }
 .program-canonical-progress-view h1 { width:100%; margin:8px 0 12px; color:#fff; font-size:29px; line-height:1.05; font-weight:950; letter-spacing:-.045em; }
 .program-progress-heading { width:100%; display:flex; align-items:center; justify-content:space-between; gap:16px; }
-.program-progress-heading .program-eyebrow { margin-bottom:10px; }
+.program-progress-heading .program-eyebrow { flex:1; min-width:0; margin-bottom:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .program-how-link { min-height:32px; margin:-4px 0 6px; padding:0 1px; border:0; background:transparent; color:rgba(255,255,255,.58); font:italic 800 12px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; cursor:pointer; white-space:nowrap; }
 .program-how-link:hover,.program-how-link:focus-visible { color:var(--program-orange); }
 .program-canonical-summary { width:100%; margin:1px 0 12px; color:#fff; font-size:23px; line-height:1.16; font-weight:900; letter-spacing:-.035em; }
@@ -2881,7 +2881,7 @@ var fox2AwaitingFirst = params.get('awaiting') === '1';
   var SUPABASE_URL = 'https://byysvwdsbpmbypflqcjs.supabase.co';
   var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ5eXN2d2RzYnBtYnlwZmxxY2pzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MTEwNTYsImV4cCI6MjA5NDE4NzA1Nn0.uAKOkd9vNhtN7umEGrVLcQLNjWOnn33n-xKVT25mFzw';
   fetch(SUPABASE_URL + '/rest/v1/devices?device_id=eq.' + encodeURIComponent(idParam)
-      + '&select=last_t_param,last_d_param,last_a_param,last_s_param,last_ws_param,last_tz_param,firmware_ver,last_measurement_at&limit=1',
+      + '&select=last_t_param,last_d_param,last_a_param,last_s_param,last_ws_param,last_tz_param,firmware_ver,last_measurement_at,patient_id&limit=1',
     { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } })
   .then(function(r) { console.log('[restore] fetch status:', r.status); return r.ok ? r.json() : []; })
   .then(function(rows) {
@@ -2897,6 +2897,7 @@ var fox2AwaitingFirst = params.get('awaiting') === '1';
     if (row.last_s_param)  u.searchParams.set('s',  row.last_s_param); else u.searchParams.delete('s');
     if (row.last_tz_param) u.searchParams.set('tz', row.last_tz_param); else u.searchParams.delete('tz');
     if (row.firmware_ver)  u.searchParams.set('v',  row.firmware_ver);
+    if (row.patient_id)    u.searchParams.set('p',  row.patient_id); else u.searchParams.delete('p');
     var wsToUse = row.last_ws_param;
     if (!wsToUse && row.last_measurement_at) {
       var mDate = new Date(row.last_measurement_at);
@@ -3225,7 +3226,7 @@ var _isNewerPayload    = false;
           + '&select=day_date,events,tray_tags,note', { method:'GET', headers:readHeaders })
       .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; }),
     fetch(SUPABASE_URL + '/rest/v1/devices?device_id=eq.' + encodeURIComponent(deviceId)
-          + '&select=leaderboard_opt_in,leaderboard_hash,last_d_param,last_ws_param,last_measurement_at&limit=1', { method:'GET', headers:readHeaders })
+          + '&select=leaderboard_opt_in,leaderboard_hash,last_d_param,last_ws_param,last_measurement_at,patient_id&limit=1', { method:'GET', headers:readHeaders })
       .then(function(r){ return r.ok ? r.json() : []; }).catch(function(){ return []; }),
     Fox2DataFetch.fetchAllRows(SUPABASE_URL,
       '/rest/v1/readings?device_id=eq.' + encodeURIComponent(deviceId)
@@ -3296,7 +3297,7 @@ var _isNewerPayload    = false;
     if (isNewerPayload) {
       var deviceWriteBody = {
         device_id:            deviceId,
-        patient_id:           patientId,
+        patient_id:           patientId || (storedDeviceRow && storedDeviceRow.patient_id) || null,
         clinic_id:            clinicId,
         target_auc:           targetAUC || null,
         streak_current:       streakCurrent,
@@ -6638,6 +6639,7 @@ var fox2ProgramRemoteSaveAgain=false;
 var fox2ProgramRemoteSaveTimer=0;
 var fox2ProgramRemoteGeneration=0;
 var fox2ApplyingRemoteProgram=false;
+var fox2ProgressOwnerName=fox2NormalizeProgressOwnerName(params.get('p'));
 var fox2ProgramRemoteRetryTimer=0;
 var fox2ProgramRemoteRetryDelay=15000;
 
@@ -7081,6 +7083,31 @@ function fox2Escape(value){
   return String(value==null?'':value).replace(/[&<>'"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c];});
 }
 
+function fox2NormalizeProgressOwnerName(value){
+  var name=String(value==null?'':value).trim().replace(/\s+/g,' ');
+  if(!name||/^(null|undefined)$/i.test(name)) return '';
+  return name.slice(0,40);
+}
+
+function fox2PossessiveName(name){
+  if(/[\u2019']s$/i.test(name)) return name;
+  return /s$/i.test(name)?name+'\u2019':name+'\u2019s';
+}
+
+function fox2ProgressTitle(){
+  if(fox2ProgramReadOnly) return '30-Day Progress';
+  if(fox2DemoMode) return 'Demo 30-Day Progress';
+  return fox2ProgressOwnerName?fox2PossessiveName(fox2ProgressOwnerName)+' 30-Day Progress':'30-Day Progress';
+}
+
+function fox2RefreshProgressOwnerTitle(){
+  var title=fox2ProgressTitle();
+  document.querySelectorAll('[data-progress-title="1"]').forEach(function(label){
+    label.textContent=title;
+    label.setAttribute('title',title);
+  });
+}
+
 function fox2TodayIso(){
   var now=new Date();
   return now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
@@ -7425,7 +7452,8 @@ function fox2ProgressHtml(metrics){
   var pastResultsLink=previousChangeRecords.length?'<button type="button" class="program-utility-link" data-program-action="open-past-results">Past results</button>':'';
   var programOptionsLink=hasBaseline||fox2Program.action?'<button type="button" class="program-utility-link program-options-link" data-program-action="open-program-options">Program options</button>':'';
   var programUtilities=pastResultsLink||programOptionsLink?'<div class="program-utilities">'+pastResultsLink+programOptionsLink+'</div>':'';
-  var barsView='<section class="program-canonical-progress-view program-canonical-progress-bars"'+(animate?' aria-hidden="true"':'')+'><div class="program-progress-heading"><div class="program-eyebrow">30-Day Progress</div><button type="button" class="program-how-link" onclick="openFox2WorksGuideFromHelp()">How this works</button></div><div class="program-canonical-summary" data-final-summary="'+fox2Escape(finalMessage.summary)+'">'+fox2Escape(summary)+'</div>'+heroHtml+programUtilities+'<div class="program-calendar">'+historyChart+currentDayNote+'</div>'+(hasBaseline?'':'<div class="program-canonical-baseline-action"><strong>Want to see what affects your fat use?</strong><span>Set a starting point, try a change, and FOX2 will compare the results.</span><button type="button" data-program-action="start">Set up a baseline</button></div>')+'</section>';
+  var progressTitle=fox2ProgressTitle();
+  var barsView='<section class="program-canonical-progress-view program-canonical-progress-bars"'+(animate?' aria-hidden="true"':'')+'><div class="program-progress-heading"><div class="program-eyebrow" data-progress-title="1" title="'+fox2Escape(progressTitle)+'">'+fox2Escape(progressTitle)+'</div><button type="button" class="program-how-link" onclick="openFox2WorksGuideFromHelp()">How this works</button></div><div class="program-canonical-summary" data-final-summary="'+fox2Escape(finalMessage.summary)+'">'+fox2Escape(summary)+'</div>'+heroHtml+programUtilities+'<div class="program-calendar">'+historyChart+currentDayNote+'</div>'+(hasBaseline?'':'<div class="program-canonical-baseline-action"><strong>Want to see what affects your fat use?</strong><span>Set a starting point, try a change, and FOX2 will compare the results.</span><button type="button" data-program-action="start">Set up a baseline</button></div>')+'</section>';
   if(!latest) return '<section class="program-canonical-progress is-bars"><section class="program-canonical-progress-view program-canonical-progress-bars"><div class="program-eyebrow">Progress</div><h1>Your daily Scores will appear here.</h1><p class="program-canonical-progress-copy">Take a measurement and tap your phone to FOX2 to sync it.</p></section></section>';
   return '<section class="program-canonical-progress'+(today?' has-current-day':'')+(animate?' has-recap':' is-bars')+'" style="--recap-target-x:'+recapTargetX+'px;--recap-target-y:118px" data-progress-key="'+fox2Escape(key)+'" data-progress-fill="'+visual.progress+'" data-progress-animate="'+(animate?'1':'0')+'">'+barsView+ring+'</section>';
 }
@@ -11238,6 +11266,10 @@ function initWithSupabase(sbUrl,sbHeaders,deviceId,preRead){
   if(preRead.deviceRow){
     _lbOptIn      = preRead.deviceRow.leaderboard_opt_in || '';
     _lbStoredHash = preRead.deviceRow.leaderboard_hash   || '';
+    if(!fox2ProgramReadOnly&&!fox2DemoMode){
+      fox2ProgressOwnerName=fox2NormalizeProgressOwnerName(preRead.deviceRow.patient_id||params.get('p'));
+      fox2RefreshProgressOwnerTitle();
+    }
   }
   renderHistoricalAnalysis(preRead.historyReadings||[],preRead.historyScores||[],tagRows);
   _doInit();

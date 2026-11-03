@@ -34,6 +34,25 @@ function functionSource(name,nextName){
     'program snapshots should round-trip without TextEncoder or TextDecoder');
 })();
 
+(function progressTitleUsesSavedNameWithoutLeakingIntoShares(){
+  const labels=[];
+  const context={fox2ProgramReadOnly:false,fox2DemoMode:false,fox2ProgressOwnerName:'James',document:{
+    querySelectorAll(){return labels;}
+  }};
+  vm.runInNewContext(functionSource('fox2NormalizeProgressOwnerName','fox2TodayIso'),context);
+  assert.strictEqual(context.fox2ProgressTitle(),'James\u2019 30-Day Progress',
+    'a saved name ending in s should use a clean possessive title');
+  context.fox2ProgressOwnerName='Tim';
+  assert.strictEqual(context.fox2ProgressTitle(),'Tim\u2019s 30-Day Progress',
+    'the Progress eyebrow should identify whose results are shown');
+  context.fox2DemoMode=true;
+  assert.strictEqual(context.fox2ProgressTitle(),'Demo 30-Day Progress',
+    'demo mode should identify demo data rather than a real person');
+  context.fox2ProgramReadOnly=true;
+  assert.strictEqual(context.fox2ProgressTitle(),'30-Day Progress',
+    'shared snapshots should not expose the saved person name');
+})();
+
 (function progressUsesCanonicalScoresInsteadOfASecondResultSummary(){
   const context={fox2Program:{measureStart:'2026-10-26',action:'Oatmeal for breakfast',resultHistory:[
     {id:'2026-10-26|Add a walk after eating',action:'Add a walk after eating',before:75,after:125,change:67,date:'2026-10-28'}
@@ -50,7 +69,7 @@ function functionSource(name,nextName){
     fox2TodayProgramDay:()=>({date:'2026-10-29',score:94,readings:3}),
     fox2AllCompletedScoreDays:()=>[{date:'2026-10-27',score:72},{date:'2026-10-28',score:96}],
     fox2RingVisual:score=>({value:Math.round(score),color:'#4ADE80',progress:Math.min(1,score/120)}),
-    Fox2CopyGenerator:copyGenerator,Math,Date,isFinite});
+    fox2ProgressTitle:()=> '30-Day Progress',Fox2CopyGenerator:copyGenerator,Math,Date,isFinite});
   vm.runInNewContext(functionSource('fox2ResolveProgressMessage','fox2ProgressHtml'),context);
   vm.runInNewContext(functionSource('fox2ProgressHtml','fox2SimpleProgressChartHtml'),context);
   const html=context.fox2ProgressHtml({baseline:75,after:125,measureDays:[{score:125}],elapsedDays:3,savedResult:context.fox2CurrentProgramResult()});
@@ -433,6 +452,10 @@ assert.ok(source.includes('Keep current program')&&source.includes('End program 
   'the destructive confirmation should make canceling the prominent safe choice');
 assert.ok(source.includes('function fox2ApplyProgramRecoveryParam()'),
   'a one-time recovery URL should be able to restore known program metadata');
+assert.ok(source.includes('last_measurement_at,patient_id&limit=1'),
+  'device restores and normal loads should request the saved person name');
+assert.ok(source.includes("patientId || (storedDeviceRow && storedDeviceRow.patient_id) || null"),
+  'a nameless sync should preserve the saved person name instead of clearing it');
 assert.ok(source.includes("params.get('program_recover')"),
   'the recovery URL should use an explicit program recovery parameter');
 assert.ok(source.includes('function fox2SetProgramHistory(readingRows,scoreRows)'),
