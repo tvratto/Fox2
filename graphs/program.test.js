@@ -555,6 +555,8 @@ assert.ok(!source.includes('program-history-today-label'),
   'today’s unfinished bar should not carry an awkward SO FAR label');
 assert.ok(source.includes('program-history-readout-date')&&source.includes('program-history-readout-value'),
   'the chart should show one calm date-and-score readout instead of a visible value axis');
+assert.ok(source.includes('program-history-callout-pointer')&&source.includes('data-progress-x=')&&source.includes("callout.setAttribute('transform'"),
+  'the selected value should remain visibly anchored to its bar as the selection moves');
 assert.ok(source.includes('completedShownDays[completedShownDays.length-1]')&&source.includes("'Final score '+fox2Round(defaultSelectedDay.score)"),
   'the latest completed score should be selected by default even when today is unfinished');
 assert.ok(source.includes("current?score+' so far':'Final score '+score")&&source.includes('data-progress-current='),

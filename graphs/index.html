@@ -12,6 +12,7 @@ if('scrollRestoration' in history) history.scrollRestoration='manual';
 </script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
+.sr-only { position:absolute!important; width:1px!important; height:1px!important; padding:0!important; margin:-1px!important; overflow:hidden!important; clip:rect(0,0,0,0)!important; white-space:nowrap!important; border:0!important; }
 html, body {
   height: 100%;
   background: #000;
@@ -417,10 +418,12 @@ html, body {
 .program-canonical-progress-copy { width:100%; margin:8px 0 0; color:rgba(255,255,255,.65); font-size:15px; line-height:1.45; font-weight:650; }
 .program-calendar { width:100%; margin:8px 0 13px; padding:11px; border-radius:18px; background:#050505; }
 .program-history-chart { width:100%; }
-.program-history-readout { min-height:28px; margin:0 4px 2px; display:flex; align-items:baseline; gap:7px; color:#fff; }
-.program-history-readout-date { color:rgba(255,255,255,.58); font-size:12px; line-height:1; font-weight:850; }
-.program-history-readout-value { font-size:17px; line-height:1; font-weight:950; letter-spacing:-.02em; }
 .program-history-chart svg { display:block; width:100%; height:auto; overflow:visible; }
+.program-history-callout { pointer-events:none; }
+.program-history-callout-box { fill:#15110d; stroke:rgba(255,140,0,.58); stroke-width:1; filter:drop-shadow(0 3px 5px rgba(0,0,0,.46)); }
+.program-history-callout-pointer { fill:#15110d; stroke:rgba(255,140,0,.58); stroke-width:1; stroke-linejoin:round; }
+.program-history-readout-date { fill:rgba(255,255,255,.58); font:850 8px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; letter-spacing:.03em; text-transform:uppercase; }
+.program-history-readout-value { fill:#fff; font:950 11px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; letter-spacing:-.02em; }
 .program-current-day-note { margin:8px 4px 2px; color:rgba(255,255,255,.62); font-size:13px; line-height:1.38; font-weight:650; }
 .program-current-day-note strong { color:#fff; font-weight:900; }
 .program-history-date { fill:rgba(255,255,255,.58); font:850 10px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; }
@@ -7351,9 +7354,9 @@ function fox2ProgressHtml(metrics){
   var defaultSelectedDay=completedShownDays.length?completedShownDays[completedShownDays.length-1]:(shownDays.length?shownDays[shownDays.length-1]:null);
   var maxValue=Math.max.apply(null,[60,hasBaseline?baseline:0].concat(shownDays.map(function(day){return Number(day.score)||0;})));
   var scaleMax=Math.max(60,Math.ceil((maxValue*1.12)/30)*30);
-  var chartLeft=10,chartRight=326,plotTop=18,plotBottom=190,plotHeight=plotBottom-plotTop;
+  var chartLeft=10,chartRight=326,plotTop=48,plotBottom=190,plotHeight=plotBottom-plotTop;
   var baselineY=hasBaseline?plotBottom-Math.min(plotHeight,baseline/scaleMax*plotHeight):plotBottom;
-  var chartBars='',chartSlots='',chartDates='';
+  var chartBars='',chartSlots='',chartDates='',defaultCalloutX=chartLeft,defaultCalloutTop=plotTop;
   slots.forEach(function(slot,index){
     var x=chartLeft+index*((chartRight-chartLeft)/(chartTarget-1)),day=slot.day;
     if((index%7===0&&index<chartTarget-2)||index===chartTarget-1){
@@ -7369,8 +7372,9 @@ function fox2ProgressHtml(metrics){
     if(slot.current) chartBars+='<line class="program-history-today-outline'+latestClass+'" x1="'+x.toFixed(1)+'" y1="'+top.toFixed(1)+'" x2="'+x.toFixed(1)+'" y2="'+plotBottom+'" aria-hidden="true"></line>';
     var dayLabel=slot.current?'Today, '+fox2Round(score)+' so far':fox2ShortDate(day.date)+', final score '+fox2Round(score);
     var selectedClass=defaultSelectedDay&&day.date===defaultSelectedDay.date?' is-selected':'';
+    if(selectedClass){defaultCalloutX=x;defaultCalloutTop=top;}
     chartBars+='<line class="program-history-bar'+(slot.current?' is-today':'')+latestClass+selectedClass+'" data-progress-date="'+fox2Escape(day.date)+'" x1="'+x.toFixed(1)+'" y1="'+top.toFixed(1)+'" x2="'+x.toFixed(1)+'" y2="'+plotBottom+'" aria-hidden="true"></line>'
-      +'<line class="program-history-hit" data-progress-day="1" data-progress-date="'+fox2Escape(day.date)+'" data-progress-score="'+fox2Round(score)+'" data-progress-current="'+(slot.current?'1':'0')+'" x1="'+x.toFixed(1)+'" y1="'+top.toFixed(1)+'" x2="'+x.toFixed(1)+'" y2="'+plotBottom+'" role="button" tabindex="0" aria-pressed="'+(selectedClass?'true':'false')+'" aria-label="'+fox2Escape(dayLabel)+'. Select day."></line>';
+      +'<line class="program-history-hit" data-progress-day="1" data-progress-date="'+fox2Escape(day.date)+'" data-progress-score="'+fox2Round(score)+'" data-progress-current="'+(slot.current?'1':'0')+'" data-progress-x="'+x.toFixed(1)+'" data-progress-top="'+top.toFixed(1)+'" x1="'+x.toFixed(1)+'" y1="'+top.toFixed(1)+'" x2="'+x.toFixed(1)+'" y2="'+plotBottom+'" role="button" tabindex="0" aria-pressed="'+(selectedClass?'true':'false')+'" aria-label="'+fox2Escape(dayLabel)+'. Select day."></line>';
   });
   var todayOffset=fox2DaysBetween(graphStart,todayIso),todayMarker='';
   if(todayOffset>=0&&todayOffset<chartTarget){
@@ -7380,7 +7384,9 @@ function fox2ProgressHtml(metrics){
   var baselineMark=hasBaseline?'<line class="program-history-baseline" x1="'+chartLeft+'" y1="'+baselineY.toFixed(1)+'" x2="'+chartRight+'" y2="'+baselineY.toFixed(1)+'"></line><text class="program-history-baseline-label" x="'+chartRight+'" y="'+Math.max(29,baselineY-6).toFixed(1)+'" text-anchor="end">BASELINE '+fox2Round(baseline)+'</text>':'';
   var defaultReadoutDate=defaultSelectedDay?(defaultSelectedDay.current?'Today':fox2ShortDate(defaultSelectedDay.date)):'';
   var defaultReadoutValue=defaultSelectedDay?(defaultSelectedDay.current?fox2Round(defaultSelectedDay.score)+' so far':'Final score '+fox2Round(defaultSelectedDay.score)):'';
-  var historyChart='<div class="program-history-chart'+(defaultSelectedDay?' has-selection':'')+'"><div class="program-history-readout" aria-live="polite"><span class="program-history-readout-date">'+fox2Escape(defaultReadoutDate)+'</span><strong class="program-history-readout-value">'+fox2Escape(defaultReadoutValue)+'</strong></div><svg viewBox="0 0 336 218" role="group" aria-label="Thirty days of Fat Use Scores, filling from left to right"><line class="program-history-axis" x1="'+chartLeft+'" y1="'+plotBottom+'" x2="'+chartRight+'" y2="'+plotBottom+'"></line>'+chartDates+chartSlots+baselineMark+chartBars+todayMarker+'</svg></div>';
+  var defaultCalloutCenter=Math.max(50,Math.min(286,defaultCalloutX)),defaultCalloutY=Math.max(2,defaultCalloutTop-42),defaultPointerX=Math.max(-40,Math.min(40,defaultCalloutX-defaultCalloutCenter));
+  var callout=defaultSelectedDay?'<g class="program-history-callout" transform="translate('+defaultCalloutCenter.toFixed(1)+' '+defaultCalloutY.toFixed(1)+')" aria-hidden="true"><rect class="program-history-callout-box" x="-48" y="0" width="96" height="34" rx="10"></rect><path class="program-history-callout-pointer" d="M'+(defaultPointerX-5).toFixed(1)+' 33 L'+defaultPointerX.toFixed(1)+' 40 L'+(defaultPointerX+5).toFixed(1)+' 33 Z"></path><text class="program-history-readout-date" x="0" y="12" text-anchor="middle">'+fox2Escape(defaultReadoutDate)+'</text><text class="program-history-readout-value" x="0" y="27" text-anchor="middle">'+fox2Escape(defaultReadoutValue)+'</text></g>':'';
+  var historyChart='<div class="program-history-chart'+(defaultSelectedDay?' has-selection':'')+'"><span class="sr-only program-history-live" aria-live="polite">'+fox2Escape(defaultReadoutDate+' '+defaultReadoutValue)+'</span><svg viewBox="0 0 336 218" role="group" aria-label="Thirty days of Fat Use Scores, filling from left to right"><line class="program-history-axis" x1="'+chartLeft+'" y1="'+plotBottom+'" x2="'+chartRight+'" y2="'+plotBottom+'"></line>'+chartDates+chartSlots+baselineMark+chartBars+todayMarker+callout+'</svg></div>';
   var currentDayNote=today?'<p class="program-current-day-note"><strong>Today is still accumulating.</strong> It will be included in your progress after the day is complete.</p>':'';
   var previousChangeRecords=Array.isArray(fox2Program.resultHistory)?fox2Program.resultHistory:[];
   var hasActiveChange=!!(programStart&&fox2Program.action);
@@ -7415,7 +7421,10 @@ function fox2InitProgressChartSelection(root){
     var hits=Array.prototype.slice.call(chart.querySelectorAll('[data-progress-day="1"]'));
     var dateReadout=chart.querySelector('.program-history-readout-date');
     var valueReadout=chart.querySelector('.program-history-readout-value');
-    if(!svg||!hits.length||!dateReadout||!valueReadout) return;
+    var callout=chart.querySelector('.program-history-callout');
+    var calloutPointer=chart.querySelector('.program-history-callout-pointer');
+    var liveReadout=chart.querySelector('.program-history-live');
+    if(!svg||!hits.length||!dateReadout||!valueReadout||!callout||!calloutPointer) return;
 
     function selectDay(hit){
       if(!hit) return;
@@ -7428,6 +7437,14 @@ function fox2InitProgressChartSelection(root){
       });
       dateReadout.textContent=current?'Today':fox2ShortDate(date);
       valueReadout.textContent=current?score+' so far':'Final score '+score;
+      if(liveReadout) liveReadout.textContent=dateReadout.textContent+' '+valueReadout.textContent;
+      var barX=Number(hit.getAttribute('data-progress-x'))||10;
+      var barTop=Number(hit.getAttribute('data-progress-top'))||48;
+      var calloutX=Math.max(50,Math.min(286,barX));
+      var calloutY=Math.max(2,barTop-42);
+      var pointerX=Math.max(-40,Math.min(40,barX-calloutX));
+      callout.setAttribute('transform','translate('+calloutX.toFixed(1)+' '+calloutY.toFixed(1)+')');
+      calloutPointer.setAttribute('d','M'+(pointerX-5).toFixed(1)+' 33 L'+pointerX.toFixed(1)+' 40 L'+(pointerX+5).toFixed(1)+' 33 Z');
       chart.classList.add('has-selection');
     }
 
