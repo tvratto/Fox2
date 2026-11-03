@@ -2393,20 +2393,20 @@ html.payload-unsupported #update-banner { display: none !important; }
 <body>
 
 <div class="top-header">
-  <div class="top-header-inner">
-    <button class="nav-tab active" data-page="0">Progress</button>
-    <button class="nav-tab" data-page="1">Data</button>
-    <button class="nav-tab" data-page="2">History</button>
-    <button class="nav-tab" data-page="3">Analysis</button>
+  <div class="top-header-inner" role="tablist" aria-label="FOX2 results">
+    <button class="nav-tab active" id="tab-progress" role="tab" aria-selected="true" aria-controls="panel-progress" tabindex="0" data-page="0">Progress</button>
+    <button class="nav-tab" id="tab-data" role="tab" aria-selected="false" aria-controls="panel-data" tabindex="-1" data-page="1">Data</button>
+    <button class="nav-tab" id="tab-history" role="tab" aria-selected="false" aria-controls="panel-history" tabindex="-1" data-page="2">History</button>
+    <button class="nav-tab" id="tab-analysis" role="tab" aria-selected="false" aria-controls="panel-analysis" tabindex="-1" data-page="3">Analysis</button>
   </div>
   <div id="debug-bar" style="display:none;">v1.1</div>
 </div>
 
 <div class="scroll-x is-initializing" id="scroller">
-  <div class="page program-page">
+  <div class="page program-page" id="panel-progress" role="tabpanel" aria-labelledby="tab-progress">
     <main class="program-shell" id="program-shell" aria-live="polite"></main>
   </div>
-  <div class="page">
+  <div class="page" id="panel-data" role="tabpanel" aria-labelledby="tab-data" aria-hidden="true" inert>
 <div id="results-page" style="width:100%;height:100%;">
 <canvas id="particles"></canvas>
 <div id="dragGhost"><span id="ghostIcon"></span><span class="ghostName" id="ghostName"></span></div>
@@ -2445,7 +2445,7 @@ html.payload-unsupported #update-banner { display: none !important; }
 </div>
 </div>
   </div>
-  <div class="page">
+  <div class="page" id="panel-history" role="tabpanel" aria-labelledby="tab-history" aria-hidden="true" inert>
     <div class="card-wrap" style="position:relative;">
       <canvas id="card-fuel" style="cursor:pointer;"></canvas>
       <div id="dot-popup-fuel" style="display:none;position:fixed;background:rgba(20,20,35,0.95);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:6px 10px;pointer-events:none;z-index:999999;white-space:nowrap;">
@@ -2454,7 +2454,7 @@ html.payload-unsupported #update-banner { display: none !important; }
       </div>
     </div>
   </div>
-  <div class="page analysis-page">
+  <div class="page analysis-page" id="panel-analysis" role="tabpanel" aria-labelledby="tab-analysis" aria-hidden="true" inert>
     <div class="analysis-shell" id="analysis-shell">
       <section class="analysis-card analysis-empty" id="analysis-loading">Loading your complete history…</section>
     </div>
@@ -6605,6 +6605,15 @@ var fox2PreparedShareFingerprint='';
 var fox2PreparedShareToken='';
 var fox2PreparedSharePromise=null;
 var fox2LastProgressAnimationKey='';
+var fox2ProgramRemoteRevision=0;
+var fox2ProgramRemoteLoaded=false;
+var fox2ProgramRemoteSaving=false;
+var fox2ProgramRemoteSaveAgain=false;
+var fox2ProgramRemoteSaveTimer=0;
+var fox2ProgramRemoteGeneration=0;
+var fox2ApplyingRemoteProgram=false;
+var fox2ProgramRemoteRetryTimer=0;
+var fox2ProgramRemoteRetryDelay=15000;
 
 function fox2InvalidatePreparedShare(){
   // Never let a just-edited program briefly share the previous frozen state.
@@ -6721,6 +6730,38 @@ function fox2ProgramBackupStorageKey(){ return fox2ProgramStorageKey()+':previou
 
 function fox2SetupTokenStorageKey(){ return fox2ProgramStorageKey()+':setup-token'; }
 
+function fox2ProgramRemoteMetaStorageKey(){ return fox2ProgramStorageKey()+':remote'; }
+
+function fox2ProgramRemoteDeviceId(){
+  var id=String(params.get('id')||'');
+  return /^[A-Za-z0-9_-]{1,128}$/.test(id)?id:'';
+}
+
+function fox2LoadProgramRemoteMeta(){
+  try{
+    var meta=JSON.parse(localStorage.getItem(fox2ProgramRemoteMetaStorageKey())||'null');
+    return meta&&typeof meta==='object'?meta:{revision:0,dirty:false,forceReset:false};
+  }catch(e){return {revision:0,dirty:false,forceReset:false};}
+}
+
+function fox2SaveProgramRemoteMeta(revision,dirty,forceReset){
+  try{
+    localStorage.setItem(fox2ProgramRemoteMetaStorageKey(),JSON.stringify({
+      revision:Math.max(0,Math.round(Number(revision)||0)),
+      dirty:!!dirty,
+      forceReset:!!forceReset,
+      updatedAt:new Date().toISOString()
+    }));
+  }catch(e){}
+}
+
+function fox2MarkRemoteProgramDirty(forceReset){
+  if(fox2ProgramReadOnly||fox2DemoMode||fox2ApplyingRemoteProgram||!fox2ProgramRemoteDeviceId()) return;
+  var meta=fox2LoadProgramRemoteMeta();
+  fox2ProgramRemoteGeneration++;
+  fox2SaveProgramRemoteMeta(meta.revision||fox2ProgramRemoteRevision,true,!!forceReset||!!meta.forceReset);
+}
+
 function fox2SaveProgramBackup(reason){
   if(fox2ProgramReadOnly||!fox2Program) return;
   try{
@@ -6760,6 +6801,22 @@ function fox2DefaultProgram(){
   };
 }
 
+function fox2NormalizeActiveProgram(raw){
+  raw=raw&&typeof raw==='object'?raw:{};
+  var normalized=fox2NormalizeSharedProgram({program:raw});
+  normalized.optedOut=!!raw.optedOut;
+  normalized.setupMode=['new','change','restart'].indexOf(raw.setupMode)>=0?raw.setupMode:'new';
+  normalized.firstMeasurementSynced=!!raw.firstMeasurementSynced;
+  return normalized;
+}
+
+function fox2ProgramHasMeaningfulState(program){
+  if(!program||typeof program!=='object') return false;
+  return !!(program.action||program.baselineStart||program.measureStart||
+    Number(program.baselineValue)>0||program.optedOut||
+    (Array.isArray(program.resultHistory)&&program.resultHistory.length));
+}
+
 function fox2LoadProgram(){
   var fallback=fox2DefaultProgram();
   if(fox2ProgramSnapshot) return fox2NormalizeSharedProgram(fox2ProgramSnapshot);
@@ -6777,6 +6834,7 @@ function fox2LoadProgram(){
       }
       localStorage.setItem(fox2SetupTokenStorageKey(),fox2SetupToken);
       localStorage.setItem(programKey,JSON.stringify(fallback));
+      fox2MarkRemoteProgramDirty(true);
       return fallback;
     }
     if(!saved||typeof saved!=='object'){
@@ -6809,6 +6867,7 @@ function fox2ApplyProgramRecoveryParam(){
     measureStart:measureStart
   });
   try{localStorage.setItem(fox2ProgramStorageKey(),JSON.stringify(fox2Program));}catch(e){}
+  fox2MarkRemoteProgramDirty(true);
   try{
     var cleanUrl=new URL(window.location.href);
     cleanUrl.searchParams.delete('program_recover');
@@ -6821,9 +6880,176 @@ fox2ApplyProgramRecoveryParam();
 function fox2SaveProgram(){
   if(fox2ProgramReadOnly||fox2DemoMode) return;
   try{ localStorage.setItem(fox2ProgramStorageKey(),JSON.stringify(fox2Program)); }catch(e){}
+  fox2MarkRemoteProgramDirty();
+  fox2QueueRemoteProgramSave();
   fox2InvalidatePreparedShare();
   if(typeof fox2PrepareFrozenShare==='function') setTimeout(fox2PrepareFrozenShare,0);
 }
+
+function fox2BuildRemoteProgramState(){
+  return {
+    v:1,
+    program:{
+      screen:fox2Program.screen,
+      optedOut:!!fox2Program.optedOut,
+      setupMode:fox2Program.setupMode,
+      baselineMode:fox2Program.baselineMode,
+      action:String(fox2Program.action||'').slice(0,2000),
+      baselineStart:fox2IsoOrBlank(fox2Program.baselineStart),
+      baselineValue:Number(fox2Program.baselineValue)>0?Number(fox2Program.baselineValue):null,
+      baselineSource:String(fox2Program.baselineSource||'').slice(0,40),
+      baselineRange:String(fox2Program.baselineRange||'').slice(0,80),
+      measureStart:fox2IsoOrBlank(fox2Program.measureStart),
+      targetDays:fox2ProgramTargetDays(),
+      resultHistory:(Array.isArray(fox2Program.resultHistory)?fox2Program.resultHistory:[]).slice(-20).map(function(item){
+        return {id:String(item&&item.id||'').slice(0,220),action:String(item&&item.action||'').slice(0,2000),before:Number(item&&item.before)||0,after:Number(item&&item.after)||0,change:Number(item&&item.change)||0,date:fox2IsoOrBlank(item&&item.date)};
+      }),
+      firstMeasurementSynced:!!fox2Program.firstMeasurementSynced
+    }
+  };
+}
+
+function fox2RemoteProgramRequest(name,body){
+  return fetch(FOX2_SUPABASE_URL+'/rest/v1/rpc/'+name,{
+    method:'POST',
+    headers:{'Content-Type':'application/json','apikey':FOX2_SUPABASE_KEY,'Authorization':'Bearer '+FOX2_SUPABASE_KEY},
+    body:JSON.stringify(body)
+  }).then(function(response){
+    if(!response.ok) throw new Error(name+' failed: '+response.status);
+    return response.json();
+  });
+}
+
+function fox2ResetRemoteProgramRetry(){
+  clearTimeout(fox2ProgramRemoteRetryTimer);
+  fox2ProgramRemoteRetryTimer=0;
+  fox2ProgramRemoteRetryDelay=15000;
+}
+
+function fox2ScheduleRemoteProgramRetry(){
+  if(fox2ProgramReadOnly||fox2DemoMode||!fox2ProgramRemoteDeviceId()||fox2ProgramRemoteRetryTimer) return;
+  var delay=fox2ProgramRemoteRetryDelay;
+  fox2ProgramRemoteRetryDelay=Math.min(300000,fox2ProgramRemoteRetryDelay*4);
+  fox2ProgramRemoteRetryTimer=setTimeout(function(){
+    fox2ProgramRemoteRetryTimer=0;
+    if(fox2ProgramRemoteLoaded) fox2QueueRemoteProgramSave();
+    else fox2LoadRemoteProgramState();
+  },delay);
+}
+
+function fox2ApplyRemoteProgramState(remoteState,revision){
+  if(!remoteState||remoteState.v!==1||!remoteState.program||typeof remoteState.program!=='object') return false;
+  fox2ApplyingRemoteProgram=true;
+  fox2Program=fox2NormalizeActiveProgram(remoteState.program);
+  try{localStorage.setItem(fox2ProgramStorageKey(),JSON.stringify(fox2Program));}catch(e){}
+  fox2ApplyingRemoteProgram=false;
+  fox2ProgramRemoteRevision=Math.max(0,Math.round(Number(revision)||0));
+  fox2SaveProgramRemoteMeta(fox2ProgramRemoteRevision,false,false);
+  fox2InvalidatePreparedShare();
+  if(typeof fox2RenderProgram==='function') fox2RenderProgram();
+  if(typeof fox2PrepareFrozenShare==='function') setTimeout(fox2PrepareFrozenShare,0);
+  return true;
+}
+
+function fox2LoadRemoteProgramState(){
+  var deviceId=fox2ProgramRemoteDeviceId();
+  if(!deviceId||fox2ProgramReadOnly||fox2DemoMode){fox2ProgramRemoteLoaded=true;return Promise.resolve(null);}
+  return fox2RemoteProgramRequest('get_device_program_state',{p_device_id:deviceId}).then(function(remote){
+    var meta=fox2LoadProgramRemoteMeta();
+    fox2ProgramRemoteLoaded=true;
+    fox2ResetRemoteProgramRetry();
+    if(!remote||!remote.state){
+      fox2ProgramRemoteRevision=0;
+      if(meta.dirty||fox2ProgramHasMeaningfulState(fox2Program)){
+        fox2MarkRemoteProgramDirty(!!meta.forceReset);
+        fox2QueueRemoteProgramSave();
+      }else{
+        fox2SaveProgramRemoteMeta(0,false,false);
+      }
+      return null;
+    }
+
+    fox2ProgramRemoteRevision=Math.max(0,Math.round(Number(remote.revision)||0));
+    if(meta.dirty&&fox2ProgramHasMeaningfulState(fox2Program)){
+      if(meta.forceReset||Math.max(0,Math.round(Number(meta.revision)||0))===fox2ProgramRemoteRevision){
+        // This browser edited the revision it just fetched, or the physical
+        // device explicitly started a new setup. It is safe to publish.
+        fox2SaveProgramRemoteMeta(fox2ProgramRemoteRevision,true,!!meta.forceReset);
+        fox2QueueRemoteProgramSave();
+        return remote;
+      }
+
+      // Another browser saved a newer revision while this browser was away.
+      // Preserve the local draft for Help > Restore, but never let a stale tab
+      // silently overwrite the newer cross-device state.
+      fox2SaveProgramBackup('updated on another device');
+      fox2ApplyRemoteProgramState(remote.state,fox2ProgramRemoteRevision);
+      var conflictStatus=document.getElementById('program-status');
+      if(conflictStatus) conflictStatus.textContent='Progress was updated on another device.';
+      return remote;
+    }
+
+    fox2ApplyRemoteProgramState(remote.state,fox2ProgramRemoteRevision);
+    return remote;
+  }).catch(function(){
+    // Browser storage remains the recovery copy while offline. The online
+    // event below retries immediately; bounded backoff also heals a temporary
+    // service interruption without requiring a reload or another edit.
+    fox2ProgramRemoteLoaded=false;
+    fox2ScheduleRemoteProgramRetry();
+    return null;
+  });
+}
+
+function fox2QueueRemoteProgramSave(){
+  if(!fox2ProgramRemoteLoaded||fox2ProgramReadOnly||fox2DemoMode||!fox2ProgramRemoteDeviceId()) return;
+  if(fox2ProgramRemoteSaving){fox2ProgramRemoteSaveAgain=true;return;}
+  clearTimeout(fox2ProgramRemoteSaveTimer);
+  fox2ProgramRemoteSaveTimer=setTimeout(fox2FlushRemoteProgramSave,250);
+}
+
+function fox2FlushRemoteProgramSave(){
+  var deviceId=fox2ProgramRemoteDeviceId();
+  if(!deviceId||fox2ProgramReadOnly||fox2DemoMode||!fox2ProgramRemoteLoaded) return;
+  if(fox2ProgramRemoteSaving){fox2ProgramRemoteSaveAgain=true;return;}
+  fox2ProgramRemoteSaving=true;
+  fox2ProgramRemoteSaveAgain=false;
+  var generation=fox2ProgramRemoteGeneration;
+  var state=fox2BuildRemoteProgramState();
+  fox2RemoteProgramRequest('save_device_program_state',{
+    p_device_id:deviceId,
+    p_state:state,
+    p_expected_revision:fox2ProgramRemoteRevision
+  }).then(function(result){
+    if(result&&result.ok){
+      fox2ProgramRemoteRevision=Math.max(0,Math.round(Number(result.revision)||0));
+      fox2SaveProgramRemoteMeta(fox2ProgramRemoteRevision,generation!==fox2ProgramRemoteGeneration,false);
+      fox2ResetRemoteProgramRetry();
+      return;
+    }
+    if(result&&result.conflict&&result.state){
+      fox2ProgramRemoteSaveAgain=false;
+      fox2ApplyRemoteProgramState(result.state,result.revision);
+      var status=document.getElementById('program-status');
+      if(status) status.textContent='Progress was updated on another device.';
+      return;
+    }
+    throw new Error('program save failed');
+  }).catch(function(){
+    var meta=fox2LoadProgramRemoteMeta();
+    fox2SaveProgramRemoteMeta(fox2ProgramRemoteRevision,true,!!meta.forceReset);
+    fox2ScheduleRemoteProgramRetry();
+  }).finally(function(){
+    fox2ProgramRemoteSaving=false;
+    if(fox2ProgramRemoteSaveAgain||generation!==fox2ProgramRemoteGeneration) fox2QueueRemoteProgramSave();
+  });
+}
+
+window.addEventListener('online',function(){
+  fox2ResetRemoteProgramRetry();
+  if(fox2ProgramRemoteLoaded) fox2QueueRemoteProgramSave();
+  else fox2LoadRemoteProgramState();
+});
 
 function fox2Escape(value){
   return String(value==null?'':value).replace(/[&<>'"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c];});
@@ -8641,6 +8867,7 @@ function fox2InitProgram(){
   fox2RenderProgram();
   fox2RouteInitialPage();
   fox2PrepareFrozenShare();
+  fox2LoadRemoteProgramState();
 }
 
 // ── Page navigation: tabs + share routing ──
@@ -8680,13 +8907,25 @@ function handleBottomShare() {
 (function() {
   var scroller = document.getElementById('scroller');
   var tabs = document.querySelectorAll('.nav-tab');
+  var pagePanels = scroller.children;
   var initialPageIndex = 0;
   var initialRouteLocked = true;
 
   function updatePage(idx) {
-    if (idx === currentPage) return;
+    idx=Math.max(0,Math.min(tabs.length-1,Number(idx)||0));
+    var changed=idx!==currentPage;
     currentPage = idx;
-    for (var i = 0; i < tabs.length; i++) tabs[i].classList.toggle('active', i === idx);
+    for (var i = 0; i < tabs.length; i++) {
+      var active=i===idx;
+      tabs[i].classList.toggle('active',active);
+      tabs[i].setAttribute('aria-selected',active?'true':'false');
+      tabs[i].tabIndex=active?0:-1;
+      if(pagePanels[i]){
+        pagePanels[i].setAttribute('aria-hidden',active?'false':'true');
+        pagePanels[i].toggleAttribute('inert',!active);
+      }
+    }
+    if(!changed) return;
     // Clear any open popups when switching pages
     var p1 = document.getElementById('dot-popup');
     var p2 = document.getElementById('dot-popup-fuel');
@@ -8751,6 +8990,16 @@ function handleBottomShare() {
         window.fox2GoToPage(idx,true);
       };
     })(i));
+    tabs[i].addEventListener('keydown',function(event){
+      if(event.key!=='ArrowLeft'&&event.key!=='ArrowRight'&&event.key!=='Home'&&event.key!=='End') return;
+      event.preventDefault();
+      var idx=Number(this.dataset.page)||0;
+      if(event.key==='Home') idx=0;
+      else if(event.key==='End') idx=tabs.length-1;
+      else idx=(idx+(event.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;
+      window.fox2GoToPage(idx,true);
+      tabs[idx].focus();
+    });
   }
 
   // Dismiss the tag-pattern popup on any tap/click outside the insights canvas
