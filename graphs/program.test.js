@@ -557,6 +557,10 @@ assert.ok(source.includes('program-history-readout-date')&&source.includes('prog
   'the chart should show one calm date-and-score readout instead of a visible value axis');
 assert.ok(source.includes('program-history-callout-pointer')&&source.includes('data-progress-x=')&&source.includes("callout.setAttribute('transform'"),
   'the selected value should remain visibly anchored to its bar as the selection moves');
+assert.ok(source.includes('program-history-callout-close')&&source.includes('program-history-callout-reopen')&&source.includes('function setCalloutCollapsed(collapsed)'),
+  'the selected-value label should collapse to its caret and reopen from the caret or a bar');
+assert.ok(source.includes('defaultCalloutTop-47')&&source.includes('M-5 37 L0 44 L5 37 Z'),
+  'the label should retain a small visual gap above its caret');
 assert.ok(source.includes('completedShownDays[completedShownDays.length-1]')&&source.includes("'Final score '+fox2Round(defaultSelectedDay.score)"),
   'the latest completed score should be selected by default even when today is unfinished');
 assert.ok(source.includes("current?score+' so far':'Final score '+score")&&source.includes('data-progress-current='),

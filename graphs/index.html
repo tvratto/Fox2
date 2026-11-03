@@ -419,9 +419,22 @@ html, body {
 .program-calendar { width:100%; margin:8px 0 13px; padding:11px; border-radius:18px; background:#050505; }
 .program-history-chart { width:100%; }
 .program-history-chart svg { display:block; width:100%; height:auto; overflow:visible; }
-.program-history-callout { pointer-events:none; }
+.program-history-callout-box,.program-history-readout-date,.program-history-readout-value,.program-history-callout-close { transition:opacity .16s ease; }
 .program-history-callout-box { fill:#15110d; stroke:rgba(255,140,0,.58); stroke-width:1; filter:drop-shadow(0 3px 5px rgba(0,0,0,.46)); }
-.program-history-callout-pointer { fill:#15110d; stroke:rgba(255,140,0,.58); stroke-width:1; stroke-linejoin:round; }
+.program-history-callout-pointer { fill:#15110d; stroke:rgba(255,140,0,.72); stroke-width:1; stroke-linejoin:round; transition:fill .16s ease,stroke .16s ease; }
+.program-history-callout-close,.program-history-callout-reopen { cursor:pointer; }
+.program-history-callout-close:focus,.program-history-callout-reopen:focus { outline:none; }
+.program-history-callout-close:focus-visible .program-history-callout-close-text { fill:#fff; }
+.program-history-callout-reopen:focus-visible .program-history-callout-pointer { stroke:#fff; stroke-width:2; }
+.program-history-callout-close-hit,.program-history-callout-reopen-hit { fill:transparent; }
+.program-history-callout-close-hit { pointer-events:all; }
+.program-history-callout-reopen-hit { pointer-events:none; }
+.program-history-callout-close-text { fill:rgba(255,255,255,.64); font:800 12px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; }
+.program-history-callout-reopen { pointer-events:none; }
+.program-history-callout.is-collapsed .program-history-callout-box,.program-history-callout.is-collapsed .program-history-readout-date,.program-history-callout.is-collapsed .program-history-readout-value,.program-history-callout.is-collapsed .program-history-callout-close { opacity:0; pointer-events:none; }
+.program-history-callout.is-collapsed .program-history-callout-pointer { fill:var(--program-orange); stroke:var(--program-orange); filter:drop-shadow(0 0 3px rgba(255,140,0,.55)); }
+.program-history-callout.is-collapsed .program-history-callout-reopen { pointer-events:all; }
+.program-history-callout.is-collapsed .program-history-callout-reopen-hit { pointer-events:all; }
 .program-history-readout-date { fill:rgba(255,255,255,.58); font:850 8px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; letter-spacing:.03em; text-transform:uppercase; }
 .program-history-readout-value { fill:#fff; font:950 11px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; letter-spacing:-.02em; }
 .program-current-day-note { margin:8px 4px 2px; color:rgba(255,255,255,.62); font-size:13px; line-height:1.38; font-weight:650; }
@@ -7384,8 +7397,8 @@ function fox2ProgressHtml(metrics){
   var baselineMark=hasBaseline?'<line class="program-history-baseline" x1="'+chartLeft+'" y1="'+baselineY.toFixed(1)+'" x2="'+chartRight+'" y2="'+baselineY.toFixed(1)+'"></line><text class="program-history-baseline-label" x="'+chartRight+'" y="'+Math.max(29,baselineY-6).toFixed(1)+'" text-anchor="end">BASELINE '+fox2Round(baseline)+'</text>':'';
   var defaultReadoutDate=defaultSelectedDay?(defaultSelectedDay.current?'Today':fox2ShortDate(defaultSelectedDay.date)):'';
   var defaultReadoutValue=defaultSelectedDay?(defaultSelectedDay.current?fox2Round(defaultSelectedDay.score)+' so far':'Final score '+fox2Round(defaultSelectedDay.score)):'';
-  var defaultCalloutCenter=Math.max(50,Math.min(286,defaultCalloutX)),defaultCalloutY=Math.max(2,defaultCalloutTop-42),defaultPointerX=Math.max(-40,Math.min(40,defaultCalloutX-defaultCalloutCenter));
-  var callout=defaultSelectedDay?'<g class="program-history-callout" transform="translate('+defaultCalloutCenter.toFixed(1)+' '+defaultCalloutY.toFixed(1)+')" aria-hidden="true"><rect class="program-history-callout-box" x="-48" y="0" width="96" height="34" rx="10"></rect><path class="program-history-callout-pointer" d="M'+(defaultPointerX-5).toFixed(1)+' 33 L'+defaultPointerX.toFixed(1)+' 40 L'+(defaultPointerX+5).toFixed(1)+' 33 Z"></path><text class="program-history-readout-date" x="0" y="12" text-anchor="middle">'+fox2Escape(defaultReadoutDate)+'</text><text class="program-history-readout-value" x="0" y="27" text-anchor="middle">'+fox2Escape(defaultReadoutValue)+'</text></g>':'';
+  var defaultCalloutCenter=Math.max(50,Math.min(286,defaultCalloutX)),defaultCalloutY=Math.max(1,defaultCalloutTop-47),defaultPointerX=Math.max(-40,Math.min(40,defaultCalloutX-defaultCalloutCenter));
+  var callout=defaultSelectedDay?'<g class="program-history-callout" transform="translate('+defaultCalloutCenter.toFixed(1)+' '+defaultCalloutY.toFixed(1)+')" aria-expanded="true"><rect class="program-history-callout-box" x="-48" y="0" width="96" height="32" rx="10"></rect><text class="program-history-readout-date" x="0" y="11" text-anchor="middle">'+fox2Escape(defaultReadoutDate)+'</text><text class="program-history-readout-value" x="0" y="25" text-anchor="middle">'+fox2Escape(defaultReadoutValue)+'</text><g class="program-history-callout-close" role="button" tabindex="0" aria-label="Hide selected score"><circle class="program-history-callout-close-hit" cx="39" cy="8" r="11"></circle><text class="program-history-callout-close-text" x="39" y="11" text-anchor="middle">×</text></g><g class="program-history-callout-reopen" transform="translate('+defaultPointerX.toFixed(1)+' 0)" role="button" tabindex="-1" aria-label="Show selected score"><rect class="program-history-callout-reopen-hit" x="-18" y="27" width="36" height="20" rx="8"></rect><path class="program-history-callout-pointer" d="M-5 37 L0 44 L5 37 Z"></path></g></g>':'';
   var historyChart='<div class="program-history-chart'+(defaultSelectedDay?' has-selection':'')+'"><span class="sr-only program-history-live" aria-live="polite">'+fox2Escape(defaultReadoutDate+' '+defaultReadoutValue)+'</span><svg viewBox="0 0 336 218" role="group" aria-label="Thirty days of Fat Use Scores, filling from left to right"><line class="program-history-axis" x1="'+chartLeft+'" y1="'+plotBottom+'" x2="'+chartRight+'" y2="'+plotBottom+'"></line>'+chartDates+chartSlots+baselineMark+chartBars+todayMarker+callout+'</svg></div>';
   var currentDayNote=today?'<p class="program-current-day-note"><strong>Today is still accumulating.</strong> It will be included in your progress after the day is complete.</p>':'';
   var previousChangeRecords=Array.isArray(fox2Program.resultHistory)?fox2Program.resultHistory:[];
@@ -7422,9 +7435,17 @@ function fox2InitProgressChartSelection(root){
     var dateReadout=chart.querySelector('.program-history-readout-date');
     var valueReadout=chart.querySelector('.program-history-readout-value');
     var callout=chart.querySelector('.program-history-callout');
-    var calloutPointer=chart.querySelector('.program-history-callout-pointer');
+    var calloutClose=chart.querySelector('.program-history-callout-close');
+    var calloutReopen=chart.querySelector('.program-history-callout-reopen');
     var liveReadout=chart.querySelector('.program-history-live');
-    if(!svg||!hits.length||!dateReadout||!valueReadout||!callout||!calloutPointer) return;
+    if(!svg||!hits.length||!dateReadout||!valueReadout||!callout||!calloutClose||!calloutReopen) return;
+
+    function setCalloutCollapsed(collapsed){
+      callout.classList.toggle('is-collapsed',collapsed);
+      callout.setAttribute('aria-expanded',collapsed?'false':'true');
+      calloutClose.setAttribute('tabindex',collapsed?'-1':'0');
+      calloutReopen.setAttribute('tabindex',collapsed?'0':'-1');
+    }
 
     function selectDay(hit){
       if(!hit) return;
@@ -7441,12 +7462,24 @@ function fox2InitProgressChartSelection(root){
       var barX=Number(hit.getAttribute('data-progress-x'))||10;
       var barTop=Number(hit.getAttribute('data-progress-top'))||48;
       var calloutX=Math.max(50,Math.min(286,barX));
-      var calloutY=Math.max(2,barTop-42);
+      var calloutY=Math.max(1,barTop-47);
       var pointerX=Math.max(-40,Math.min(40,barX-calloutX));
       callout.setAttribute('transform','translate('+calloutX.toFixed(1)+' '+calloutY.toFixed(1)+')');
-      calloutPointer.setAttribute('d','M'+(pointerX-5).toFixed(1)+' 33 L'+pointerX.toFixed(1)+' 40 L'+(pointerX+5).toFixed(1)+' 33 Z');
+      calloutReopen.setAttribute('transform','translate('+pointerX.toFixed(1)+' 0)');
+      setCalloutCollapsed(false);
       chart.classList.add('has-selection');
     }
+
+    function activateControl(event,action){
+      if(event.type==='keydown'&&event.key!=='Enter'&&event.key!==' ') return;
+      event.preventDefault();
+      event.stopPropagation();
+      action();
+    }
+    calloutClose.addEventListener('click',function(event){activateControl(event,function(){setCalloutCollapsed(true);});});
+    calloutClose.addEventListener('keydown',function(event){activateControl(event,function(){setCalloutCollapsed(true);calloutReopen.focus();});});
+    calloutReopen.addEventListener('click',function(event){activateControl(event,function(){setCalloutCollapsed(false);});});
+    calloutReopen.addEventListener('keydown',function(event){activateControl(event,function(){setCalloutCollapsed(false);calloutClose.focus();});});
 
     hits.forEach(function(hit){
       hit.addEventListener('click',function(){selectDay(hit);});
