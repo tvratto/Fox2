@@ -7386,10 +7386,13 @@ function fox2ProgressHtml(metrics){
     ?days.filter(function(day){return day.date>=programStart;}).slice(0,chartTarget)
     :days.slice(-chartTarget);
   var graphStart=programStart||(chartDays.length?chartDays[0].date:todayIso);
+  var chartDayByDate={};
+  chartDays.forEach(function(day){chartDayByDate[day.date]=day;});
   var slots=[];
   for(var slotIndex=0;slotIndex<chartTarget;slotIndex++){
-    var slotDay=chartDays[slotIndex]||null;
-    slots.push({date:slotDay?slotDay.date:fox2AddIsoDays(graphStart,slotIndex),day:slotDay,current:!!(slotDay&&slotDay.current)});
+    var slotDate=fox2AddIsoDays(graphStart,slotIndex);
+    var slotDay=chartDayByDate[slotDate]||null;
+    slots.push({date:slotDate,day:slotDay,current:!!(slotDay&&slotDay.current)});
   }
   var shownDays=slots.filter(function(slot){return !!slot.day;}).map(function(slot){return slot.day;});
   var completedShownDays=shownDays.filter(function(day){return !day.current;});

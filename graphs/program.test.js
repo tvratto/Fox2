@@ -81,6 +81,23 @@ function functionSource(name,nextName){
     'a daytime sync should animate today’s bar without recalculating the completed-day percentage');
   assert.ok(html.includes('data-program-action="open-past-results">Past results</button>')&&!html.includes('Add a walk after eating'),
     'Progress should keep prior changes behind one quiet Past results link rather than lengthening the main card');
+  const originalTodayIso=context.fox2TodayIso;
+  const originalTodayProgramDay=context.fox2TodayProgramDay;
+  const originalCompletedScoreDays=context.fox2AllCompletedScoreDays;
+  const originalMeasureStart=context.fox2Program.measureStart;
+  context.fox2Program.measureStart='2026-10-28';
+  context.fox2TodayIso=()=> '2026-11-03';
+  context.fox2TodayProgramDay=()=>({date:'2026-11-03',score:68,readings:1});
+  context.fox2AllCompletedScoreDays=()=>[{date:'2026-10-28',score:72},{date:'2026-10-31',score:83}];
+  const sparseHtml=context.fox2ProgressHtml({baseline:75,measureDays:[{score:83}],elapsedDays:7,savedResult:null});
+  const todayBarX=sparseHtml.match(/data-progress-date="2026-11-03" x1="([0-9.]+)"/);
+  const todayDotX=sparseHtml.match(/class="program-history-today-dot" cx="([0-9.]+)"/);
+  assert.ok(todayBarX&&todayDotX&&todayBarX[1]===todayDotX[1],
+    'a current-day bar should use its real calendar slot and align with the today marker after missed days');
+  context.fox2Program.measureStart=originalMeasureStart;
+  context.fox2TodayIso=originalTodayIso;
+  context.fox2TodayProgramDay=originalTodayProgramDay;
+  context.fox2AllCompletedScoreDays=originalCompletedScoreDays;
   const content={innerHTML:'',querySelectorAll(){return[];}},edit={textContent:'',hidden:false,setAttribute(){}},undo={hidden:true};
   const overlay={classList:{add(){}},querySelector(){return null;}};
   context.document={getElementById:id=>id==='past-results-content'?content:id==='past-results-edit'?edit:id==='past-results-undo'?undo:overlay};
@@ -596,8 +613,8 @@ assert.ok(source.includes('--today-color:var(--program-orange)'),
   'the web Progress score ring should use the established FOX2 web orange');
 assert.ok(source.includes('slotIndex<chartTarget')&&source.includes('30-Day Progress')&&source.includes('program-history-date'),
   'Progress should use one dated 30-day history chart');
-assert.ok(source.includes('var slotDay=chartDays[slotIndex]||null'),
-  'daily scores should fill the 30-day chart from left to right');
+assert.ok(source.includes('var slotDate=fox2AddIsoDays(graphStart,slotIndex)')&&source.includes('var slotDay=chartDayByDate[slotDate]||null'),
+  'daily scores should occupy their real calendar slots while the 30-day chart fills left to right');
 assert.ok(source.includes('y="211"')&&source.includes('viewBox="0 0 336 218"'),
   'the 30-day date labels should sit on the X-axis beneath the bars');
 assert.ok(source.includes('class="program-history-today-dot"')&&source.includes('todayOffset=fox2DaysBetween(graphStart,todayIso)')&&source.includes('aria-label="Today, '),
