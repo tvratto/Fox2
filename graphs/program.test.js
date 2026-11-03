@@ -547,6 +547,8 @@ assert.ok(!source.includes('.program-canonical-progress-ring .program-today-valu
   'the essential recap sequence should remain visible when a phone has Reduce Motion enabled');
 assert.ok(source.includes("progressBars.removeAttribute('aria-hidden')")&&source.includes('recapOverlay.remove()'),
   'the recap overlay should leave one clean, accessible Progress view after its animation');
+assert.ok(source.includes('.program-canonical-progress.has-recap:not(.is-bars) .program-history-callout { opacity:0;')&&source.includes('transition:opacity .24s ease .18s'),
+  'the selected-bar callout should wait until the recap ring has become the new bar');
 assert.ok(source.includes('program-history-bar')&&source.includes('stroke:var(--program-orange)'),
   'every daily score bar should use the established FOX2 web orange');
 assert.ok(source.includes('program-history-today-outline')&&source.includes('stroke:#ffd84d'),

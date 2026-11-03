@@ -420,6 +420,8 @@ html, body {
 .program-history-chart { width:100%; }
 .program-history-chart svg { display:block; width:100%; height:auto; overflow:visible; }
 .program-history-callout-box,.program-history-readout-date,.program-history-readout-value,.program-history-callout-close { transition:opacity .16s ease; }
+.program-history-callout { opacity:1; transition:opacity .24s ease .18s; }
+.program-canonical-progress.has-recap:not(.is-bars) .program-history-callout { opacity:0; pointer-events:none; transition:none; }
 .program-history-callout-box { fill:#15110d; stroke:rgba(255,140,0,.58); stroke-width:1; filter:drop-shadow(0 3px 5px rgba(0,0,0,.46)); }
 .program-history-callout-pointer { fill:#15110d; stroke:rgba(255,140,0,.72); stroke-width:1; stroke-linejoin:round; transition:fill .16s ease,stroke .16s ease; }
 .program-history-callout-close,.program-history-callout-reopen { cursor:pointer; }
@@ -8426,9 +8428,14 @@ function fox2CommitCanonicalProgressResult(root){
 function fox2MorphCanonicalProgressRing(root,done){
   var ring=root.querySelector('.program-canonical-progress-ring .program-today-ring');
   var target=root.querySelector('.program-history-bar.is-latest');
-  if(!ring||!target){done();return;}
+  function finish(){
+    root.classList.add('is-bars');
+    fox2CommitCanonicalProgressResult(root);
+    done();
+  }
+  if(!ring||!target){finish();return;}
   var rootRect=root.getBoundingClientRect(),ringRect=ring.getBoundingClientRect(),targetRect=target.getBoundingClientRect();
-  if(!rootRect.width||!rootRect.height||!ringRect.width||!targetRect.height){done();return;}
+  if(!rootRect.width||!rootRect.height||!ringRect.width||!targetRect.height){finish();return;}
   var fill=Math.max(.02,Math.min(1,Number(root.dataset.progressFill)||0));
   var count=48,source=[],destination=[],centerX=ringRect.left-rootRect.left+ringRect.width/2;
   var centerY=ringRect.top-rootRect.top+ringRect.height/2,radius=ringRect.width*54/120;
@@ -8457,10 +8464,8 @@ function fox2MorphCanonicalProgressRing(root,done){
     path.setAttribute('d',pathFor(points));
     path.setAttribute('stroke-width',(sourceStroke+(targetStroke-sourceStroke)*ease).toFixed(2));
     if(raw<1){window.requestAnimationFrame(frame);return;}
-    root.classList.add('is-bars');
-    fox2CommitCanonicalProgressResult(root);
     if(layer.isConnected) layer.remove();
-    done();
+    finish();
   }
   window.requestAnimationFrame(frame);
 }
