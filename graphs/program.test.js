@@ -509,7 +509,7 @@ assert.ok(source.includes('function fox2RingVisual(score)'),
   'the web Score ring should retain the firmware graduating score scales');
 assert.ok(source.includes("bands=[60,120,180,240]"),
   'the web ring should use the same graduating score scales as the device');
-assert.ok(source.includes('class="program-canonical-progress')&&source.includes('class="program-history-chart"'),
+assert.ok(source.includes('class="program-canonical-progress')&&source.includes('class="program-history-chart'),
   'Progress should use only the canonical Score ring and 30-day daily-score history');
 assert.ok(source.includes('.program-canonical-progress-bars { position:relative; inset:auto;'),
   'the settled Progress content should determine the card height instead of being clipped inside a fixed animation stage');
@@ -553,6 +553,14 @@ assert.ok(source.includes('program-history-today-outline')&&source.includes('str
   'today’s unfinished bar should use a yellow outline instead of a text label');
 assert.ok(!source.includes('program-history-today-label'),
   'today’s unfinished bar should not carry an awkward SO FAR label');
+assert.ok(source.includes('program-history-readout-date')&&source.includes('program-history-readout-value'),
+  'the chart should show one calm date-and-score readout instead of a visible value axis');
+assert.ok(source.includes('completedShownDays[completedShownDays.length-1]')&&source.includes("'Final score '+fox2Round(defaultSelectedDay.score)"),
+  'the latest completed score should be selected by default even when today is unfinished');
+assert.ok(source.includes("current?score+' so far':'Final score '+score")&&source.includes('data-progress-current='),
+  'selecting today should clearly distinguish its unfinished score from a final score');
+assert.ok(source.includes('function fox2InitProgressChartSelection(root)')&&source.includes('fox2InitProgressChartSelection(shell);'),
+  'daily bars should support a single interactive selected value');
 assert.ok(source.includes('--today-color:var(--program-orange)'),
   'the web Progress score ring should use the established FOX2 web orange');
 assert.ok(source.includes('slotIndex<chartTarget')&&source.includes('30-Day Progress')&&source.includes('program-history-date'),
