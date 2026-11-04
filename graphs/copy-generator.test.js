@@ -48,8 +48,14 @@ function days(scores){
 (function earlyLowerActionDoesNotRepeatTheProvisionalQualifier(){
   const message=copy.progress({completedDays:days([65,68]),baseline:75,action:'Walk after dinner'});
   assert.equal(message.state,'early-down-action');
-  assert.equal(message.headline,'It’s still early, but since starting Walk after dinner, your Fat Use Score is lower.');
+  assert.equal(message.headline,'It’s still early, but since starting Walk after dinner, your Fat Use Score is lower than baseline.');
   assert.ok(!message.headline.includes('so far'));
+})();
+
+(function establishedLowerActionNamesTheBaseline(){
+  const message=copy.progress({completedDays:days([66,65,64,63]),baseline:75,action:'Walk after dinner'});
+  assert.equal(message.state,'established-down-action');
+  assert.equal(message.headline,'Your Fat Use Score is averaging lower than baseline since starting Walk after dinner.');
 })();
 
 (function smallChangesStayNeutral(){

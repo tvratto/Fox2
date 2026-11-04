@@ -171,7 +171,7 @@
         detail='Keep measuring normally to see if this early result holds.';
         tone='positive';
       }else if(direction==='down'){
-        headline='It’s still early, but since starting '+action+', your Fat Use Score is lower.';
+        headline='It’s still early, but since starting '+action+', your Fat Use Score is lower than baseline.';
         detail='That’s useful to know. Keep measuring normally to see whether this holds.';
         tone='supportive';
       }else{
@@ -186,7 +186,7 @@
         cta={label:'See what changed',action:'review-change'};
         tone='positive';
       }else if(direction==='down'){
-        headline='Your Fat Use Score is averaging lower since starting '+action+'.';
+        headline='Your Fat Use Score is averaging lower than baseline since starting '+action+'.';
         detail='This result is worth learning from. Review what else changed, then decide what to try next.';
         cta={label:'Review recent days',action:'review-days'};
         tone='supportive';
