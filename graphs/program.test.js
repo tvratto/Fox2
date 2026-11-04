@@ -116,8 +116,8 @@ function functionSource(name,nextName){
   const openHtml=context.fox2ProgressHtml({baseline:0,measureDays:[],elapsedDays:0,savedResult:null});
   assert.ok(openHtml.includes('It’s still early, but your recent Fat Use Score is higher than your first completed Score.')&&openHtml.includes('data-final-value="33%">33%'),
     'a provisional current-day Score should not alter a personal-history comparison');
-  assert.ok(openHtml.includes('Want to see what affects your fat use?')&&openHtml.includes('Set up a baseline'),
-    'the neutral Progress state should offer one clear baseline setup prompt');
+  assert.ok(openHtml.includes('Want to see what affects your fat use?')&&openHtml.includes('Start New Experiment'),
+    'the neutral Progress state should offer one clear new-experiment prompt');
   assert.ok(!openHtml.includes('BASELINE ')&&!openHtml.includes('Past results'),
     'the neutral state should not invent a baseline or attributed change result');
 
@@ -417,8 +417,8 @@ assert.ok(source.includes("}else if(action==='cancel-baseline'){"),
   'canceling baseline setup should return to the settled Progress state');
 assert.ok(source.includes('.program-method-radio { display:block;'),
   'baseline choice markers should retain their circular dimensions');
-assert.ok(source.includes('data-program-action="start">Set up a baseline</button>'),
-  'baseline setup should remain optional and available from the settled bars');
+assert.ok(source.includes('data-program-action="open-program-options">Start New Experiment</button>'),
+  'a new experiment should remain optional and available from the settled bars');
 assert.ok(source.includes("if(fox2FinalizeResult(metrics)){fox2Program.screen='results';fox2ProgramOptionsOpen=true;}"),
   'legacy program completion should continue saving its result data');
 assert.ok(!source.includes('class="program-simple-change"'),
@@ -435,22 +435,18 @@ assert.ok(source.includes("fox2Program.action=(input?input.value:fox2ActionDraft
   'the new action should become current only when tracking is confirmed');
 assert.ok(source.includes("fox2ActionDraft=fox2Program.action||'';fox2Program.setupMode='change';fox2Program.screen='setup'"),
   'changing actions should prefill the current action without changing it before confirmation');
-assert.ok(source.includes('function fox2OpenBaselineEditor()'),
-  'the active program should provide a focused baseline editor');
-assert.ok(source.includes('data-program-action="open-program-options">Program options</button>'),
-  'settled Progress should provide one quiet Program options link beneath the chart');
+assert.ok(source.includes('data-program-action="open-program-options">New experiment</button>'),
+  'settled Progress should provide one quiet New experiment link beneath the chart');
 assert.ok(source.includes('id="program-options-overlay"')&&source.includes('program-options-row-label">Baseline')&&source.includes('program-options-row-label">Action'),
-  'Program options should show the current baseline and action with focused change controls');
-assert.ok(source.includes('function fox2OpenBaselineFromProgramOptions(){')&&source.includes('fox2OpenBaselineEditor();'),
-  'changing the baseline from Program options should open the existing baseline editor');
-assert.ok(!functionSource('fox2OpenProgramOptions','fox2CloseProgramOptions').includes('measure a new baseline'),
-  'measuring a new baseline should not appear at the top level of Program options');
-assert.ok(functionSource('fox2RenderBaselineEditor','fox2ReviewBaselineChange').includes('measure a new baseline'),
-  'measuring a new baseline should remain nested inside the baseline-change menu');
-assert.ok(source.includes('Your program results will be recalculated.'),
-  'changing a baseline should explain its effect on existing results');
-assert.ok(source.includes('function fox2BeginNewMeasuredBaseline()'),
-  'measuring a new baseline should explicitly begin a new program');
+  'the experiment dialog should show the current baseline and action');
+assert.ok(source.includes('function fox2ShowNewExperimentForm()')&&source.includes('function fox2StartNewExperiment()'),
+  'one focused flow should collect the next action and baseline');
+assert.ok(!functionSource('fox2OpenProgramOptions','fox2CloseProgramOptions').includes('program-options-change'),
+  'the current experiment should not expose separate controls that silently rewrite its action or baseline');
+assert.ok(source.includes("fox2SaveProgramBackup('new experiment')")&&source.includes('fox2FinalizeResult(previousMetrics)'),
+  'starting a new experiment should preserve and archive the previous comparison');
+assert.ok(source.includes("fox2Program.measureStart=fox2TodayIso()")&&source.includes("fox2Program.screen='measure'"),
+  'a confirmed experiment should restart the chart at Day 1 today');
 assert.ok(source.includes('function fox2SaveProgramBackup(reason)'),
   'destructive program changes should preserve the prior program locally');
 assert.ok(source.includes("fox2SaveProgramBackup('new baseline')"),
@@ -665,8 +661,8 @@ assert.ok(!source.includes('program-previous-changes')&&!source.includes('What y
   'completed-change records should no longer expand the main Progress card');
 assert.ok(!source.includes('program-canonical-average'),
   'Progress should not repeat the chart with a separate average value');
-assert.ok(source.includes('Want to see what affects your fat use?')&&source.includes('Set up a baseline'),
-  'the baseline call to action should explain its purpose without forcing the comparison model');
+assert.ok(source.includes('Want to see what affects your fat use?')&&source.includes('Start New Experiment'),
+  'the comparison call to action should lead directly to the simplified experiment model');
 assert.ok(source.includes('function fox2CurrentProgramResult()'),
   'finished programs should resolve the saved result belonging to the current program');
 assert.ok(source.includes("String(history[j].id||'').indexOf(prefix)===0"),

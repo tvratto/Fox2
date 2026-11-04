@@ -68,10 +68,12 @@ history chart. Both use orange for score data.
 - If one baseline choice is labeled `Recommended`, all three choices remain
   visible together. Present them as one compact grouped list rather than large
   standalone cards or a hidden alternatives disclosure.
-- A quiet `Program options` link beneath the chart opens a compact view of the
-  current baseline and action, each with one `Change` control. Measuring a new
-  baseline is not a top-level program option; it remains nested inside the
-  baseline-change flow.
+- A quiet `New experiment` link beneath the chart opens a compact view of the
+  current action and baseline followed by one `Start New Experiment` control.
+  Starting asks only for the change and baseline, saves the previous comparison
+  to Past Results, and places the new experiment's Day 1 at the left edge of the
+  existing 30-position chart. Do not silently recalculate an experiment already
+  underway by exposing separate action and baseline change controls.
 - A quiet `How this works` link beside the `30-Day Progress` heading opens the
   existing three-slide FOX2 explanation directly. Reuse that explanation; do
   not create a second help flow or duplicate its copy inside Progress.

@@ -821,6 +821,23 @@ html, body {
 .program-options-row-label { color:rgba(255,255,255,.46); font-size:10px; font-weight:900; letter-spacing:.11em; text-transform:uppercase; }
 .program-options-row-value { margin-top:5px; color:#fff; font-size:17px; line-height:1.25; font-weight:850; overflow-wrap:anywhere; }
 .program-options-change { min-height:42px; padding:0 4px; border:0; background:transparent; color:var(--program-orange,#ff8c00); font:850 14px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; cursor:pointer; }
+.program-options-copy { margin:12px 0 2px; color:rgba(255,255,255,.58); font-size:14px; line-height:1.45; }
+.program-options-new { width:100%; min-height:50px; margin-top:14px; border:0; border-radius:15px; background:var(--program-orange,#ff8c00); color:#050505; font:900 15px/1.2 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; cursor:pointer; }
+.program-new-experiment { display:grid; gap:12px; padding-top:12px; }
+.program-new-experiment label>span,.program-new-experiment-legend { display:block; margin-bottom:6px; color:rgba(255,255,255,.48); font-size:10px; font-weight:900; letter-spacing:.11em; text-transform:uppercase; }
+.program-new-experiment textarea,.program-new-experiment input[type="number"] { box-sizing:border-box; width:100%; border:1px solid rgba(255,255,255,.14); border-radius:13px; background:rgba(255,255,255,.06); color:#fff; font:750 16px/1.35 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; outline:none; }
+.program-new-experiment textarea { min-height:76px; padding:12px 13px; resize:vertical; }
+.program-new-experiment input[type="number"] { min-height:46px; margin-top:8px; padding:0 13px; }
+.program-new-experiment textarea:focus,.program-new-experiment input[type="number"]:focus { border-color:var(--program-orange,#ff8c00); }
+.program-new-experiment-baselines { display:grid; gap:7px; margin:0; padding:0; border:0; }
+.program-new-experiment-choice { display:grid; grid-template-columns:20px minmax(0,1fr); gap:10px; align-items:start; padding:11px 12px; border:1px solid rgba(255,255,255,.11); border-radius:13px; background:rgba(255,255,255,.045); color:#fff; cursor:pointer; }
+.program-new-experiment-choice input { width:17px; height:17px; margin:2px 0 0; accent-color:var(--program-orange,#ff8c00); }
+.program-new-experiment-choice strong,.program-new-experiment-choice small { display:block; }
+.program-new-experiment-choice strong { font-size:14px; line-height:1.25; }
+.program-new-experiment-choice small { margin-top:3px; color:rgba(255,255,255,.48); font-size:12px; line-height:1.35; }
+.program-new-experiment-error { margin:0; color:#ffb2a8; font-size:13px; line-height:1.35; }
+.program-new-experiment-actions { display:grid; grid-template-columns:1fr 1.35fr; gap:8px; }
+.program-new-experiment-actions button { min-height:48px; border-radius:14px; font:850 14px/1.2 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; cursor:pointer; }
 .past-results-header { display:flex; align-items:center; justify-content:space-between; gap:14px; padding-right:42px; }
 .past-results-edit { min-height:36px; padding:0; border:0; background:transparent; color:var(--program-orange,#ff8c00); font:850 14px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; cursor:pointer; }
 .past-results-note { margin:7px 0 0; padding:10px 12px; border-radius:12px; background:rgba(255,255,255,.055); color:rgba(255,255,255,.58); font-size:12px; line-height:1.4; }
@@ -7453,10 +7470,10 @@ function fox2ProgressHtml(metrics){
   var latestRecapHeading=latest&&latest.current?'Today’s Fat Use Score':latestRecapDate;
   var ring=animate?'<section class="program-canonical-progress-view program-canonical-progress-ring" aria-live="polite"><div class="program-canonical-recap-popover"><div class="program-eyebrow">'+(latest.current?'Synced just now':'Final Daily Score')+'</div>'+(latest.current?'':'<div class="program-recap-for">for</div>')+'<h1>'+fox2Escape(latestRecapHeading)+'</h1><svg class="program-today-ring" viewBox="0 0 120 120" role="img" aria-label="Fat Use Score '+visual.value+(latest.current?' so far':' final')+'"><circle class="program-today-track" cx="60" cy="60" r="54" style="stroke:var(--program-orange);opacity:.18"></circle><circle class="program-today-value" cx="60" cy="60" r="54" style="--today-color:var(--program-orange);--today-offset:'+(339.292*(1-visual.progress)).toFixed(3)+'"></circle><text class="program-today-score" x="60" y="64">'+visual.value+'</text><text class="program-today-unit" x="60" y="82">'+(latest.current?'TODAY SO FAR':'FINAL')+'</text></svg><p class="program-canonical-progress-copy">'+(latest.current?'This Score includes the reading you just synced and is still accumulating.':'This is the completed Score for your latest finished day.')+'</p></div></section>':'';
   var pastResultsLink=previousChangeRecords.length?'<button type="button" class="program-utility-link" data-program-action="open-past-results">Past results</button>':'';
-  var programOptionsLink=hasBaseline||fox2Program.action?'<button type="button" class="program-utility-link program-options-link" data-program-action="open-program-options">Program options</button>':'';
+  var programOptionsLink=hasBaseline||fox2Program.action?'<button type="button" class="program-utility-link program-options-link" data-program-action="open-program-options">New experiment</button>':'';
   var programUtilities=pastResultsLink||programOptionsLink?'<div class="program-utilities">'+pastResultsLink+programOptionsLink+'</div>':'';
   var progressTitle=fox2ProgressTitle();
-  var barsView='<section class="program-canonical-progress-view program-canonical-progress-bars"'+(animate?' aria-hidden="true"':'')+'><div class="program-progress-heading"><div class="program-eyebrow" data-progress-title="1" title="'+fox2Escape(progressTitle)+'">'+fox2Escape(progressTitle)+'</div><button type="button" class="program-how-link" onclick="openFox2WorksGuideFromHelp()">How this works</button></div><div class="program-canonical-summary" data-final-summary="'+fox2Escape(finalMessage.summary)+'">'+fox2Escape(summary)+'</div>'+heroHtml+programUtilities+'<div class="program-calendar">'+historyChart+currentDayNote+'</div>'+(hasBaseline?'':'<div class="program-canonical-baseline-action"><strong>Want to see what affects your fat use?</strong><span>Set a starting point, try a change, and FOX2 will compare the results.</span><button type="button" data-program-action="start">Set up a baseline</button></div>')+'</section>';
+  var barsView='<section class="program-canonical-progress-view program-canonical-progress-bars"'+(animate?' aria-hidden="true"':'')+'><div class="program-progress-heading"><div class="program-eyebrow" data-progress-title="1" title="'+fox2Escape(progressTitle)+'">'+fox2Escape(progressTitle)+'</div><button type="button" class="program-how-link" onclick="openFox2WorksGuideFromHelp()">How this works</button></div><div class="program-canonical-summary" data-final-summary="'+fox2Escape(finalMessage.summary)+'">'+fox2Escape(summary)+'</div>'+heroHtml+programUtilities+'<div class="program-calendar">'+historyChart+currentDayNote+'</div>'+(hasBaseline?'':'<div class="program-canonical-baseline-action"><strong>Want to see what affects your fat use?</strong><span>Name a change, choose a baseline, and FOX2 will compare your completed daily Scores.</span><button type="button" data-program-action="open-program-options">Start New Experiment</button></div>')+'</section>';
   if(!latest) return '<section class="program-canonical-progress is-bars"><section class="program-canonical-progress-view program-canonical-progress-bars"><div class="program-eyebrow">Progress</div><h1>Your daily Scores will appear here.</h1><p class="program-canonical-progress-copy">Take a measurement and tap your phone to FOX2 to sync it.</p></section></section>';
   return '<section class="program-canonical-progress'+(today?' has-current-day':'')+(animate?' has-recap':' is-bars')+'" style="--recap-target-x:'+recapTargetX+'px;--recap-target-y:118px" data-progress-key="'+fox2Escape(key)+'" data-progress-fill="'+visual.progress+'" data-progress-animate="'+(animate?'1':'0')+'">'+barsView+ring+'</section>';
 }
@@ -8691,14 +8708,77 @@ function fox2OpenProgramOptions(){
   var overlay=document.getElementById('program-options-overlay');
   var content=document.getElementById('program-options-content');
   if(!overlay||!content) return;
+  var title=document.getElementById('program-options-title');
+  if(title) title.textContent=fox2Program.action?'Current experiment':'Experiment';
   var storedBaseline=Number(fox2Program.baselineValue);
   var baseline=isFinite(storedBaseline)&&storedBaseline>0?fox2Round(storedBaseline):'Not set';
   var action=String(fox2Program.action||'No action selected');
-  content.innerHTML='<div class="program-options-row"><div><span class="program-options-row-label">Baseline</span><span class="program-options-row-value">'+baseline+'</span></div><button type="button" class="program-options-change" onclick="fox2OpenBaselineFromProgramOptions()">Change</button></div>'
-    +'<div class="program-options-row"><div><span class="program-options-row-label">Action</span><span class="program-options-row-value">'+fox2Escape(action)+'</span></div><button type="button" class="program-options-change" onclick="fox2ChangeActionFromProgramOptions()">Change</button></div>';
+  content.innerHTML=(fox2Program.action?'<div class="program-options-row"><div><span class="program-options-row-label">Action</span><span class="program-options-row-value">'+fox2Escape(action)+'</span></div></div><div class="program-options-row"><div><span class="program-options-row-label">Baseline</span><span class="program-options-row-value">'+baseline+'</span></div></div>':'<p class="program-options-copy">Start with one change and one baseline. Your existing Scores will stay in History.</p>')
+    +'<button type="button" class="program-options-new" onclick="fox2ShowNewExperimentForm()">Start New Experiment</button>';
   overlay.classList.add('open');
   var close=overlay.querySelector('.modal-corner-close');
   if(close) close.focus();
+}
+
+function fox2RecentExperimentBaselineDays(){
+  var today=fox2TodayIso();
+  return fox2AllCompletedScoreDays().filter(function(day){return day.date<today;}).slice(-FOX2_BASELINE_DAYS);
+}
+
+function fox2ShowNewExperimentForm(){
+  var content=document.getElementById('program-options-content');
+  var title=document.getElementById('program-options-title');
+  if(!content) return;
+  if(title) title.textContent='Start New Experiment';
+  var recent=fox2RecentExperimentBaselineDays();
+  var recentValue=recent.length?fox2Round(fox2Mean(recent.map(function(day){return day.score;}))):0;
+  var current=fox2Round(fox2Program.baselineValue)||0;
+  var defaultMode=recentValue?'recent':(current?'current':'manual');
+  var recentChoice=recentValue?'<label class="program-new-experiment-choice"><input type="radio" name="new-experiment-baseline" value="recent" '+(defaultMode==='recent'?'checked':'')+'><span><strong>Use recent Scores · '+recentValue+'</strong><small>'+recent.length+' completed '+(recent.length===1?'day':'days')+' · '+fox2Escape(fox2DateRange(recent))+' · Recommended</small></span></label>':'';
+  var currentChoice=current?'<label class="program-new-experiment-choice"><input type="radio" name="new-experiment-baseline" value="current" '+(defaultMode==='current'?'checked':'')+'><span><strong>Keep current baseline · '+current+'</strong><small>Start a new experiment without changing your reference.</small></span></label>':'';
+  content.innerHTML='<p class="program-options-copy">The current experiment will be saved to Past Results. The new graph will begin with Day 1 on the left.</p><div class="program-new-experiment"><label><span>What are you trying?</span><textarea id="new-experiment-action" placeholder="For example: Walk after dinner"></textarea></label><fieldset class="program-new-experiment-baselines"><legend class="program-new-experiment-legend">Choose a baseline</legend>'+recentChoice+currentChoice+'<label class="program-new-experiment-choice"><input type="radio" name="new-experiment-baseline" value="manual" '+(defaultMode==='manual'?'checked':'')+'><span><strong>Enter another score</strong><small>Use a Fat Use Score you already know.</small><input id="new-experiment-baseline-value" type="number" min="1" max="999" inputmode="numeric" value="'+(current||FOX2_STANDARD_BASELINE)+'" aria-label="Fat Use baseline score"></span></label></fieldset><p class="program-new-experiment-error" id="new-experiment-error" role="alert"></p><div class="program-new-experiment-actions"><button type="button" class="program-confirm-cancel" onclick="fox2OpenProgramOptions()">Cancel</button><button type="button" class="program-confirm-use" onclick="fox2StartNewExperiment()">Start Experiment</button></div></div>';
+  var action=document.getElementById('new-experiment-action');
+  if(action) action.focus();
+}
+
+function fox2StartNewExperiment(){
+  var actionInput=document.getElementById('new-experiment-action');
+  var selected=document.querySelector('input[name="new-experiment-baseline"]:checked');
+  var error=document.getElementById('new-experiment-error');
+  var action=String(actionInput&&actionInput.value||'').trim();
+  if(!action){if(error) error.textContent='Describe the change you want to try.';if(actionInput) actionInput.focus();return;}
+  var mode=selected?selected.value:'',baseline=0,source='',range='';
+  if(mode==='recent'){
+    var recent=fox2RecentExperimentBaselineDays();
+    baseline=fox2Mean(recent.map(function(day){return day.score;}));
+    source='previous'; range=fox2DateRange(recent);
+  }else if(mode==='current'){
+    baseline=Number(fox2Program.baselineValue); source=fox2Program.baselineSource||'default'; range=fox2Program.baselineRange||'Current baseline';
+  }else{
+    var manual=document.getElementById('new-experiment-baseline-value');
+    baseline=Math.round(Number(manual&&manual.value)); source='manual'; range='Entered manually';
+  }
+  if(!isFinite(baseline)||baseline<=0){if(error) error.textContent='Choose or enter a baseline.';return;}
+  var previousMetrics=fox2ProgramMetrics();
+  fox2SaveProgramBackup('new experiment');
+  if(fox2Program.action&&fox2Program.measureStart) fox2FinalizeResult(previousMetrics);
+  fox2Program.action=action;
+  fox2Program.baselineMode=source==='manual'?'manual':'default';
+  fox2Program.baselineStart='';
+  fox2Program.baselineValue=baseline;
+  fox2Program.baselineSource=source;
+  fox2Program.baselineRange=range;
+  fox2Program.measureStart=fox2TodayIso();
+  fox2Program.targetDays=FOX2_MEASURE_DAYS;
+  fox2Program.firstMeasurementSynced=true;
+  fox2Program.optedOut=false;
+  fox2Program.setupMode='new';
+  fox2Program.screen='measure';
+  fox2ProgramOptionsOpen=false;
+  fox2LastProgressAnimationKey='';
+  fox2CloseProgramOptions();
+  fox2SaveProgram();
+  fox2RenderProgram();
 }
 
 function fox2CloseProgramOptions(){
