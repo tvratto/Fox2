@@ -439,6 +439,12 @@ assert.ok(source.includes('data-program-action="open-program-options">New experi
   'settled Progress should provide one quiet New experiment link beneath the chart');
 assert.ok(source.includes('id="program-options-overlay"')&&source.includes('program-options-row-label">Baseline')&&source.includes('program-options-row-label">Action'),
   'the experiment dialog should show the current baseline and action');
+assert.ok(source.includes('onclick="fox2ShowEditExperimentForm()">Edit action and baseline</button>')&&source.includes('function fox2SaveExperimentEdits()'),
+  'the current experiment should provide one focused editor for its action and baseline');
+assert.ok(functionSource('fox2SaveExperimentEdits','fox2ShowNewExperimentForm').includes("fox2SaveProgramBackup('edit experiment')")&&functionSource('fox2SaveExperimentEdits','fox2ShowNewExperimentForm').includes('fox2Program.measureStart')===false,
+  'editing should preserve a backup without restarting the experiment window');
+assert.ok(source.includes('Changing the baseline will recalculate its comparison; your dates and measurement history will stay the same.'),
+  'the editor should explain the effect of changing the baseline');
 assert.ok(source.includes('function fox2ShowNewExperimentForm()')&&source.includes('function fox2StartNewExperiment()'),
   'one focused flow should collect the next action and baseline');
 assert.ok(!functionSource('fox2OpenProgramOptions','fox2CloseProgramOptions').includes('program-options-change'),

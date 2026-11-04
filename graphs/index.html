@@ -822,6 +822,8 @@ html, body {
 .program-options-row-value { margin-top:5px; color:#fff; font-size:17px; line-height:1.25; font-weight:850; overflow-wrap:anywhere; }
 .program-options-change { min-height:42px; padding:0 4px; border:0; background:transparent; color:var(--program-orange,#ff8c00); font:850 14px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; cursor:pointer; }
 .program-options-copy { margin:12px 0 2px; color:rgba(255,255,255,.58); font-size:14px; line-height:1.45; }
+.program-options-edit { width:100%; min-height:46px; margin-top:14px; border:1px solid rgba(255,255,255,.18); border-radius:14px; background:rgba(255,255,255,.055); color:#fff; font:850 14px/1.2 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; cursor:pointer; }
+.program-options-edit + .program-options-new { margin-top:8px; }
 .program-options-new { width:100%; min-height:50px; margin-top:14px; border:0; border-radius:15px; background:var(--program-orange,#ff8c00); color:#050505; font:900 15px/1.2 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; cursor:pointer; }
 .program-new-experiment { display:grid; gap:12px; padding-top:12px; }
 .program-new-experiment label>span,.program-new-experiment-legend { display:block; margin-bottom:6px; color:rgba(255,255,255,.48); font-size:10px; font-weight:900; letter-spacing:.11em; text-transform:uppercase; }
@@ -8713,7 +8715,7 @@ function fox2OpenProgramOptions(){
   var storedBaseline=Number(fox2Program.baselineValue);
   var baseline=isFinite(storedBaseline)&&storedBaseline>0?fox2Round(storedBaseline):'Not set';
   var action=String(fox2Program.action||'No action selected');
-  content.innerHTML=(fox2Program.action?'<div class="program-options-row"><div><span class="program-options-row-label">Action</span><span class="program-options-row-value">'+fox2Escape(action)+'</span></div></div><div class="program-options-row"><div><span class="program-options-row-label">Baseline</span><span class="program-options-row-value">'+baseline+'</span></div></div>':'<p class="program-options-copy">Start with one change and one baseline. Your existing Scores will stay in History.</p>')
+  content.innerHTML=(fox2Program.action?'<div class="program-options-row"><div><span class="program-options-row-label">Action</span><span class="program-options-row-value">'+fox2Escape(action)+'</span></div></div><div class="program-options-row"><div><span class="program-options-row-label">Baseline</span><span class="program-options-row-value">'+baseline+'</span></div></div><button type="button" class="program-options-edit" onclick="fox2ShowEditExperimentForm()">Edit action and baseline</button>':'<p class="program-options-copy">Start with one change and one baseline. Your existing Scores will stay in History.</p>')
     +'<button type="button" class="program-options-new" onclick="fox2ShowNewExperimentForm()">Start New Experiment</button>';
   overlay.classList.add('open');
   var close=overlay.querySelector('.modal-corner-close');
@@ -8723,6 +8725,41 @@ function fox2OpenProgramOptions(){
 function fox2RecentExperimentBaselineDays(){
   var today=fox2TodayIso();
   return fox2AllCompletedScoreDays().filter(function(day){return day.date<today;}).slice(-FOX2_BASELINE_DAYS);
+}
+
+function fox2ShowEditExperimentForm(){
+  var content=document.getElementById('program-options-content');
+  var title=document.getElementById('program-options-title');
+  if(!content) return;
+  if(title) title.textContent='Edit Experiment';
+  var action=String(fox2Program.action||'');
+  var baseline=fox2Round(fox2Program.baselineValue)||FOX2_STANDARD_BASELINE;
+  content.innerHTML='<p class="program-options-copy">This updates the current experiment. Changing the baseline will recalculate its comparison; your dates and measurement history will stay the same.</p><div class="program-new-experiment"><label><span>Action</span><textarea id="edit-experiment-action" placeholder="For example: Walk after dinner">'+fox2Escape(action)+'</textarea></label><label><span>Baseline</span><input id="edit-experiment-baseline" type="number" min="1" max="999" inputmode="numeric" value="'+baseline+'" aria-label="Fat Use baseline score"></label><p class="program-new-experiment-error" id="edit-experiment-error" role="alert"></p><div class="program-new-experiment-actions"><button type="button" class="program-confirm-cancel" onclick="fox2OpenProgramOptions()">Cancel</button><button type="button" class="program-confirm-use" onclick="fox2SaveExperimentEdits()">Save Changes</button></div></div>';
+  var actionInput=document.getElementById('edit-experiment-action');
+  if(actionInput) actionInput.focus();
+}
+
+function fox2SaveExperimentEdits(){
+  var actionInput=document.getElementById('edit-experiment-action');
+  var baselineInput=document.getElementById('edit-experiment-baseline');
+  var error=document.getElementById('edit-experiment-error');
+  var action=String(actionInput&&actionInput.value||'').trim();
+  var baseline=Math.round(Number(baselineInput&&baselineInput.value));
+  if(!action){if(error) error.textContent='Describe the change you are trying.';if(actionInput) actionInput.focus();return;}
+  if(!isFinite(baseline)||baseline<=0){if(error) error.textContent='Enter a baseline score.';if(baselineInput) baselineInput.focus();return;}
+  var baselineChanged=baseline!==fox2Round(fox2Program.baselineValue);
+  fox2SaveProgramBackup('edit experiment');
+  fox2Program.action=action;
+  fox2Program.baselineValue=baseline;
+  if(baselineChanged){
+    fox2Program.baselineMode='manual';
+    fox2Program.baselineSource='manual';
+    fox2Program.baselineRange='Entered manually';
+  }
+  fox2LastProgressAnimationKey='';
+  fox2CloseProgramOptions();
+  fox2SaveProgram();
+  fox2RenderProgram();
 }
 
 function fox2ShowNewExperimentForm(){

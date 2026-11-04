@@ -69,7 +69,10 @@ history chart. Both use orange for score data.
   visible together. Present them as one compact grouped list rather than large
   standalone cards or a hidden alternatives disclosure.
 - A quiet `New experiment` link beneath the chart opens a compact view of the
-  current action and baseline followed by one `Start New Experiment` control.
+  current action and baseline. One secondary `Edit action and baseline` control
+  edits the current experiment without restarting its dates; it explicitly says
+  that a baseline edit recalculates the comparison. A primary `Start New
+  Experiment` control remains visually separate.
   Starting asks only for the change and baseline, saves the previous comparison
   to Past Results, and places the new experiment's Day 1 at the left edge of the
   existing 30-position chart. Do not silently recalculate an experiment already
