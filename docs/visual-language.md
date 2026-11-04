@@ -73,6 +73,8 @@ history chart. Both use orange for score data.
   edits the current experiment without restarting its dates; it explicitly says
   that a baseline edit recalculates the comparison. A primary `Start New
   Experiment` control remains visually separate.
+- On the 30-day chart, the orange date-axis dot is an empty-day locator. Show it
+  only until today's first measurement creates the outlined current-day bar.
   Starting asks only for the change and baseline, saves the previous comparison
   to Past Results, and places the new experiment's Day 1 at the left edge of the
   existing 30-position chart. Do not silently recalculate an experiment already

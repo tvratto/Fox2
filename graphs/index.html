@@ -7441,7 +7441,7 @@ function fox2ProgressHtml(metrics){
       +'<line class="program-history-hit" data-progress-day="1" data-progress-date="'+fox2Escape(day.date)+'" data-progress-score="'+fox2Round(score)+'" data-progress-current="'+(slot.current?'1':'0')+'" data-progress-x="'+x.toFixed(1)+'" data-progress-top="'+top.toFixed(1)+'" x1="'+x.toFixed(1)+'" y1="'+top.toFixed(1)+'" x2="'+x.toFixed(1)+'" y2="'+plotBottom+'" role="button" tabindex="0" aria-pressed="'+(selectedClass?'true':'false')+'" aria-label="'+fox2Escape(dayLabel)+'. Select day."></line>';
   });
   var todayOffset=fox2DaysBetween(graphStart,todayIso),todayMarker='';
-  if(todayOffset>=0&&todayOffset<chartTarget){
+  if(!today&&todayOffset>=0&&todayOffset<chartTarget){
     var todayX=chartLeft+todayOffset*((chartRight-chartLeft)/(chartTarget-1));
     todayMarker='<circle class="program-history-today-dot" cx="'+todayX.toFixed(1)+'" cy="199" r="4" role="img" aria-label="Today, '+fox2Escape(fox2ShortDate(todayIso))+'"></circle>';
   }

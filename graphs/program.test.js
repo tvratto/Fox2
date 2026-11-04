@@ -65,7 +65,7 @@ function functionSource(name,nextName){
     fox2TodayIso:()=> '2026-10-29',fox2IsoOrBlank:value=>String(value||''),
     fox2DaysBetween:(start,end)=>Math.floor((Date.parse(end+'T00:00:00Z')-Date.parse(start+'T00:00:00Z'))/86400000),
     fox2AddIsoDays:(iso,amount)=>new Date(Date.parse(iso+'T00:00:00Z')+amount*86400000).toISOString().slice(0,10),
-    fox2ShortDate:iso=>iso,fox2Mean:values=>values.reduce((sum,value)=>sum+Number(value||0),0)/values.length,
+    fox2ShortDate:iso=>iso,fox2RecapDateLabel:iso=>iso,fox2Mean:values=>values.reduce((sum,value)=>sum+Number(value||0),0)/values.length,
     fox2TodayProgramDay:()=>({date:'2026-10-29',score:94,readings:3}),
     fox2AllCompletedScoreDays:()=>[{date:'2026-10-27',score:72},{date:'2026-10-28',score:96}],
     fox2RingVisual:score=>({value:Math.round(score),color:'#4ADE80',progress:Math.min(1,score/120)}),
@@ -91,9 +91,12 @@ function functionSource(name,nextName){
   context.fox2AllCompletedScoreDays=()=>[{date:'2026-10-28',score:72},{date:'2026-10-31',score:83}];
   const sparseHtml=context.fox2ProgressHtml({baseline:75,measureDays:[{score:83}],elapsedDays:7,savedResult:null});
   const todayBarX=sparseHtml.match(/data-progress-date="2026-11-03" x1="([0-9.]+)"/);
-  const todayDotX=sparseHtml.match(/class="program-history-today-dot" cx="([0-9.]+)"/);
-  assert.ok(todayBarX&&todayDotX&&todayBarX[1]===todayDotX[1],
-    'a current-day bar should use its real calendar slot and align with the today marker after missed days');
+  assert.ok(todayBarX&&!sparseHtml.includes('class="program-history-today-dot"'),
+    'a current-day bar should use its real calendar slot without a redundant today marker');
+  context.fox2TodayProgramDay=()=>null;
+  const emptyTodayHtml=context.fox2ProgressHtml({baseline:75,measureDays:[{score:83}],elapsedDays:7,savedResult:null});
+  assert.ok(emptyTodayHtml.includes('class="program-history-today-dot"')&&emptyTodayHtml.includes('aria-label="Today, 2026-11-03"'),
+    'the today marker should locate the empty current day when no measurement has been synced');
   context.fox2Program.measureStart=originalMeasureStart;
   context.fox2TodayIso=originalTodayIso;
   context.fox2TodayProgramDay=originalTodayProgramDay;
@@ -619,8 +622,8 @@ assert.ok(source.includes('var slotDate=fox2AddIsoDays(graphStart,slotIndex)')&&
   'daily scores should occupy their real calendar slots while the 30-day chart fills left to right');
 assert.ok(source.includes('y="211"')&&source.includes('viewBox="0 0 336 218"'),
   'the 30-day date labels should sit on the X-axis beneath the bars');
-assert.ok(source.includes('class="program-history-today-dot"')&&source.includes('todayOffset=fox2DaysBetween(graphStart,todayIso)')&&source.includes('aria-label="Today, '),
-  'the 30-day chart should mark today on its date axis even when today has no measurement');
+assert.ok(source.includes('class="program-history-today-dot"')&&source.includes('if(!today&&todayOffset>=0&&todayOffset<chartTarget)')&&source.includes('aria-label="Today, '),
+  'the 30-day chart should mark today on its date axis only when today has no measurement');
 assert.ok(!source.includes('program-history-curve')&&!source.includes('curvePoints'),
   'the daily bars should stand on their own without a line connecting their tops');
 assert.ok(source.includes('stroke-dasharray:3 5')&&source.includes('BASELINE '),
