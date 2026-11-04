@@ -72,16 +72,19 @@ history chart. Both use orange for score data.
   current action and baseline. One secondary `Edit action and baseline` control
   edits the current experiment without restarting its dates; it explicitly says
   that a baseline edit recalculates the comparison. A primary `Start New
-  Experiment` control remains visually separate.
+  Experiment` control remains visually separate. Starting asks only for the
+  change and baseline, saves the previous comparison to Past Results, and places
+  the new experiment's Day 1 at the left edge of the existing 30-position chart.
+  Do not silently recalculate an experiment already underway by exposing
+  separate action and baseline change controls.
 - On the 30-day chart, the orange date-axis dot is an empty-day locator. Show it
   only until today's first measurement creates the outlined current-day bar.
+- Place `Past results` and `New experiment` beneath the chart and current-day
+  note at the bottom of the Progress card. Keep the dashed baseline dark enough
+  to function as a reference without competing with the orange score bars.
 - Claim each synced recap animation as soon as it is rendered. Background
   history and experiment-state updates must not replay the same result or flash
   an older completed-day recap before today's result.
-  Starting asks only for the change and baseline, saves the previous comparison
-  to Past Results, and places the new experiment's Day 1 at the left edge of the
-  existing 30-position chart. Do not silently recalculate an experiment already
-  underway by exposing separate action and baseline change controls.
 - A quiet `How this works` link beside the `30-Day Progress` heading opens the
   existing three-slide FOX2 explanation directly. Reuse that explanation; do
   not create a second help flow or duplicate its copy inside Progress.

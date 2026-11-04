@@ -634,6 +634,10 @@ assert.ok(source.includes('fox2ResolveProgressMessage')&&source.includes('progra
   'the current change and result should read as one concise narrative rather than separate boxes');
 assert.ok(source.includes('data-program-action="open-past-results">Past results</button>')&&source.includes('id="past-results-overlay"'),
   'completed changes should open from a visible, quiet Past results link on the Progress card');
+assert.ok(source.includes("+heroHtml+'<div class=\"program-calendar\">'+historyChart+currentDayNote+'</div>'+programUtilities"),
+  'Past results and New experiment should sit below the chart and current-day note');
+assert.ok(source.includes('.program-history-baseline { stroke:rgba(255,255,255,.32);'),
+  'the baseline should remain a subdued reference rather than competing with the orange score bars');
 assert.ok(source.includes('class="program-how-link" onclick="openFox2WorksGuideFromHelp()">How this works</button>'),
   'Progress and persistent Help should share one guide entry point');
 assert.ok(source.includes('function fox2PurposeGuideHtml()')&&source.includes('What FOX2 is for')&&source.includes('See how changes in your life affect your fat use.')&&source.includes('Math.min(4,fox2GuideReplayStep+delta)'),
