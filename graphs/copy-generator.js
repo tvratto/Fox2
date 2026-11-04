@@ -105,6 +105,16 @@
       );
     }
     if(completed.length===1){
+      if(today){
+        return result(
+          'first-result-active-day','starting','unknown',
+          (hasAction?'Your first completed Fat Use Score since starting '+action:'Your first completed Fat Use Score')+' was '+rounded(latest.score)+'. Today is '+rounded(today.score)+' so far.',
+          'Today’s unfinished Score is shown on the graph but will not be included in your progress until tomorrow morning.',
+          {label:'Keep measuring',action:'measure'},
+          {basis:'first-completed-score',value:rounded(latest.score),todayValue:rounded(today.score),completedCount:1,excludesToday:true},
+          'Based on your first completed daily Fat Use Score. Today’s unfinished Score is not included in the comparison.','informational'
+        );
+      }
       return result(
         'first-result','starting','unknown',
         'Your first completed Fat Use Score is '+rounded(latest.score)+'.',
