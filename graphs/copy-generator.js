@@ -108,7 +108,7 @@
       if(today){
         return result(
           'first-result-active-day','starting','unknown',
-          (hasAction?'Your first completed Fat Use Score since starting '+action:'Your first completed Fat Use Score')+' was '+rounded(latest.score)+'. Today is '+rounded(today.score)+' so far.',
+          (hasAction?'Your first completed Fat Use Score since starting '+action:'Your first completed Fat Use Score')+' was '+rounded(latest.score)+'. Today’s Score will be included once the day is complete.',
           'Today’s unfinished Score is shown on the graph but will not be included in your progress until tomorrow morning.',
           {label:'Keep measuring',action:'measure'},
           {basis:'first-completed-score',value:rounded(latest.score),todayValue:rounded(today.score),completedCount:1,excludesToday:true},

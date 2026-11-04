@@ -31,7 +31,7 @@ function days(scores){
   assert.equal(dayFour.metric.gapDays,4);
   const synced=copy.progress({completedDays:completed,today:{date:'2026-10-29',score:62},asOfDate:'2026-10-29'});
   assert.equal(synced.state,'first-result-active-day');
-  assert.equal(synced.headline,'Your first completed Fat Use Score was 85. Today is 62 so far.');
+  assert.equal(synced.headline,'Your first completed Fat Use Score was 85. Today’s Score will be included once the day is complete.');
   assert.equal(synced.metric.excludesToday,true);
   assert.ok(!synced.headline.includes('Welcome back'),'the re-entry prompt should end as soon as today’s measurement is synced');
 })();
@@ -39,7 +39,8 @@ function days(scores){
 (function firstResultWithActiveDayRelatesBothScoresToTheAction(){
   const message=copy.progress({completedDays:days([85]),today:{date:'2026-10-21',score:62},baseline:75,action:'Zepbound 0.25 mg'});
   assert.equal(message.state,'first-result-active-day');
-  assert.equal(message.headline,'Your first completed Fat Use Score since starting Zepbound 0.25 mg was 85. Today is 62 so far.');
+  assert.equal(message.headline,'Your first completed Fat Use Score since starting Zepbound 0.25 mg was 85. Today’s Score will be included once the day is complete.');
+  assert.ok(!message.headline.includes('62'),'the headline should acknowledge today without repeating its provisional value');
   assert.ok(message.evidence.includes('unfinished Score is not included'));
 })();
 
