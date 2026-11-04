@@ -8593,6 +8593,11 @@ function fox2RenderProgram(){
   var canonicalProgress=shell.querySelector('[data-progress-animate="1"]');
   if(canonicalProgress){
     var progressKey=canonicalProgress.dataset.progressKey||'';
+    // Claim this result before the delayed animation begins. Supabase history
+    // and remote experiment state can each trigger another render while the
+    // ring is still filling; waiting until the morph finishes lets those
+    // renders launch the same recap again (or briefly replay the prior day).
+    fox2LastProgressAnimationKey=progressKey;
     window.setTimeout(function(){
       canonicalProgress.classList.add('is-preparing-morph');
       var progressBars=canonicalProgress.querySelector('.program-canonical-progress-bars');
@@ -8601,7 +8606,6 @@ function fox2RenderProgram(){
       window.setTimeout(function(){
         fox2MorphCanonicalProgressRing(canonicalProgress,function(){
           if(recapOverlay&&recapOverlay.isConnected) recapOverlay.remove();
-          fox2LastProgressAnimationKey=progressKey;
         });
       },320);
     },3100);

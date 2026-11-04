@@ -75,6 +75,9 @@ history chart. Both use orange for score data.
   Experiment` control remains visually separate.
 - On the 30-day chart, the orange date-axis dot is an empty-day locator. Show it
   only until today's first measurement creates the outlined current-day bar.
+- Claim each synced recap animation as soon as it is rendered. Background
+  history and experiment-state updates must not replay the same result or flash
+  an older completed-day recap before today's result.
   Starting asks only for the change and baseline, saves the previous comparison
   to Past Results, and places the new experiment's Day 1 at the left edge of the
   existing 30-position chart. Do not silently recalculate an experiment already
