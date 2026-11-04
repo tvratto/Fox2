@@ -57,7 +57,7 @@
     <section class="grid" id="cards" aria-live="polite"></section>
   </main>
 
-  <script src="copy-generator.js?v=20261104-03"></script>
+  <script src="copy-generator.js?v=20261104-04"></script>
   <script>
     (function(){
       'use strict';
@@ -80,7 +80,7 @@
         return [
           {id:'empty',label:'No completed data',purpose:'The first useful invitation.',input:{}},
           {id:'accumulating',label:'Today is accumulating',purpose:'A real number without a premature comparison.',input:{today:{date:'2026-10-29',score:62},asOfDate:'2026-10-29'}},
-          {id:'first',label:'First completed day',purpose:'Acknowledge the result without claiming a trend.',input:{completedDays:scoreDays([85]),baseline:baseline,action:action}},
+          {id:'first',label:'First completed day',purpose:'Report the actual baseline comparison while making clear that it is only one day.',input:{completedDays:scoreDays([85]),baseline:baseline,action:action}},
           {id:'early-up',label:'Early · higher',purpose:'Encouraging, specific, and explicitly early.',input:{completedDays:scoreDays([85,96],'2026-10-27'),today:{date:'2026-10-29',score:62},asOfDate:'2026-10-29',baseline:baseline,action:action}},
           {id:'early-stable',label:'Early · no clear shift',purpose:'Reports the result without manufacturing a win.',input:{completedDays:scoreDays([baseline,baseline+2]),baseline:baseline,action:action}},
           {id:'early-down',label:'Early · lower',purpose:'Useful evidence, never failure.',input:{completedDays:scoreDays([baseline-5,baseline-7]),baseline:baseline,action:action}},

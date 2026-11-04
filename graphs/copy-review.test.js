@@ -5,7 +5,7 @@ const source=fs.readFileSync(__dirname+'/copy-review.html','utf8');
 
 assert.ok(source.includes('<meta name="robots" content="noindex,nofollow">'),
   'the internal copy review should stay out of search results');
-assert.ok(source.includes('copy-generator.js?v=20261104-03')&&source.includes("Fox2CopyGenerator.generateCopy('progress',row.input)"),
+assert.ok(source.includes('copy-generator.js?v=20261104-04')&&source.includes("Fox2CopyGenerator.generateCopy('progress',row.input)"),
   'the review must exercise the same generator used by live Progress');
 assert.ok(source.includes('message.hero.arrow')&&source.includes('message.hero.value')&&source.includes('message.hero.label'),
   'the review should show the same directional hero result as Progress');

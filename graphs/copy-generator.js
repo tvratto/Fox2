@@ -105,14 +105,32 @@
       );
     }
     if(completed.length===1){
-      if(today){
+      if(hasBaseline){
+        var firstRawPercent=(latest.score-baseline)/Math.max(1,baseline)*100;
+        var firstPercent=Math.round(Math.abs(firstRawPercent));
+        var firstDirection=stableDirection(firstRawPercent,neutralBand);
+        var firstLead=hasAction
+          ?'It’s only been one completed day, but since starting '+action+', your Fat Use Score is '
+          :'It’s only been one completed day, but your Fat Use Score is ';
+        var firstConclusion=firstDirection==='up'
+          ?'already '+firstPercent+'% higher.'
+          :(firstDirection==='down'
+            ?firstPercent+'% lower than baseline.'
+            :(firstPercent===0?'right at baseline—a 0% difference.':'within '+firstPercent+'% of baseline.'));
+        var firstHero={
+          arrow:firstDirection==='up'?'↑':(firstDirection==='down'?'↓':'↔'),
+          value:firstPercent+'%',
+          label:firstDirection==='up'?'ABOVE BASELINE':(firstDirection==='down'?'BELOW BASELINE':'FROM BASELINE'),
+          accessibleLabel:firstPercent+'% '+(firstDirection==='up'?'above baseline':(firstDirection==='down'?'below baseline':'from baseline'))
+        };
         return result(
-          'first-result-active-day','starting','unknown',
-          (hasAction?'Your first completed Fat Use Score since starting '+action:'Your first completed Fat Use Score')+' was '+rounded(latest.score)+'. Today’s Score will be included once the day is complete.',
-          'Today’s unfinished Score is shown on the graph but will not be included in your progress until tomorrow morning.',
+          'first-'+firstDirection+(hasAction?'-action':'-baseline'),'first',firstDirection,
+          firstLead+firstConclusion,
+          'Keep measuring normally to see whether this early result holds.',
           {label:'Keep measuring',action:'measure'},
-          {basis:'first-completed-score',value:rounded(latest.score),todayValue:rounded(today.score),completedCount:1,excludesToday:true},
-          'Based on your first completed daily Fat Use Score. Today’s unfinished Score is not included in the comparison.','informational'
+          {basis:'completed-score-vs-baseline',percent:firstPercent,rawPercent:firstRawPercent,direction:firstDirection,completedCount:1,comparisonValue:latest.score,referenceValue:baseline,excludesToday:!!today},
+          baselineEvidence(1,latest.score,baseline,!!today),
+          firstDirection==='up'?'positive':(firstDirection==='down'?'supportive':'informational'),firstHero
         );
       }
       return result(

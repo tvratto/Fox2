@@ -14,11 +14,11 @@ function days(scores){
   assert.equal(today.headline,'Today’s Fat Use Score is 62 so far.');
 })();
 
-(function firstResultDoesNotOverclaim(){
+(function firstResultReportsItsBaselineComparison(){
   const message=copy.progress({completedDays:days([85]),baseline:75,action:'Zepbound 0.25 mg'});
-  assert.equal(message.state,'first-result');
-  assert.equal(message.headline,'Your first completed Fat Use Score is 85.');
-  assert.ok(message.detail.includes('first result since starting Zepbound 0.25 mg'));
+  assert.equal(message.state,'first-up-action');
+  assert.equal(message.headline,'It’s only been one completed day, but since starting Zepbound 0.25 mg, your Fat Use Score is already 13% higher.');
+  assert.deepStrictEqual(message.hero,{arrow:'↑',value:'13%',label:'ABOVE BASELINE',accessibleLabel:'13% above baseline'});
 })();
 
 (function gentleReentryStartsOnDayFour(){
@@ -30,18 +30,30 @@ function days(scores){
   assert.equal(dayFour.headline,'Welcome back. One measurement today is enough to pick up where you left off.');
   assert.equal(dayFour.metric.gapDays,4);
   const synced=copy.progress({completedDays:completed,today:{date:'2026-10-29',score:62},asOfDate:'2026-10-29'});
-  assert.equal(synced.state,'first-result-active-day');
-  assert.equal(synced.headline,'Your first completed Fat Use Score was 85. Today’s Score will be included once the day is complete.');
-  assert.equal(synced.metric.excludesToday,true);
+  assert.equal(synced.state,'first-result');
+  assert.equal(synced.headline,'Your first completed Fat Use Score is 85.');
   assert.ok(!synced.headline.includes('Welcome back'),'the re-entry prompt should end as soon as today’s measurement is synced');
 })();
 
-(function firstResultWithActiveDayRelatesBothScoresToTheAction(){
+(function firstResultWithActiveDayUsesOnlyTheCompletedBaselineComparison(){
   const message=copy.progress({completedDays:days([85]),today:{date:'2026-10-21',score:62},baseline:75,action:'Zepbound 0.25 mg'});
-  assert.equal(message.state,'first-result-active-day');
-  assert.equal(message.headline,'Your first completed Fat Use Score since starting Zepbound 0.25 mg was 85. Today’s Score will be included once the day is complete.');
+  assert.equal(message.state,'first-up-action');
+  assert.equal(message.headline,'It’s only been one completed day, but since starting Zepbound 0.25 mg, your Fat Use Score is already 13% higher.');
   assert.ok(!message.headline.includes('62'),'the headline should acknowledge today without repeating its provisional value');
   assert.ok(message.evidence.includes('unfinished Score is not included'));
+})();
+
+(function firstLowerResultNamesTheBaseline(){
+  const message=copy.progress({completedDays:days([65]),baseline:75,action:'Walk after dinner'});
+  assert.equal(message.state,'first-down-action');
+  assert.equal(message.headline,'It’s only been one completed day, but since starting Walk after dinner, your Fat Use Score is 13% lower than baseline.');
+  assert.equal(message.hero.value,'13%');
+})();
+
+(function firstStableResultStillReportsThePercentage(){
+  const message=copy.progress({completedDays:days([76]),baseline:75,action:'Walk after dinner'});
+  assert.equal(message.state,'first-stable-action');
+  assert.equal(message.headline,'It’s only been one completed day, but since starting Walk after dinner, your Fat Use Score is within 1% of baseline.');
 })();
 
 (function earlyActionUsesCompletedAverageAndExcludesToday(){
