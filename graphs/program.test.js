@@ -608,14 +608,16 @@ assert.ok(source.includes('program-history-callout-pointer')&&source.includes('d
   'the selected value should remain visibly anchored to its bar as the selection moves');
 assert.ok(source.includes('program-history-callout-close')&&source.includes('program-history-callout-reopen')&&source.includes('function setCalloutCollapsed(collapsed)'),
   'the selected-value label should collapse to its caret and reopen from the caret or a bar');
-assert.ok(source.includes('defaultCalloutTop-47')&&source.includes('M-5 37 L0 44 L5 37 Z'),
-  'the label should retain a small visual gap above its caret');
-assert.ok(source.includes('completedShownDays[completedShownDays.length-1]')&&source.includes('String(fox2Round(defaultSelectedDay.score))'),
-  'the latest completed score should be selected by default even when today is unfinished');
+assert.ok(source.includes('defaultCalloutTop-55')&&source.includes('M-4 37 L0 42 L4 37 Z'),
+  'the label should retain relaxed visual space above its shorter caret');
+assert.ok(source.includes('defaultSelectedDay=shownDays.length?shownDays[shownDays.length-1]:null')&&source.includes('String(fox2Round(defaultSelectedDay.score))'),
+  'the newest visible score should be selected by default even when today is unfinished');
 assert.ok(source.includes("current?score+' so far':score")&&source.includes("dateReadout.textContent=current?'Today':fox2ShortDate(date)")&&source.includes('data-progress-current='),
   'selecting today should clearly distinguish its unfinished score while completed callouts stay concise');
 assert.ok(source.includes('.program-history-bar.is-today.is-selected { opacity:.58;')&&source.includes('width="88" height="38" rx="14"'),
   'today should read as a translucent live preview and the selected value should use a compact rounded callout');
+assert.ok(source.includes('stroke:rgba(255,140,0,.46)')&&source.includes('drop-shadow(0 4px 8px rgba(0,0,0,.34))'),
+  'the selected-value callout should feel light rather than visually heavy');
 assert.ok(source.includes('function fox2InitProgressChartSelection(root)')&&source.includes('fox2InitProgressChartSelection(shell);'),
   'daily bars should support a single interactive selected value');
 assert.ok(source.includes('--today-color:var(--program-orange)'),
