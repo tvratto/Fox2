@@ -130,7 +130,7 @@ function functionSource(name,nextName){
   const reentrySyncedHtml=context.fox2ProgressHtml({baseline:75,measureDays:[{score:80},{score:100}],elapsedDays:6,savedResult:null});
   assert.ok(reentrySyncedHtml.includes('It’s only been a few days, but since starting Walk after dinner, your Fat Use Score is already higher.')&&reentrySyncedHtml.includes('data-final-value="20%">20%')&&!reentrySyncedHtml.includes('Welcome back'),
     'syncing a current-day measurement should restore the completed-day progress result');
-  assert.ok(reentrySyncedHtml.includes('<strong>Today is still accumulating.</strong> It will be included in your progress after the day is complete.'),
+  assert.ok(reentrySyncedHtml.includes('<strong>Today is still taking shape.</strong> Your progress updates when the day is complete.'),
     'the current outlined bar should explain why it is not part of the progress percentage yet');
   assert.ok(reentrySyncedHtml.includes('program-canonical-progress has-current-day'),
     'the current-day note should expand the Progress card so utility links remain visible');
@@ -610,10 +610,12 @@ assert.ok(source.includes('program-history-callout-close')&&source.includes('pro
   'the selected-value label should collapse to its caret and reopen from the caret or a bar');
 assert.ok(source.includes('defaultCalloutTop-47')&&source.includes('M-5 37 L0 44 L5 37 Z'),
   'the label should retain a small visual gap above its caret');
-assert.ok(source.includes('completedShownDays[completedShownDays.length-1]')&&source.includes("'Final score '+fox2Round(defaultSelectedDay.score)"),
+assert.ok(source.includes('completedShownDays[completedShownDays.length-1]')&&source.includes('String(fox2Round(defaultSelectedDay.score))'),
   'the latest completed score should be selected by default even when today is unfinished');
-assert.ok(source.includes("current?score+' so far':'Final score '+score")&&source.includes('data-progress-current='),
-  'selecting today should clearly distinguish its unfinished score from a final score');
+assert.ok(source.includes("current?score+' so far':score")&&source.includes("dateReadout.textContent=current?'Today':fox2ShortDate(date)")&&source.includes('data-progress-current='),
+  'selecting today should clearly distinguish its unfinished score while completed callouts stay concise');
+assert.ok(source.includes('.program-history-bar.is-today.is-selected { opacity:.58;')&&source.includes('width="88" height="38" rx="14"'),
+  'today should read as a translucent live preview and the selected value should use a compact rounded callout');
 assert.ok(source.includes('function fox2InitProgressChartSelection(root)')&&source.includes('fox2InitProgressChartSelection(shell);'),
   'daily bars should support a single interactive selected value');
 assert.ok(source.includes('--today-color:var(--program-orange)'),
