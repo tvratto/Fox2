@@ -78,7 +78,7 @@ function functionSource(name,nextName){
     'Progress should move from the synced daily ring into the canonical daily bars');
   assert.ok(html.includes('BASELINE 75')&&html.includes('Oatmeal for breakfast'),
     'Progress should compare daily Scores directly while identifying the dated lifestyle change');
-  assert.ok(html.includes('It’s only been a few days, but since starting Oatmeal for breakfast, your Fat Use Score is already higher.')&&html.includes('data-final-value="12%">12%')&&html.includes('program-canonical-hero-label'),
+  assert.ok(html.includes('It’s early, but Oatmeal for breakfast is showing promise.')&&html.includes('data-final-value="12%">12%</span><sup class="program-canonical-hero-asterisk"')&&html.includes('program-canonical-hero-label'),
     'a daytime sync should animate today’s bar without recalculating the completed-day percentage');
   assert.ok(html.includes('data-program-action="open-past-results">Past results</button>')&&!html.includes('Add a walk after eating'),
     'Progress should keep prior changes behind one quiet Past results link rather than lengthening the main card');
@@ -118,7 +118,7 @@ function functionSource(name,nextName){
 
   context.fox2Program={measureStart:'',action:'',resultHistory:[]};
   const openHtml=context.fox2ProgressHtml({baseline:0,measureDays:[],elapsedDays:0,savedResult:null});
-  assert.ok(openHtml.includes('Early win—your Fat Use Score is averaging above the reference.')&&openHtml.includes('data-final-value="12%">12%'),
+  assert.ok(openHtml.includes('Your recent scores are trending higher.')&&openHtml.includes('data-final-value="12%">12%</span><sup class="program-canonical-hero-asterisk"'),
     'without a personal baseline, completed Scores should use the standard reference while excluding today');
   assert.ok(openHtml.includes('Want to see what affects your fat use?')&&openHtml.includes('Start New Experiment'),
     'the neutral Progress state should offer one clear new-experiment prompt');
@@ -129,12 +129,12 @@ function functionSource(name,nextName){
   context.fox2AllCompletedScoreDays=()=>[{date:'2026-10-24',score:80},{date:'2026-10-25',score:100}];
   context.fox2TodayProgramDay=()=>({date:'2026-10-29',score:62,readings:1});
   const reentrySyncedHtml=context.fox2ProgressHtml({baseline:75,measureDays:[{score:80},{score:100}],elapsedDays:6,savedResult:null});
-  assert.ok(reentrySyncedHtml.includes('It’s only been a few days, but since starting Walk after dinner, your Fat Use Score is already higher.')&&reentrySyncedHtml.includes('data-final-value="20%">20%')&&!reentrySyncedHtml.includes('Welcome back'),
+  assert.ok(reentrySyncedHtml.includes('It’s early, but Walk after dinner is showing promise.')&&reentrySyncedHtml.includes('data-final-value="20%">20%</span><sup class="program-canonical-hero-asterisk"')&&!reentrySyncedHtml.includes('Welcome back'),
     'syncing a current-day measurement should restore the completed-day progress result');
-  assert.ok(reentrySyncedHtml.includes('<strong>Today is still taking shape.</strong> It isn’t included in the percentage above.'),
-    'the current outlined bar should explicitly explain why it is not part of the percentage above');
+  assert.ok(reentrySyncedHtml.includes('<p class="program-completed-days-note">*Completed days only</p>')&&!reentrySyncedHtml.includes('Today is still taking shape'),
+    'the unfinished-day exclusion should use one compact footnote instead of another explanatory sentence');
   assert.ok(reentrySyncedHtml.includes('program-canonical-progress has-current-day'),
-    'the current-day note should expand the Progress card so utility links remain visible');
+    'the current-day state should keep the Progress card and its utility links visible');
 })();
 
 (function progressMessageStateMachineCoversCoreStates(){
@@ -145,9 +145,9 @@ function functionSource(name,nextName){
   assert.strictEqual(resolve({completedDays:[],today:{score:62},baseline:75}).state,'accumulating');
   assert.strictEqual(resolve({completedDays:[{score:85}],action:'Zepbound 0.25 mg'}).state,'first-result');
   assert.strictEqual(resolve({completedDays:[{score:72},{score:96}],baseline:75,action:'Zepbound 0.25 mg'}).summary,
-    'It’s only been a few days, but since starting Zepbound 0.25 mg, your Fat Use Score is already higher.');
+    'It’s early, but Zepbound 0.25 mg is showing promise.');
   assert.strictEqual(resolve({completedDays:[{score:90},{score:96},{score:102},{score:108}],baseline:75,action:'Zepbound 0.25 mg'}).summary,
-    'Great—your Fat Use Score is averaging higher since starting Zepbound 0.25 mg.');
+    'Zepbound 0.25 mg is showing promise.');
   assert.strictEqual(resolve({completedDays:[{score:80},{score:100}],baseline:0,action:''}).summary,
     'It’s still early, but your recent Fat Use Score is higher than your first completed Score.');
 })();
@@ -639,8 +639,8 @@ assert.ok(source.includes('fox2ResolveProgressMessage')&&source.includes('progra
   'the current change and result should read as one concise narrative rather than separate boxes');
 assert.ok(source.includes('data-program-action="open-past-results">Past results</button>')&&source.includes('id="past-results-overlay"'),
   'completed changes should open from a visible, quiet Past results link on the Progress card');
-assert.ok(source.includes("+heroHtml+'<div class=\"program-calendar\">'+historyChart+currentDayNote+'</div>'+programUtilities"),
-  'Past results and New experiment should sit below the chart and current-day note');
+assert.ok(source.includes("+heroHtml+'<div class=\"program-calendar\">'+historyChart+completedDaysNote+'</div>'+programUtilities"),
+  'Past results and New experiment should sit below the chart and compact completed-days footnote');
 assert.ok(source.includes('.program-history-baseline { stroke:rgba(255,255,255,.32);'),
   'the baseline should remain a subdued reference rather than competing with the orange score bars');
 assert.ok(source.includes('class="program-how-link" onclick="openFox2WorksGuideFromHelp()">How this works</button>'),

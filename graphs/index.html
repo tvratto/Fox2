@@ -393,7 +393,9 @@ html, body {
 .program-canonical-summary { width:100%; margin:1px 0 12px; color:#fff; font-size:23px; line-height:1.16; font-weight:900; letter-spacing:-.035em; }
 .program-canonical-hero { width:100%; display:flex; align-items:baseline; gap:8px; margin:-2px 0 4px; color:#fff; }
 .program-canonical-hero-arrow { color:var(--program-orange); font-size:46px; line-height:.85; font-weight:950; }
+.program-canonical-hero-number { display:inline-flex; align-items:flex-start; }
 .program-canonical-hero-value { font-size:58px; line-height:.9; font-weight:950; letter-spacing:-.055em; }
+.program-canonical-hero-asterisk { margin:1px 0 0 2px; color:rgba(255,255,255,.72); font-size:16px; line-height:1; font-weight:900; }
 .program-canonical-hero-label { margin-left:3px; color:#ffc46f; font-size:10px; line-height:1.15; font-weight:900; letter-spacing:1.15px; text-transform:uppercase; }
 .program-canonical-progress-bars { position:relative; inset:auto; z-index:1; min-height:518px; opacity:1; pointer-events:auto; }
 .program-canonical-progress.has-current-day .program-canonical-progress-bars { min-height:578px; }
@@ -439,8 +441,7 @@ html, body {
 .program-history-callout.is-collapsed .program-history-callout-reopen-hit { pointer-events:all; }
 .program-history-readout-date { fill:rgba(255,255,255,.6); font:850 8px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; letter-spacing:.06em; text-transform:uppercase; }
 .program-history-readout-value { fill:#fff; font:950 12px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; letter-spacing:-.02em; }
-.program-current-day-note { margin:8px 4px 2px; color:rgba(255,255,255,.62); font-size:13px; line-height:1.38; font-weight:650; }
-.program-current-day-note strong { color:#fff; font-weight:900; }
+.program-completed-days-note { margin:7px 4px 1px; color:rgba(255,255,255,.42); font-size:10px; line-height:1.2; font-weight:750; letter-spacing:.01em; }
 .program-history-date { fill:rgba(255,255,255,.58); font:850 10px/1 -apple-system,BlinkMacSystemFont,system-ui,sans-serif; }
 .program-history-axis { stroke:rgba(255,255,255,.15); stroke-width:1.3; }
 .program-history-today-dot { fill:var(--program-orange,#ff8c00); filter:drop-shadow(0 0 3px rgba(255,140,0,.62)); }
@@ -2654,7 +2655,7 @@ html.payload-unsupported #update-banner { display: none !important; }
 
 <script src="data-fetch.js?v=20260930-11"></script>
 <script src="payload-codec.js?v=20261029-01"></script>
-<script src="copy-generator.js?v=20261104-05"></script>
+<script src="copy-generator.js?v=20261104-06"></script>
 <script>
 
 // ─── Parse URL params ─────────────────────────────────────────────
@@ -7473,10 +7474,11 @@ function fox2ProgressHtml(metrics){
   var finalMessage=fox2ResolveProgressMessage({completedDays:comparisonDays,today:todayForMessage,asOfDate:todayIso,reentryAfterDays:4,baseline:baseline,comparisonType:comparisonType,action:hasActiveChange?fox2Program.action:''});
   var previousComparisonDays=animate&&latest&&!latest.current&&comparisonDays.length>1?comparisonDays.slice(0,-1):comparisonDays;
   var message=animate?fox2ResolveProgressMessage({completedDays:previousComparisonDays,today:todayForMessage,asOfDate:todayIso,reentryAfterDays:4,baseline:baseline,comparisonType:comparisonType,action:hasActiveChange?fox2Program.action:''}):finalMessage;
-  var currentDayNote=today?'<p class="program-current-day-note"><strong>Today is still taking shape.</strong> '+(finalMessage.hero?'It isn’t included in the percentage above.':'It will count once the day is complete.')+'</p>':'';
+  var completedDaysNote=today&&finalMessage.hero?'<p class="program-completed-days-note">*Completed days only</p>':'';
   var summary=message.summary;
   var shownHero=message.hero||finalMessage.hero,finalHero=finalMessage.hero;
-  var heroHtml=shownHero?'<div class="program-canonical-hero'+(!message.hero?' is-pending-result':'')+'" role="img" aria-label="'+fox2Escape(shownHero.accessibleLabel)+'" data-final-label="'+fox2Escape(finalHero?finalHero.accessibleLabel:shownHero.accessibleLabel)+'"><span class="program-canonical-hero-arrow" data-final-value="'+fox2Escape(finalHero?finalHero.arrow:shownHero.arrow)+'">'+fox2Escape(shownHero.arrow)+'</span><span class="program-canonical-hero-value" data-final-value="'+fox2Escape(finalHero?finalHero.value:shownHero.value)+'">'+fox2Escape(message.hero?shownHero.value:'0%')+'</span><span class="program-canonical-hero-label" data-final-value="'+fox2Escape(finalHero?finalHero.label:shownHero.label)+'">'+fox2Escape(shownHero.label)+'</span></div>':'';
+  var heroMarker=today&&finalHero?'*':'';
+  var heroHtml=shownHero?'<div class="program-canonical-hero'+(!message.hero?' is-pending-result':'')+'" role="img" aria-label="'+fox2Escape(shownHero.accessibleLabel+(heroMarker?' · completed days only':''))+'" data-final-label="'+fox2Escape((finalHero?finalHero.accessibleLabel:shownHero.accessibleLabel)+(heroMarker?' · completed days only':''))+'"><span class="program-canonical-hero-arrow" data-final-value="'+fox2Escape(finalHero?finalHero.arrow:shownHero.arrow)+'">'+fox2Escape(shownHero.arrow)+'</span><span class="program-canonical-hero-number"><span class="program-canonical-hero-value" data-final-value="'+fox2Escape(finalHero?finalHero.value:shownHero.value)+'">'+fox2Escape(message.hero?shownHero.value:'0%')+'</span>'+(heroMarker?'<sup class="program-canonical-hero-asterisk" aria-hidden="true">*</sup>':'')+'</span><span class="program-canonical-hero-label" data-final-value="'+fox2Escape(finalHero?finalHero.label:shownHero.label)+'">'+fox2Escape(shownHero.label)+'</span></div>':'';
   var latestSlotIndex=Math.max(0,shownDays.length-1),recapTargetX=Math.round((latestSlotIndex/(chartTarget-1)-.5)*280);
   var latestRecapDate=latest&&!latest.current?fox2RecapDateLabel(latest.date,todayIso):'';
   var latestRecapHeading=latest&&latest.current?'Today’s Fat Use Score':latestRecapDate;
@@ -7485,7 +7487,7 @@ function fox2ProgressHtml(metrics){
   var programOptionsLink=hasBaseline||fox2Program.action?'<button type="button" class="program-utility-link program-options-link" data-program-action="open-program-options">New experiment</button>':'';
   var programUtilities=pastResultsLink||programOptionsLink?'<div class="program-utilities">'+pastResultsLink+programOptionsLink+'</div>':'';
   var progressTitle=fox2ProgressTitle();
-  var barsView='<section class="program-canonical-progress-view program-canonical-progress-bars"'+(animate?' aria-hidden="true"':'')+'><div class="program-progress-heading"><div class="program-eyebrow" data-progress-title="1" title="'+fox2Escape(progressTitle)+'">'+fox2Escape(progressTitle)+'</div><button type="button" class="program-how-link" onclick="openFox2WorksGuideFromHelp()">How this works</button></div><div class="program-canonical-summary" data-final-summary="'+fox2Escape(finalMessage.summary)+'">'+fox2Escape(summary)+'</div>'+heroHtml+'<div class="program-calendar">'+historyChart+currentDayNote+'</div>'+programUtilities+(hasStoredBaseline?'':'<div class="program-canonical-baseline-action"><strong>Want to see what affects your fat use?</strong><span>Name a change and measure a personal baseline. Until then, FOX2 compares your completed daily Scores with the standard reference.</span><button type="button" data-program-action="open-program-options">Start New Experiment</button></div>')+'</section>';
+  var barsView='<section class="program-canonical-progress-view program-canonical-progress-bars"'+(animate?' aria-hidden="true"':'')+'><div class="program-progress-heading"><div class="program-eyebrow" data-progress-title="1" title="'+fox2Escape(progressTitle)+'">'+fox2Escape(progressTitle)+'</div><button type="button" class="program-how-link" onclick="openFox2WorksGuideFromHelp()">How this works</button></div><div class="program-canonical-summary" data-final-summary="'+fox2Escape(finalMessage.summary)+'">'+fox2Escape(summary)+'</div>'+heroHtml+'<div class="program-calendar">'+historyChart+completedDaysNote+'</div>'+programUtilities+(hasStoredBaseline?'':'<div class="program-canonical-baseline-action"><strong>Want to see what affects your fat use?</strong><span>Name a change and measure a personal baseline. Until then, FOX2 compares your completed daily Scores with the standard reference.</span><button type="button" data-program-action="open-program-options">Start New Experiment</button></div>')+'</section>';
   if(!latest) return '<section class="program-canonical-progress is-bars"><section class="program-canonical-progress-view program-canonical-progress-bars"><div class="program-eyebrow">Progress</div><h1>Your daily Scores will appear here.</h1><p class="program-canonical-progress-copy">Take a measurement and tap your phone to FOX2 to sync it.</p></section></section>';
   return '<section class="program-canonical-progress'+(today?' has-current-day':'')+(animate?' has-recap':' is-bars')+'" style="--recap-target-x:'+recapTargetX+'px;--recap-target-y:118px" data-progress-key="'+fox2Escape(key)+'" data-progress-fill="'+visual.progress+'" data-progress-animate="'+(animate?'1':'0')+'">'+barsView+ring+'</section>';
 }

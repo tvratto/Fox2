@@ -113,14 +113,9 @@
         var firstRawPercent=(latest.score-baseline)/Math.max(1,baseline)*100;
         var firstPercent=Math.round(Math.abs(firstRawPercent));
         var firstDirection=stableDirection(firstRawPercent,neutralBand);
-        var firstLead=hasAction
-          ?'It’s only been one completed day, but since starting '+action+', your Fat Use Score is '
-          :'It’s only been one completed day, but your Fat Use Score is ';
-        var firstConclusion=firstDirection==='up'
-          ?'already '+firstPercent+'% higher'+(comparisonType==='reference'?' than the reference':'')+'.'
-          :(firstDirection==='down'
-            ?firstPercent+'% lower than '+comparisonPhrase+'.'
-            :(firstPercent===0?'right at '+comparisonPhrase+'—a 0% difference.':'within '+firstPercent+'% of '+comparisonPhrase+'.'));
+        var firstHeadline=hasAction
+          ?'It’s early, but '+action+(firstDirection==='up'?' is showing promise.':(firstDirection==='down'?' isn’t showing an improvement yet.':' hasn’t made a clear difference yet.'))
+          :'It’s early, but your score is '+(firstDirection==='up'?'above '+comparisonPhrase+'.':(firstDirection==='down'?'below '+comparisonPhrase+'.':'close to '+comparisonPhrase+'.'));
         var firstHero={
           arrow:firstDirection==='up'?'↑':(firstDirection==='down'?'↓':'↔'),
           value:firstPercent+'%',
@@ -129,7 +124,7 @@
         };
         return result(
           'first-'+firstDirection+(hasAction?'-action':'-'+comparisonType),'first',firstDirection,
-          firstLead+firstConclusion,
+          firstHeadline,
           'Keep measuring normally to see whether this early result holds.',
           {label:'Keep measuring',action:'measure'},
           {basis:'completed-score-vs-'+comparisonType,percent:firstPercent,rawPercent:firstRawPercent,direction:firstDirection,completedCount:1,comparisonValue:latest.score,referenceValue:baseline,comparisonType:comparisonType,excludesToday:!!today},
@@ -200,46 +195,46 @@
 
     if(stage==='early'&&hasAction&&hasBaseline){
       if(direction==='up'){
-        headline='It’s only been a few days, but since starting '+action+', your Fat Use Score is already higher'+(comparisonType==='reference'?' than the reference':'')+'.';
+        headline='It’s early, but '+action+' is showing promise.';
         detail='Keep measuring normally to see if this early result holds.';
         tone='positive';
       }else if(direction==='down'){
-        headline='It’s still early, but since starting '+action+', your Fat Use Score is lower than '+comparisonPhrase+'.';
+        headline='It’s early, but '+action+' isn’t showing an improvement yet.';
         detail='That’s useful to know. Keep measuring normally to see whether this holds.';
         tone='supportive';
       }else{
-        headline='No clear shift yet since starting '+action+'.';
+        headline='It’s early, but '+action+' hasn’t made a clear difference yet.';
         detail='Keep measuring normally. A few more completed days will make the comparison more useful.';
         tone='informational';
       }
     }else if(stage==='established'&&hasAction&&hasBaseline){
       if(direction==='up'){
-        headline='Great—your Fat Use Score is averaging '+(comparisonType==='reference'?'above the reference':'higher')+' since starting '+action+'.';
+        headline=action+' is showing promise.';
         detail='Keep measuring to see how durable this result is.';
         cta={label:'See what changed',action:'review-change'};
         tone='positive';
       }else if(direction==='down'){
-        headline='Your Fat Use Score is averaging lower than '+comparisonPhrase+' since starting '+action+'.';
+        headline=action+' isn’t showing an improvement yet.';
         detail='This result is worth learning from. Review what else changed, then decide what to try next.';
         cta={label:'Review recent days',action:'review-days'};
         tone='supportive';
       }else{
-        headline='No clear shift yet since starting '+action+'.';
+        headline=action+' hasn’t made a clear difference yet.';
         detail='Keep measuring a little longer to make the comparison easier to interpret.';
         tone='informational';
       }
     }else if(hasBaseline){
       if(direction==='up'){
-        headline=(stage==='early'?'Early win—':'Great—')+'your Fat Use Score is averaging above '+comparisonPhrase+'.';
+        headline='Your recent scores are trending higher.';
         detail=stage==='early'?'Keep measuring to see whether this becomes a pattern.':'Your completed days are consistently landing above your starting point.';
         tone='positive';
       }else if(direction==='down'){
-        headline='Your Fat Use Score is averaging below '+comparisonPhrase+'.';
+        headline='Your recent scores are running below '+comparisonPhrase+'.';
         detail='Think about what changed recently, then choose one thing to test.';
         cta={label:'Choose a change',action:'start-change'};
         tone='supportive';
       }else{
-        headline='Your Fat Use Score is holding close to '+comparisonPhrase+'.';
+        headline='Your recent scores are holding steady.';
         detail='This is a useful starting point for testing one lifestyle change.';
         cta={label:'Choose a change',action:'start-change'};
         tone='informational';

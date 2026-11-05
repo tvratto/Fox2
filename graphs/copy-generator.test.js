@@ -17,20 +17,20 @@ function days(scores){
 (function firstResultReportsItsBaselineComparison(){
   const message=copy.progress({completedDays:days([85]),baseline:75,action:'Zepbound 0.25 mg'});
   assert.equal(message.state,'first-up-action');
-  assert.equal(message.headline,'It’s only been one completed day, but since starting Zepbound 0.25 mg, your Fat Use Score is already 13% higher.');
+  assert.equal(message.headline,'It’s early, but Zepbound 0.25 mg is showing promise.');
   assert.deepStrictEqual(message.hero,{arrow:'↑',value:'13%',label:'ABOVE BASELINE',accessibleLabel:'13% above baseline'});
 })();
 
 (function standardReferenceIsNotPresentedAsAPersonalBaseline(){
   const first=copy.progress({completedDays:days([85]),baseline:75,comparisonType:'reference'});
   assert.equal(first.state,'first-up-reference');
-  assert.equal(first.headline,'It’s only been one completed day, but your Fat Use Score is already 13% higher than the reference.');
+  assert.equal(first.headline,'It’s early, but your score is above the reference.');
   assert.deepStrictEqual(first.hero,{arrow:'↑',value:'13%',label:'ABOVE REFERENCE',accessibleLabel:'13% above reference'});
   assert.equal(first.metric.basis,'completed-score-vs-reference');
   assert.equal(first.metric.comparisonType,'reference');
 
   const established=copy.progress({completedDays:days([90,96,102,108]),baseline:75,comparisonType:'reference',action:'Walk after dinner'});
-  assert.equal(established.headline,'Great—your Fat Use Score is averaging above the reference since starting Walk after dinner.');
+  assert.equal(established.headline,'Walk after dinner is showing promise.');
   assert.equal(established.hero.label,'ABOVE REFERENCE');
   assert.equal(established.metric.basis,'completed-average-vs-reference');
 })();
@@ -52,7 +52,7 @@ function days(scores){
 (function firstResultWithActiveDayUsesOnlyTheCompletedBaselineComparison(){
   const message=copy.progress({completedDays:days([85]),today:{date:'2026-10-21',score:62},baseline:75,action:'Zepbound 0.25 mg'});
   assert.equal(message.state,'first-up-action');
-  assert.equal(message.headline,'It’s only been one completed day, but since starting Zepbound 0.25 mg, your Fat Use Score is already 13% higher.');
+  assert.equal(message.headline,'It’s early, but Zepbound 0.25 mg is showing promise.');
   assert.ok(!message.headline.includes('62'),'the headline should acknowledge today without repeating its provisional value');
   assert.ok(message.evidence.includes('unfinished Score is not included'));
 })();
@@ -60,14 +60,14 @@ function days(scores){
 (function firstLowerResultNamesTheBaseline(){
   const message=copy.progress({completedDays:days([65]),baseline:75,action:'Walk after dinner'});
   assert.equal(message.state,'first-down-action');
-  assert.equal(message.headline,'It’s only been one completed day, but since starting Walk after dinner, your Fat Use Score is 13% lower than baseline.');
+  assert.equal(message.headline,'It’s early, but Walk after dinner isn’t showing an improvement yet.');
   assert.equal(message.hero.value,'13%');
 })();
 
 (function firstStableResultStillReportsThePercentage(){
   const message=copy.progress({completedDays:days([76]),baseline:75,action:'Walk after dinner'});
   assert.equal(message.state,'first-stable-action');
-  assert.equal(message.headline,'It’s only been one completed day, but since starting Walk after dinner, your Fat Use Score is within 1% of baseline.');
+  assert.equal(message.headline,'It’s early, but Walk after dinner hasn’t made a clear difference yet.');
 })();
 
 (function earlyActionUsesCompletedAverageAndExcludesToday(){
@@ -75,7 +75,7 @@ function days(scores){
   assert.equal(message.state,'early-up-action');
   assert.equal(message.metric.percent,21);
   assert.equal(message.metric.basis,'completed-average-vs-baseline');
-  assert.equal(message.headline,'It’s only been a few days, but since starting Zepbound 0.25 mg, your Fat Use Score is already higher.');
+  assert.equal(message.headline,'It’s early, but Zepbound 0.25 mg is showing promise.');
   assert.deepStrictEqual(message.hero,{arrow:'↑',value:'21%',label:'ABOVE BASELINE',accessibleLabel:'21% above baseline'});
   assert.ok(message.evidence.includes('unfinished Score is not included'));
 })();
@@ -83,32 +83,32 @@ function days(scores){
 (function earlyLowerActionDoesNotRepeatTheProvisionalQualifier(){
   const message=copy.progress({completedDays:days([65,68]),baseline:75,action:'Walk after dinner'});
   assert.equal(message.state,'early-down-action');
-  assert.equal(message.headline,'It’s still early, but since starting Walk after dinner, your Fat Use Score is lower than baseline.');
+  assert.equal(message.headline,'It’s early, but Walk after dinner isn’t showing an improvement yet.');
   assert.ok(!message.headline.includes('so far'));
 })();
 
 (function establishedLowerActionNamesTheBaseline(){
   const message=copy.progress({completedDays:days([66,65,64,63]),baseline:75,action:'Walk after dinner'});
   assert.equal(message.state,'established-down-action');
-  assert.equal(message.headline,'Your Fat Use Score is averaging lower than baseline since starting Walk after dinner.');
+  assert.equal(message.headline,'Walk after dinner isn’t showing an improvement yet.');
 })();
 
 (function smallChangesStayNeutral(){
   const message=copy.progress({completedDays:days([75,77]),baseline:75,action:'Walk after dinner'});
   assert.equal(message.direction,'stable');
-  assert.ok(message.headline.includes('No clear shift yet'));
+  assert.ok(message.headline.includes('hasn’t made a clear difference yet'));
   assert.equal(message.hero.value,'1%');
   assert.equal(message.hero.arrow,'↔');
   const unchanged=copy.progress({completedDays:days([75,75,75,75]),baseline:75,action:'Walk after dinner'});
   assert.equal(unchanged.hero.value,'0%');
-  assert.ok(unchanged.headline.includes('No clear shift yet'));
+  assert.ok(unchanged.headline.includes('hasn’t made a clear difference yet'));
 })();
 
 (function establishedActionUsesTheSameMetric(){
   const message=copy.progress({completedDays:days([90,96,102,108]),baseline:75,action:'Zepbound 0.25 mg'});
   assert.equal(message.state,'established-up-action');
   assert.equal(message.metric.percent,32);
-  assert.equal(message.headline,'Great—your Fat Use Score is averaging higher since starting Zepbound 0.25 mg.');
+  assert.equal(message.headline,'Zepbound 0.25 mg is showing promise.');
   assert.equal(message.hero.value,'32%');
   assert.equal(message.cta.action,'review-change');
 })();
