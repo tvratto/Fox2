@@ -21,6 +21,20 @@ function days(scores){
   assert.deepStrictEqual(message.hero,{arrow:'↑',value:'13%',label:'ABOVE BASELINE',accessibleLabel:'13% above baseline'});
 })();
 
+(function standardReferenceIsNotPresentedAsAPersonalBaseline(){
+  const first=copy.progress({completedDays:days([85]),baseline:75,comparisonType:'reference'});
+  assert.equal(first.state,'first-up-reference');
+  assert.equal(first.headline,'It’s only been one completed day, but your Fat Use Score is already 13% higher than the reference.');
+  assert.deepStrictEqual(first.hero,{arrow:'↑',value:'13%',label:'ABOVE REFERENCE',accessibleLabel:'13% above reference'});
+  assert.equal(first.metric.basis,'completed-score-vs-reference');
+  assert.equal(first.metric.comparisonType,'reference');
+
+  const established=copy.progress({completedDays:days([90,96,102,108]),baseline:75,comparisonType:'reference',action:'Walk after dinner'});
+  assert.equal(established.headline,'Great—your Fat Use Score is averaging above the reference since starting Walk after dinner.');
+  assert.equal(established.hero.label,'ABOVE REFERENCE');
+  assert.equal(established.metric.basis,'completed-average-vs-reference');
+})();
+
 (function gentleReentryStartsOnDayFour(){
   const completed=[{date:'2026-10-25',score:85}];
   const dayThree=copy.progress({completedDays:completed,asOfDate:'2026-10-28'});

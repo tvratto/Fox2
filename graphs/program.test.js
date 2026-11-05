@@ -62,6 +62,7 @@ function functionSource(name,nextName){
     'the saved result must retain its original action even if a draft previously overwrote the live label');
 
   Object.assign(context,{fox2LastProgressAnimationKey:'',fox2Escape:value=>String(value),fox2Round:value=>Math.round(value),
+    FOX2_STANDARD_BASELINE:75,
     fox2TodayIso:()=> '2026-10-29',fox2IsoOrBlank:value=>String(value||''),
     fox2DaysBetween:(start,end)=>Math.floor((Date.parse(end+'T00:00:00Z')-Date.parse(start+'T00:00:00Z'))/86400000),
     fox2AddIsoDays:(iso,amount)=>new Date(Date.parse(iso+'T00:00:00Z')+amount*86400000).toISOString().slice(0,10),
@@ -117,12 +118,12 @@ function functionSource(name,nextName){
 
   context.fox2Program={measureStart:'',action:'',resultHistory:[]};
   const openHtml=context.fox2ProgressHtml({baseline:0,measureDays:[],elapsedDays:0,savedResult:null});
-  assert.ok(openHtml.includes('It’s still early, but your recent Fat Use Score is higher than your first completed Score.')&&openHtml.includes('data-final-value="33%">33%'),
-    'a provisional current-day Score should not alter a personal-history comparison');
+  assert.ok(openHtml.includes('Early win—your Fat Use Score is averaging above the reference.')&&openHtml.includes('data-final-value="12%">12%'),
+    'without a personal baseline, completed Scores should use the standard reference while excluding today');
   assert.ok(openHtml.includes('Want to see what affects your fat use?')&&openHtml.includes('Start New Experiment'),
     'the neutral Progress state should offer one clear new-experiment prompt');
-  assert.ok(!openHtml.includes('BASELINE ')&&!openHtml.includes('Past results'),
-    'the neutral state should not invent a baseline or attributed change result');
+  assert.ok(openHtml.includes('REFERENCE 75')&&!openHtml.includes('BASELINE ')&&!openHtml.includes('Past results'),
+    'the neutral state should show the standard reference without inventing a personal baseline or attributed result');
 
   context.fox2Program={measureStart:'2026-10-24',action:'Walk after dinner',resultHistory:[]};
   context.fox2AllCompletedScoreDays=()=>[{date:'2026-10-24',score:80},{date:'2026-10-25',score:100}];
@@ -130,8 +131,8 @@ function functionSource(name,nextName){
   const reentrySyncedHtml=context.fox2ProgressHtml({baseline:75,measureDays:[{score:80},{score:100}],elapsedDays:6,savedResult:null});
   assert.ok(reentrySyncedHtml.includes('It’s only been a few days, but since starting Walk after dinner, your Fat Use Score is already higher.')&&reentrySyncedHtml.includes('data-final-value="20%">20%')&&!reentrySyncedHtml.includes('Welcome back'),
     'syncing a current-day measurement should restore the completed-day progress result');
-  assert.ok(reentrySyncedHtml.includes('<strong>Today is still taking shape.</strong> Your progress updates when the day is complete.'),
-    'the current outlined bar should explain why it is not part of the progress percentage yet');
+  assert.ok(reentrySyncedHtml.includes('<strong>Today is still taking shape.</strong> It isn’t included in the percentage above.'),
+    'the current outlined bar should explicitly explain why it is not part of the percentage above');
   assert.ok(reentrySyncedHtml.includes('program-canonical-progress has-current-day'),
     'the current-day note should expand the Progress card so utility links remain visible');
 })();
@@ -372,8 +373,8 @@ assert.ok(source.includes('function fox2MethodHtml()'),
 assert.ok(source.includes('Measure my baseline'));
 assert.ok(source.includes('Measure for about a week before beginning your action.'),
   'the recommended baseline option should describe the timing in plain language');
-assert.ok(source.includes('Choose a default baseline'));
-assert.ok(source.includes('Enter another score'));
+assert.ok(source.includes('Use a reference score'));
+assert.ok(source.includes('Enter another baseline score'));
 assert.ok(!source.includes('toggle-baseline-alternatives')&&!source.includes('program-baseline-alternatives'),
   'all baseline choices should remain visible without a disclosure control');
 assert.ok(source.includes('program-method-title-row')&&source.includes('program-method-group'),
@@ -440,14 +441,14 @@ assert.ok(source.includes("fox2ActionDraft=fox2Program.action||'';fox2Program.se
   'changing actions should prefill the current action without changing it before confirmation');
 assert.ok(source.includes('data-program-action="open-program-options">New experiment</button>'),
   'settled Progress should provide one quiet New experiment link beneath the chart');
-assert.ok(source.includes('id="program-options-overlay"')&&source.includes('program-options-row-label">Baseline')&&source.includes('program-options-row-label">Action'),
-  'the experiment dialog should show the current baseline and action');
-assert.ok(source.includes('onclick="fox2ShowEditExperimentForm()">Edit action and baseline</button>')&&source.includes('function fox2SaveExperimentEdits()'),
-  'the current experiment should provide one focused editor for its action and baseline');
+assert.ok(source.includes('id="program-options-overlay"')&&source.includes("comparisonLabel=fox2ProgressComparisonType()==='reference'?'Reference':'Baseline'")&&source.includes('program-options-row-label">Action'),
+  'the experiment dialog should distinguish the current reference or baseline alongside the action');
+assert.ok(source.includes('onclick="fox2ShowEditExperimentForm()">Edit action and starting point</button>')&&source.includes('function fox2SaveExperimentEdits()'),
+  'the current experiment should provide one focused editor for its action and starting point');
 assert.ok(functionSource('fox2SaveExperimentEdits','fox2ShowNewExperimentForm').includes("fox2SaveProgramBackup('edit experiment')")&&functionSource('fox2SaveExperimentEdits','fox2ShowNewExperimentForm').includes('fox2Program.measureStart')===false,
   'editing should preserve a backup without restarting the experiment window');
-assert.ok(source.includes('Changing the baseline will recalculate its comparison; your dates and measurement history will stay the same.'),
-  'the editor should explain the effect of changing the baseline');
+assert.ok(source.includes('Changing the starting score will recalculate its comparison; your dates and measurement history will stay the same.'),
+  'the editor should explain the effect of changing the starting score');
 assert.ok(source.includes('function fox2ShowNewExperimentForm()')&&source.includes('function fox2StartNewExperiment()'),
   'one focused flow should collect the next action and baseline');
 assert.ok(!functionSource('fox2OpenProgramOptions','fox2CloseProgramOptions').includes('program-options-change'),

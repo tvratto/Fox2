@@ -2654,7 +2654,7 @@ html.payload-unsupported #update-banner { display: none !important; }
 
 <script src="data-fetch.js?v=20260930-11"></script>
 <script src="payload-codec.js?v=20261029-01"></script>
-<script src="copy-generator.js?v=20261104-04"></script>
+<script src="copy-generator.js?v=20261104-05"></script>
 <script>
 
 // ─── Parse URL params ─────────────────────────────────────────────
@@ -7353,11 +7353,17 @@ function fox2ProgramTargetDays(){
 
 function fox2BaselineSourceLabel(){
   var source=String(fox2Program.baselineSource||'');
-  if(source==='default'||source==='standard') return 'Default';
-  if(source==='manual') return 'Entered manually';
+  if(source==='default'||source==='standard') return 'Standard reference';
+  if(source==='manual') return 'Entered baseline';
   if(source==='previous') return fox2Program.baselineRange?'Measured · '+fox2Program.baselineRange:'Measured from previous days';
   if(source==='measured'||source==='current') return fox2Program.baselineRange?'Measured · '+fox2Program.baselineRange:'Measured over 7 days';
-  return fox2Program.baselineMode==='personal'?'Measured baseline':'Reference baseline';
+  return fox2Program.baselineMode==='personal'?'Measured baseline':'Standard reference';
+}
+
+function fox2ProgressComparisonType(){
+  var source=String(fox2Program.baselineSource||'');
+  if(!isFinite(Number(fox2Program.baselineValue))||Number(fox2Program.baselineValue)<=0) return 'reference';
+  return source==='default'||source==='standard'||(!source&&(fox2Program.baselineMode==='default'||fox2Program.baselineMode==='standard'))?'reference':'baseline';
 }
 
 function fox2CurrentProgramResult(){
@@ -7397,8 +7403,12 @@ function fox2ProgressHtml(metrics){
   days=days.sort(function(a,b){return a.date.localeCompare(b.date);});
   var latest=days.length?days[days.length-1]:null;
   var visual=latest?fox2RingVisual(latest.score):null;
-  var baseline=Number(metrics.baseline);
-  var hasBaseline=isFinite(baseline)&&baseline>0;
+  var storedBaseline=Number(metrics.baseline);
+  var hasStoredBaseline=isFinite(storedBaseline)&&storedBaseline>0;
+  var baseline=hasStoredBaseline?storedBaseline:FOX2_STANDARD_BASELINE;
+  var comparisonSource=String(fox2Program.baselineSource||'');
+  var comparisonType=!hasStoredBaseline||comparisonSource==='default'||comparisonSource==='standard'||(!comparisonSource&&(fox2Program.baselineMode==='default'||fox2Program.baselineMode==='standard'))?'reference':'baseline';
+  var hasBaseline=true;
   var todayIso=fox2TodayIso();
   var programStart=fox2IsoOrBlank(fox2Program.measureStart);
   var chartTarget=30;
@@ -7445,13 +7455,12 @@ function fox2ProgressHtml(metrics){
     var todayX=chartLeft+todayOffset*((chartRight-chartLeft)/(chartTarget-1));
     todayMarker='<circle class="program-history-today-dot" cx="'+todayX.toFixed(1)+'" cy="199" r="4" role="img" aria-label="Today, '+fox2Escape(fox2ShortDate(todayIso))+'"></circle>';
   }
-  var baselineMark=hasBaseline?'<line class="program-history-baseline" x1="'+chartLeft+'" y1="'+baselineY.toFixed(1)+'" x2="'+chartRight+'" y2="'+baselineY.toFixed(1)+'"></line><text class="program-history-baseline-label" x="'+chartRight+'" y="'+Math.max(29,baselineY-6).toFixed(1)+'" text-anchor="end">BASELINE '+fox2Round(baseline)+'</text>':'';
+  var baselineMark=hasBaseline?'<line class="program-history-baseline" x1="'+chartLeft+'" y1="'+baselineY.toFixed(1)+'" x2="'+chartRight+'" y2="'+baselineY.toFixed(1)+'"></line><text class="program-history-baseline-label" x="'+chartRight+'" y="'+Math.max(29,baselineY-6).toFixed(1)+'" text-anchor="end">'+(comparisonType==='reference'?'REFERENCE ':'BASELINE ')+fox2Round(baseline)+'</text>':'';
   var defaultReadoutDate=defaultSelectedDay?(defaultSelectedDay.current?'Today':fox2ShortDate(defaultSelectedDay.date)):'';
   var defaultReadoutValue=defaultSelectedDay?(defaultSelectedDay.current?fox2Round(defaultSelectedDay.score)+' so far':String(fox2Round(defaultSelectedDay.score))):'';
   var defaultCalloutCenter=Math.max(46,Math.min(290,defaultCalloutX)),defaultCalloutY=Math.max(-6,defaultCalloutTop-55),defaultPointerX=Math.max(-38,Math.min(38,defaultCalloutX-defaultCalloutCenter));
   var callout=defaultSelectedDay?'<g class="program-history-callout" transform="translate('+defaultCalloutCenter.toFixed(1)+' '+defaultCalloutY.toFixed(1)+')" aria-expanded="true"><rect class="program-history-callout-box" x="-44" y="0" width="88" height="38" rx="14"></rect><text class="program-history-readout-date" x="0" y="13" text-anchor="middle">'+fox2Escape(defaultReadoutDate)+'</text><text class="program-history-readout-value" x="0" y="29" text-anchor="middle">'+fox2Escape(defaultReadoutValue)+'</text><g class="program-history-callout-close" role="button" tabindex="0" aria-label="Hide selected score"><circle class="program-history-callout-close-hit" cx="35" cy="10" r="11"></circle><text class="program-history-callout-close-text" x="35" y="13" text-anchor="middle">×</text></g><g class="program-history-callout-reopen" transform="translate('+defaultPointerX.toFixed(1)+' 0)" role="button" tabindex="-1" aria-label="Show selected score"><rect class="program-history-callout-reopen-hit" x="-18" y="30" width="36" height="18" rx="8"></rect><path class="program-history-callout-pointer" d="M-4 37 L0 42 L4 37 Z"></path></g></g>':'';
   var historyChart='<div class="program-history-chart'+(defaultSelectedDay?' has-selection':'')+'"><span class="sr-only program-history-live" aria-live="polite">'+fox2Escape(defaultReadoutDate+' '+defaultReadoutValue)+'</span><svg viewBox="0 0 336 218" role="group" aria-label="Thirty days of Fat Use Scores, filling from left to right"><line class="program-history-axis" x1="'+chartLeft+'" y1="'+plotBottom+'" x2="'+chartRight+'" y2="'+plotBottom+'"></line>'+chartDates+chartSlots+baselineMark+chartBars+todayMarker+callout+'</svg></div>';
-  var currentDayNote=today?'<p class="program-current-day-note"><strong>Today is still taking shape.</strong> Your progress updates when the day is complete.</p>':'';
   var previousChangeRecords=Array.isArray(fox2Program.resultHistory)?fox2Program.resultHistory:[];
   var hasActiveChange=!!(programStart&&fox2Program.action);
   var key=latest?[latest.date,fox2Round(latest.score),latest.readings||0].join('|'):'';
@@ -7461,9 +7470,10 @@ function fox2ProgressHtml(metrics){
   // bar without changing the headline percentage.
   var comparisonDays=shownDays.filter(function(day){return !day.current;}).map(function(day){return {date:day.date,score:day.score};});
   var todayForMessage=today?{date:today.date,score:today.score}:null;
-  var finalMessage=fox2ResolveProgressMessage({completedDays:comparisonDays,today:todayForMessage,asOfDate:todayIso,reentryAfterDays:4,baseline:hasBaseline?baseline:0,action:hasActiveChange?fox2Program.action:''});
+  var finalMessage=fox2ResolveProgressMessage({completedDays:comparisonDays,today:todayForMessage,asOfDate:todayIso,reentryAfterDays:4,baseline:baseline,comparisonType:comparisonType,action:hasActiveChange?fox2Program.action:''});
   var previousComparisonDays=animate&&latest&&!latest.current&&comparisonDays.length>1?comparisonDays.slice(0,-1):comparisonDays;
-  var message=animate?fox2ResolveProgressMessage({completedDays:previousComparisonDays,today:todayForMessage,asOfDate:todayIso,reentryAfterDays:4,baseline:hasBaseline?baseline:0,action:hasActiveChange?fox2Program.action:''}):finalMessage;
+  var message=animate?fox2ResolveProgressMessage({completedDays:previousComparisonDays,today:todayForMessage,asOfDate:todayIso,reentryAfterDays:4,baseline:baseline,comparisonType:comparisonType,action:hasActiveChange?fox2Program.action:''}):finalMessage;
+  var currentDayNote=today?'<p class="program-current-day-note"><strong>Today is still taking shape.</strong> '+(finalMessage.hero?'It isn’t included in the percentage above.':'It will count once the day is complete.')+'</p>':'';
   var summary=message.summary;
   var shownHero=message.hero||finalMessage.hero,finalHero=finalMessage.hero;
   var heroHtml=shownHero?'<div class="program-canonical-hero'+(!message.hero?' is-pending-result':'')+'" role="img" aria-label="'+fox2Escape(shownHero.accessibleLabel)+'" data-final-label="'+fox2Escape(finalHero?finalHero.accessibleLabel:shownHero.accessibleLabel)+'"><span class="program-canonical-hero-arrow" data-final-value="'+fox2Escape(finalHero?finalHero.arrow:shownHero.arrow)+'">'+fox2Escape(shownHero.arrow)+'</span><span class="program-canonical-hero-value" data-final-value="'+fox2Escape(finalHero?finalHero.value:shownHero.value)+'">'+fox2Escape(message.hero?shownHero.value:'0%')+'</span><span class="program-canonical-hero-label" data-final-value="'+fox2Escape(finalHero?finalHero.label:shownHero.label)+'">'+fox2Escape(shownHero.label)+'</span></div>':'';
@@ -7475,7 +7485,7 @@ function fox2ProgressHtml(metrics){
   var programOptionsLink=hasBaseline||fox2Program.action?'<button type="button" class="program-utility-link program-options-link" data-program-action="open-program-options">New experiment</button>':'';
   var programUtilities=pastResultsLink||programOptionsLink?'<div class="program-utilities">'+pastResultsLink+programOptionsLink+'</div>':'';
   var progressTitle=fox2ProgressTitle();
-  var barsView='<section class="program-canonical-progress-view program-canonical-progress-bars"'+(animate?' aria-hidden="true"':'')+'><div class="program-progress-heading"><div class="program-eyebrow" data-progress-title="1" title="'+fox2Escape(progressTitle)+'">'+fox2Escape(progressTitle)+'</div><button type="button" class="program-how-link" onclick="openFox2WorksGuideFromHelp()">How this works</button></div><div class="program-canonical-summary" data-final-summary="'+fox2Escape(finalMessage.summary)+'">'+fox2Escape(summary)+'</div>'+heroHtml+'<div class="program-calendar">'+historyChart+currentDayNote+'</div>'+programUtilities+(hasBaseline?'':'<div class="program-canonical-baseline-action"><strong>Want to see what affects your fat use?</strong><span>Name a change, choose a baseline, and FOX2 will compare your completed daily Scores.</span><button type="button" data-program-action="open-program-options">Start New Experiment</button></div>')+'</section>';
+  var barsView='<section class="program-canonical-progress-view program-canonical-progress-bars"'+(animate?' aria-hidden="true"':'')+'><div class="program-progress-heading"><div class="program-eyebrow" data-progress-title="1" title="'+fox2Escape(progressTitle)+'">'+fox2Escape(progressTitle)+'</div><button type="button" class="program-how-link" onclick="openFox2WorksGuideFromHelp()">How this works</button></div><div class="program-canonical-summary" data-final-summary="'+fox2Escape(finalMessage.summary)+'">'+fox2Escape(summary)+'</div>'+heroHtml+'<div class="program-calendar">'+historyChart+currentDayNote+'</div>'+programUtilities+(hasStoredBaseline?'':'<div class="program-canonical-baseline-action"><strong>Want to see what affects your fat use?</strong><span>Name a change and measure a personal baseline. Until then, FOX2 compares your completed daily Scores with the standard reference.</span><button type="button" data-program-action="open-program-options">Start New Experiment</button></div>')+'</section>';
   if(!latest) return '<section class="program-canonical-progress is-bars"><section class="program-canonical-progress-view program-canonical-progress-bars"><div class="program-eyebrow">Progress</div><h1>Your daily Scores will appear here.</h1><p class="program-canonical-progress-copy">Take a measurement and tap your phone to FOX2 to sync it.</p></section></section>';
   return '<section class="program-canonical-progress'+(today?' has-current-day':'')+(animate?' has-recap':' is-bars')+'" style="--recap-target-x:'+recapTargetX+'px;--recap-target-y:118px" data-progress-key="'+fox2Escape(key)+'" data-progress-fill="'+visual.progress+'" data-progress-animate="'+(animate?'1':'0')+'">'+barsView+ring+'</section>';
 }
@@ -7713,12 +7723,12 @@ function fox2MethodHtml(){
   var defaults=FOX2_DEFAULT_BASELINES.map(function(score){
     return '<button type="button" class="program-baseline-default '+(mode==='default'&&value===score?'is-selected':'')+'" data-program-action="choose-default-'+score+'">'+score+'</button>';
   }).join('');
-  return '<section class="program-onboarding-card"><div class="program-eyebrow">Set up your program</div><h1 class="program-title">Choose your Fat Use Baseline.</h1><p class="program-copy">FOX2 uses this reference to show how your Fat Use Score changes during the program.</p>'
+  return '<section class="program-onboarding-card"><div class="program-eyebrow">Set up your program</div><h1 class="program-title">Choose your starting point.</h1><p class="program-copy">Measure a personal baseline, or compare your Scores with a reference value.</p>'
     +'<div class="program-methods">'
       +'<div class="program-method-group"><button type="button" class="program-method '+(mode==='personal'?'is-selected':'')+'" data-program-action="method-personal"><span class="program-method-choice"><i class="program-method-radio" aria-hidden="true"></i><span><span class="program-method-title-row"><strong>Measure my baseline</strong><em class="program-method-badge">Recommended</em></span><span class="program-method-copy">Measure for about a week before beginning your action.</span></span></span></button></div>'
-      +'<div class="program-method-group"><button type="button" class="program-method '+(mode==='default'?'is-selected':'')+'" data-program-action="method-default"><span class="program-method-choice"><i class="program-method-radio" aria-hidden="true"></i><span><strong>Choose a default baseline</strong><span class="program-method-copy">Apply a reference score to the data you already have.</span></span></span></button>'+(mode==='default'?'<div class="program-method-detail"><div class="program-baseline-defaults">'+defaults+'</div><div class="program-baseline-reference-note">Reference values—not goals.</div></div>':'')+'</div>'
-      +'<div class="program-method-group"><button type="button" class="program-method '+(mode==='manual'?'is-selected':'')+'" data-program-action="method-manual"><span class="program-method-choice"><i class="program-method-radio" aria-hidden="true"></i><span><strong>Enter another score</strong><span class="program-method-copy">Use a Fat Use Score you already know.</span></span></span></button>'+(mode==='manual'?'<div class="program-method-detail"><label class="program-baseline-manual"><span class="sr-only">Manual Fat Use Baseline</span><input id="program-baseline-manual-input" type="number" min="1" max="999" inputmode="numeric" value="'+(storedValue||'')+'" placeholder="Fat Use Score"></label></div>':'')+'</div>'
-    +'</div><button type="button" class="program-primary" data-program-action="method-next">'+(mode==='personal'?'Next':'Apply baseline')+'</button><button type="button" class="program-secondary" data-program-action="cancel-baseline">Cancel setup</button></section>';
+      +'<div class="program-method-group"><button type="button" class="program-method '+(mode==='default'?'is-selected':'')+'" data-program-action="method-default"><span class="program-method-choice"><i class="program-method-radio" aria-hidden="true"></i><span><strong>Use a reference score</strong><span class="program-method-copy">Apply a reference score to the data you already have.</span></span></span></button>'+(mode==='default'?'<div class="program-method-detail"><div class="program-baseline-defaults">'+defaults+'</div><div class="program-baseline-reference-note">Reference values—not goals.</div></div>':'')+'</div>'
+      +'<div class="program-method-group"><button type="button" class="program-method '+(mode==='manual'?'is-selected':'')+'" data-program-action="method-manual"><span class="program-method-choice"><i class="program-method-radio" aria-hidden="true"></i><span><strong>Enter another baseline score</strong><span class="program-method-copy">Use a personal starting score you already know.</span></span></span></button>'+(mode==='manual'?'<div class="program-method-detail"><label class="program-baseline-manual"><span class="sr-only">Manual Fat Use Baseline</span><input id="program-baseline-manual-input" type="number" min="1" max="999" inputmode="numeric" value="'+(storedValue||'')+'" placeholder="Fat Use Score"></label></div>':'')+'</div>'
+    +'</div><button type="button" class="program-primary" data-program-action="method-next">'+(mode==='personal'?'Next':(mode==='default'?'Apply reference':'Apply baseline'))+'</button><button type="button" class="program-secondary" data-program-action="cancel-baseline">Cancel setup</button></section>';
 }
 
 function fox2SetupHtml(){
@@ -7756,7 +7766,7 @@ function fox2FirstMeasurementHtml(){
   var personal=fox2Program.baselineMode==='personal',received=fox2HasTodayMeasurement();
   return '<section><div class="program-first-day"><div class="program-eyebrow">'+(personal?'Fat Use Baseline · Day 1':'30-Day Program · Day 1')+'</div>'
     +'<h2>Take your first measurement.</h2>'
-    +(personal?'':'<div class="program-reference"><span>Fat Use Baseline</span><strong>'+fox2Round(fox2Program.baselineValue)+'</strong></div>')
+    +(personal?'':'<div class="program-reference"><span>'+(fox2ProgressComparisonType()==='reference'?'Reference score':'Fat Use Baseline')+'</span><strong>'+fox2Round(fox2Program.baselineValue)+'</strong></div>')
     +'<div class="program-first-steps"><div class="program-first-step"><b>1</b><span>Pick up FOX2 and press the main button.</span></div><div class="program-first-step"><b>2</b><span>Select Measure and complete your breath test.</span></div><div class="program-first-step"><b>3</b><span>Tap your phone to FOX2 again to sync it.</span></div></div>'
     +(received?'<div class="program-first-received">Measurement received</div><button type="button" class="program-primary" data-program-action="finish-first">Continue</button>':'<p>Leave this page open. It will update after FOX2 syncs.</p>')
     +'</div></section>';
@@ -8717,9 +8727,10 @@ function fox2OpenProgramOptions(){
   var title=document.getElementById('program-options-title');
   if(title) title.textContent=fox2Program.action?'Current experiment':'Experiment';
   var storedBaseline=Number(fox2Program.baselineValue);
-  var baseline=isFinite(storedBaseline)&&storedBaseline>0?fox2Round(storedBaseline):'Not set';
+  var baseline=isFinite(storedBaseline)&&storedBaseline>0?fox2Round(storedBaseline):FOX2_STANDARD_BASELINE;
+  var comparisonLabel=fox2ProgressComparisonType()==='reference'?'Reference':'Baseline';
   var action=String(fox2Program.action||'No action selected');
-  content.innerHTML=(fox2Program.action?'<div class="program-options-row"><div><span class="program-options-row-label">Action</span><span class="program-options-row-value">'+fox2Escape(action)+'</span></div></div><div class="program-options-row"><div><span class="program-options-row-label">Baseline</span><span class="program-options-row-value">'+baseline+'</span></div></div><button type="button" class="program-options-edit" onclick="fox2ShowEditExperimentForm()">Edit action and baseline</button>':'<p class="program-options-copy">Start with one change and one baseline. Your existing Scores will stay in History.</p>')
+  content.innerHTML=(fox2Program.action?'<div class="program-options-row"><div><span class="program-options-row-label">Action</span><span class="program-options-row-value">'+fox2Escape(action)+'</span></div></div><div class="program-options-row"><div><span class="program-options-row-label">'+comparisonLabel+'</span><span class="program-options-row-value">'+baseline+'</span></div></div><button type="button" class="program-options-edit" onclick="fox2ShowEditExperimentForm()">Edit action and starting point</button>':'<p class="program-options-copy">Start with one change. Use the standard reference or measure a personal baseline; your existing Scores will stay in History.</p>')
     +'<button type="button" class="program-options-new" onclick="fox2ShowNewExperimentForm()">Start New Experiment</button>';
   overlay.classList.add('open');
   var close=overlay.querySelector('.modal-corner-close');
@@ -8738,7 +8749,8 @@ function fox2ShowEditExperimentForm(){
   if(title) title.textContent='Edit Experiment';
   var action=String(fox2Program.action||'');
   var baseline=fox2Round(fox2Program.baselineValue)||FOX2_STANDARD_BASELINE;
-  content.innerHTML='<p class="program-options-copy">This updates the current experiment. Changing the baseline will recalculate its comparison; your dates and measurement history will stay the same.</p><div class="program-new-experiment"><label><span>Action</span><textarea id="edit-experiment-action" placeholder="For example: Walk after dinner">'+fox2Escape(action)+'</textarea></label><label><span>Baseline</span><input id="edit-experiment-baseline" type="number" min="1" max="999" inputmode="numeric" value="'+baseline+'" aria-label="Fat Use baseline score"></label><p class="program-new-experiment-error" id="edit-experiment-error" role="alert"></p><div class="program-new-experiment-actions"><button type="button" class="program-confirm-cancel" onclick="fox2OpenProgramOptions()">Cancel</button><button type="button" class="program-confirm-use" onclick="fox2SaveExperimentEdits()">Save Changes</button></div></div>';
+  var comparisonLabel=fox2ProgressComparisonType()==='reference'?'Reference':'Baseline';
+  content.innerHTML='<p class="program-options-copy">This updates the current experiment. Changing the starting score will recalculate its comparison; your dates and measurement history will stay the same.</p><div class="program-new-experiment"><label><span>Action</span><textarea id="edit-experiment-action" placeholder="For example: Walk after dinner">'+fox2Escape(action)+'</textarea></label><label><span>'+comparisonLabel+'</span><input id="edit-experiment-baseline" type="number" min="1" max="999" inputmode="numeric" value="'+baseline+'" aria-label="Fat Use starting score"></label><p class="program-new-experiment-error" id="edit-experiment-error" role="alert"></p><div class="program-new-experiment-actions"><button type="button" class="program-confirm-cancel" onclick="fox2OpenProgramOptions()">Cancel</button><button type="button" class="program-confirm-use" onclick="fox2SaveExperimentEdits()">Save Changes</button></div></div>';
   var actionInput=document.getElementById('edit-experiment-action');
   if(actionInput) actionInput.focus();
 }
@@ -8750,7 +8762,7 @@ function fox2SaveExperimentEdits(){
   var action=String(actionInput&&actionInput.value||'').trim();
   var baseline=Math.round(Number(baselineInput&&baselineInput.value));
   if(!action){if(error) error.textContent='Describe the change you are trying.';if(actionInput) actionInput.focus();return;}
-  if(!isFinite(baseline)||baseline<=0){if(error) error.textContent='Enter a baseline score.';if(baselineInput) baselineInput.focus();return;}
+  if(!isFinite(baseline)||baseline<=0){if(error) error.textContent='Enter a starting score.';if(baselineInput) baselineInput.focus();return;}
   var baselineChanged=baseline!==fox2Round(fox2Program.baselineValue);
   fox2SaveProgramBackup('edit experiment');
   fox2Program.action=action;
@@ -8776,8 +8788,9 @@ function fox2ShowNewExperimentForm(){
   var current=fox2Round(fox2Program.baselineValue)||0;
   var defaultMode=recentValue?'recent':(current?'current':'manual');
   var recentChoice=recentValue?'<label class="program-new-experiment-choice"><input type="radio" name="new-experiment-baseline" value="recent" '+(defaultMode==='recent'?'checked':'')+'><span><strong>Use recent Scores · '+recentValue+'</strong><small>'+recent.length+' completed '+(recent.length===1?'day':'days')+' · '+fox2Escape(fox2DateRange(recent))+' · Recommended</small></span></label>':'';
-  var currentChoice=current?'<label class="program-new-experiment-choice"><input type="radio" name="new-experiment-baseline" value="current" '+(defaultMode==='current'?'checked':'')+'><span><strong>Keep current baseline · '+current+'</strong><small>Start a new experiment without changing your reference.</small></span></label>':'';
-  content.innerHTML='<p class="program-options-copy">The current experiment will be saved to Past Results. The new graph will begin with Day 1 on the left.</p><div class="program-new-experiment"><label><span>What are you trying?</span><textarea id="new-experiment-action" placeholder="For example: Walk after dinner"></textarea></label><fieldset class="program-new-experiment-baselines"><legend class="program-new-experiment-legend">Choose a baseline</legend>'+recentChoice+currentChoice+'<label class="program-new-experiment-choice"><input type="radio" name="new-experiment-baseline" value="manual" '+(defaultMode==='manual'?'checked':'')+'><span><strong>Enter another score</strong><small>Use a Fat Use Score you already know.</small><input id="new-experiment-baseline-value" type="number" min="1" max="999" inputmode="numeric" value="'+(current||FOX2_STANDARD_BASELINE)+'" aria-label="Fat Use baseline score"></span></label></fieldset><p class="program-new-experiment-error" id="new-experiment-error" role="alert"></p><div class="program-new-experiment-actions"><button type="button" class="program-confirm-cancel" onclick="fox2OpenProgramOptions()">Cancel</button><button type="button" class="program-confirm-use" onclick="fox2StartNewExperiment()">Start Experiment</button></div></div>';
+  var currentLabel=fox2ProgressComparisonType()==='reference'?'reference':'baseline';
+  var currentChoice=current?'<label class="program-new-experiment-choice"><input type="radio" name="new-experiment-baseline" value="current" '+(defaultMode==='current'?'checked':'')+'><span><strong>Keep current '+currentLabel+' · '+current+'</strong><small>Start a new experiment without changing your starting point.</small></span></label>':'';
+  content.innerHTML='<p class="program-options-copy">The current experiment will be saved to Past Results. The new graph will begin with Day 1 on the left.</p><div class="program-new-experiment"><label><span>What are you trying?</span><textarea id="new-experiment-action" placeholder="For example: Walk after dinner"></textarea></label><fieldset class="program-new-experiment-baselines"><legend class="program-new-experiment-legend">Choose a starting point</legend>'+recentChoice+currentChoice+'<label class="program-new-experiment-choice"><input type="radio" name="new-experiment-baseline" value="manual" '+(defaultMode==='manual'?'checked':'')+'><span><strong>Enter a baseline score</strong><small>Use a personal starting score you already know.</small><input id="new-experiment-baseline-value" type="number" min="1" max="999" inputmode="numeric" value="'+(current||FOX2_STANDARD_BASELINE)+'" aria-label="Fat Use baseline score"></span></label></fieldset><p class="program-new-experiment-error" id="new-experiment-error" role="alert"></p><div class="program-new-experiment-actions"><button type="button" class="program-confirm-cancel" onclick="fox2OpenProgramOptions()">Cancel</button><button type="button" class="program-confirm-use" onclick="fox2StartNewExperiment()">Start Experiment</button></div></div>';
   var action=document.getElementById('new-experiment-action');
   if(action) action.focus();
 }
@@ -8799,7 +8812,7 @@ function fox2StartNewExperiment(){
     var manual=document.getElementById('new-experiment-baseline-value');
     baseline=Math.round(Number(manual&&manual.value)); source='manual'; range='Entered manually';
   }
-  if(!isFinite(baseline)||baseline<=0){if(error) error.textContent='Choose or enter a baseline.';return;}
+  if(!isFinite(baseline)||baseline<=0){if(error) error.textContent='Choose or enter a starting score.';return;}
   var previousMetrics=fox2ProgramMetrics();
   fox2SaveProgramBackup('new experiment');
   if(fox2Program.action&&fox2Program.measureStart) fox2FinalizeResult(previousMetrics);
@@ -8940,11 +8953,13 @@ function fox2RenderBaselineEditor(message){
   var content=document.getElementById('program-baseline-editor-content');
   if(!content) return;
   var current=fox2Round(fox2Program.baselineValue)||FOX2_STANDARD_BASELINE;
+  var currentType=fox2ProgressComparisonType()==='reference'?'reference':'baseline';
+  var nextType=fox2BaselineEditorSource==='default'?'reference':'baseline';
   if(fox2BaselineEditorStep==='confirm'){
-    content.innerHTML='<div class="program-confirm-title" id="program-baseline-editor-title">Confirm baseline change</div>'
-      +'<div class="program-baseline-editor-current">'+fox2BaselineEditorValue+'</div><small>New Fat Use Baseline</small>'
-      +'<p class="program-baseline-editor-copy">Change your Fat Use Baseline from '+current+' to '+fox2BaselineEditorValue+'? Your program results will be recalculated.</p>'
-      +'<div class="program-confirm-actions"><button type="button" class="program-confirm-cancel" onclick="fox2BaselineEditorBack()">Back</button><button type="button" class="program-confirm-use" onclick="fox2ApplyBaselineChange()">Change baseline</button></div>';
+    content.innerHTML='<div class="program-confirm-title" id="program-baseline-editor-title">Confirm starting score</div>'
+      +'<div class="program-baseline-editor-current">'+fox2BaselineEditorValue+'</div><small>New '+(nextType==='reference'?'Reference':'Fat Use Baseline')+'</small>'
+      +'<p class="program-baseline-editor-copy">Change your '+currentType+' from '+current+' to '+fox2BaselineEditorValue+'? Your program results will be recalculated.</p>'
+      +'<div class="program-confirm-actions"><button type="button" class="program-confirm-cancel" onclick="fox2BaselineEditorBack()">Back</button><button type="button" class="program-confirm-use" onclick="fox2ApplyBaselineChange()">Change score</button></div>';
     return;
   }
   if(fox2BaselineEditorStep==='restart'){
@@ -8957,10 +8972,10 @@ function fox2RenderBaselineEditor(message){
   var defaults=FOX2_DEFAULT_BASELINES.map(function(value){
     return '<button type="button" class="program-baseline-default '+(fox2BaselineEditorSource==='default'&&fox2BaselineEditorValue===value?'is-selected':'')+'" onclick="fox2SelectBaselineDefault('+value+')">'+value+'</button>';
   }).join('');
-  content.innerHTML='<div class="program-confirm-title" id="program-baseline-editor-title">Change Fat Use Baseline</div>'
-    +'<p class="program-baseline-editor-copy">Current baseline: <strong>'+current+'</strong>. Changing it recalculates your program results.</p>'
-    +'<div class="program-baseline-editor-label">Choose a default</div><div class="program-baseline-defaults">'+defaults+'</div><div class="program-baseline-reference-note">Reference values—not goals.</div>'
-    +'<div class="program-baseline-editor-or">or</div><label class="program-baseline-manual"><span class="sr-only">Enter another Fat Use Baseline</span><input id="program-baseline-editor-input" type="number" min="1" max="999" inputmode="numeric" value="'+(fox2BaselineEditorSource==='manual'?fox2BaselineEditorValue:'')+'" placeholder="Enter another score"></label>'
+  content.innerHTML='<div class="program-confirm-title" id="program-baseline-editor-title">Change starting score</div>'
+    +'<p class="program-baseline-editor-copy">Current '+currentType+': <strong>'+current+'</strong>. Changing it recalculates your program results.</p>'
+    +'<div class="program-baseline-editor-label">Choose a reference</div><div class="program-baseline-defaults">'+defaults+'</div><div class="program-baseline-reference-note">Reference values—not goals.</div>'
+    +'<div class="program-baseline-editor-or">or</div><label class="program-baseline-manual"><span class="sr-only">Enter a personal Fat Use Baseline</span><input id="program-baseline-editor-input" type="number" min="1" max="999" inputmode="numeric" value="'+(fox2BaselineEditorSource==='manual'?fox2BaselineEditorValue:'')+'" placeholder="Enter a baseline score"></label>'
     +(message?'<p class="program-baseline-editor-copy" role="alert">'+fox2Escape(message)+'</p>':'')
     +'<button type="button" class="program-baseline-editor-review" onclick="fox2ReviewBaselineChange()">Review change</button><button type="button" class="program-baseline-editor-new" onclick="fox2ReviewNewMeasuredBaseline()">End current program and measure a new baseline</button>';
 }
