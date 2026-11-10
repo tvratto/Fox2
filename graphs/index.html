@@ -2655,6 +2655,7 @@ html.payload-unsupported #update-banner { display: none !important; }
 
 <script src="data-fetch.js?v=20260930-11"></script>
 <script src="payload-codec.js?v=20261029-01"></script>
+<script src="time-codec.js?v=20261110-01"></script>
 <script src="copy-generator.js?v=20261104-06"></script>
 <script>
 
@@ -2709,6 +2710,7 @@ var aParam    = params.get('a') || '';
 var sParam    = params.get('s') || '';
 var fox2PayloadDayCount=dParam?dParam.split('|').length:21;
 var fox2PayloadMeta=Fox2PayloadCodec.decode(params,fox2PayloadDayCount);
+var fox2TimeMeta=Fox2TimeCodec.decode(params,fox2PayloadMeta);
 if(!fox2PayloadMeta.supported){
   document.documentElement.classList.add('payload-unsupported');
 }
@@ -2902,7 +2904,7 @@ var fox2AwaitingFirst = params.get('awaiting') === '1';
   var SUPABASE_URL = 'https://byysvwdsbpmbypflqcjs.supabase.co';
   var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ5eXN2d2RzYnBtYnlwZmxxY2pzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MTEwNTYsImV4cCI6MjA5NDE4NzA1Nn0.uAKOkd9vNhtN7umEGrVLcQLNjWOnn33n-xKVT25mFzw';
   fetch(SUPABASE_URL + '/rest/v1/devices?device_id=eq.' + encodeURIComponent(idParam)
-      + '&select=last_t_param,last_d_param,last_a_param,last_s_param,last_ws_param,last_tz_param,firmware_ver,last_measurement_at,patient_id&limit=1',
+      + '&select=last_t_param,last_d_param,last_a_param,last_s_param,last_ws_param,last_tz_param,time_zone,firmware_ver,last_measurement_at,patient_id&limit=1',
     { method: 'GET', headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } })
   .then(function(r) { console.log('[restore] fetch status:', r.status); return r.ok ? r.json() : []; })
   .then(function(rows) {
@@ -2917,6 +2919,7 @@ var fox2AwaitingFirst = params.get('awaiting') === '1';
     if (row.last_a_param)  u.searchParams.set('a',  row.last_a_param); else u.searchParams.delete('a');
     if (row.last_s_param)  u.searchParams.set('s',  row.last_s_param); else u.searchParams.delete('s');
     if (row.last_tz_param) u.searchParams.set('tz', row.last_tz_param); else u.searchParams.delete('tz');
+    if (row.time_zone)     u.searchParams.set('z',  row.time_zone); else u.searchParams.delete('z');
     if (row.firmware_ver)  u.searchParams.set('v',  row.firmware_ver);
     if (row.patient_id)    u.searchParams.set('p',  row.patient_id); else u.searchParams.delete('p');
     var wsToUse = row.last_ws_param;
@@ -3184,12 +3187,21 @@ var _isNewerPayload    = false;
       var ppmTimes10   = parseInt(rest.substring(i+2, i+4), 36);
       var ppm          = ppmTimes10 / 10.0;
       var ts           = new Date((dayStartEpoch + minuteOffset * 60) * 1000).toISOString();
+      var localDate    = new Date(dayStartEpoch * 1000).toISOString().slice(0,10);
+      var utcTs        = fox2TimeMeta.utcCapable
+        ? Fox2TimeCodec.localToUtcIso(localDate,minuteOffset,fox2TimeMeta.timeZone)
+        : null;
       readingRows.push({
         device_id:   deviceId,
         patient_id:  patientId,
         clinic_id:   clinicId,
         target_auc:  targetAUC || null,
         reading_ts:  ts,
+        reading_utc_ts: utcTs,
+        local_date: localDate,
+        local_minute: minuteOffset,
+        time_zone: fox2TimeMeta.timeZone,
+        time_basis: fox2TimeMeta.timeBasis,
         ppm:         ppm,
         payload_ver: payloadVer
       });
@@ -3214,6 +3226,8 @@ var _isNewerPayload    = false;
         day_date:    dayDate,
         auc_score:   auc,
         target_auc:  targetAUC || null,
+        time_zone:   fox2TimeMeta.timeZone,
+        time_basis:  fox2TimeMeta.timeBasis,
         payload_ver: payloadVer
       });
     }
@@ -3227,12 +3241,19 @@ var _isNewerPayload    = false;
   var pctFat     = Math.round(ztDb.fat     / ztTotal * 100);
 
   var lastMeasurementAt = null;
+  var lastMeasurementUtcAt = null;
   if (readingRows.length > 0) {
     var maxTs = readingRows.reduce(function(max, r) {
       return r.reading_ts > max ? r.reading_ts : max;
     }, readingRows[0].reading_ts);
     lastMeasurementAt = maxTs;
     _lastMeasurementAt = maxTs; // expose to banner polling
+    var utcRows=readingRows.filter(function(row){return !!row.reading_utc_ts;});
+    if(utcRows.length){
+      lastMeasurementUtcAt=utcRows.reduce(function(max,row){
+        return row.reading_utc_ts>max?row.reading_utc_ts:max;
+      },utcRows[0].reading_utc_ts);
+    }
   }
 
   // ── Read day_tags and devices before writes ──────────────────────
@@ -3325,6 +3346,7 @@ var _isNewerPayload    = false;
         streak_best:          streakBest,
         last_scan_at:         new Date().toISOString(),
         last_measurement_at:  lastMeasurementAt,
+        last_measurement_utc_at: lastMeasurementUtcAt,
         payload_ver:          payloadVer,
         firmware_ver:         params.get('v') || null,
         pct_glucose:          pctGlucose,
@@ -3335,7 +3357,10 @@ var _isNewerPayload    = false;
         last_a_param:         aParam         || null,
         last_s_param:         sParam         || null,
         last_ws_param:        params.get('ws') || null,
-        last_tz_param:        params.get('tz') || null
+        last_tz_param:        params.get('tz') || null,
+        time_zone:            fox2TimeMeta.timeZone,
+        time_basis:           fox2TimeMeta.timeBasis,
+        current_utc_offset_minutes: fox2TimeMeta.utcOffsetMinutes
       };
       writePromises.push(fetch(SUPABASE_URL + '/rest/v1/devices?on_conflict=device_id', {
         method:  'POST',
@@ -11864,6 +11889,9 @@ function initDayGraphPopup(){
       u.searchParams.delete('tz');
     }
 
+    if(row.time_zone) u.searchParams.set('z',row.time_zone);
+    else u.searchParams.delete('z');
+
     return u.toString();
   }
 
@@ -11881,7 +11909,7 @@ function initDayGraphPopup(){
   function poll() {
     if (!_sbUrl || !_sbDeviceId) return;
     fetch(_sbUrl + '/rest/v1/devices?device_id=eq.' + encodeURIComponent(_sbDeviceId)
-          + '&select=last_d_param,last_t_param,last_a_param,last_s_param,last_ws_param,last_tz_param,last_measurement_at&limit=1',
+          + '&select=last_d_param,last_t_param,last_a_param,last_s_param,last_ws_param,last_tz_param,time_zone,last_measurement_at&limit=1',
       { method: 'GET', headers: _sbHeaders })
     .then(function(r){ return r.ok ? r.json() : []; })
     .then(function(rows){
