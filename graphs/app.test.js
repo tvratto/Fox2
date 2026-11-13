@@ -27,7 +27,8 @@ assert.ok(app.includes('function renderHistory()'),'History should render the me
 assert.ok(app.includes("record.displayDailyAverage.toFixed(1)"),'History should show Daily Average under each day');
 assert.ok(html.includes('id="day-rail"'),'Today should preserve the established date rail');
 assert.ok(css.includes('.day-pill.is-selected'),'Today should preserve the selected-day treatment');
-assert.ok(css.includes('.history-range'),'History should preserve the established three-week range pill');
+assert.ok(app.includes("ctx.fillText('3 WEEKS'")&&app.includes('pillW=220'),
+  'History should preserve the established centered three-week range pill');
 assert.ok(app.includes('historyPage'),'all History weeks should remain reachable through paging');
 assert.ok(app.includes("document.getElementById('log-content')"),'Log should render Tracking results separately');
 assert.ok(app.includes("p_expected_revision:trackingRevision"),
@@ -44,9 +45,11 @@ assert.ok(!html.includes('>Community</button>'),'deferred Community must not cre
 assert.ok(css.includes('.average-line.before'));
 assert.ok(css.includes('border-top-style:dashed'));
 assert.ok(css.includes('.tracking-bar.is-today'));
-assert.ok(css.includes('.history-week'));
-assert.ok(css.includes('.history-point'));
-assert.ok(css.includes('.history-daily-average'));
+assert.ok(css.includes('.history-canvas'));
+assert.ok(app.includes('function catmullSamples(knots)'),'Today and History should preserve fitted curves');
+['#22D3EE','#4ADE80','#A855F7','#FF8C00'].forEach(color=>{
+  assert.ok(app.includes(color),`graphs should preserve established color ${color}`);
+});
 
 ['analysis.js','copy-generator.js','state-engine.js'].forEach(filename=>{
   assert.equal(fs.existsSync(path.join(__dirname,filename)),false,

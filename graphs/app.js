@@ -166,9 +166,50 @@
   }
 
   function tierClass(record){ return record&&record.tierKey?'tier-'+record.tierKey:''; }
-  function tierColor(value){
-    var tier=Fox2DailyRecord.tierForAverage(value);
-    return !tier?'#555':tier.key==='low'?'#55d7eb':tier.key==='medium'?'#62e594':tier.key==='high'?'#d946c7':'#ff8c00';
+  var zoneStroke=['#22D3EE','#4ADE80','#A855F7','#FF8C00'];
+  var zoneFill=['rgba(34,211,238,0.45)','rgba(74,222,128,0.40)','rgba(168,85,247,0.35)','rgba(255,140,0,0.38)'];
+  function zoneIndex(value){var rounded=Math.round(Number(value)||0);return rounded<=2?0:rounded<=4?1:rounded<=7?2:3;}
+  function tierColor(value){ return zoneStroke[zoneIndex(value)]; }
+
+  function catmullSamples(knots){
+    if(knots.length<2) return knots.slice();
+    var samples=[];
+    for(var i=0;i<knots.length-1;i++){
+      var p0=knots[Math.max(0,i-1)],p1=knots[i],p2=knots[i+1],p3=knots[Math.min(knots.length-1,i+2)];
+      var steps=Math.max(8,Math.ceil(Math.abs(p2.x-p1.x)/2));
+      for(var step=0;step<steps;step++){
+        var t=step/steps,t2=t*t,t3=t2*t;
+        samples.push({
+          x:.5*((2*p1.x)+(-p0.x+p2.x)*t+(2*p0.x-5*p1.x+4*p2.x-p3.x)*t2+(-p0.x+3*p1.x-3*p2.x+p3.x)*t3),
+          y:.5*((2*p1.y)+(-p0.y+p2.y)*t+(2*p0.y-5*p1.y+4*p2.y-p3.y)*t2+(-p0.y+3*p1.y-3*p2.y+p3.y)*t3),
+          value:.5*((2*p1.value)+(-p0.value+p2.value)*t+(2*p0.value-5*p1.value+4*p2.value-p3.value)*t2+(-p0.value+3*p1.value-3*p2.value+p3.value)*t3)
+        });
+      }
+    }
+    samples.push(knots[knots.length-1]);
+    return samples;
+  }
+
+  function drawZoneCurve(ctx,knots,baseline,lineWidth,shadowBlur){
+    var samples=catmullSamples(knots);if(samples.length<2) return;
+    var runs=[],start=0,current=zoneIndex(samples[0].value);
+    for(var i=1;i<samples.length;i++){
+      var next=zoneIndex(samples[i].value);
+      if(next!==current){runs.push({zone:current,from:start,to:i});start=Math.max(0,i-1);current=next;}
+    }
+    runs.push({zone:current,from:start,to:samples.length-1});
+    runs.forEach(function(run){
+      ctx.beginPath();ctx.moveTo(samples[run.from].x,baseline);ctx.lineTo(samples[run.from].x,samples[run.from].y);
+      for(var i=run.from+1;i<=run.to;i++) ctx.lineTo(samples[i].x,samples[i].y);
+      ctx.lineTo(samples[run.to].x,baseline);ctx.closePath();ctx.fillStyle=zoneFill[run.zone];ctx.fill();
+    });
+    ctx.lineWidth=lineWidth;ctx.lineCap='round';ctx.lineJoin='round';
+    runs.forEach(function(run){
+      ctx.beginPath();ctx.moveTo(samples[run.from].x,samples[run.from].y);
+      for(var i=run.from+1;i<=run.to;i++) ctx.lineTo(samples[i].x,samples[i].y);
+      ctx.strokeStyle=zoneStroke[run.zone];ctx.shadowColor=zoneStroke[run.zone];ctx.shadowBlur=shadowBlur;ctx.stroke();
+    });
+    ctx.shadowBlur=0;
   }
 
   async function restoreLatestPayload(){
@@ -375,25 +416,34 @@
     var readings=record&&record.readings||[];
     if(!readings||!readings.length){target.innerHTML='';empty.hidden=false;return;}
     empty.hidden=true;
-    var sequence=readings.slice();
     var previousDate=addDays(displayDate,-1),previous=dailyByDate[previousDate]||payloadDays.find(function(day){return day.localDate===previousDate;})||null;
     var previousReadings=previous&&previous.readings||[];
-    var anchor=previousReadings.length?previousReadings[previousReadings.length-1].value:readings[0].value;
-    sequence.unshift({minute:0,value:anchor,anchor:true});
-    if(record&&record.dayState==='complete') sequence.push({minute:1440,value:readings[readings.length-1].value,anchor:true});
-    var width=640,height=360,left=32,right=15,top=32,bottom=42,base=height-bottom;
-    var maxValue=Math.max.apply(null,sequence.map(function(item){return item.value;}));
-    var ceiling=maxValue<=5?5:maxValue<=8?8:maxValue<=10?10:20;
-    var x=function(minute){return left+(minute/1440)*(width-left-right);};
-    var y=function(value){return base-(Math.min(value,ceiling)/ceiling)*(base-top);};
-    var line=sequence.map(function(item,index){return (index?'L':'M')+x(item.minute).toFixed(1)+' '+y(item.value).toFixed(1);}).join(' ');
-    var area='M'+x(sequence[0].minute).toFixed(1)+' '+base+' '+line+' L'+x(sequence[sequence.length-1].minute).toFixed(1)+' '+base+' Z';
-    var grid=[0,360,720,1080,1440].map(function(minute){var xx=x(minute);return '<line class="chart-grid" x1="'+xx+'" x2="'+xx+'" y1="'+top+'" y2="'+base+'"/>';}).join('');
-    var points=readings.map(function(item){
-      var value=Math.round(item.value),color=tierColor(value);
-      return '<g><circle class="chart-point-glow" cx="'+x(item.minute)+'" cy="'+y(item.value)+'" r="12" fill="'+color+'"/><circle class="chart-point" cx="'+x(item.minute)+'" cy="'+y(item.value)+'" r="7" fill="'+color+'"/><text class="chart-value" x="'+x(item.minute)+'" y="'+(y(item.value)-13)+'">'+value+'</text></g>';
-    }).join('');
-    target.innerHTML='<svg viewBox="0 0 '+width+' '+height+'" aria-hidden="true"><defs><linearGradient id="today-area-gradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff9e32" stop-opacity=".56"/><stop offset="1" stop-color="#ff8c00" stop-opacity=".07"/></linearGradient><filter id="today-glow"><feGaussianBlur stdDeviation="6"/></filter></defs>'+grid+'<path class="chart-area" d="'+area+'"/><path class="chart-line-glow" d="'+line+'"/><path class="chart-line" d="'+line+'"/>'+points+'<text class="chart-axis" x="'+left+'" y="'+(height-9)+'">12a</text><text class="chart-axis" x="'+x(360)+'" y="'+(height-9)+'" text-anchor="middle">6a</text><text class="chart-axis" x="'+x(720)+'" y="'+(height-9)+'" text-anchor="middle">12p</text><text class="chart-axis" x="'+x(1080)+'" y="'+(height-9)+'" text-anchor="middle">6p</text><text class="chart-axis" x="'+(width-right)+'" y="'+(height-9)+'" text-anchor="end">12a</text><text class="chart-axis" x="'+(left-7)+'" y="'+(top+4)+'" text-anchor="end">'+ceiling+'</text></svg>';
+    var nextDate=addDays(displayDate,1),next=dailyByDate[nextDate]||payloadDays.find(function(day){return day.localDate===nextDate;})||null,nextReadings=next&&next.readings||[];
+    var relative=[];
+    if(previousReadings.length){var prior=previousReadings[previousReadings.length-1];relative.push({minute:Number(prior.minute)-1440,value:Number(prior.value)});}
+    else relative.push({minute:0,value:Number(readings[0].value)});
+    readings.forEach(function(item){relative.push({minute:Number(item.minute),value:Number(item.value)});});
+    if(displayDate<localToday&&nextReadings.length){relative.push({minute:1440+Number(nextReadings[0].minute),value:Number(nextReadings[0].value)});}
+    else if(record&&record.dayState==='complete') relative.push({minute:1440,value:Number(readings[readings.length-1].value)});
+    relative.sort(function(a,b){return a.minute-b.minute;});
+    target.innerHTML='<canvas aria-hidden="true"></canvas>';
+    var canvas=target.querySelector('canvas'),width=Math.max(320,target.clientWidth||640),height=Math.max(260,target.clientHeight||330),dpr=window.devicePixelRatio||1;
+    canvas.width=width*dpr;canvas.height=height*dpr;canvas.style.width=width+'px';canvas.style.height=height+'px';
+    var ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
+    var padL=6,padR=6,padT=12,padB=28,base=height-padB,relStart=-240,relEnd=1680;
+    var maxValue=Math.max.apply(null,relative.map(function(item){return item.value;}));
+    var step=maxValue<=4?.5:maxValue<=8?1:maxValue<=15?2:5,ceiling=Math.max(4,Math.ceil(maxValue*1.15/step)*step);
+    var x=function(minute){return padL+(minute-relStart)/(relEnd-relStart)*(width-padL-padR);};
+    var y=function(value){return base-Math.max(0,Math.min(ceiling,value))/ceiling*(base-padT);};
+    ctx.strokeStyle='rgba(255,255,255,.065)';ctx.lineWidth=1;
+    [360,720,1080].forEach(function(minute){var xx=x(minute);ctx.beginPath();ctx.moveTo(xx,padT+10);ctx.lineTo(xx,base);ctx.stroke();});
+    ctx.strokeStyle='rgba(255,255,255,.14)';ctx.beginPath();ctx.moveTo(padL,base);ctx.lineTo(width-padR,base);ctx.stroke();
+    ctx.strokeStyle='rgba(255,255,255,.24)';ctx.setLineDash([4,6]);[0,1440].forEach(function(minute){var xx=x(minute);ctx.beginPath();ctx.moveTo(xx,padT+4);ctx.lineTo(xx,base);ctx.stroke();});ctx.setLineDash([]);
+    ctx.save();ctx.beginPath();ctx.rect(padL,padT,width-padL-padR,base-padT);ctx.clip();
+    drawZoneCurve(ctx,relative.map(function(item){return {x:x(item.minute),y:y(item.value),value:item.value};}),base,3,12);ctx.restore();
+    readings.forEach(function(item){var xx=x(item.minute),yy=y(item.value),color=tierColor(item.value);ctx.beginPath();ctx.arc(xx,yy,7,0,Math.PI*2);ctx.fillStyle=color;ctx.shadowColor=color;ctx.shadowBlur=14;ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#fff';ctx.font='800 14px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(Math.round(item.value),xx,yy-10);});
+    ctx.fillStyle='rgba(255,255,255,.32)';ctx.font='650 11px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textBaseline='alphabetic';
+    [[0,'12a'],[360,'6a'],[720,'12p'],[1080,'6p'],[1440,'12a']].forEach(function(pair,index){ctx.textAlign=index===0?'left':index===4?'right':'center';ctx.fillText(pair[1],x(pair[0]),height-6);});
   }
 
   function renderToday(){
@@ -417,7 +467,7 @@
       average.hidden=false;
       average.textContent=record.displayDailyAverage.toFixed(1);
       tier.textContent=record.tierLabel+(record.dayState==='provisional'?' so far':'');
-      average.classList.add(tierClass(record));tier.classList.add(tierClass(record));
+      tier.classList.add(tierClass(record));
     }else{
       average.hidden=true;
       average.textContent='';
@@ -559,31 +609,51 @@
     var visiblePoints=[];visibleWeeks.forEach(function(start){visiblePoints=visiblePoints.concat(pointsByWeek[start]||[]);});
     var maxValue=Math.max.apply(null,visiblePoints.map(function(point){return point.value;}).concat([8]));
     var ceiling=maxValue<=8?8:maxValue<=10?10:maxValue<=20?20:Math.ceil(maxValue/5)*5;
-    var width=640,height=186,left=18,right=10,top=12,bottom=55,base=height-bottom,plotWidth=width-left-right;
-    var labels=['M','T','W','T','F','S','S'];
-    var rows=visibleWeeks.map(function(start){
-      var points=pointsByWeek[start]||[];
-      var x=function(point){return left+((daysBetween(start,point.date)+point.minute/1440)/7)*plotWidth;};
-      var y=function(value){return base-(Math.min(value,ceiling)/ceiling)*(base-top);};
-      var byDay={};points.forEach(function(point){(byDay[point.date]||(byDay[point.date]=[])).push(point);});
-      var shapes=labels.map(function(label,index){
-        var date=addDays(start,index),day=byDay[date]||[];if(!day.length) return '';
-        var previous=null;for(var p=measurementHistory.length-1;p>=0;p--){if(measurementHistory[p].date<date){previous=measurementHistory[p];break;}}
-        var anchor=previous&&previous.date===addDays(date,-1)?previous.value:day[0].value;
-        var sequence=[{date:date,minute:0,value:anchor}].concat(day),record=dailyByDate[date]||null;
-        if(record?record.dayState==='complete':date<localToday) sequence.push({date:date,minute:1440,value:day[day.length-1].value});
-        var line=sequence.map(function(point,pointIndex){return (pointIndex?'L':'M')+x(point).toFixed(1)+' '+y(point.value).toFixed(1);}).join(' ');
-        var area='M'+x(sequence[0]).toFixed(1)+' '+base+' '+line+' L'+x(sequence[sequence.length-1]).toFixed(1)+' '+base+' Z';
-        var color=tierColor(record&&record.dailyAverage!==null?record.dailyAverage:day[day.length-1].value);
-        return '<path class="history-area" d="'+area+'" fill="'+color+'"/><path class="history-line-glow" d="'+line+'" stroke="'+color+'"/><path class="history-line" d="'+line+'" stroke="'+color+'"/>';
-      }).join('');
-      var dots=points.map(function(point){var value=Math.round(point.value);return '<g><circle class="history-point" cx="'+x(point).toFixed(1)+'" cy="'+y(point.value).toFixed(1)+'" r="5" fill="'+tierColor(value)+'"><title>'+escapeHtml(formatDate(point.date,{weekday:'short',month:'short',day:'numeric'})+' at '+formatTime(point.minute)+': '+value)+'</title></circle><text class="history-point-value" x="'+x(point).toFixed(1)+'" y="'+(y(point.value)-9)+'" text-anchor="middle">'+value+'</text></g>';}).join('');
-      var dayLabels=labels.map(function(label,index){var date=addDays(start,index),record=dailyByDate[date]||null,average=record&&record.displayDailyAverage!==null?record.displayDailyAverage.toFixed(1):'—',center=(left+(index+.5)/7*plotWidth).toFixed(1);return '<text class="history-axis-label" x="'+center+'" y="'+(height-31)+'" text-anchor="middle">'+label+'</text><text class="history-daily-average" x="'+center+'" y="'+(height-7)+'" text-anchor="middle">'+average+'</text>';}).join('');
-      var grid=labels.map(function(label,index){var xx=left+index/7*plotWidth;return '<line class="history-grid" x1="'+xx.toFixed(1)+'" x2="'+xx.toFixed(1)+'" y1="'+top+'" y2="'+base+'"/>';}).join('');
-      return '<div class="history-week"><svg viewBox="0 0 '+width+' '+height+'" role="img" aria-label="Fat Use Zone measurements from '+escapeHtml(start)+' through '+escapeHtml(addDays(start,6))+'"><line class="history-base" x1="'+left+'" x2="'+(width-right)+'" y1="'+base+'" y2="'+base+'"/>'+grid+shapes+dots+dayLabels+'</svg></div>';
-    }).join('');
     var rangeStart=visibleWeeks[0],rangeEnd=addDays(visibleWeeks[visibleWeeks.length-1],6);
-    target.innerHTML='<div class="history-graph"><div class="history-range"><strong>3 WEEKS</strong><span>'+escapeHtml(formatDate(rangeStart,{month:'short',day:'numeric'})+' – '+formatDate(rangeEnd,{month:'short',day:'numeric'}))+'</span></div>'+rows+'<div class="history-average-label">Daily Average</div></div><div class="history-pager"><button id="history-earlier" type="button" '+(historyPage>=maxPage?'disabled':'')+'>Earlier</button><button id="history-later" type="button" '+(historyPage===0?'disabled':'')+'>Later</button></div>';
+    target.innerHTML='<div class="history-graph"><canvas class="history-canvas" width="400" height="510" role="img" aria-label="Fat Use Zone measurements from '+escapeHtml(rangeStart)+' through '+escapeHtml(rangeEnd)+'"></canvas></div><div class="history-pager"><button id="history-earlier" type="button" '+(historyPage>=maxPage?'disabled':'')+'>Earlier</button><button id="history-later" type="button" '+(historyPage===0?'disabled':'')+'>Later</button></div>';
+    var canvas=target.querySelector('.history-canvas'),dpr=window.devicePixelRatio||1,CW=400,CH=510;
+    canvas.width=CW*dpr;canvas.height=CH*dpr;var ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.fillStyle='#111';ctx.fillRect(0,0,CW,CH);
+    var PAD=14,PILL_H=28,PILL_PAD=8,GRAPH_H=90,LABEL_H=14,AVG_H=36,ROW_GAP=12,gLeft=20,gRight=382,plotWidth=gRight-gLeft;
+    var rangeText=formatDate(rangeStart,{month:'short',day:'numeric'})+' – '+formatDate(rangeEnd,{month:'short',day:'numeric'}),pillW=220,pillLeft=CW/2-pillW/2,pillCY=PAD+PILL_H/2;
+    ctx.fillStyle='#f5c842';ctx.beginPath();ctx.roundRect(pillLeft,PAD,pillW,PILL_H,PILL_H/2);ctx.fill();
+    ctx.fillStyle='#1a1a2e';ctx.textBaseline='middle';ctx.textAlign='center';ctx.font='bold 16px -apple-system,BlinkMacSystemFont,sans-serif';var weeksWidth=ctx.measureText('3 WEEKS').width;ctx.font='15px -apple-system,BlinkMacSystemFont,sans-serif';var rangeWidth=ctx.measureText(rangeText).width,totalWidth=weeksWidth+rangeWidth,gap=pillW-totalWidth-20,weeksX=pillLeft+10+weeksWidth/2,separatorX=pillLeft+10+weeksWidth+gap/2,rangeX=separatorX+gap/2+rangeWidth/2;
+    ctx.font='bold 16px -apple-system,BlinkMacSystemFont,sans-serif';ctx.fillText('3 WEEKS',weeksX,pillCY+1);ctx.fillStyle='rgba(26,26,46,.35)';ctx.fillRect(separatorX,PAD+7,1,PILL_H-14);ctx.fillStyle='#1a1a2e';ctx.font='15px -apple-system,BlinkMacSystemFont,sans-serif';ctx.fillText(rangeText,rangeX,pillCY+1);
+    var rowTop=PAD+PILL_H+PILL_PAD,dayLetters=['m','t','w','t','f','s','s'];
+    visibleWeeks.forEach(function(start,weekIndex){
+      var points=(pointsByWeek[start]||[]).slice().sort(function(a,b){return a.date===b.date?a.minute-b.minute:a.date.localeCompare(b.date);});
+      var gTop=rowTop,gBottom=gTop+GRAPH_H,bandWidth=plotWidth/7;
+      function absoluteMinute(point){return daysBetween(start,point.date)*1440+Number(point.minute);}
+      function xMinute(minute){return gLeft+minute/(7*1440)*plotWidth;}
+      function yValue(value){return gBottom-Math.max(0,Math.min(ceiling,value))/ceiling*GRAPH_H;}
+      for(var day=0;day<7;day++){
+        var bandX=gLeft+day*bandWidth;if(day%2===1){ctx.fillStyle='rgba(255,255,255,.04)';ctx.fillRect(bandX,gTop,bandWidth,GRAPH_H);}if(day>0){ctx.strokeStyle='rgba(255,255,255,.15)';ctx.lineWidth=.75;ctx.beginPath();ctx.moveTo(bandX,gTop);ctx.lineTo(bandX,gBottom);ctx.stroke();}
+      }
+      ctx.strokeStyle='rgba(255,255,255,.5)';ctx.lineWidth=.75;ctx.beginPath();ctx.moveTo(gLeft,gBottom);ctx.lineTo(gRight,gBottom);ctx.stroke();
+      var segments=[];
+      if(points.length){var segment=[points[0]];for(var p=1;p<points.length;p++){var previousAbs=absoluteMinute(points[p-1]),currentAbs=absoluteMinute(points[p]);if(currentAbs-previousAbs>1440){segments.push(segment);segment=[];}segment.push(points[p]);}segments.push(segment);}
+      ctx.save();ctx.beginPath();ctx.rect(gLeft,gTop,plotWidth,GRAPH_H);ctx.clip();
+      segments.forEach(function(segment,segmentIndex){
+        var knots=[],first=segment[0],last=segment[segment.length-1],firstAbs=absoluteMinute(first),lastAbs=absoluteMinute(last),previousPoint=null,nextPoint=null;
+        for(var before=measurementHistory.length-1;before>=0;before--){if(measurementHistory[before].date<first.date||(measurementHistory[before].date===first.date&&measurementHistory[before].minute<first.minute)){previousPoint=measurementHistory[before];break;}}
+        for(var after=0;after<measurementHistory.length;after++){if(measurementHistory[after].date>last.date||(measurementHistory[after].date===last.date&&measurementHistory[after].minute>last.minute)){nextPoint=measurementHistory[after];break;}}
+        if(segmentIndex===0&&previousPoint&&firstAbs-(daysBetween(start,previousPoint.date)*1440+previousPoint.minute)<=1440) knots.push({minute:daysBetween(start,previousPoint.date)*1440+previousPoint.minute,value:previousPoint.value});
+        else knots.push({minute:Math.floor(firstAbs/1440)*1440,value:0});
+        segment.forEach(function(point){knots.push({minute:absoluteMinute(point),value:point.value});});
+        if(segmentIndex===segments.length-1&&nextPoint&&(daysBetween(start,nextPoint.date)*1440+nextPoint.minute)-lastAbs<=1440) knots.push({minute:daysBetween(start,nextPoint.date)*1440+nextPoint.minute,value:nextPoint.value});
+        else if(last.date<localToday) knots.push({minute:(Math.floor(lastAbs/1440)+1)*1440,value:0});
+        drawZoneCurve(ctx,knots.map(function(knot){return {x:xMinute(knot.minute),y:yValue(knot.value),value:knot.value};}),gBottom,1.5,0);
+      });
+      ctx.restore();
+      points.forEach(function(point,index){var xx=xMinute(absoluteMinute(point)),yy=yValue(point.value),color=tierColor(point.value);ctx.beginPath();ctx.arc(xx,yy,3,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();if(index%2===1||index===points.length-1){ctx.fillStyle='#fff';ctx.font='bold 12px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(Math.round(point.value),xx,yy-4);}});
+      for(var labelIndex=0;labelIndex<7;labelIndex++){
+        var center=gLeft+(labelIndex+.5)*bandWidth,date=addDays(start,labelIndex),record=dailyByDate[date]||null,average=record&&record.displayDailyAverage!==null?record.displayDailyAverage.toFixed(1):'—';
+        ctx.fillStyle='rgba(255,255,255,.45)';ctx.font='10px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText(dayLetters[labelIndex],center,gBottom+3);
+        ctx.fillStyle='#FF8C00';ctx.font='18px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textBaseline='middle';ctx.fillText(average,center,gBottom+30);
+      }
+      rowTop+=GRAPH_H+LABEL_H+AVG_H+ROW_GAP;
+    });
+    ctx.fillStyle='#f5c842';ctx.font='bold 10px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.fillText('DAILY AVERAGE',20,CH-5);
     var earlier=document.getElementById('history-earlier'),later=document.getElementById('history-later');
     if(earlier) earlier.addEventListener('click',function(){historyPage++;renderHistory();});
     if(later) later.addEventListener('click',function(){historyPage--;renderHistory();});
