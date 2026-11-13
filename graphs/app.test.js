@@ -52,8 +52,8 @@ assert.ok(app.includes('reflectedFirst')&&app.includes('reflectedLast'),
   'History should preserve the original reflected spline endpoints');
 assert.ok(app.includes('function constrainedDerivatives(xs,ys)')&&app.includes('function sampleConstrainedKnots(knots,from,to)'),
   'Today should use the established constrained spline fit');
-assert.ok(app.includes("bindHorizontalSwipe(document.getElementById('app-main')"),
-  'primary pages should support horizontal swiping');
+assert.ok(css.includes('scroll-snap-type:x mandatory')&&app.includes("panelTrack.addEventListener('scroll'"),
+  'primary pages should preserve native horizontal scroll-snap swiping');
 assert.ok(app.includes("bindHorizontalSwipe(document.querySelector('.graph-card')"),
   'Today should support day-to-day card swiping');
 ['#22D3EE','#4ADE80','#A855F7','#FF8C00'].forEach(color=>{
