@@ -29,6 +29,15 @@
     return {key:'very_high',label:'Very High'};
   }
 
+  function tierForDailyFatUse(value){
+    if(!finite(value)) return null;
+    value=Math.round(Number(value));
+    if(value<=60) return {key:'low',label:'Low'};
+    if(value<=120) return {key:'medium',label:'Medium'};
+    if(value<=180) return {key:'high',label:'High'};
+    return {key:'very_high',label:'Very High'};
+  }
+
   function normalizeDay(input){
     input=input||{};
     var dayState=input.dayState==='complete'||input.dayState==='provisional'
@@ -53,7 +62,9 @@
       dailyAverage=canonicalAuc/(representedMinutes/60);
     }
     var displayDailyAverage=dailyAverage===null?null:oneDecimal(dailyAverage);
-    var tier=tierForAverage(displayDailyAverage);
+    var dailyFatUse=measured&&canonicalAuc!==null?canonicalAuc:null;
+    var displayDailyFatUse=dailyFatUse===null?null:Math.round(dailyFatUse);
+    var tier=tierForDailyFatUse(displayDailyFatUse);
 
     return {
       localDate:String(input.localDate||''),
@@ -63,17 +74,20 @@
       representedMinutes:representedMinutes,
       dailyAverage:dailyAverage,
       displayDailyAverage:displayDailyAverage,
+      dailyFatUse:dailyFatUse,
+      displayDailyFatUse:displayDailyFatUse,
       tierKey:tier?tier.key:null,
       tierLabel:tier?tier.label:null,
       dayState:dayState,
       scoreAlgorithm:finite(input.scoreAlgorithm)?Number(input.scoreAlgorithm):null,
       payloadSchema:input.payloadSchema||null,
-      eligibleForTracking:dayState==='complete'&&measured&&dailyAverage!==null
+      eligibleForTracking:dayState==='complete'&&measured&&dailyFatUse!==null
     };
   }
 
   var RICH_FIELDS=[
     'canonicalAuc','representedMinutes','dailyAverage','displayDailyAverage',
+    'dailyFatUse','displayDailyFatUse',
     'tierKey','tierLabel','dayState','scoreAlgorithm'
   ];
 
@@ -118,6 +132,7 @@
     mergeRecord:mergeRecord,
     persistenceFields:persistenceFields,
     tierForAverage:tierForAverage,
+    tierForDailyFatUse:tierForDailyFatUse,
     oneDecimal:oneDecimal
   };
 });

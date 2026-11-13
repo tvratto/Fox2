@@ -12,6 +12,9 @@ const daily=require('./daily-record.js');
   assert.equal(record.representedMinutes,1440);
   assert.ok(Math.abs(record.dailyAverage-4.9)<1e-12);
   assert.equal(record.displayDailyAverage,4.9);
+  assert.equal(record.dailyFatUse,117.6);
+  assert.equal(record.displayDailyFatUse,118);
+  assert.equal(record.tierLabel,'Medium');
   assert.equal(record.tierLabel,'Medium');
   assert.equal(record.eligibleForTracking,true);
 }
@@ -41,6 +44,7 @@ const daily=require('./daily-record.js');
     dayState:'complete',representedMinutes:1440
   });
   assert.equal(compressedOnly.canonicalAuc,null);
+  assert.equal(compressedOnly.dailyFatUse,null);
   assert.equal(compressedOnly.dailyAverage,null,
     'compressed graph points must not become a canonical Daily Average');
 }
@@ -51,6 +55,7 @@ const daily=require('./daily-record.js');
     dayState:'complete'
   });
   assert.equal(measuredZero.dailyAverage,0);
+  assert.equal(measuredZero.displayDailyFatUse,0);
   assert.equal(measuredZero.tierLabel,'Low');
   assert.equal(measuredZero.eligibleForTracking,true);
 }
@@ -61,6 +66,7 @@ const daily=require('./daily-record.js');
   });
   assert.equal(unmeasured.dayState,null);
   assert.equal(unmeasured.dailyAverage,null);
+  assert.equal(unmeasured.displayDailyFatUse,null);
 }
 
 {

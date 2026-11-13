@@ -558,6 +558,14 @@
     return dailyByDate[date]||payloadDays.find(function(day){return day.localDate===date;})||null;
   }
 
+  function dailyFatUseColor(value){
+    value=Math.round(Number(value)||0);
+    if(value<=60) return '#22D3EE';
+    if(value<=120) return '#4ADE80';
+    if(value<=180) return '#A855F7';
+    return '#FF8C00';
+  }
+
   function noMeasurementCopy(date){
     return date===localToday?'Take a measurement, then tap your phone to see it here.':'No measurements';
   }
@@ -571,8 +579,8 @@
     card.querySelector('.daily-day').textContent=date===localToday?'Today':formatDate(date,{weekday:'long'});
     card.querySelector('.daily-result-row h1').textContent=formatDate(date,{month:'short',day:'numeric'});
     var lockup=card.querySelector('.average-lockup'),average=lockup.querySelector('strong'),tier=lockup.querySelector('small');average.className='';tier.className='';lockup.hidden=!(record&&record.measured);
-    if(record&&record.displayDailyAverage!==null){average.hidden=false;average.textContent=record.displayDailyAverage.toFixed(1);tier.textContent=record.tierLabel+(record.dayState==='provisional'?' so far':'');average.classList.add(tierClass(record));tier.classList.add(tierClass(record));}
-    else{average.hidden=true;average.textContent='';tier.textContent=record&&record.measured?'Not available yet':'';}
+    if(record&&record.displayDailyFatUse!==null){average.hidden=false;average.textContent=String(record.displayDailyFatUse);tier.textContent=record.tierLabel+(record.dayState==='provisional'?' so far':'');average.classList.add(tierClass(record));tier.classList.add(tierClass(record));}
+    else{average.hidden=true;average.textContent='';tier.textContent='';}
     card.querySelector('.empty-copy').textContent=noMeasurementCopy(date);
     return card;
   }
@@ -606,16 +614,16 @@
     var lockup=document.getElementById('average-lockup');
     document.getElementById('today-empty').textContent=noMeasurementCopy(displayDate);
     average.className='';tier.className='';lockup.hidden=!(record&&record.measured);
-    if(record&&record.displayDailyAverage!==null){
+    if(record&&record.displayDailyFatUse!==null){
       average.hidden=false;
-      average.textContent=record.displayDailyAverage.toFixed(1);
+      average.textContent=String(record.displayDailyFatUse);
       tier.textContent=record.tierLabel+(record.dayState==='provisional'?' so far':'');
       average.classList.add(tierClass(record));
       tier.classList.add(tierClass(record));
     }else{
       average.hidden=true;
       average.textContent='';
-      tier.textContent=record&&record.measured?'Not available yet':'';
+      tier.textContent='';
     }
     renderDayChart(record,displayDate);
     refreshDayPager();
@@ -673,8 +681,8 @@
   function activeMetrics(active){
     var before=(active.beforeDates||[]).map(function(date){return dailyByDate[date];}).filter(function(record){return record&&record.eligibleForTracking;});
     var tracked=completedRecords().filter(function(record){return record.localDate>=active.startDate&&record.localDate<=active.endDate;});
-    var beforeMean=mean(before.map(function(record){return record.dailyAverage;}));
-    var currentMean=mean(tracked.map(function(record){return record.dailyAverage;}));
+    var beforeMean=mean(before.map(function(record){return record.dailyFatUse;}));
+    var currentMean=mean(tracked.map(function(record){return record.dailyFatUse;}));
     var change=beforeMean&&currentMean!==null?(currentMean-beforeMean)/beforeMean*100:null;
     return {before:before,tracked:tracked,beforeMean:beforeMean,currentMean:currentMean,change:change};
   }
@@ -691,13 +699,13 @@
 
   function renderTrackingIntro(){
     if(readOnlyShare) return '<article class="card tracking-intro"><p class="eyebrow">Shared snapshot</p><h1>No Tracking period</h1><p class="tracking-intro-copy">This frozen snapshot does not include a Tracking comparison.</p></article>';
-    return '<article class="card tracking-intro"><p class="eyebrow">Optional</p><h1>Track a change</h1><p class="tracking-intro-copy">See whether a change affects your daily fat use. Choose something you want to try. For the next 30 days, FOX2 will compare your new daily averages with your earlier days.</p><div class="intro-diagram" aria-hidden="true"><i></i><i></i><i></i><span class="intro-start"><span>Start</span></span><i></i><i></i><i></i><i></i><i></i></div><button class="primary-button" id="start-tracking-main" type="button">Start tracking</button></article>';
+    return '<article class="card tracking-intro"><p class="eyebrow">Optional</p><h1>Track a change</h1><p class="tracking-intro-copy">See whether a change affects your daily fat use. Choose something you want to try. For the next 30 days, FOX2 will compare your Daily Fat Use with your earlier days.</p><div class="intro-diagram" aria-hidden="true"><i></i><i></i><i></i><span class="intro-start"><span>Start</span></span><i></i><i></i><i></i><i></i><i></i></div><button class="primary-button" id="start-tracking-main" type="button">Start tracking</button></article>';
   }
 
   function barHtml(record,isToday){
-    if(!record||record.displayDailyAverage===null) return '<i class="tracking-bar is-missing"></i>';
-    var height=Math.max(3,Math.min(100,record.dailyAverage/10*100));
-    return '<i class="tracking-bar '+(isToday?'is-today':'')+'" style="height:'+height+'%;background:'+tierColor(record.dailyAverage)+'" title="'+escapeHtml(record.localDate+': '+record.displayDailyAverage.toFixed(1))+'"></i>';
+    if(!record||record.displayDailyFatUse===null) return '<i class="tracking-bar is-missing"></i>';
+    var height=Math.max(3,Math.min(100,record.dailyFatUse/240*100));
+    return '<i class="tracking-bar '+(isToday?'is-today':'')+'" style="height:'+height+'%;background:'+dailyFatUseColor(record.dailyFatUse)+'" title="'+escapeHtml(record.localDate+': '+record.displayDailyFatUse)+'"></i>';
   }
 
   function renderActiveTracking(active){
@@ -711,10 +719,10 @@
       var record=dailyByDate[date]||null;
       bars.push(barHtml(record,date===localToday&&record&&record.dayState==='provisional'));
     }
-    var maxLine=Math.max(10,metrics.beforeMean||0,metrics.currentMean||0);
+    var maxLine=Math.max(240,metrics.beforeMean||0,metrics.currentMean||0);
     var beforeBottom=metrics.beforeMean===null?null:Math.min(100,metrics.beforeMean/maxLine*100);
     var currentBottom=metrics.currentMean===null?null:Math.min(100,metrics.currentMean/maxLine*100);
-    return '<section><header class="tracking-header"><div><p class="eyebrow">Day '+day+' of 30</p><div class="tracking-title-row"><h1>'+escapeHtml(active.name)+'</h1>'+(readOnlyShare?'':'<button class="info-button" id="tracking-info" aria-label="About and manage tracking">i</button>')+'</div></div><span class="tracking-day">'+formatDate(active.startDate)+'–'+formatDate(active.endDate)+'</span></header><div class="change-summary '+(metrics.change===null?'is-neutral':'')+'">'+escapeHtml(changeCopy)+'</div><p class="change-subtitle">Uses completed Daily Averages only.</p><div class="card tracking-chart-card"><div class="tracking-chart"><div class="tracking-plot">'+bars.join('')+'<span class="start-line"><span>Start</span></span>'+(beforeBottom===null?'':'<span class="average-line before" style="bottom:'+beforeBottom+'%"><span>Before '+metrics.beforeMean.toFixed(1)+'</span></span>')+(currentBottom===null?'':'<span class="average-line current" style="bottom:'+currentBottom+'%"><span>Current '+metrics.currentMean.toFixed(1)+'</span></span>')+'</div><div class="tracking-axis"><span>Before</span><span>Day 1</span><span>Day 30</span></div></div></div><div class="tracking-legend"><span style="color:#aaa">Before</span><span style="color:#eee">Current</span></div></section>';
+    return '<section><header class="tracking-header"><div><p class="eyebrow">Day '+day+' of 30</p><div class="tracking-title-row"><h1>'+escapeHtml(active.name)+'</h1>'+(readOnlyShare?'':'<button class="info-button" id="tracking-info" aria-label="About and manage tracking">i</button>')+'</div></div><span class="tracking-day">'+formatDate(active.startDate)+'–'+formatDate(active.endDate)+'</span></header><div class="change-summary '+(metrics.change===null?'is-neutral':'')+'">'+escapeHtml(changeCopy)+'</div><p class="change-subtitle">Uses completed Daily Fat Use only.</p><div class="card tracking-chart-card"><div class="tracking-chart"><div class="tracking-plot">'+bars.join('')+'<span class="start-line"><span>Start</span></span>'+(beforeBottom===null?'':'<span class="average-line before" style="bottom:'+beforeBottom+'%"><span>Before '+Math.round(metrics.beforeMean)+'</span></span>')+(currentBottom===null?'':'<span class="average-line current" style="bottom:'+currentBottom+'%"><span>Current '+Math.round(metrics.currentMean)+'</span></span>')+'</div><div class="tracking-axis"><span>Before</span><span>Day 1</span><span>Day 30</span></div></div></div><div class="tracking-legend"><span style="color:#aaa">Before</span><span style="color:#eee">Current</span></div></section>';
   }
 
   function renderTracking(){
@@ -783,13 +791,13 @@
       ctx.restore();
       points.forEach(function(point,index){var xx=xMinute(absoluteMinute(point)),yy=yValue(point.value),color=tierColor(point.value);ctx.beginPath();ctx.arc(xx,yy,3,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();if(index%2===1||index===points.length-1){ctx.fillStyle='#fff';ctx.font='bold 14px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(Math.round(point.value),xx,yy-4);}});
       for(var labelIndex=0;labelIndex<7;labelIndex++){
-        var center=gLeft+(labelIndex+.5)*bandWidth,date=addDays(start,labelIndex),record=dailyByDate[date]||null,average=record&&record.displayDailyAverage!==null?record.displayDailyAverage.toFixed(1):'—';
+        var center=gLeft+(labelIndex+.5)*bandWidth,date=addDays(start,labelIndex),record=dailyByDate[date]||null,average=record&&record.displayDailyFatUse!==null?String(record.displayDailyFatUse):'—';
         ctx.fillStyle='rgba(255,255,255,.55)';ctx.font='12px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText(dayLetters[labelIndex],center,gBottom+3);
-        ctx.fillStyle='#FF8C00';ctx.font='19px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textBaseline='middle';ctx.fillText(average,center,gBottom+30);
+        ctx.fillStyle=record&&record.displayDailyFatUse!==null?dailyFatUseColor(record.dailyFatUse):'#666';ctx.font='19px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textBaseline='middle';ctx.fillText(average,center,gBottom+30);
       }
       rowTop+=GRAPH_H+LABEL_H+AVG_H+ROW_GAP;
     });
-    ctx.fillStyle='#f5c842';ctx.font='bold 12px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.fillText('DAILY AVERAGE',20,CH-5);
+    ctx.fillStyle='#f5c842';ctx.font='bold 12px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.fillText('DAILY FAT USE',20,CH-5);
     var earlier=document.getElementById('history-earlier'),later=document.getElementById('history-later');
     if(earlier) earlier.addEventListener('click',function(){historyPage++;renderHistory();});
     if(later) later.addEventListener('click',function(){historyPage--;renderHistory();});
@@ -1000,13 +1008,13 @@
   }
 
   function exportDailyAverages(){
-    var rows=[['date','daily_average','tier','status']];
+    var rows=[['date','daily_fat_use','tier','status']];
     Object.keys(dailyByDate).sort().forEach(function(date){
       var record=dailyByDate[date];
-      if(!record||record.displayDailyAverage===null) return;
-      rows.push([date,record.displayDailyAverage.toFixed(1),record.tierLabel,record.dayState]);
+      if(!record||record.displayDailyFatUse===null) return;
+      rows.push([date,record.displayDailyFatUse,record.tierLabel,record.dayState]);
     });
-    downloadCsv('fox2-daily-averages.csv',rows);
+    downloadCsv('fox2-daily-fat-use.csv',rows);
   }
 
   function shareSnapshotPayload(){

@@ -24,7 +24,7 @@ assert.ok(app.includes("status='stopped'"),'stopped periods should be saved to L
 assert.ok(app.includes("status='completed'"),'Day 30 should complete into Log');
 assert.ok(app.includes("select=local_date,local_minute,ppm"),'History should load the complete measurement series');
 assert.ok(app.includes('function renderHistory()'),'History should render the measurement graph');
-assert.ok(app.includes("record.displayDailyAverage.toFixed(1)"),'History should show Daily Average under each day');
+assert.ok(app.includes("record.displayDailyFatUse!==null?String(record.displayDailyFatUse):'—'"),'History should show Daily Fat Use under each day');
 assert.ok(html.includes('id="day-rail"'),'Today should preserve the established date rail');
 assert.ok(css.includes('.day-pill.is-selected'),'Today should preserve the selected-day treatment');
 assert.ok(app.includes("ctx.fillText('3 WEEKS'")&&app.includes('pillW=220'),
@@ -40,7 +40,7 @@ assert.ok(!app.includes('Saved just now')&&!html.includes('id="sync-status"'),
 assert.ok(app.includes("'/rest/v1/rpc/get_share_snapshot'"),'frozen share links should remain readable');
 assert.ok(app.includes("'/rest/v1/rpc/create_share_snapshot'"),'new frozen share links should remain available');
 assert.ok(app.includes("downloadCsv('fox2-measurements.csv'"),'measurement export should remain available');
-assert.ok(app.includes("downloadCsv('fox2-daily-averages.csv'"),'daily-average export should remain available');
+assert.ok(app.includes("downloadCsv('fox2-daily-fat-use.csv'"),'Daily Fat Use export should remain available');
 assert.ok(app.includes("new BroadcastChannel('fox2-sync-'"),'NFC sync should update an established results page');
 assert.ok(html.includes('id="utility-button"'),'share and export should use one quiet utility control');
 assert.ok(!html.includes('>Community</button>'),'deferred Community must not create an empty tab');
@@ -63,7 +63,11 @@ assert.ok(app.indexOf('panel.appendChild(card)')<app.indexOf('renderDayChart(rec
 assert.ok(app.includes("date===localToday?'Take a measurement, then tap your phone to see it here.':'No measurements'"),
   'past empty days should use a neutral no-measurements message');
 assert.ok(app.includes('average.classList.add(tierClass(record))'),
-  'the Daily Average number should use its own tier color');
+  'the Daily Fat Use number should use its own tier color');
+assert.ok(app.includes('record.dailyFatUse/240*100'),
+  'Tracking bars should use cumulative Daily Fat Use');
+assert.ok(app.includes('before.map(function(record){return record.dailyFatUse;})'),
+  'Tracking comparisons should use completed Daily Fat Use');
 assert.ok(!html.includes('id="latest-reading"')&&!html.includes('>Latest</span>'),
   'the graph should not repeat the latest measurement in a permanent header block');
 assert.ok(app.includes('function bindDayPointPopup(target,canvas,dots)')&&app.includes("value.textContent='Zone '"),
