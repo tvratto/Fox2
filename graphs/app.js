@@ -496,9 +496,37 @@
     var selected=target.querySelector('.is-selected');if(selected) requestAnimationFrame(function(){selected.scrollIntoView({block:'nearest',inline:'center'});});
   }
 
+  function clearDayPointPopup(target){
+    var handlers=target&&target._pointPopupHandlers;if(!handlers) return;
+    target.removeEventListener('touchstart',handlers.touchstart);
+    target.removeEventListener('touchend',handlers.touchend);
+    target.removeEventListener('click',handlers.click);
+    target._pointPopupHandlers=null;
+  }
+
+  function bindDayPointPopup(target,canvas,dots){
+    if(target.id!=='day-chart') return;
+    var popup=document.createElement('div');popup.className='point-popup';popup.hidden=true;popup.innerHTML='<strong></strong><span></span>';target.appendChild(popup);
+    var startX=0,startY=0,startAt=0,lastTouch=0,hitRadius=44;
+    function hide(){popup.hidden=true;}
+    function handle(clientX,clientY){
+      var rect=canvas.getBoundingClientRect(),x=clientX-rect.left,y=clientY-rect.top,best=null,bestDistance=hitRadius*hitRadius;
+      dots.forEach(function(dot){var dx=dot.x-x,dy=dot.y-y,distance=dx*dx+dy*dy;if(distance<bestDistance){best=dot;bestDistance=distance;}});
+      if(!best){hide();return;}
+      var value=popup.querySelector('strong'),time=popup.querySelector('span');value.textContent='Zone '+Math.round(best.value);value.style.color=tierColor(best.value);time.textContent=formatTime(best.minute);
+      popup.hidden=false;var left=Math.max(4,Math.min(best.x-popup.offsetWidth/2,target.clientWidth-popup.offsetWidth-4)),above=best.y-popup.offsetHeight-12,top=above>=4?above:best.y+18;popup.style.left=left+'px';popup.style.top=top+'px';
+    }
+    function touchstart(event){var touch=event.touches&&event.touches[0];if(!touch) return;startX=touch.clientX;startY=touch.clientY;startAt=Date.now();}
+    function touchend(event){var touch=event.changedTouches&&event.changedTouches[0];if(!touch) return;lastTouch=Date.now();if(lastTouch-startAt<300&&Math.abs(touch.clientX-startX)<14&&Math.abs(touch.clientY-startY)<14) handle(touch.clientX,touch.clientY);}
+    function click(event){if(Date.now()-lastTouch<500) return;handle(event.clientX,event.clientY);}
+    target.addEventListener('touchstart',touchstart,{passive:true});target.addEventListener('touchend',touchend,{passive:true});target.addEventListener('click',click);
+    target._pointPopupHandlers={touchstart:touchstart,touchend:touchend,click:click};
+  }
+
   function renderDayChart(record,displayDate,target,empty){
     target=target||document.getElementById('day-chart');
     empty=empty||document.getElementById('today-empty');
+    clearDayPointPopup(target);
     var readings=record&&record.readings||[];
     if(!readings||!readings.length){target.innerHTML='';empty.hidden=false;return;}
     empty.hidden=true;
@@ -516,9 +544,10 @@
     ctx.strokeStyle='rgba(255,255,255,.24)';ctx.setLineDash([4,6]);[0,1440].forEach(function(minute){var xx=x(minute);ctx.beginPath();ctx.moveTo(xx,padT+4);ctx.lineTo(xx,base);ctx.stroke();});ctx.setLineDash([]);
     ctx.save();ctx.beginPath();ctx.rect(padL,padT,width-padL-padR,base-padT);ctx.clip();
     curve.segments.forEach(function(samples){drawZoneSamples(ctx,samples,base,3,12,x,y);});ctx.restore();
-    curve.actual.forEach(function(item){var xx=x(item.minute),yy=y(item.value),color=tierColor(item.value);ctx.beginPath();ctx.arc(xx,yy,7,0,Math.PI*2);ctx.fillStyle=color;ctx.shadowColor=color;ctx.shadowBlur=14;ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#fff';ctx.font='800 14px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(Math.round(item.value),xx,yy-10);});
+    var dots=[];curve.actual.forEach(function(item){var xx=x(item.minute),yy=y(item.value),color=tierColor(item.value);dots.push({x:xx,y:yy,value:item.value,minute:item.minute});ctx.beginPath();ctx.arc(xx,yy,7,0,Math.PI*2);ctx.fillStyle=color;ctx.shadowColor=color;ctx.shadowBlur=14;ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#fff';ctx.font='800 14px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(Math.round(item.value),xx,yy-10);});
     ctx.fillStyle='rgba(255,255,255,.42)';ctx.font='650 13px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textBaseline='alphabetic';
     [[0,'12a'],[360,'6a'],[720,'12p'],[1080,'6p'],[1440,'12a']].forEach(function(pair,index){ctx.textAlign=index===0?'left':index===4?'right':'center';ctx.fillText(pair[1],x(pair[0]),height-6);});
+    bindDayPointPopup(target,canvas,dots);
   }
 
   function availableTodayDates(){
@@ -536,7 +565,7 @@
   function buildGhostDayCard(date){
     if(!date) return null;
     var live=document.querySelector('[data-day-slot="current"] .graph-card');
-    var card=live.cloneNode(true),record=recordForDate(date),readings=record&&record.readings||[];
+    var card=live.cloneNode(true),record=recordForDate(date);
     card.classList.add('is-ghost');card.removeAttribute('aria-labelledby');card.setAttribute('aria-hidden','true');
     card.querySelectorAll('[id]').forEach(function(node){node.removeAttribute('id');});
     card.querySelector('.daily-day').textContent=date===localToday?'Today':formatDate(date,{weekday:'long'});
@@ -544,8 +573,6 @@
     var lockup=card.querySelector('.average-lockup'),average=lockup.querySelector('strong'),tier=lockup.querySelector('small');average.className='';tier.className='';lockup.hidden=!(record&&record.measured);
     if(record&&record.displayDailyAverage!==null){average.hidden=false;average.textContent=record.displayDailyAverage.toFixed(1);tier.textContent=record.tierLabel+(record.dayState==='provisional'?' so far':'');average.classList.add(tierClass(record));tier.classList.add(tierClass(record));}
     else{average.hidden=true;average.textContent='';tier.textContent=record&&record.measured?'Not available yet':'';}
-    var latest=card.querySelector('.latest-reading');
-    if(readings.length){var reading=readings[readings.length-1];latest.hidden=false;latest.querySelector('strong').textContent=Math.round(reading.value);latest.querySelector('strong').style.color=tierColor(Math.round(reading.value));latest.querySelector('time').textContent=formatTime(reading.minute);}else latest.hidden=true;
     card.querySelector('.empty-copy').textContent=noMeasurementCopy(date);
     return card;
   }
@@ -590,16 +617,7 @@
       average.textContent='';
       tier.textContent=record&&record.measured?'Not available yet':'';
     }
-    var readings=record&&record.readings||[];
     renderDayChart(record,displayDate);
-    var latest=document.getElementById('latest-reading');
-    if(readings.length){
-      var reading=readings[readings.length-1];
-      latest.hidden=false;
-      document.getElementById('latest-zone').textContent=Math.round(reading.value);
-      document.getElementById('latest-zone').style.color=tierColor(Math.round(reading.value));
-      document.getElementById('latest-time').textContent=formatTime(reading.minute);
-    }else latest.hidden=true;
     refreshDayPager();
   }
 
