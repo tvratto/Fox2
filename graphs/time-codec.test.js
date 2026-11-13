@@ -28,15 +28,16 @@ assert.equal(codec.localToUtcIso('bad',60,'America/Los_Angeles'),null);
 
 {
   const page=fs.readFileSync(require.resolve('./index.html'),'utf8');
+  const app=fs.readFileSync(require.resolve('./app.js'),'utf8');
   assert.ok(page.includes('<script src="time-codec.js?v='));
-  assert.ok(page.includes('Fox2TimeCodec.decode(params,fox2PayloadMeta)'));
-  assert.ok(page.includes('reading_utc_ts:'));
-  assert.ok(page.includes('local_date:'));
-  assert.ok(page.includes('local_minute:'));
-  assert.ok(page.includes('time_basis:'));
-  assert.ok(page.includes('time_zone:'));
-  assert.ok(page.includes('last_measurement_utc_at:'));
-  assert.ok(page.includes("u.searchParams.set('z',row.time_zone)"));
+  assert.ok(app.includes('Fox2TimeCodec.decode(params,payloadMeta)'));
+  assert.ok(app.includes('reading_utc_ts:'));
+  assert.ok(app.includes('local_date:'));
+  assert.ok(app.includes('local_minute:'));
+  assert.ok(app.includes('time_basis:'));
+  assert.ok(app.includes('time_zone:'));
+  assert.ok(app.includes('last_measurement_utc_at:'));
+  assert.ok(app.includes("['z','time_zone']"));
 }
 
 console.log('time codec tests passed');

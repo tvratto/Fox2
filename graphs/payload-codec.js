@@ -1,9 +1,10 @@
 /* FOX2 URL payload metadata decoder.
  *
  * Unversioned URLs are the frozen field-device legacy-v1 contract. Payload v2
- * is additive: x= identifies the schema/score algorithm/today slot and n=
- * carries original daily measurement counts independently of compressed graph
- * points in d=.
+ * is additive: x= identifies the schema/score algorithm/today slot and m=
+ * marks measured daily slots independently of compressed graph points in d=.
+ * r= carries the exact represented duration for today's
+ * provisional AUC, in whole minutes.
  */
 (function(root,factory){
   var api=factory();
@@ -12,8 +13,6 @@
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
 
-  var UNKNOWN_COUNT_PAIR='zz';
-
   function unsupported(raw,reason){
     return {
       supported:false,
@@ -21,6 +20,7 @@
       schemaLabel:'unsupported',
       scoreAlgorithm:null,
       todayIndex:null,
+      todayRepresentedMinutes:null,
       rawHeader:raw||'',
       reason:reason
     };
@@ -39,6 +39,7 @@
         schemaLabel:'legacy_v1',
         scoreAlgorithm:null,
         todayIndex:null,
+        todayRepresentedMinutes:null,
         rawHeader:''
       };
     }
@@ -59,14 +60,22 @@
     };
   }
 
-  function decodeCountPair(pair){
-    pair=String(pair||'').toLowerCase();
-    if(!/^[0-9a-z]{2}$/.test(pair)) return {valid:false};
-    if(pair===UNKNOWN_COUNT_PAIR){
-      return {valid:true,measured:true,count:null,countKnown:false};
+  function decodeMeasuredMask(raw,dayCount){
+    raw=String(raw||'').toLowerCase();
+    if(!/^[0-9a-z]{5}$/.test(raw)) return {valid:false,mask:0};
+    var mask=parseInt(raw,36);
+    if(!Number.isSafeInteger(mask)||mask<0||mask>=Math.pow(2,dayCount)){
+      return {valid:false,mask:0};
     }
-    var count=parseInt(pair,36);
-    return {valid:true,measured:count>0,count:count,countKnown:true};
+    return {valid:true,mask:mask};
+  }
+
+  function decodeRepresentedMinutes(raw){
+    raw=String(raw||'').toLowerCase();
+    if(!/^[0-9a-z]{3}$/.test(raw)) return {valid:false,minutes:null};
+    var minutes=parseInt(raw,36);
+    if(minutes<0||minutes>1440) return {valid:false,minutes:null};
+    return {valid:true,minutes:minutes>0?minutes:null};
   }
 
   function decode(params,dayCount){
@@ -79,10 +88,9 @@
         return {
           index:index,
           measured:null,
-          measurementCount:null,
-          measurementCountKnown:false,
           dayState:null,
-          isFuture:false
+          isFuture:false,
+          representedMinutes:null
         };
       });
       return header;
@@ -92,29 +100,33 @@
       return unsupported(header.rawHeader,'FOX2 payload today index is outside its day window.');
     }
 
-    var rawCounts=String(params.get('n')||'').toLowerCase();
-    if(rawCounts.length!==dayCount*2){
-      return unsupported(header.rawHeader,'FOX2 payload measurement counts have the wrong length.');
+    var represented=decodeRepresentedMinutes(params.get('r'));
+    if(!represented.valid){
+      return unsupported(header.rawHeader,'FOX2 payload represented duration is malformed.');
+    }
+    header.todayRepresentedMinutes=represented.minutes;
+
+    var measuredMask=decodeMeasuredMask(params.get('m'),dayCount);
+    if(!measuredMask.valid){
+      return unsupported(header.rawHeader,'FOX2 payload measured-day mask is malformed.');
     }
 
     var decoded=[];
     for(var index=0;index<dayCount;index++){
-      var countInfo=decodeCountPair(rawCounts.substring(index*2,index*2+2));
-      if(!countInfo.valid){
-        return unsupported(header.rawHeader,'FOX2 payload measurement counts are malformed.');
-      }
+      var measured=(measuredMask.mask&Math.pow(2,index))!==0;
       var isFuture=index>header.todayIndex;
       var dayState=null;
-      if(countInfo.measured&&!isFuture){
+      if(measured&&!isFuture){
         dayState=index===header.todayIndex?'provisional':'complete';
       }
       decoded.push({
         index:index,
-        measured:countInfo.measured,
-        measurementCount:countInfo.count,
-        measurementCountKnown:countInfo.countKnown,
+        measured:measured,
         dayState:dayState,
-        isFuture:isFuture
+        isFuture:isFuture,
+        representedMinutes:!measured||isFuture
+          ?null
+          :(index===header.todayIndex?represented.minutes:1440)
       });
     }
     header.days=decoded;
@@ -124,7 +136,7 @@
   return {
     decode:decode,
     parseHeader:parseHeader,
-    decodeCountPair:decodeCountPair,
-    UNKNOWN_COUNT_PAIR:UNKNOWN_COUNT_PAIR
+    decodeMeasuredMask:decodeMeasuredMask,
+    decodeRepresentedMinutes:decodeRepresentedMinutes,
   };
 });
