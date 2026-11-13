@@ -6,6 +6,7 @@
   var params=new URLSearchParams(window.location.search);
   var deviceId=params.get('id')||'';
   var dailyByDate={};
+  var measurementHistory=[];
   var payloadDays=[];
   var payloadMeta=null;
   var timeMeta=null;
@@ -276,6 +277,13 @@
     }catch(error){ return []; }
   }
 
+  async function loadMeasurementHistory(){
+    if(!deviceId||readOnlyShare) return [];
+    try{
+      return await Fox2DataFetch.fetchAllRows(SUPABASE_URL,'/rest/v1/readings?device_id=eq.'+encodeURIComponent(deviceId)+'&select=local_date,local_minute,ppm&order=reading_ts.asc',headers());
+    }catch(error){ return []; }
+  }
+
   function mergeDailyHistory(rows){
     dailyByDate={};
     (rows||[]).forEach(function(row){
@@ -307,6 +315,28 @@
       var merged=existing?Fox2DailyRecord.mergeRecord(existing,record,{incomingIsNewer:true}):record;
       merged.readings=record.readings;
       dailyByDate[record.localDate]=merged;
+    });
+  }
+
+  function mergeMeasurementHistory(rows){
+    var byKey={};
+    (rows||[]).forEach(function(row){
+      var date=String(row&&row.local_date||'');
+      var minute=Number(row&&row.local_minute);
+      var value=Number(row&&row.ppm);
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!Number.isFinite(minute)||!Number.isFinite(value)) return;
+      var point={date:date,minute:Math.max(0,Math.min(1439,minute)),value:value};
+      byKey[date+':'+point.minute+':'+value]=point;
+    });
+    payloadDays.forEach(function(day){
+      (day.readings||[]).forEach(function(reading){
+        var point={date:day.localDate,minute:Number(reading.minute),value:Number(reading.value)};
+        if(!Number.isFinite(point.minute)||!Number.isFinite(point.value)) return;
+        byKey[point.date+':'+point.minute+':'+point.value]=point;
+      });
+    });
+    measurementHistory=Object.keys(byKey).map(function(key){return byKey[key];}).sort(function(a,b){
+      return a.date===b.date?a.minute-b.minute:a.date.localeCompare(b.date);
     });
   }
 
@@ -415,7 +445,7 @@
       var response=await fetch(SUPABASE_URL+'/rest/v1/rpc/save_device_program_state',{method:'POST',headers:headers(),body:JSON.stringify({p_device_id:deviceId,p_state:trackingState,p_expected_revision:trackingRevision})});
       var result=response.ok?await response.json():null;
       if(result&&result.ok){trackingRevision=Number(result.revision)||trackingRevision+1;return true;}
-      if(result&&result.conflict&&result.state){trackingState=normalizeTrackingState(result.state);trackingRevision=Number(result.revision)||0;localStorage.setItem(trackingStorageKey(),JSON.stringify(trackingState));renderTracking();renderHistory();}
+      if(result&&result.conflict&&result.state){trackingState=normalizeTrackingState(result.state);trackingRevision=Number(result.revision)||0;localStorage.setItem(trackingStorageKey(),JSON.stringify(trackingState));renderTracking();renderLog();}
     }catch(error){}
     return false;
   }
@@ -475,9 +505,63 @@
     var info=document.getElementById('tracking-info');if(info) info.addEventListener('click',openTrackingInfo);
   }
 
-  function historyMetrics(item){ return activeMetrics(item); }
+  function mondayFor(iso){
+    var date=new Date(iso+'T00:00:00Z');
+    var offset=(date.getUTCDay()+6)%7;
+    date.setUTCDate(date.getUTCDate()-offset);
+    return isoDate(date);
+  }
+
   function renderHistory(){
     var target=document.getElementById('history-content');
+    if(!measurementHistory.length){target.innerHTML='<div class="card history-empty">Your measurements will appear here after you sync.</div>';return;}
+    var maxValue=Math.max.apply(null,measurementHistory.map(function(point){return point.value;}));
+    var ceiling=maxValue<=5?5:maxValue<=8?8:maxValue<=10?10:maxValue<=20?20:Math.ceil(maxValue/5)*5;
+    var weeks={};
+    measurementHistory.forEach(function(point){var start=mondayFor(point.date);(weeks[start]||(weeks[start]=[])).push(point);});
+    var width=640,height=184,left=34,right=12,top=12,bottom=55,base=height-bottom,plotWidth=width-left-right;
+    var labels=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    var rows=Object.keys(weeks).sort().reverse().map(function(start){
+      var points=weeks[start];
+      var x=function(point){return left+((daysBetween(start,point.date)+point.minute/1440)/7)*plotWidth;};
+      var y=function(value){return base-(Math.min(value,ceiling)/ceiling)*(base-top);};
+      var byDay={};points.forEach(function(point){(byDay[point.date]||(byDay[point.date]=[])).push(point);});
+      var shapes=labels.map(function(label,index){
+        var date=addDays(start,index),day=byDay[date]||[];
+        if(!day.length) return '';
+        var previous=null;
+        for(var p=measurementHistory.length-1;p>=0;p--){if(measurementHistory[p].date<date){previous=measurementHistory[p];break;}}
+        var anchor=previous&&previous.date===addDays(date,-1)?previous.value:day[0].value;
+        var sequence=[{date:date,minute:0,value:anchor}].concat(day);
+        var record=dailyByDate[date]||null;
+        var complete=record?record.dayState==='complete':date<localToday;
+        if(complete) sequence.push({date:date,minute:1440,value:day[day.length-1].value});
+        var line=sequence.map(function(point,pointIndex){return (pointIndex?'L':'M')+x(point).toFixed(1)+' '+y(point.value).toFixed(1);}).join(' ');
+        var area='M'+x(sequence[0]).toFixed(1)+' '+base+' '+line+' L'+x(sequence[sequence.length-1]).toFixed(1)+' '+base+' Z';
+        var areaValue=record&&record.dailyAverage!==null?record.dailyAverage:day[day.length-1].value;
+        return '<path class="history-area" d="'+area+'" fill="'+tierColor(areaValue)+'"/><path class="history-line" d="'+line+'"/>';
+      }).join('');
+      var dots=points.map(function(point){
+        var value=Math.round(point.value);
+        return '<circle class="history-point" cx="'+x(point).toFixed(1)+'" cy="'+y(point.value).toFixed(1)+'" r="4.5" fill="'+tierColor(value)+'"><title>'+escapeHtml(formatDate(point.date,{weekday:'short',month:'short',day:'numeric'})+' at '+formatTime(point.minute)+': '+value)+'</title></circle>';
+      }).join('');
+      var dayLabels=labels.map(function(label,index){
+        var date=addDays(start,index),record=dailyByDate[date]||null;
+        var average=record&&record.displayDailyAverage!==null?record.displayDailyAverage.toFixed(1):'—';
+        var color=record&&record.dailyAverage!==null?tierColor(record.dailyAverage):'#666';
+        var center=(left+(index+.5)/7*plotWidth).toFixed(1);
+        return '<text class="history-axis-label" x="'+center+'" y="'+(height-30)+'" text-anchor="middle">'+label+'</text><text class="history-daily-average" x="'+center+'" y="'+(height-8)+'" text-anchor="middle" fill="'+color+'">'+average+'</text>';
+      }).join('');
+      var grid=labels.map(function(label,index){var xx=left+index/7*plotWidth;return '<line class="history-grid" x1="'+xx.toFixed(1)+'" x2="'+xx.toFixed(1)+'" y1="'+top+'" y2="'+base+'"/>';}).join('');
+      var end=addDays(start,6);
+      return '<article class="history-week"><div class="history-week-head"><strong>'+escapeHtml(formatDate(start,{month:'short',day:'numeric'})+'–'+formatDate(end,{month:'short',day:'numeric'}))+'</strong><span>'+points.length+' '+(points.length===1?'measurement':'measurements')+'</span></div><svg viewBox="0 0 '+width+' '+height+'" role="img" aria-label="Fat Use Zone measurements from '+escapeHtml(start)+' through '+escapeHtml(end)+'"><line class="history-base" x1="'+left+'" x2="'+(width-right)+'" y1="'+base+'" y2="'+base+'"/>'+grid+shapes+dots+dayLabels+'<text class="history-ceiling" x="'+(left-7)+'" y="'+(top+4)+'" text-anchor="end">'+ceiling+'</text></svg></article>';
+    }).join('');
+    target.innerHTML='<div class="card history-graph"><div class="history-key"><p>Each dot is one Fat Use Zone measurement. The filled area shows the daily pattern.</p><span>Daily Average</span></div>'+rows+'</div>';
+  }
+
+  function historyMetrics(item){ return activeMetrics(item); }
+  function renderLog(){
+    var target=document.getElementById('log-content');
     var items=trackingState.tracking.history||[];
     if(!items.length){target.innerHTML='<div class="card history-empty">Completed and stopped tracking periods will appear here.</div>';return;}
     target.innerHTML='<div class="history-list">'+items.map(function(item){
@@ -541,8 +625,8 @@
       document.getElementById('tracking-start').value=active.startDate;
       document.getElementById('start-dialog').showModal();
     }else if(action==='stop'){
-      var okay=await confirmAction('Stop tracking?','This will save the dates and results collected so far in History.','Stop tracking');
-      if(okay){active.status='stopped';active.actualEndDate=localToday;trackingState.tracking.history.unshift(active);trackingState.tracking.active=null;await saveTracking();renderTracking();renderHistory();switchView('history');}
+      var okay=await confirmAction('Stop tracking?','This will save the dates and results collected so far in Log.','Stop tracking');
+      if(okay){active.status='stopped';active.actualEndDate=localToday;trackingState.tracking.history.unshift(active);trackingState.tracking.active=null;await saveTracking();renderTracking();renderLog();switchView('log');}
     }
   }
 
@@ -553,7 +637,7 @@
     if(startMode==='edit-name'){
       if(!current||!name) return;
       current.name=name.slice(0,80);
-      await saveTracking();renderTracking();renderHistory();
+      await saveTracking();renderTracking();renderLog();
       return;
     }
     if(startMode==='edit-start'){
@@ -568,7 +652,7 @@
       id:active.id||('tracking-'+Date.now()),name:name.slice(0,80),startDate:start,
       endDate:addDays(start,29),actualEndDate:null,status:'active',beforeDates:beforeDatesFor(start)
     };
-    await saveTracking();renderTracking();renderHistory();switchView('tracking');
+    await saveTracking();renderTracking();renderLog();switchView('tracking');
   }
 
   function latestMeasurementIso(){
@@ -725,10 +809,11 @@
       return;
     }
     if(!localToday) localToday=isoDate(new Date());
-    var results=await Promise.all([loadDailyHistory(),loadTracking()]);
+    var results=await Promise.all([loadDailyHistory(),loadMeasurementHistory(),loadTracking()]);
     mergeDailyHistory(results[0]);
+    mergeMeasurementHistory(results[1]);
     await finalizeExpiredTracking();
-    renderToday();renderTracking();renderHistory();
+    renderToday();renderTracking();renderHistory();renderLog();
     var saved=await savePayload();
     finishSyncHandoff(saved);
   }

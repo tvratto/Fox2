@@ -9,6 +9,7 @@ const css=fs.readFileSync(path.join(__dirname,'app.css'),'utf8');
 assert.ok(html.includes('>Today</button>'));
 assert.ok(html.includes('>Tracking</button>'));
 assert.ok(html.includes('>History</button>'));
+assert.ok(html.includes('>Log</button>'));
 ['>Progress</button>','>Data</button>','>Analysis</button>','Squad','Fat Use Score'].forEach(oldCopy=>{
   assert.ok(!html.includes(oldCopy),`production shell should not contain ${oldCopy}`);
 });
@@ -19,8 +20,12 @@ assert.ok(app.includes("date===localToday&&record&&record.dayState==='provisiona
   'Today should be visibly provisional');
 assert.ok(app.includes('filter(function(record){return record&&record.eligibleForTracking;})'),
   'partial days must not enter Tracking calculations');
-assert.ok(app.includes("status='stopped'"),'stopped periods should be saved to History');
-assert.ok(app.includes("status='completed'"),'Day 30 should complete into History');
+assert.ok(app.includes("status='stopped'"),'stopped periods should be saved to Log');
+assert.ok(app.includes("status='completed'"),'Day 30 should complete into Log');
+assert.ok(app.includes("select=local_date,local_minute,ppm"),'History should load the complete measurement series');
+assert.ok(app.includes('function renderHistory()'),'History should render the measurement graph');
+assert.ok(app.includes("record.displayDailyAverage.toFixed(1)"),'History should show Daily Average under each day');
+assert.ok(app.includes("document.getElementById('log-content')"),'Log should render Tracking results separately');
 assert.ok(app.includes("p_expected_revision:trackingRevision"),
   'Tracking saves should remain protected from stale tabs');
 assert.ok(!app.includes('window.prompt('),'management controls should use the product sheet, not a browser prompt');
@@ -35,6 +40,9 @@ assert.ok(!html.includes('>Community</button>'),'deferred Community must not cre
 assert.ok(css.includes('.average-line.before'));
 assert.ok(css.includes('border-top-style:dashed'));
 assert.ok(css.includes('.tracking-bar.is-today'));
+assert.ok(css.includes('.history-week'));
+assert.ok(css.includes('.history-point'));
+assert.ok(css.includes('.history-daily-average'));
 
 ['analysis.js','copy-generator.js','state-engine.js'].forEach(filename=>{
   assert.equal(fs.existsSync(path.join(__dirname,filename)),false,

@@ -6,7 +6,7 @@ const source=fs.readFileSync(__dirname+'/index.html','utf8');
 (function tabsExposeOneAccessiblePanelAtATime(){
   assert.ok(source.includes('role="tablist" aria-label="FOX2 results"'),
     'the results navigation should identify itself as a tab list');
-  ['today','tracking','history'].forEach((name,index)=>{
+  ['today','tracking','history','log'].forEach((name,index)=>{
     assert.ok(source.includes(`id="tab-${name}" role="tab"`),
       `${name} should expose a semantic tab`);
     assert.ok(source.includes(`id="panel-${name}" role="tabpanel" aria-labelledby="tab-${name}"`),
