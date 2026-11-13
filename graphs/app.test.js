@@ -58,6 +58,10 @@ assert.ok(app.includes('function bindDayPager()')&&css.includes('.day-card-track
   'Today should preserve the finger-following day-card pager');
 assert.ok(app.includes("date===localToday?'Take a measurement, then tap your phone to see it here.':'No measurements'"),
   'past empty days should use a neutral no-measurements message');
+assert.ok(app.includes('average.classList.add(tierClass(record))'),
+  'the Daily Average number should use its own tier color');
+assert.ok(css.includes('.app-shell{height:100svh')&&css.includes('.day-card-viewport{flex:1 1 auto;min-height:0}'),
+  'the Today card should fit within the mobile viewport');
 ['#22D3EE','#4ADE80','#A855F7','#FF8C00'].forEach(color=>{
   assert.ok(app.includes(color),`graphs should preserve established color ${color}`);
 });

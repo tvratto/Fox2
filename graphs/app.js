@@ -541,9 +541,9 @@
     card.querySelectorAll('[id]').forEach(function(node){node.removeAttribute('id');});
     card.querySelector('.daily-day').textContent=date===localToday?'Today':formatDate(date,{weekday:'long'});
     card.querySelector('.daily-result-row h1').textContent=formatDate(date,{month:'short',day:'numeric'});
-    var average=card.querySelector('.average-lockup strong'),tier=card.querySelector('.average-lockup small');average.className='';tier.className='';
-    if(record&&record.displayDailyAverage!==null){average.hidden=false;average.textContent=record.displayDailyAverage.toFixed(1);tier.textContent=record.tierLabel+(record.dayState==='provisional'?' so far':'');tier.classList.add(tierClass(record));}
-    else{average.hidden=true;average.textContent='';tier.textContent=record&&record.measured?'Not available yet':(date===localToday?'No measurement yet':'No measurements');}
+    var lockup=card.querySelector('.average-lockup'),average=lockup.querySelector('strong'),tier=lockup.querySelector('small');average.className='';tier.className='';lockup.hidden=!(record&&record.measured);
+    if(record&&record.displayDailyAverage!==null){average.hidden=false;average.textContent=record.displayDailyAverage.toFixed(1);tier.textContent=record.tierLabel+(record.dayState==='provisional'?' so far':'');average.classList.add(tierClass(record));tier.classList.add(tierClass(record));}
+    else{average.hidden=true;average.textContent='';tier.textContent=record&&record.measured?'Not available yet':'';}
     var latest=card.querySelector('.latest-reading');
     if(readings.length){var reading=readings[readings.length-1];latest.hidden=false;latest.querySelector('strong').textContent=Math.round(reading.value);latest.querySelector('strong').style.color=tierColor(Math.round(reading.value));latest.querySelector('time').textContent=formatTime(reading.minute);}else latest.hidden=true;
     card.querySelector('.empty-copy').textContent=noMeasurementCopy(date);
@@ -574,17 +574,19 @@
     document.getElementById('today-date').textContent=formatDate(displayDate,{month:'short',day:'numeric'});
     var average=document.getElementById('today-average');
     var tier=document.getElementById('today-tier');
+    var lockup=document.getElementById('average-lockup');
     document.getElementById('today-empty').textContent=noMeasurementCopy(displayDate);
-    average.className='';tier.className='';
+    average.className='';tier.className='';lockup.hidden=!(record&&record.measured);
     if(record&&record.displayDailyAverage!==null){
       average.hidden=false;
       average.textContent=record.displayDailyAverage.toFixed(1);
       tier.textContent=record.tierLabel+(record.dayState==='provisional'?' so far':'');
+      average.classList.add(tierClass(record));
       tier.classList.add(tierClass(record));
     }else{
       average.hidden=true;
       average.textContent='';
-      tier.textContent=record&&record.measured?'Not available yet':(displayDate===localToday?'No measurement yet':'No measurements');
+      tier.textContent=record&&record.measured?'Not available yet':'';
     }
     var readings=record&&record.readings||[];
     renderDayChart(record,displayDate);
