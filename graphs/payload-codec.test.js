@@ -68,6 +68,10 @@ assert.deepEqual(codec.decodeMeasuredMask('0000z',5),{valid:false,mask:0});
 assert.deepEqual(codec.decodeRepresentedMinutes('140'),{valid:true,minutes:1440});
 assert.deepEqual(codec.decodeRepresentedMinutes('000'),{valid:true,minutes:null});
 assert.deepEqual(codec.decodeRepresentedMinutes('zzz'),{valid:false,minutes:null});
+assert.equal(codec.inferLegacyRepresentedMinutes([{minute:360},{minute:480}]),480);
+assert.equal(codec.inferLegacyRepresentedMinutes([{minute:0}]),null);
+assert.equal(codec.inferLegacyRepresentedMinutes([{minute:1295}]),null,
+  'the legacy two-character timestamp ceiling is ambiguous');
 
 {
   const page=fs.readFileSync(require.resolve('./index.html'),'utf8');
@@ -84,6 +88,8 @@ assert.deepEqual(codec.decodeRepresentedMinutes('zzz'),{valid:false,minutes:null
     'normalized day records should retain their payload schema');
   assert.ok(app.includes("scoreAlgorithm:payloadMeta.scoreAlgorithm"),
     'normalized day records should retain their score algorithm');
+  assert.ok(app.includes('Fox2PayloadCodec.inferLegacyRepresentedMinutes(readings)'),
+    'legacy Today should recover represented duration from its exact latest point');
 }
 
 console.log('payload codec tests passed');

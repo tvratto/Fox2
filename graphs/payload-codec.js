@@ -78,6 +78,20 @@
     return {valid:true,minutes:minutes>0?minutes:null};
   }
 
+  // Legacy payloads preserve today's latest measurement as its own graph
+  // point. Its minute offset therefore matches the interval covered by the
+  // provisional AUC. Two base-36 characters cap at 1295, so that value is
+  // ambiguous (exactly 21:35 or a later clamped time) and must not be used.
+  function inferLegacyRepresentedMinutes(readings){
+    if(!Array.isArray(readings)||!readings.length) return null;
+    var latest=null;
+    readings.forEach(function(reading){
+      var minute=Number(reading&&reading.minute);
+      if(Number.isFinite(minute)&&(latest===null||minute>latest)) latest=minute;
+    });
+    return latest!==null&&latest>0&&latest<1295?Math.round(latest):null;
+  }
+
   function decode(params,dayCount){
     dayCount=Math.max(0,Number(dayCount)||0);
     var header=parseHeader(params&&typeof params.get==='function'?params.get('x'):'');
@@ -138,5 +152,6 @@
     parseHeader:parseHeader,
     decodeMeasuredMask:decodeMeasuredMask,
     decodeRepresentedMinutes:decodeRepresentedMinutes,
+    inferLegacyRepresentedMinutes:inferLegacyRepresentedMinutes,
   };
 });

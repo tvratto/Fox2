@@ -380,7 +380,9 @@
       if(!measured) dayState=null;
       var authoritative=payloadMeta.schemaVersion===2?measured&&fixedAuc[index]!==undefined:legacyAuc[index]!==undefined;
       var auc=payloadMeta.schemaVersion===2?fixedAuc[index]:legacyAuc[index];
-      var represented=payloadMeta.schemaVersion===2?metaDay.representedMinutes:(dayState==='complete'?1440:null);
+      var represented=payloadMeta.schemaVersion===2
+        ?metaDay.representedMinutes
+        :(dayState==='complete'?1440:Fox2PayloadCodec.inferLegacyRepresentedMinutes(readings));
       var record=Fox2DailyRecord.normalizeDay({
         localDate:date,
         measured:measured,
