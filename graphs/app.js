@@ -529,6 +529,10 @@
     return dailyByDate[date]||payloadDays.find(function(day){return day.localDate===date;})||null;
   }
 
+  function noMeasurementCopy(date){
+    return date===localToday?'Take a measurement, then tap your phone to see it here.':'No measurements';
+  }
+
   function buildGhostDayCard(date){
     if(!date) return null;
     var live=document.querySelector('[data-day-slot="current"] .graph-card');
@@ -539,9 +543,10 @@
     card.querySelector('.daily-result-row h1').textContent=formatDate(date,{month:'short',day:'numeric'});
     var average=card.querySelector('.average-lockup strong'),tier=card.querySelector('.average-lockup small');average.className='';tier.className='';
     if(record&&record.displayDailyAverage!==null){average.hidden=false;average.textContent=record.displayDailyAverage.toFixed(1);tier.textContent=record.tierLabel+(record.dayState==='provisional'?' so far':'');tier.classList.add(tierClass(record));}
-    else{average.hidden=true;average.textContent='';tier.textContent=record&&record.measured?'Not available yet':'No measurement yet';}
+    else{average.hidden=true;average.textContent='';tier.textContent=record&&record.measured?'Not available yet':(date===localToday?'No measurement yet':'No measurements');}
     var latest=card.querySelector('.latest-reading');
     if(readings.length){var reading=readings[readings.length-1];latest.hidden=false;latest.querySelector('strong').textContent=Math.round(reading.value);latest.querySelector('strong').style.color=tierColor(Math.round(reading.value));latest.querySelector('time').textContent=formatTime(reading.minute);}else latest.hidden=true;
+    card.querySelector('.empty-copy').textContent=noMeasurementCopy(date);
     renderDayChart(record,date,card.querySelector('.day-chart'),card.querySelector('.empty-copy'));
     return card;
   }
@@ -569,6 +574,7 @@
     document.getElementById('today-date').textContent=formatDate(displayDate,{month:'short',day:'numeric'});
     var average=document.getElementById('today-average');
     var tier=document.getElementById('today-tier');
+    document.getElementById('today-empty').textContent=noMeasurementCopy(displayDate);
     average.className='';tier.className='';
     if(record&&record.displayDailyAverage!==null){
       average.hidden=false;
@@ -578,7 +584,7 @@
     }else{
       average.hidden=true;
       average.textContent='';
-      tier.textContent=record&&record.measured?'Not available yet':'No measurement yet';
+      tier.textContent=record&&record.measured?'Not available yet':(displayDate===localToday?'No measurement yet':'No measurements');
     }
     var readings=record&&record.readings||[];
     renderDayChart(record,displayDate);

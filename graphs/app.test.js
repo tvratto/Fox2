@@ -56,6 +56,8 @@ assert.ok(!html.includes('id="panel-track"')&&!css.includes('.panel-track'),
   'primary tabs should not be horizontally swipeable pages');
 assert.ok(app.includes('function bindDayPager()')&&css.includes('.day-card-track.is-dragging'),
   'Today should preserve the finger-following day-card pager');
+assert.ok(app.includes("date===localToday?'Take a measurement, then tap your phone to see it here.':'No measurements'"),
+  'past empty days should use a neutral no-measurements message');
 ['#22D3EE','#4ADE80','#A855F7','#FF8C00'].forEach(color=>{
   assert.ok(app.includes(color),`graphs should preserve established color ${color}`);
 });
