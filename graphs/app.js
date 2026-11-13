@@ -792,9 +792,9 @@
       writes.push(fetch(SUPABASE_URL+'/rest/v1/devices?on_conflict=device_id',{method:'POST',headers:headers({Prefer:'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify(device)}));
       var results=await Promise.all(writes);
       var ok=results.every(function(response){return response.ok;});
-      status.textContent=ok?'Saved just now':'Saved on this phone';
+      status.textContent=ok?'Saved just now':'';
       return ok;
-    }catch(error){status.textContent='Saved on this phone';return false;}
+    }catch(error){status.textContent='';return false;}
   }
 
   function csvCell(value){

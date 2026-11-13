@@ -34,6 +34,7 @@ assert.ok(app.includes("document.getElementById('log-content')"),'Log should ren
 assert.ok(app.includes("p_expected_revision:trackingRevision"),
   'Tracking saves should remain protected from stale tabs');
 assert.ok(!app.includes('window.prompt('),'management controls should use the product sheet, not a browser prompt');
+assert.ok(!app.includes('Saved on this phone'),'the interface should not expose an unclear local-fallback message');
 assert.ok(app.includes("'/rest/v1/rpc/get_share_snapshot'"),'frozen share links should remain readable');
 assert.ok(app.includes("'/rest/v1/rpc/create_share_snapshot'"),'new frozen share links should remain available');
 assert.ok(app.includes("downloadCsv('fox2-measurements.csv'"),'measurement export should remain available');

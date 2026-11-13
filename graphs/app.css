@@ -22,13 +22,13 @@ button{cursor:pointer}
 [hidden]{display:none!important}
 .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 .app-shell{width:min(100%,560px);min-height:100vh;margin:0 auto}
-.app-header{position:sticky;z-index:20;top:0;display:flex;align-items:end;justify-content:space-between;gap:20px;padding:17px 60px 0 18px;background:linear-gradient(180deg,rgba(5,5,5,.98),rgba(5,5,5,.92));border-bottom:1px solid rgba(255,255,255,.055);backdrop-filter:blur(18px)}
-.brand{padding-bottom:14px;color:var(--text);font-size:13px;font-weight:900;letter-spacing:.12em;text-decoration:none}
-.tabs{display:flex;gap:22px;overflow:auto;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
-.tab{position:relative;min-height:47px;padding:0 0 13px;border:0;background:transparent;color:rgba(255,255,255,.28);font-size:14px;font-weight:760;white-space:nowrap;transition:color .18s,font-size .18s}
-.tab::after{position:absolute;right:0;bottom:-1px;left:0;height:2px;border-radius:2px;background:transparent;content:""}
-.tab.is-active{color:#fff;font-size:21px;font-weight:900}.tab.is-active::after{background:#fff}
-.utility-button{position:absolute;right:17px;bottom:10px;width:36px;height:36px;padding:0;border:1px solid #303030;border-radius:50%;background:#111;color:#bbb;font-size:14px;font-weight:900;letter-spacing:-.08em}
+.app-header{position:sticky;z-index:20;top:0;display:flex;align-items:baseline;padding:16px 56px 14px 20px;background:#000}
+.brand{display:none}
+.tabs{display:flex;align-items:baseline;gap:clamp(8px,3vw,16px);overflow:auto;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;padding:0;border:0;background:transparent;color:rgba(255,255,255,.3);font-size:15px;font-weight:600;white-space:nowrap}
+.tab::after{display:none}
+.tab.is-active{color:#fff;font-size:clamp(18px,5.5vw,24px);font-weight:700}
+.utility-button{position:absolute;right:17px;top:10px;width:36px;height:36px;padding:0;border:1px solid #303030;border-radius:50%;background:#111;color:#bbb;font-size:14px;font-weight:900;letter-spacing:-.08em}
 .app-main{padding:28px 16px 70px}
 .shared-banner{margin:0 0 18px;padding:9px 12px;border:1px solid rgba(255,140,0,.3);border-radius:12px;background:rgba(255,140,0,.08);color:#d9a159;font-size:11px;font-weight:850;letter-spacing:.08em;text-align:center;text-transform:uppercase}
 .panel{animation:panel-in .22s ease both}
@@ -52,6 +52,6 @@ h1,h2,p{margin-top:0}h1{margin-bottom:0;font-size:clamp(34px,8vw,52px);line-heig
 .confirm-dialog{width:min(calc(100% - 32px),390px);padding:24px;border:1px solid #333;border-radius:20px;background:#181818;color:#fff}.confirm-dialog h2{font-size:23px}.confirm-dialog p{margin:12px 0 23px;color:#aaa;line-height:1.45}.confirm-actions{display:flex;justify-content:flex-end;gap:8px}.confirm-actions button{min-height:40px;padding:0 15px;border:1px solid #333;border-radius:11px;background:#222;color:#ddd}.confirm-actions .is-primary{background:#eee;color:#111}
 .utility-sheet .sheet-action{padding:0 2px}.utility-status{min-height:20px;margin:14px 0 0;color:var(--muted);font-size:12px;line-height:1.4}
 .handoff-overlay{position:fixed;z-index:100;inset:0;display:grid;place-items:center;padding:24px;background:#050505}.handoff-card{width:min(100%,390px);text-align:center}.handoff-mark{display:grid;width:68px;height:68px;margin:0 auto 26px;place-items:center;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--green));color:#031314;font-size:32px;font-weight:900}.handoff-card h1{margin-bottom:12px;font-size:30px}.handoff-card p{margin:0 auto 28px;max-width:330px;color:var(--muted);line-height:1.5}.handoff-card .primary-button{width:100%}
-@media(max-width:600px){.app-header{display:block;padding:9px 52px 0 12px}.brand{display:none}.tabs{justify-content:space-between;gap:0}.tab{flex:1;color:rgba(255,255,255,.42);font-size:12px}.tab.is-active{font-size:20px}.utility-button{right:9px;bottom:7px}.app-main{padding:17px 10px 60px}.day-rail{margin-inline:-10px;padding-inline:10px}.daily-result-row{gap:18px}.daily-result-row h1{font-size:29px}.average-lockup strong{font-size:49px}.graph-card{min-height:475px;padding:14px 11px 11px}.day-chart{height:315px}.tracking-chart{height:265px}.tracking-plot{gap:2px}.tracking-intro{padding:25px 20px}.sheet{margin:auto 8px 8px}.sheet form{padding:25px 20px}}
+@media(max-width:600px){.app-header{padding:16px 52px 14px 20px}.utility-button{right:9px;top:10px}.app-main{padding:17px 10px 60px}.day-rail{margin-inline:-10px;padding-inline:10px}.daily-result-row{gap:18px}.daily-result-row h1{font-size:29px}.average-lockup strong{font-size:49px}.graph-card{min-height:475px;padding:14px 11px 11px}.day-chart{height:315px}.tracking-chart{height:265px}.tracking-plot{gap:2px}.tracking-intro{padding:25px 20px}.sheet{margin:auto 8px 8px}.sheet form{padding:25px 20px}}
 @media(max-width:380px){.today-summary{display:block}.average-lockup{margin-top:24px;text-align:left}.tracking-plot{gap:1px}.change-summary{font-size:36px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}
