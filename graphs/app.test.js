@@ -35,6 +35,8 @@ assert.ok(app.includes("p_expected_revision:trackingRevision"),
   'Tracking saves should remain protected from stale tabs');
 assert.ok(!app.includes('window.prompt('),'management controls should use the product sheet, not a browser prompt');
 assert.ok(!app.includes('Saved on this phone'),'the interface should not expose an unclear local-fallback message');
+assert.ok(!app.includes('Saved just now')&&!html.includes('id="sync-status"'),
+  'successful background persistence should not add status copy to Today');
 assert.ok(app.includes("'/rest/v1/rpc/get_share_snapshot'"),'frozen share links should remain readable');
 assert.ok(app.includes("'/rest/v1/rpc/create_share_snapshot'"),'new frozen share links should remain available');
 assert.ok(app.includes("downloadCsv('fox2-measurements.csv'"),'measurement export should remain available');
@@ -56,6 +58,8 @@ assert.ok(!html.includes('id="panel-track"')&&!css.includes('.panel-track'),
   'primary tabs should not be horizontally swipeable pages');
 assert.ok(app.includes('function bindDayPager()')&&css.includes('.day-card-track.is-dragging'),
   'Today should preserve the finger-following day-card pager');
+assert.ok(app.indexOf('panel.appendChild(card)')<app.indexOf('renderDayChart(recordForDate(pair[1])'),
+  'neighbor graphs should render only after their phone-width panels are mounted');
 assert.ok(app.includes("date===localToday?'Take a measurement, then tap your phone to see it here.':'No measurements'"),
   'past empty days should use a neutral no-measurements message');
 assert.ok(app.includes('average.classList.add(tierClass(record))'),

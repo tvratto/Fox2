@@ -547,14 +547,16 @@
     var latest=card.querySelector('.latest-reading');
     if(readings.length){var reading=readings[readings.length-1];latest.hidden=false;latest.querySelector('strong').textContent=Math.round(reading.value);latest.querySelector('strong').style.color=tierColor(Math.round(reading.value));latest.querySelector('time').textContent=formatTime(reading.minute);}else latest.hidden=true;
     card.querySelector('.empty-copy').textContent=noMeasurementCopy(date);
-    renderDayChart(record,date,card.querySelector('.day-chart'),card.querySelector('.empty-copy'));
     return card;
   }
 
   function refreshDayPager(){
     var track=document.getElementById('day-card-track');if(!track) return;
     var dates=availableTodayDates(),index=dates.indexOf(selectedTodayDate),previous=index>0?dates[index-1]:null,next=index>=0&&index<dates.length-1?dates[index+1]:null;
-    [['previous',previous],['next',next]].forEach(function(pair){var panel=track.querySelector('[data-day-slot="'+pair[0]+'"]');panel.innerHTML='';var card=buildGhostDayCard(pair[1]);if(card) panel.appendChild(card);});
+    [['previous',previous],['next',next]].forEach(function(pair){
+      var panel=track.querySelector('[data-day-slot="'+pair[0]+'"]');panel.innerHTML='';var card=buildGhostDayCard(pair[1]);
+      if(card){panel.appendChild(card);renderDayChart(recordForDate(pair[1]),pair[1],card.querySelector('.day-chart'),card.querySelector('.empty-copy'));}
+    });
     track.classList.add('is-dragging');track.style.transform='translateX(-100%)';void track.offsetWidth;track.classList.remove('is-dragging');
   }
 
@@ -920,7 +922,6 @@
   async function savePayload(){
     var dParam=params.get('d')||'';
     if(readOnlyShare||!deviceId||!dParam||!payloadMeta||!payloadMeta.supported) return true;
-    var status=document.getElementById('sync-status');
     try{
       var check=await fetch(SUPABASE_URL+'/rest/v1/devices?device_id=eq.'+encodeURIComponent(deviceId)+'&select=last_ws_param,last_measurement_at&limit=1',{headers:headers()});
       var rows=check.ok?await check.json():[];
@@ -929,7 +930,7 @@
       var storedWs=parseInt(stored.last_ws_param||'0',36)||0;
       var incomingLatest=latestMeasurementIso();
       var isCurrent=incomingWs>storedWs||(incomingWs===storedWs&&Date.parse(incomingLatest||0)>=Date.parse(stored.last_measurement_at||0));
-      if(!isCurrent){status.textContent='Showing saved results';return true;}
+      if(!isCurrent) return true;
 
       var patient=params.get('p')||null,clinic=params.get('c')||null;
       var readingRows=[];
@@ -948,9 +949,8 @@
       writes.push(fetch(SUPABASE_URL+'/rest/v1/devices?on_conflict=device_id',{method:'POST',headers:headers({Prefer:'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify(device)}));
       var results=await Promise.all(writes);
       var ok=results.every(function(response){return response.ok;});
-      status.textContent=ok?'Saved just now':'';
       return ok;
-    }catch(error){status.textContent='';return false;}
+    }catch(error){return false;}
   }
 
   function csvCell(value){
