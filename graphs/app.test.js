@@ -77,6 +77,12 @@ assert.ok(css.includes('.app-shell{height:100svh')&&css.includes('.day-card-view
 ['#22D3EE','#4ADE80','#A855F7','#FF8C00'].forEach(color=>{
   assert.ok(app.includes(color),`graphs should preserve established color ${color}`);
 });
+assert.ok(app.includes('function continuousZoneGradient(ctx,baseline,top,ceiling,alpha)'),
+  'Today and History curves should share one continuous tier gradient');
+assert.ok(app.includes('zoneBlendWidth=.55'),
+  'tier transitions should blend across a controlled Zone-width');
+assert.ok(app.includes('color=tierColor(item.value)')&&app.includes('color=tierColor(point.value)'),
+  'actual measurement dots should retain categorical tier colors');
 
 ['analysis.js','copy-generator.js','state-engine.js'].forEach(filename=>{
   assert.equal(fs.existsSync(path.join(__dirname,filename)),false,
