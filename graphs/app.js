@@ -21,6 +21,8 @@
   var handoffChannel=null;
   var handoffExisting=false;
   var handoffNonce=String(Date.now())+Math.random();
+  var selectedTodayDate='';
+  var historyPage=0;
 
   function headers(extra){
     return Object.assign({
@@ -338,6 +340,12 @@
     measurementHistory=Object.keys(byKey).map(function(key){return byKey[key];}).sort(function(a,b){
       return a.date===b.date?a.minute-b.minute:a.date.localeCompare(b.date);
     });
+    measurementHistory.forEach(function(point){
+      var record=dailyByDate[point.date];if(!record) return;
+      if(!Array.isArray(record.readings)) record.readings=[];
+      if(!record.readings.some(function(reading){return Number(reading.minute)===point.minute&&Number(reading.value)===point.value;})) record.readings.push({minute:point.minute,value:point.value});
+      record.readings.sort(function(a,b){return a.minute-b.minute;});
+    });
   }
 
   function formatTime(minute){
@@ -347,50 +355,76 @@
     return display+':'+String(minutes).padStart(2,'0')+' '+suffix;
   }
 
-  function renderDayChart(readings){
+  function renderDayRail(displayDate){
+    var target=document.getElementById('day-rail');
+    var dates=Object.keys(dailyByDate).concat(payloadDays.map(function(day){return day.localDate;})).concat([localToday]).filter(Boolean);
+    dates=Array.from(new Set(dates)).sort().slice(-21);
+    target.innerHTML=dates.map(function(date){
+      var record=dailyByDate[date]||payloadDays.find(function(day){return day.localDate===date;})||null;
+      var selected=date===displayDate;
+      var weekday=formatDate(date,{weekday:'short'}),day=formatDate(date,{month:'short',day:'numeric'});
+      return '<button class="day-pill '+(record&&record.measured?'has-data ':'')+(selected?'is-selected':'')+'" type="button" data-day="'+escapeHtml(date)+'" aria-pressed="'+(selected?'true':'false')+'"><span>'+escapeHtml(weekday)+'</span><strong>'+escapeHtml(day)+'</strong><i></i></button>';
+    }).join('');
+    target.querySelectorAll('[data-day]').forEach(function(button){button.addEventListener('click',function(){selectedTodayDate=this.dataset.day;renderToday();});});
+    var selected=target.querySelector('.is-selected');if(selected) requestAnimationFrame(function(){selected.scrollIntoView({block:'nearest',inline:'center'});});
+  }
+
+  function renderDayChart(record,displayDate){
     var target=document.getElementById('day-chart');
     var empty=document.getElementById('today-empty');
+    var readings=record&&record.readings||[];
     if(!readings||!readings.length){target.innerHTML='';empty.hidden=false;return;}
     empty.hidden=true;
-    var width=640,height=250,left=24,right=12,top=24,bottom=35,base=height-bottom;
-    var maxValue=Math.max.apply(null,readings.map(function(item){return item.value;}));
+    var sequence=readings.slice();
+    var previousDate=addDays(displayDate,-1),previous=dailyByDate[previousDate]||payloadDays.find(function(day){return day.localDate===previousDate;})||null;
+    var previousReadings=previous&&previous.readings||[];
+    var anchor=previousReadings.length?previousReadings[previousReadings.length-1].value:readings[0].value;
+    sequence.unshift({minute:0,value:anchor,anchor:true});
+    if(record&&record.dayState==='complete') sequence.push({minute:1440,value:readings[readings.length-1].value,anchor:true});
+    var width=640,height=360,left=32,right=15,top=32,bottom=42,base=height-bottom;
+    var maxValue=Math.max.apply(null,sequence.map(function(item){return item.value;}));
     var ceiling=maxValue<=5?5:maxValue<=8?8:maxValue<=10?10:20;
     var x=function(minute){return left+(minute/1440)*(width-left-right);};
     var y=function(value){return base-(Math.min(value,ceiling)/ceiling)*(base-top);};
-    var line=readings.map(function(item,index){return (index?'L':'M')+x(item.minute).toFixed(1)+' '+y(item.value).toFixed(1);}).join(' ');
-    var area='M'+x(readings[0].minute).toFixed(1)+' '+base+' '+line+' L'+x(readings[readings.length-1].minute).toFixed(1)+' '+base+' Z';
-    var grid=[0,.25,.5,.75,1].map(function(fraction){var yy=base-(base-top)*fraction;return '<line class="chart-grid" x1="'+left+'" x2="'+(width-right)+'" y1="'+yy+'" y2="'+yy+'"/>';}).join('');
+    var line=sequence.map(function(item,index){return (index?'L':'M')+x(item.minute).toFixed(1)+' '+y(item.value).toFixed(1);}).join(' ');
+    var area='M'+x(sequence[0].minute).toFixed(1)+' '+base+' '+line+' L'+x(sequence[sequence.length-1].minute).toFixed(1)+' '+base+' Z';
+    var grid=[0,360,720,1080,1440].map(function(minute){var xx=x(minute);return '<line class="chart-grid" x1="'+xx+'" x2="'+xx+'" y1="'+top+'" y2="'+base+'"/>';}).join('');
     var points=readings.map(function(item){
       var value=Math.round(item.value),color=tierColor(value);
-      return '<g><circle class="chart-point" cx="'+x(item.minute)+'" cy="'+y(item.value)+'" r="6" fill="'+color+'"/><text class="chart-value" x="'+x(item.minute)+'" y="'+(y(item.value)-11)+'">'+value+'</text></g>';
+      return '<g><circle class="chart-point-glow" cx="'+x(item.minute)+'" cy="'+y(item.value)+'" r="12" fill="'+color+'"/><circle class="chart-point" cx="'+x(item.minute)+'" cy="'+y(item.value)+'" r="7" fill="'+color+'"/><text class="chart-value" x="'+x(item.minute)+'" y="'+(y(item.value)-13)+'">'+value+'</text></g>';
     }).join('');
-    target.innerHTML='<svg viewBox="0 0 '+width+' '+height+'" aria-hidden="true">'+grid+'<path class="chart-area" d="'+area+'"/><path class="chart-line" d="'+line+'"/>'+points+'<text class="chart-axis" x="'+left+'" y="'+(height-8)+'">12 AM</text><text class="chart-axis" x="'+(width/2)+'" y="'+(height-8)+'" text-anchor="middle">12 PM</text><text class="chart-axis" x="'+(width-right)+'" y="'+(height-8)+'" text-anchor="end">12 AM</text><text class="chart-axis" x="'+(left-5)+'" y="'+(top+3)+'" text-anchor="end">'+ceiling+'</text></svg>';
+    target.innerHTML='<svg viewBox="0 0 '+width+' '+height+'" aria-hidden="true"><defs><linearGradient id="today-area-gradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff9e32" stop-opacity=".56"/><stop offset="1" stop-color="#ff8c00" stop-opacity=".07"/></linearGradient><filter id="today-glow"><feGaussianBlur stdDeviation="6"/></filter></defs>'+grid+'<path class="chart-area" d="'+area+'"/><path class="chart-line-glow" d="'+line+'"/><path class="chart-line" d="'+line+'"/>'+points+'<text class="chart-axis" x="'+left+'" y="'+(height-9)+'">12a</text><text class="chart-axis" x="'+x(360)+'" y="'+(height-9)+'" text-anchor="middle">6a</text><text class="chart-axis" x="'+x(720)+'" y="'+(height-9)+'" text-anchor="middle">12p</text><text class="chart-axis" x="'+x(1080)+'" y="'+(height-9)+'" text-anchor="middle">6p</text><text class="chart-axis" x="'+(width-right)+'" y="'+(height-9)+'" text-anchor="end">12a</text><text class="chart-axis" x="'+(left-7)+'" y="'+(top+4)+'" text-anchor="end">'+ceiling+'</text></svg>';
   }
 
   function renderToday(){
     document.getElementById('loading-card').hidden=true;
     document.getElementById('today-content').hidden=false;
-    var displayDate=localToday;
+    var displayDate=selectedTodayDate||localToday;
     var record=dailyByDate[displayDate]||payloadDays.find(function(day){return day.localDate===displayDate;})||null;
     if(readOnlyShare&&!record){
       var sharedDates=Object.keys(dailyByDate).sort();
       displayDate=sharedDates.length?sharedDates[sharedDates.length-1]:localToday;
       record=dailyByDate[displayDate]||null;
     }
-    document.getElementById('today-date').textContent=formatDate(displayDate,{weekday:'long',month:'long',day:'numeric'});
+    selectedTodayDate=displayDate;
+    renderDayRail(displayDate);
+    document.getElementById('today-day').textContent=displayDate===localToday?'Today':formatDate(displayDate,{weekday:'long'});
+    document.getElementById('today-date').textContent=formatDate(displayDate,{month:'short',day:'numeric'});
     var average=document.getElementById('today-average');
     var tier=document.getElementById('today-tier');
     average.className='';tier.className='';
     if(record&&record.displayDailyAverage!==null){
+      average.hidden=false;
       average.textContent=record.displayDailyAverage.toFixed(1);
       tier.textContent=record.tierLabel+(record.dayState==='provisional'?' so far':'');
       average.classList.add(tierClass(record));tier.classList.add(tierClass(record));
     }else{
-      average.textContent='—';
-      tier.textContent=record&&record.measured?'Daily Average not available yet':'No measurement yet';
+      average.hidden=true;
+      average.textContent='';
+      tier.textContent=record&&record.measured?'Not available yet':'No measurement yet';
     }
     var readings=record&&record.readings||[];
-    renderDayChart(readings);
+    renderDayChart(record,displayDate);
     var latest=document.getElementById('latest-reading');
     if(readings.length){
       var reading=readings[readings.length-1];
@@ -515,48 +549,44 @@
   function renderHistory(){
     var target=document.getElementById('history-content');
     if(!measurementHistory.length){target.innerHTML='<div class="card history-empty">Your measurements will appear here after you sync.</div>';return;}
-    var maxValue=Math.max.apply(null,measurementHistory.map(function(point){return point.value;}));
-    var ceiling=maxValue<=5?5:maxValue<=8?8:maxValue<=10?10:maxValue<=20?20:Math.ceil(maxValue/5)*5;
-    var weeks={};
-    measurementHistory.forEach(function(point){var start=mondayFor(point.date);(weeks[start]||(weeks[start]=[])).push(point);});
-    var width=640,height=184,left=34,right=12,top=12,bottom=55,base=height-bottom,plotWidth=width-left-right;
-    var labels=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-    var rows=Object.keys(weeks).sort().reverse().map(function(start){
-      var points=weeks[start];
+    var pointsByWeek={};
+    measurementHistory.forEach(function(point){var week=mondayFor(point.date);(pointsByWeek[week]||(pointsByWeek[week]=[])).push(point);});
+    var firstWeek=mondayFor(measurementHistory[0].date),lastWeek=mondayFor(measurementHistory[measurementHistory.length-1].date),allWeeks=[];
+    for(var week=firstWeek;week<=lastWeek;week=addDays(week,7)) allWeeks.push(week);
+    var maxPage=Math.max(0,Math.ceil(allWeeks.length/3)-1);historyPage=Math.max(0,Math.min(historyPage,maxPage));
+    var endIndex=allWeeks.length-historyPage*3,startIndex=Math.max(0,endIndex-3),visibleWeeks=allWeeks.slice(startIndex,endIndex);
+    while(visibleWeeks.length<3) visibleWeeks.unshift(addDays(visibleWeeks[0]||lastWeek,-7));
+    var visiblePoints=[];visibleWeeks.forEach(function(start){visiblePoints=visiblePoints.concat(pointsByWeek[start]||[]);});
+    var maxValue=Math.max.apply(null,visiblePoints.map(function(point){return point.value;}).concat([8]));
+    var ceiling=maxValue<=8?8:maxValue<=10?10:maxValue<=20?20:Math.ceil(maxValue/5)*5;
+    var width=640,height=186,left=18,right=10,top=12,bottom=55,base=height-bottom,plotWidth=width-left-right;
+    var labels=['M','T','W','T','F','S','S'];
+    var rows=visibleWeeks.map(function(start){
+      var points=pointsByWeek[start]||[];
       var x=function(point){return left+((daysBetween(start,point.date)+point.minute/1440)/7)*plotWidth;};
       var y=function(value){return base-(Math.min(value,ceiling)/ceiling)*(base-top);};
       var byDay={};points.forEach(function(point){(byDay[point.date]||(byDay[point.date]=[])).push(point);});
       var shapes=labels.map(function(label,index){
-        var date=addDays(start,index),day=byDay[date]||[];
-        if(!day.length) return '';
-        var previous=null;
-        for(var p=measurementHistory.length-1;p>=0;p--){if(measurementHistory[p].date<date){previous=measurementHistory[p];break;}}
+        var date=addDays(start,index),day=byDay[date]||[];if(!day.length) return '';
+        var previous=null;for(var p=measurementHistory.length-1;p>=0;p--){if(measurementHistory[p].date<date){previous=measurementHistory[p];break;}}
         var anchor=previous&&previous.date===addDays(date,-1)?previous.value:day[0].value;
-        var sequence=[{date:date,minute:0,value:anchor}].concat(day);
-        var record=dailyByDate[date]||null;
-        var complete=record?record.dayState==='complete':date<localToday;
-        if(complete) sequence.push({date:date,minute:1440,value:day[day.length-1].value});
+        var sequence=[{date:date,minute:0,value:anchor}].concat(day),record=dailyByDate[date]||null;
+        if(record?record.dayState==='complete':date<localToday) sequence.push({date:date,minute:1440,value:day[day.length-1].value});
         var line=sequence.map(function(point,pointIndex){return (pointIndex?'L':'M')+x(point).toFixed(1)+' '+y(point.value).toFixed(1);}).join(' ');
         var area='M'+x(sequence[0]).toFixed(1)+' '+base+' '+line+' L'+x(sequence[sequence.length-1]).toFixed(1)+' '+base+' Z';
-        var areaValue=record&&record.dailyAverage!==null?record.dailyAverage:day[day.length-1].value;
-        return '<path class="history-area" d="'+area+'" fill="'+tierColor(areaValue)+'"/><path class="history-line" d="'+line+'"/>';
+        var color=tierColor(record&&record.dailyAverage!==null?record.dailyAverage:day[day.length-1].value);
+        return '<path class="history-area" d="'+area+'" fill="'+color+'"/><path class="history-line-glow" d="'+line+'" stroke="'+color+'"/><path class="history-line" d="'+line+'" stroke="'+color+'"/>';
       }).join('');
-      var dots=points.map(function(point){
-        var value=Math.round(point.value);
-        return '<circle class="history-point" cx="'+x(point).toFixed(1)+'" cy="'+y(point.value).toFixed(1)+'" r="4.5" fill="'+tierColor(value)+'"><title>'+escapeHtml(formatDate(point.date,{weekday:'short',month:'short',day:'numeric'})+' at '+formatTime(point.minute)+': '+value)+'</title></circle>';
-      }).join('');
-      var dayLabels=labels.map(function(label,index){
-        var date=addDays(start,index),record=dailyByDate[date]||null;
-        var average=record&&record.displayDailyAverage!==null?record.displayDailyAverage.toFixed(1):'—';
-        var color=record&&record.dailyAverage!==null?tierColor(record.dailyAverage):'#666';
-        var center=(left+(index+.5)/7*plotWidth).toFixed(1);
-        return '<text class="history-axis-label" x="'+center+'" y="'+(height-30)+'" text-anchor="middle">'+label+'</text><text class="history-daily-average" x="'+center+'" y="'+(height-8)+'" text-anchor="middle" fill="'+color+'">'+average+'</text>';
-      }).join('');
+      var dots=points.map(function(point){var value=Math.round(point.value);return '<g><circle class="history-point" cx="'+x(point).toFixed(1)+'" cy="'+y(point.value).toFixed(1)+'" r="5" fill="'+tierColor(value)+'"><title>'+escapeHtml(formatDate(point.date,{weekday:'short',month:'short',day:'numeric'})+' at '+formatTime(point.minute)+': '+value)+'</title></circle><text class="history-point-value" x="'+x(point).toFixed(1)+'" y="'+(y(point.value)-9)+'" text-anchor="middle">'+value+'</text></g>';}).join('');
+      var dayLabels=labels.map(function(label,index){var date=addDays(start,index),record=dailyByDate[date]||null,average=record&&record.displayDailyAverage!==null?record.displayDailyAverage.toFixed(1):'—',center=(left+(index+.5)/7*plotWidth).toFixed(1);return '<text class="history-axis-label" x="'+center+'" y="'+(height-31)+'" text-anchor="middle">'+label+'</text><text class="history-daily-average" x="'+center+'" y="'+(height-7)+'" text-anchor="middle">'+average+'</text>';}).join('');
       var grid=labels.map(function(label,index){var xx=left+index/7*plotWidth;return '<line class="history-grid" x1="'+xx.toFixed(1)+'" x2="'+xx.toFixed(1)+'" y1="'+top+'" y2="'+base+'"/>';}).join('');
-      var end=addDays(start,6);
-      return '<article class="history-week"><div class="history-week-head"><strong>'+escapeHtml(formatDate(start,{month:'short',day:'numeric'})+'–'+formatDate(end,{month:'short',day:'numeric'}))+'</strong><span>'+points.length+' '+(points.length===1?'measurement':'measurements')+'</span></div><svg viewBox="0 0 '+width+' '+height+'" role="img" aria-label="Fat Use Zone measurements from '+escapeHtml(start)+' through '+escapeHtml(end)+'"><line class="history-base" x1="'+left+'" x2="'+(width-right)+'" y1="'+base+'" y2="'+base+'"/>'+grid+shapes+dots+dayLabels+'<text class="history-ceiling" x="'+(left-7)+'" y="'+(top+4)+'" text-anchor="end">'+ceiling+'</text></svg></article>';
+      return '<div class="history-week"><svg viewBox="0 0 '+width+' '+height+'" role="img" aria-label="Fat Use Zone measurements from '+escapeHtml(start)+' through '+escapeHtml(addDays(start,6))+'"><line class="history-base" x1="'+left+'" x2="'+(width-right)+'" y1="'+base+'" y2="'+base+'"/>'+grid+shapes+dots+dayLabels+'</svg></div>';
     }).join('');
-    target.innerHTML='<div class="card history-graph"><div class="history-key"><p>Each dot is one Fat Use Zone measurement. The filled area shows the daily pattern.</p><span>Daily Average</span></div>'+rows+'</div>';
+    var rangeStart=visibleWeeks[0],rangeEnd=addDays(visibleWeeks[visibleWeeks.length-1],6);
+    target.innerHTML='<div class="history-graph"><div class="history-range"><strong>3 WEEKS</strong><span>'+escapeHtml(formatDate(rangeStart,{month:'short',day:'numeric'})+' – '+formatDate(rangeEnd,{month:'short',day:'numeric'}))+'</span></div>'+rows+'<div class="history-average-label">Daily Average</div></div><div class="history-pager"><button id="history-earlier" type="button" '+(historyPage>=maxPage?'disabled':'')+'>Earlier</button><button id="history-later" type="button" '+(historyPage===0?'disabled':'')+'>Later</button></div>';
+    var earlier=document.getElementById('history-earlier'),later=document.getElementById('history-later');
+    if(earlier) earlier.addEventListener('click',function(){historyPage++;renderHistory();});
+    if(later) later.addEventListener('click',function(){historyPage--;renderHistory();});
   }
 
   function historyMetrics(item){ return activeMetrics(item); }

@@ -25,6 +25,10 @@ assert.ok(app.includes("status='completed'"),'Day 30 should complete into Log');
 assert.ok(app.includes("select=local_date,local_minute,ppm"),'History should load the complete measurement series');
 assert.ok(app.includes('function renderHistory()'),'History should render the measurement graph');
 assert.ok(app.includes("record.displayDailyAverage.toFixed(1)"),'History should show Daily Average under each day');
+assert.ok(html.includes('id="day-rail"'),'Today should preserve the established date rail');
+assert.ok(css.includes('.day-pill.is-selected'),'Today should preserve the selected-day treatment');
+assert.ok(css.includes('.history-range'),'History should preserve the established three-week range pill');
+assert.ok(app.includes('historyPage'),'all History weeks should remain reachable through paging');
 assert.ok(app.includes("document.getElementById('log-content')"),'Log should render Tracking results separately');
 assert.ok(app.includes("p_expected_revision:trackingRevision"),
   'Tracking saves should remain protected from stale tabs');

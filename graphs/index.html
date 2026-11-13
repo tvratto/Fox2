@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#050505">
   <title>FOX2</title>
-  <link rel="stylesheet" href="app.css?v=20261112-02">
+  <link rel="stylesheet" href="app.css?v=20261112-03">
 </head>
 <body>
   <div class="app-shell">
@@ -29,29 +29,22 @@
         </div>
 
         <div id="today-content" hidden>
-          <section class="today-summary" aria-labelledby="today-heading">
-            <div>
-              <p class="eyebrow" id="today-date">Today</p>
-              <h1 id="today-heading">Daily Average</h1>
-            </div>
-            <div class="average-lockup" id="average-lockup">
-              <strong id="today-average">—</strong>
-              <span id="today-tier">Not enough data yet</span>
-            </div>
-          </section>
+          <div class="day-rail" id="day-rail" aria-label="Choose a day"></div>
 
           <section class="card graph-card" aria-labelledby="graph-title">
-            <div class="card-heading">
-              <div>
-                <p class="eyebrow">Your measurements</p>
-                <h2 id="graph-title">Today</h2>
+            <header class="daily-card-header">
+              <p class="daily-day" id="today-day">Today</p>
+              <div class="daily-result-row">
+                <h1 id="today-date">Today</h1>
+                <div class="average-lockup" id="average-lockup">
+                  <span>Daily Average</span>
+                  <strong id="today-average">—</strong>
+                  <small id="today-tier">Not enough data yet</small>
+                </div>
               </div>
-              <div class="latest-reading" id="latest-reading" hidden>
-                <span>Latest</span>
-                <strong id="latest-zone">—</strong>
-                <time id="latest-time"></time>
-              </div>
-            </div>
+              <div class="latest-reading" id="latest-reading" hidden><span>Latest</span><strong id="latest-zone">—</strong><time id="latest-time"></time></div>
+            </header>
+            <h2 class="sr-only" id="graph-title">Daily Fat Use Zone graph</h2>
             <div class="day-chart" id="day-chart" role="img" aria-label="Today's Fat Use Zone measurements"></div>
             <p class="empty-copy" id="today-empty">Take a measurement, then tap your phone to see it here.</p>
           </section>
@@ -73,10 +66,7 @@
       </section>
 
       <section class="panel" id="panel-history" role="tabpanel" aria-labelledby="tab-history" aria-hidden="true" inert hidden>
-        <header class="section-heading">
-          <p class="eyebrow">All measurements</p>
-          <h1>History</h1>
-        </header>
+        <h1 class="sr-only">History</h1>
         <div id="history-content"></div>
       </section>
 
@@ -158,6 +148,6 @@
   <script src="payload-codec.js?v=20261112-02"></script>
   <script src="daily-record.js?v=20261112-02"></script>
   <script src="time-codec.js?v=20261110-01"></script>
-  <script src="app.js?v=20261112-03"></script>
+  <script src="app.js?v=20261112-04"></script>
 </body>
 </html>
