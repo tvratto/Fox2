@@ -81,6 +81,10 @@ assert.ok(app.includes('function continuousZoneGradient(ctx,baseline,top,ceiling
   'Today and History curves should share one continuous tier gradient');
 assert.ok(app.includes('zoneBlendWidth=.55'),
   'tier transitions should blend across a controlled Zone-width');
+assert.ok(app.includes("var graphColorMode='level-bands'"),
+  'horizontal level bands should remain the shipped graph-color default');
+assert.ok(app.includes("graphColorMode==='time-columns'")&&app.includes('function continuousTimeGradient'),
+  'the vertical time-column treatment should remain available through one renderer switch');
 assert.ok(app.includes('color=tierColor(item.value)')&&app.includes('color=tierColor(point.value)'),
   'actual measurement dots should retain categorical tier colors');
 

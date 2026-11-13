@@ -170,6 +170,9 @@
   var zoneRgb=[[34,211,238],[74,222,128],[168,85,247],[255,140,0]];
   var zoneThresholds=[2.5,4.5,7.5];
   var zoneBlendWidth=.55;
+  // level-bands: stable horizontal tiers; time-columns: colors follow time.
+  // Both modes retain the same blended boundary colors and categorical dots.
+  var graphColorMode='level-bands';
   function zoneIndex(value){var rounded=Math.round(Number(value)||0);return rounded<=2?0:rounded<=4?1:rounded<=7?2:3;}
   function tierColor(value){ return zoneStroke[zoneIndex(value)]; }
 
@@ -205,6 +208,25 @@
     return gradient;
   }
 
+  function continuousTimeGradient(ctx,samples,xForSample,alpha){
+    var firstX=xForSample(samples[0]),lastX=xForSample(samples[samples.length-1]);
+    if(lastX<=firstX) return zoneRgba(samples[0].value,alpha);
+    var gradient=ctx.createLinearGradient(firstX,0,lastX,0),lastOffset=-1;
+    samples.forEach(function(sample,index){
+      var offset=Math.max(0,Math.min(1,(xForSample(sample)-firstX)/(lastX-firstX)));
+      if(index>0&&index<samples.length-1&&offset-lastOffset<.003) return;
+      gradient.addColorStop(Math.max(offset,lastOffset),zoneRgba(sample.value,alpha));
+      lastOffset=offset;
+    });
+    return gradient;
+  }
+
+  function graphColorGradient(ctx,samples,xForSample,baseline,top,ceiling,alpha){
+    return graphColorMode==='time-columns'
+      ?continuousTimeGradient(ctx,samples,xForSample,alpha)
+      :continuousZoneGradient(ctx,baseline,top,ceiling,alpha);
+  }
+
   function catmullSamples(knots){
     if(knots.length<2) return knots.slice();
     var first=knots[0],second=knots[1],last=knots[knots.length-1],beforeLast=knots[knots.length-2];
@@ -232,11 +254,12 @@
     ctx.beginPath();ctx.moveTo(samples[0].x,baseline);ctx.lineTo(samples[0].x,samples[0].y);
     for(var i=1;i<samples.length;i++) ctx.lineTo(samples[i].x,samples[i].y);
     ctx.lineTo(samples[samples.length-1].x,baseline);ctx.closePath();
-    ctx.fillStyle=continuousZoneGradient(ctx,baseline,top,ceiling,.38);ctx.fill();
+    var historyX=function(sample){return sample.x;};
+    ctx.fillStyle=graphColorGradient(ctx,samples,historyX,baseline,top,ceiling,.38);ctx.fill();
     ctx.lineWidth=lineWidth;ctx.lineCap='round';ctx.lineJoin='round';
     ctx.beginPath();ctx.moveTo(samples[0].x,samples[0].y);
     for(var lineIndex=1;lineIndex<samples.length;lineIndex++) ctx.lineTo(samples[lineIndex].x,samples[lineIndex].y);
-    ctx.strokeStyle=continuousZoneGradient(ctx,baseline,top,ceiling,1);ctx.shadowColor='rgba(255,255,255,.24)';ctx.shadowBlur=shadowBlur;ctx.stroke();
+    ctx.strokeStyle=graphColorGradient(ctx,samples,historyX,baseline,top,ceiling,1);ctx.shadowColor='rgba(255,255,255,.24)';ctx.shadowBlur=shadowBlur;ctx.stroke();
     ctx.shadowBlur=0;
   }
 
@@ -279,11 +302,12 @@
     ctx.beginPath();ctx.moveTo(x(samples[0].minute),baseline);ctx.lineTo(x(samples[0].minute),y(samples[0].value));
     for(var i=1;i<samples.length;i++) ctx.lineTo(x(samples[i].minute),y(samples[i].value));
     ctx.lineTo(x(samples[samples.length-1].minute),baseline);ctx.closePath();
-    ctx.fillStyle=continuousZoneGradient(ctx,baseline,y(ceiling),ceiling,.38);ctx.fill();
+    var todayX=function(sample){return x(sample.minute);};
+    ctx.fillStyle=graphColorGradient(ctx,samples,todayX,baseline,y(ceiling),ceiling,.38);ctx.fill();
     ctx.lineWidth=lineWidth;ctx.lineCap='round';ctx.lineJoin='round';
     ctx.beginPath();ctx.moveTo(x(samples[0].minute),y(samples[0].value));
     for(var lineIndex=1;lineIndex<samples.length;lineIndex++) ctx.lineTo(x(samples[lineIndex].minute),y(samples[lineIndex].value));
-    ctx.strokeStyle=continuousZoneGradient(ctx,baseline,y(ceiling),ceiling,1);ctx.shadowColor='rgba(255,255,255,.24)';ctx.shadowBlur=shadowBlur;ctx.stroke();
+    ctx.strokeStyle=graphColorGradient(ctx,samples,todayX,baseline,y(ceiling),ceiling,1);ctx.shadowColor='rgba(255,255,255,.24)';ctx.shadowBlur=shadowBlur;ctx.stroke();
     ctx.shadowBlur=0;
   }
 
