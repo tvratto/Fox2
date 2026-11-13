@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#050505">
   <title>FOX2</title>
-  <link rel="stylesheet" href="app.css?v=20261112-07">
+  <link rel="stylesheet" href="app.css?v=20261112-08">
 </head>
 <body>
   <div class="app-shell">
@@ -22,7 +22,6 @@
 
     <main class="app-main" id="app-main" aria-live="polite">
       <div class="shared-banner" id="shared-banner" hidden>Shared FOX2 snapshot</div>
-      <div class="panel-track" id="panel-track">
       <section class="panel is-active" id="panel-today" role="tabpanel" aria-labelledby="tab-today" aria-hidden="false">
         <div class="loading-card" id="loading-card">
           <div class="spinner" aria-hidden="true"></div>
@@ -32,23 +31,31 @@
         <div id="today-content" hidden>
           <div class="day-rail" id="day-rail" aria-label="Choose a day"></div>
 
-          <section class="card graph-card" aria-labelledby="graph-title">
-            <header class="daily-card-header">
-              <p class="daily-day" id="today-day">Today</p>
-              <div class="daily-result-row">
-                <h1 id="today-date">Today</h1>
-                <div class="average-lockup" id="average-lockup">
-                  <span>Daily Average</span>
-                  <strong id="today-average">—</strong>
-                  <small id="today-tier">Not enough data yet</small>
-                </div>
+          <div class="day-card-viewport" id="day-card-viewport">
+            <div class="day-card-track" id="day-card-track">
+              <div class="day-card-panel" data-day-slot="previous"></div>
+              <div class="day-card-panel" data-day-slot="current">
+                <section class="card graph-card" aria-labelledby="graph-title">
+                  <header class="daily-card-header">
+                    <p class="daily-day" id="today-day">Today</p>
+                    <div class="daily-result-row">
+                      <h1 id="today-date">Today</h1>
+                      <div class="average-lockup" id="average-lockup">
+                        <span>Daily Average</span>
+                        <strong id="today-average">—</strong>
+                        <small id="today-tier">Not enough data yet</small>
+                      </div>
+                    </div>
+                    <div class="latest-reading" id="latest-reading" hidden><span>Latest</span><strong id="latest-zone">—</strong><time id="latest-time"></time></div>
+                  </header>
+                  <h2 class="sr-only" id="graph-title">Daily Fat Use Zone graph</h2>
+                  <div class="day-chart" id="day-chart" role="img" aria-label="Today's Fat Use Zone measurements"></div>
+                  <p class="empty-copy" id="today-empty">Take a measurement, then tap your phone to see it here.</p>
+                </section>
               </div>
-              <div class="latest-reading" id="latest-reading" hidden><span>Latest</span><strong id="latest-zone">—</strong><time id="latest-time"></time></div>
-            </header>
-            <h2 class="sr-only" id="graph-title">Daily Fat Use Zone graph</h2>
-            <div class="day-chart" id="day-chart" role="img" aria-label="Today's Fat Use Zone measurements"></div>
-            <p class="empty-copy" id="today-empty">Take a measurement, then tap your phone to see it here.</p>
-          </section>
+              <div class="day-card-panel" data-day-slot="next"></div>
+            </div>
+          </div>
 
           <div class="today-actions">
             <button class="quiet-action" id="start-tracking-shortcut" type="button">Start tracking</button>
@@ -78,7 +85,6 @@
         </header>
         <div id="log-content"></div>
       </section>
-      </div>
     </main>
   </div>
 
@@ -150,6 +156,6 @@
   <script src="payload-codec.js?v=20261112-03"></script>
   <script src="daily-record.js?v=20261112-02"></script>
   <script src="time-codec.js?v=20261110-01"></script>
-  <script src="app.js?v=20261112-09"></script>
+  <script src="app.js?v=20261112-10"></script>
 </body>
 </html>
