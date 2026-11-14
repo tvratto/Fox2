@@ -27,6 +27,17 @@ assert.ok(app.includes('function renderHistory()'),'History should render the me
 assert.ok(app.includes("record.displayDailyFatUse!==null?String(record.displayDailyFatUse):'—'"),'History should show Daily Fat Use under each day');
 assert.ok(html.includes('id="day-rail"'),'Today should preserve the established date rail');
 assert.ok(css.includes('.day-pill.is-selected'),'Today should preserve the selected-day treatment');
+assert.ok(html.indexOf('id="day-chart"')<html.indexOf('id="average-lockup"'),
+  'Today should lead with the graph and place Daily Fat Use beneath it');
+['daily-fat-use-info','daily-goal-info','daily-tier-info','metric-info-dialog'].forEach(id=>{
+  assert.ok(html.includes(`id="${id}"`),`${id} should remain available for plain-language context`);
+});
+assert.ok(app.includes('This shows your fat use at that moment.'),
+  'tapping a measurement should explain what the point represents');
+assert.ok(app.includes('It is a useful goal, not a grade.'),
+  'the 120 goal should be explained without making it a judgment');
+assert.ok(app.includes("openMetricInfo('score')")&&app.includes("openMetricInfo('goal')")&&app.includes("openMetricInfo('tier')"),
+  'the Daily Fat Use score, goal, and range should all remain tappable');
 assert.ok(app.includes("ctx.fillText('3 WEEKS'")&&app.includes('pillW=220'),
   'History should preserve the established centered three-week range pill');
 assert.ok(app.includes('historyPage'),'all History weeks should remain reachable through paging');

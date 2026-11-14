@@ -546,7 +546,7 @@
 
   function bindDayPointPopup(target,canvas,dots){
     if(target.id!=='day-chart') return;
-    var popup=document.createElement('div');popup.className='point-popup';popup.hidden=true;popup.innerHTML='<strong></strong><span></span>';target.appendChild(popup);
+    var popup=document.createElement('div');popup.className='point-popup';popup.hidden=true;popup.innerHTML='<strong></strong><span></span><p>This shows your fat use at that moment.</p>';target.appendChild(popup);
     var startX=0,startY=0,startAt=0,lastTouch=0,hitRadius=44;
     function hide(){popup.hidden=true;}
     function handle(clientX,clientY){
@@ -617,9 +617,9 @@
     card.classList.add('is-ghost');card.removeAttribute('aria-labelledby');card.setAttribute('aria-hidden','true');
     card.querySelectorAll('[id]').forEach(function(node){node.removeAttribute('id');});
     card.querySelector('.daily-day').textContent=date===localToday?'Today':formatDate(date,{weekday:'long'});
-    card.querySelector('.daily-result-row h1').textContent=formatDate(date,{month:'short',day:'numeric'});
-    var lockup=card.querySelector('.average-lockup'),average=lockup.querySelector('strong'),tier=lockup.querySelector('small');average.className='';tier.className='';lockup.hidden=!(record&&record.measured);
-    if(record&&record.displayDailyFatUse!==null){average.hidden=false;average.textContent=String(record.displayDailyFatUse);tier.textContent=record.tierLabel+(record.dayState==='provisional'?' so far':'');average.classList.add(tierClass(record));tier.classList.add(tierClass(record));}
+    card.querySelector('.daily-card-header h1').textContent=formatDate(date,{month:'short',day:'numeric'});
+    var lockup=card.querySelector('.daily-score-row'),average=lockup.querySelector('.daily-score-button strong'),tier=lockup.querySelector('.daily-tier-button small'),heart=lockup.querySelector('.daily-goal-heart'),goal=lockup.querySelector('.daily-goal-button');average.className='';tier.className='';lockup.hidden=!(record&&record.measured);
+    if(record&&record.displayDailyFatUse!==null){var score=Number(record.displayDailyFatUse);average.hidden=false;average.textContent=String(record.displayDailyFatUse);tier.textContent=record.tierLabel+(record.dayState==='provisional'?' so far':'');average.classList.add(tierClass(record));tier.classList.add(tierClass(record));heart.textContent=score>=120?'♥':'♡';goal.classList.toggle('is-earned',score>=120);}
     else{average.hidden=true;average.textContent='';tier.textContent='';}
     card.querySelector('.empty-copy').textContent=noMeasurementCopy(date);
     return card;
@@ -652,18 +652,25 @@
     var average=document.getElementById('today-average');
     var tier=document.getElementById('today-tier');
     var lockup=document.getElementById('average-lockup');
+    var heart=document.getElementById('daily-goal-heart');
+    var goal=document.getElementById('daily-goal-info');
     document.getElementById('today-empty').textContent=noMeasurementCopy(displayDate);
     average.className='';tier.className='';lockup.hidden=!(record&&record.measured);
     if(record&&record.displayDailyFatUse!==null){
+      var score=Number(record.displayDailyFatUse);
       average.hidden=false;
       average.textContent=String(record.displayDailyFatUse);
       tier.textContent=record.tierLabel+(record.dayState==='provisional'?' so far':'');
       average.classList.add(tierClass(record));
       tier.classList.add(tierClass(record));
+      heart.textContent=score>=120?'♥':'♡';
+      goal.classList.toggle('is-earned',score>=120);
     }else{
       average.hidden=true;
       average.textContent='';
       tier.textContent='';
+      heart.textContent='♡';
+      goal.classList.remove('is-earned');
     }
     renderDayChart(record,displayDate);
     refreshDayPager();
@@ -925,6 +932,30 @@
     document.getElementById('tracking-info-dialog').showModal();
   }
 
+  function openMetricInfo(kind){
+    var record=recordForDate(selectedTodayDate||localToday);
+    if(!record||record.displayDailyFatUse===null) return;
+    var dialog=document.getElementById('metric-info-dialog');
+    var eyebrow=document.getElementById('metric-info-eyebrow');
+    var title=document.getElementById('metric-info-title');
+    var copy=document.getElementById('metric-info-copy');
+    if(kind==='goal'){
+      eyebrow.textContent='Daily goal';
+      title.textContent='120 Daily Fat Use';
+      copy.textContent='The heart celebrates reaching 120. It is a useful goal, not a grade. A lower day is still useful information.';
+    }else if(kind==='tier'){
+      eyebrow.textContent='Daily Fat Use range';
+      title.textContent=record.tierLabel;
+      copy.textContent='This label gives quick context for today’s accumulated Daily Fat Use. The graph still shows how your measurements changed during the day.';
+    }else{
+      eyebrow.textContent=record.dayState==='provisional'?'Today so far':'Completed day';
+      title.textContent=record.displayDailyFatUse+' Daily Fat Use';
+      copy.textContent='This number grows as FOX2 adds your measurements to the filled graph. Today’s result is still taking shape until the day ends.';
+      if(record.dayState!=='provisional') copy.textContent='This is the completed Daily Fat Use for that day. It comes from the filled pattern of measurements in the graph.';
+    }
+    dialog.showModal();
+  }
+
   function confirmAction(title,copy,label){
     return new Promise(function(resolve){
       var dialog=document.getElementById('confirm-dialog');
@@ -1108,6 +1139,9 @@
       });
     });
     bindDayPager();
+    document.getElementById('daily-fat-use-info').addEventListener('click',function(){openMetricInfo('score');});
+    document.getElementById('daily-goal-info').addEventListener('click',function(){openMetricInfo('goal');});
+    document.getElementById('daily-tier-info').addEventListener('click',function(){openMetricInfo('tier');});
     document.getElementById('start-tracking-shortcut').addEventListener('click',function(){switchView('tracking');if(!trackingState.tracking.active) openStartDialog();});
     document.getElementById('start-dialog').addEventListener('close',function(){if(this.returnValue==='start') saveStartForm();});
     document.getElementById('tracking-info-dialog').addEventListener('close',function(){var action=this.returnValue;if(action&&action!=='cancel') handleInfoAction(action);});

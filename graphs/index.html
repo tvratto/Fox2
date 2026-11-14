@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#050505">
   <title>FOX2</title>
-  <link rel="stylesheet" href="app.css?v=20261112-11">
+  <link rel="stylesheet" href="app.css?v=20261113-01">
 </head>
 <body>
   <div class="app-shell">
@@ -38,18 +38,25 @@
                 <section class="card graph-card" aria-labelledby="graph-title">
                   <header class="daily-card-header">
                     <p class="daily-day" id="today-day">Today</p>
-                    <div class="daily-result-row">
-                      <h1 id="today-date">Today</h1>
-                      <div class="average-lockup" id="average-lockup">
-                        <span>Daily Fat Use</span>
-                        <strong id="today-average">—</strong>
-                        <small id="today-tier">Not enough data yet</small>
-                      </div>
-                    </div>
+                    <h1 id="today-date">Today</h1>
                   </header>
                   <h2 class="sr-only" id="graph-title">Daily Fat Use Zone graph</h2>
                   <div class="day-chart" id="day-chart" role="img" aria-label="Today's Fat Use Zone measurements"></div>
                   <p class="empty-copy" id="today-empty">Take a measurement, then tap your phone to see it here.</p>
+                  <div class="daily-score-row" id="average-lockup" hidden>
+                    <button class="daily-score-button" id="daily-fat-use-info" type="button" aria-label="Explain Daily Fat Use">
+                      <span>Daily Fat Use</span>
+                      <strong id="today-average">—</strong>
+                    </button>
+                    <span class="daily-goal-slash" aria-hidden="true">/</span>
+                    <button class="daily-goal-button" id="daily-goal-info" type="button" aria-label="Explain the Daily Fat Use goal">
+                      <span class="daily-goal-heart" id="daily-goal-heart" aria-hidden="true">♡</span>
+                      <strong>120</strong>
+                    </button>
+                    <button class="daily-tier-button" id="daily-tier-info" type="button" aria-label="Explain this Daily Fat Use range">
+                      <small id="today-tier">Not enough data yet</small>
+                    </button>
+                  </div>
                 </section>
               </div>
               <div class="day-card-panel" data-day-slot="next"></div>
@@ -117,6 +124,15 @@
     </form>
   </dialog>
 
+  <dialog class="sheet metric-info-sheet" id="metric-info-dialog" aria-labelledby="metric-info-title">
+    <form method="dialog">
+      <button class="sheet-close" value="cancel" aria-label="Close">×</button>
+      <p class="eyebrow" id="metric-info-eyebrow">Today</p>
+      <h2 id="metric-info-title">Daily Fat Use</h2>
+      <p class="sheet-copy" id="metric-info-copy"></p>
+    </form>
+  </dialog>
+
   <dialog class="confirm-dialog" id="confirm-dialog" aria-labelledby="confirm-title">
     <form method="dialog">
       <h2 id="confirm-title">Change the start date?</h2>
@@ -154,6 +170,6 @@
   <script src="payload-codec.js?v=20261112-03"></script>
   <script src="daily-record.js?v=20261113-01"></script>
   <script src="time-codec.js?v=20261110-01"></script>
-  <script src="app.js?v=20261113-03"></script>
+  <script src="app.js?v=20261113-04"></script>
 </body>
 </html>
