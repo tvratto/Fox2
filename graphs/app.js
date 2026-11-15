@@ -311,12 +311,31 @@
     ctx.shadowBlur=0;
   }
 
-  function buildTodayCurve(displayDate){
-    var visibleStart=-144,visibleEnd=1584,actual=[];
+  function drawTodayArea(ctx,samples,baseline,x,y){
+    if(samples.length<2) return;
+    ctx.beginPath();ctx.moveTo(x(samples[0].minute),baseline);ctx.lineTo(x(samples[0].minute),y(samples[0].value));
+    for(var index=1;index<samples.length;index++) ctx.lineTo(x(samples[index].minute),y(samples[index].value));
+    ctx.lineTo(x(samples[samples.length-1].minute),baseline);ctx.closePath();
+    var gradient=ctx.createLinearGradient(0,y(10),0,baseline);
+    gradient.addColorStop(0,'rgba(251,146,60,.34)');gradient.addColorStop(1,'rgba(251,146,60,.10)');
+    ctx.fillStyle=gradient;ctx.fill();
+  }
+
+  function drawTodayLine(ctx,samples,x,y){
+    if(samples.length<2) return;
+    ctx.beginPath();ctx.moveTo(x(samples[0].minute),y(samples[0].value));
+    for(var index=1;index<samples.length;index++) ctx.lineTo(x(samples[index].minute),y(samples[index].value));
+    ctx.strokeStyle='#FB923C';ctx.lineWidth=3.5;ctx.lineCap='round';ctx.lineJoin='round';ctx.shadowColor='rgba(251,146,60,.26)';ctx.shadowBlur=10;ctx.stroke();ctx.shadowBlur=0;
+  }
+
+  function buildTodayCurve(displayDate,visibleStart,visibleEnd){
+    visibleStart=Number.isFinite(visibleStart)?visibleStart:-144;
+    visibleEnd=Number.isFinite(visibleEnd)?visibleEnd:1584;
+    var actual=[];
     for(var offset=-2;offset<=2;offset++){
       var date=addDays(displayDate,offset),record=dailyByDate[date]||payloadDays.find(function(day){return day.localDate===date;})||null;
       if(date>localToday||!record||!Array.isArray(record.readings)) continue;
-      record.readings.forEach(function(reading){actual.push({minute:offset*1440+Number(reading.minute),value:Number(reading.value)});});
+      record.readings.forEach(function(reading){actual.push({date:date,localMinute:Number(reading.minute),minute:offset*1440+Number(reading.minute),value:Number(reading.value)});});
     }
     actual.sort(function(a,b){return a.minute-b.minute;});
     var rawMax=Math.max.apply(null,actual.filter(function(point){return point.minute>=visibleStart-1440&&point.minute<=visibleEnd+1440;}).map(function(point){return point.value;}).concat([4]));
@@ -333,7 +352,7 @@
       var from=Math.max(visibleStart,knots[0].minute),to=Math.min(visibleEnd,knots[knots.length-1].minute);
       var segmentSamples=sampleConstrainedKnots(knots,from,to);if(segmentSamples.length>=2) sampled.push(segmentSamples);
     });
-    return {start:visibleStart,end:visibleEnd,ceiling:ceiling,segments:sampled,actual:actual.filter(function(point){return point.minute>=0&&point.minute<=1440;})};
+    return {start:visibleStart,end:visibleEnd,ceiling:ceiling,segments:sampled,actual:actual.filter(function(point){return point.minute>=visibleStart&&point.minute<=visibleEnd;})};
   }
 
   async function restoreLatestPayload(){
@@ -522,18 +541,19 @@
     return display+':'+String(minutes).padStart(2,'0')+' '+suffix;
   }
 
-  function renderDayRail(displayDate){
-    var target=document.getElementById('day-rail');
-    var dates=Object.keys(dailyByDate).concat(payloadDays.map(function(day){return day.localDate;})).concat([localToday]).filter(Boolean);
-    dates=Array.from(new Set(dates)).sort().slice(-21);
-    target.innerHTML=dates.map(function(date){
-      var record=dailyByDate[date]||payloadDays.find(function(day){return day.localDate===date;})||null;
-      var selected=date===displayDate;
-      var weekday=formatDate(date,{weekday:'short'}),day=formatDate(date,{month:'short',day:'numeric'});
-      return '<button class="day-pill '+(record&&record.measured?'has-data ':'')+(selected?'is-selected':'')+'" type="button" data-day="'+escapeHtml(date)+'" aria-pressed="'+(selected?'true':'false')+'"><span>'+escapeHtml(weekday)+'</span><strong>'+escapeHtml(day)+'</strong><i></i></button>';
-    }).join('');
-    target.querySelectorAll('[data-day]').forEach(function(button){button.addEventListener('click',function(){selectedTodayDate=this.dataset.day;renderToday();});});
-    var selected=target.querySelector('.is-selected');if(selected) requestAnimationFrame(function(){selected.scrollIntoView({block:'nearest',inline:'center'});});
+  function availableTodayDates(){
+    var dates=Object.keys(dailyByDate).concat(payloadDays.map(function(day){return day.localDate;})).filter(function(date){
+      var record=recordForDate(date);return date&&date<=localToday&&record&&record.measured;
+    });
+    var selected=selectedTodayDate||localToday;
+    if(selected&&selected<=localToday&&!dates.includes(selected)) dates.push(selected);
+    if(!dates.length&&localToday) dates.push(localToday);
+    return Array.from(new Set(dates)).sort();
+  }
+
+  function todayDateNeighbors(date){
+    var dates=availableTodayDates(),index=dates.indexOf(date);
+    return {dates:dates,index:index,previous:index>0?dates[index-1]:null,next:index>=0&&index<dates.length-1?dates[index+1]:null};
   }
 
   function clearDayPointPopup(target){
@@ -563,35 +583,74 @@
     target._pointPopupHandlers={touchstart:touchstart,touchend:touchend,click:click};
   }
 
-  function renderDayChart(record,displayDate,target,empty){
+  function renderDayChart(record,displayDate,target,empty,animation){
     target=target||document.getElementById('day-chart');
     empty=empty||document.getElementById('today-empty');
     clearDayPointPopup(target);
+    if(target._timelineFrame) cancelAnimationFrame(target._timelineFrame);
     var readings=record&&record.readings||[];
-    if(!readings||!readings.length){target.innerHTML='';empty.hidden=false;return;}
-    empty.hidden=true;
-    var curve=buildTodayCurve(displayDate);
+    empty.hidden=!!readings.length;
+    var curve=buildTodayCurve(displayDate,-1440,1440);
     target.innerHTML='<canvas aria-hidden="true"></canvas>';
-    var canvas=target.querySelector('canvas'),width=Math.max(320,target.clientWidth||640),height=Math.max(260,target.clientHeight||330),dpr=window.devicePixelRatio||1;
+    target.setAttribute('aria-label','Fat Use Zone measurements for '+formatDate(addDays(displayDate,-1),{weekday:'long',month:'long',day:'numeric'})+' and '+formatDate(displayDate,{weekday:'long',month:'long',day:'numeric'}));
+    var canvas=target.querySelector('canvas'),width=Math.max(320,target.clientWidth||640),height=Math.max(360,target.clientHeight||520),dpr=window.devicePixelRatio||1;
     canvas.width=width*dpr;canvas.height=height*dpr;canvas.style.width=width+'px';canvas.style.height=height+'px';
     var ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
-    var padL=6,padR=6,padT=12,padB=28,base=height-padB,relStart=curve.start,relEnd=curve.end,ceiling=curve.ceiling;
-    var x=function(minute){return padL+(minute-relStart)/(relEnd-relStart)*(width-padL-padR);};
+    var split=width/3,padT=148,padB=40,base=height-padB,ceiling=curve.ceiling;
+    var x=function(minute){
+      minute=Math.max(-1440,Math.min(1440,minute));
+      return minute<=0?(minute+1440)/1440*split:split+minute/1440*(width-split);
+    };
     var y=function(value){return base-Math.max(0,Math.min(ceiling,value))/ceiling*(base-padT);};
-    ctx.strokeStyle='rgba(255,255,255,.065)';ctx.lineWidth=1;
-    [360,720,1080].forEach(function(minute){var xx=x(minute);ctx.beginPath();ctx.moveTo(xx,padT+10);ctx.lineTo(xx,base);ctx.stroke();});
-    ctx.strokeStyle='rgba(255,255,255,.14)';ctx.beginPath();ctx.moveTo(padL,base);ctx.lineTo(width-padR,base);ctx.stroke();
-    ctx.strokeStyle='rgba(255,255,255,.24)';ctx.setLineDash([4,6]);[0,1440].forEach(function(minute){var xx=x(minute);ctx.beginPath();ctx.moveTo(xx,padT+4);ctx.lineTo(xx,base);ctx.stroke();});ctx.setLineDash([]);
-    ctx.save();ctx.beginPath();ctx.rect(padL,padT,width-padL-padR,base-padT);ctx.clip();
-    curve.segments.forEach(function(samples){drawZoneSamples(ctx,samples,base,3,12,x,y,ceiling);});ctx.restore();
-    var dots=[];curve.actual.forEach(function(item){var xx=x(item.minute),yy=y(item.value),color=tierColor(item.value);dots.push({x:xx,y:yy,value:item.value,minute:item.minute});ctx.beginPath();ctx.arc(xx,yy,7,0,Math.PI*2);ctx.fillStyle=color;ctx.shadowColor=color;ctx.shadowBlur=14;ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#fff';ctx.font='800 14px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(Math.round(item.value),xx,yy-10);});
-    ctx.fillStyle='rgba(255,255,255,.42)';ctx.font='650 13px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textBaseline='alphabetic';
-    [[0,'12a'],[360,'6a'],[720,'12p'],[1080,'6p'],[1440,'12a']].forEach(function(pair,index){ctx.textAlign=index===0?'left':index===4?'right':'center';ctx.fillText(pair[1],x(pair[0]),height-6);});
-    bindDayPointPopup(target,canvas,dots);
-  }
+    var dots=[];
 
-  function availableTodayDates(){
-    return Array.from(document.querySelectorAll('#day-rail [data-day]')).map(function(button){return button.dataset.day;}).filter(function(date){return date<=localToday;});
+    function draw(progress){
+      ctx.clearRect(0,0,width,height);
+      ctx.fillStyle='#090a0b';ctx.fillRect(0,0,split,height);
+      ctx.fillStyle='#111214';ctx.fillRect(split,0,width-split,height);
+
+      ctx.save();ctx.beginPath();ctx.rect(0,padT,width,base-padT);ctx.clip();
+      curve.segments.forEach(function(samples){drawTodayArea(ctx,samples,base,x,y);});
+      if(animation&&progress<1){
+        var reveal=animation.fromMinute+(animation.toMinute-animation.fromMinute)*progress;
+        ctx.fillStyle='#111214';ctx.fillRect(x(reveal),padT,width-x(reveal),base-padT);
+      }
+      ctx.restore();
+
+      ctx.strokeStyle='rgba(255,255,255,.08)';ctx.lineWidth=1;
+      [-1080,-720,-360,360,720,1080].forEach(function(minute){var xx=x(minute);ctx.beginPath();ctx.moveTo(xx,64);ctx.lineTo(xx,base);ctx.stroke();});
+      ctx.strokeStyle='rgba(255,255,255,.18)';ctx.beginPath();ctx.moveTo(0,base);ctx.lineTo(width,base);ctx.stroke();
+      ctx.strokeStyle='rgba(255,255,255,.30)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(split,56);ctx.lineTo(split,base+16);ctx.stroke();
+
+      ctx.save();ctx.beginPath();ctx.rect(0,padT,width,base-padT);ctx.clip();
+      curve.segments.forEach(function(samples){drawTodayLine(ctx,samples,x,y);});ctx.restore();
+
+      dots=[];
+      curve.actual.forEach(function(item){
+        var xx=x(item.minute),yy=y(item.value),color=tierColor(item.value);
+        dots.push({x:xx,y:yy,value:item.value,minute:item.localMinute,date:item.date});
+        ctx.beginPath();ctx.arc(xx,yy,7,0,Math.PI*2);ctx.fillStyle=color;ctx.shadowColor=color;ctx.shadowBlur=13;ctx.fill();ctx.shadowBlur=0;
+        ctx.fillStyle='#f5f5f2';ctx.font='800 14px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(Math.round(item.value),xx,yy-10);
+      });
+
+      ctx.fillStyle='rgba(255,255,255,.42)';ctx.font='650 12px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textAlign='center';ctx.textBaseline='alphabetic';
+      [[-1080,'6a'],[-720,'12p'],[-360,'6p'],[360,'6a'],[720,'12p'],[1080,'6p']].forEach(function(pair){ctx.fillText(pair[1],x(pair[0]),height-12);});
+      ctx.fillStyle='rgba(255,255,255,.62)';ctx.font='650 11px -apple-system,BlinkMacSystemFont,sans-serif';ctx.fillText('midnight',split,height-2);
+      if(animation&&animation.scoreElement){
+        animation.scoreElement.textContent=String(Math.round(animation.fromScore+(animation.toScore-animation.fromScore)*progress));
+      }
+    }
+
+    if(animation&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+      var started=performance.now(),duration=2000;
+      function frame(now){
+        var raw=Math.min(1,(now-started)/duration),eased=1-Math.pow(1-raw,3);draw(eased);
+        if(raw<1) target._timelineFrame=requestAnimationFrame(frame);else bindDayPointPopup(target,canvas,dots);
+      }
+      target._timelineFrame=requestAnimationFrame(frame);
+    }else{
+      draw(1);bindDayPointPopup(target,canvas,dots);
+    }
   }
 
   function recordForDate(date){
@@ -610,18 +669,49 @@
     return date===localToday?'Take a measurement, then tap your phone to see it here.':'No measurements';
   }
 
+  function setTimelineScore(button,record,date){
+    var available=record&&record.measured&&record.displayDailyFatUse!==null;
+    button.hidden=!available;
+    button.dataset.scoreDate=date;
+    var value=button.querySelector('.timeline-score-value'),state=button.querySelector('.timeline-score-state');
+    value.textContent=available?String(record.displayDailyFatUse):'—';
+    state.textContent=available&&record.dayState==='provisional'?'so far':'';
+  }
+
+  function populateTimelineCard(card,date){
+    var previousDate=addDays(date,-1),previousRecord=recordForDate(previousDate),record=recordForDate(date);
+    var previousHeading=card.querySelector('.timeline-day-heading.is-previous'),currentHeading=card.querySelector('.timeline-day-heading.is-current');
+    previousHeading.querySelector('.timeline-day-name').textContent=formatDate(previousDate,{weekday:'long'});
+    previousHeading.querySelector('.timeline-day-date').textContent=formatDate(previousDate,{month:'short',day:'numeric'});
+    currentHeading.querySelector('.timeline-day-name').textContent=date===localToday?'Today':formatDate(date,{weekday:'long'});
+    currentHeading.querySelector('.timeline-day-date').textContent=formatDate(date,{month:'short',day:'numeric'});
+    setTimelineScore(card.querySelector('.timeline-score-button.is-previous'),previousRecord,previousDate);
+    setTimelineScore(card.querySelector('.timeline-score-button.is-current'),record,date);
+    var empty=card.querySelector('.empty-copy');empty.textContent=noMeasurementCopy(date);
+    var neighbors=todayDateNeighbors(date),previous=card.querySelector('.timeline-caret.is-previous'),next=card.querySelector('.timeline-caret.is-next');
+    previous.hidden=!neighbors.previous;next.hidden=!neighbors.next;
+    return {record:record,previousRecord:previousRecord,empty:empty};
+  }
+
+  function timelineSyncAnimation(record,date,scoreElement){
+    if(readOnlyShare||date!==localToday||!record||record.displayDailyFatUse===null||!Array.isArray(record.readings)||!record.readings.length) return null;
+    var latestMinute=Math.max.apply(null,record.readings.map(function(reading){return Number(reading.minute)||0;}));
+    var current={score:Number(record.displayDailyFatUse),minute:latestMinute};
+    var key='fox2-timeline-seen:'+(deviceId||'demo')+':'+date,previous=null;
+    try{previous=JSON.parse(localStorage.getItem(key)||'null');localStorage.setItem(key,JSON.stringify(current));}catch(error){}
+    if(!previous||!Number.isFinite(Number(previous.score))||!Number.isFinite(Number(previous.minute))) return null;
+    var fromScore=Number(previous.score),fromMinute=Number(previous.minute);
+    if(current.score<=fromScore||current.minute<=fromMinute) return null;
+    return {fromScore:fromScore,toScore:current.score,fromMinute:fromMinute,toMinute:current.minute,scoreElement:scoreElement};
+  }
+
   function buildGhostDayCard(date){
     if(!date) return null;
-    var live=document.querySelector('[data-day-slot="current"] .graph-card');
-    var card=live.cloneNode(true),record=recordForDate(date);
+    var live=document.querySelector('[data-day-slot="current"] .timeline-card');
+    var card=live.cloneNode(true);
     card.classList.add('is-ghost');card.removeAttribute('aria-labelledby');card.setAttribute('aria-hidden','true');
     card.querySelectorAll('[id]').forEach(function(node){node.removeAttribute('id');});
-    card.querySelector('.daily-day').textContent=date===localToday?'Today':formatDate(date,{weekday:'long'});
-    card.querySelector('.daily-card-header h1').textContent=formatDate(date,{month:'short',day:'numeric'});
-    var lockup=card.querySelector('.daily-score-row'),average=lockup.querySelector('.daily-score-button strong'),tier=lockup.querySelector('.daily-tier-button small'),heart=lockup.querySelector('.daily-goal-heart'),goal=lockup.querySelector('.daily-goal-button');average.className='';tier.className='';lockup.hidden=!(record&&record.measured);
-    if(record&&record.displayDailyFatUse!==null){var score=Number(record.displayDailyFatUse);average.hidden=false;average.textContent=String(record.displayDailyFatUse);tier.textContent=record.tierLabel+(record.dayState==='provisional'?' so far':'');average.classList.add(tierClass(record));tier.classList.add(tierClass(record));heart.textContent=score>=120?'♥':'♡';goal.classList.toggle('is-earned',score>=120);}
-    else{average.hidden=true;average.textContent='';tier.textContent='';}
-    card.querySelector('.empty-copy').textContent=noMeasurementCopy(date);
+    populateTimelineCard(card,date);
     return card;
   }
 
@@ -646,33 +736,11 @@
       record=dailyByDate[displayDate]||null;
     }
     selectedTodayDate=displayDate;
-    renderDayRail(displayDate);
-    document.getElementById('today-day').textContent=displayDate===localToday?'Today':formatDate(displayDate,{weekday:'long'});
-    document.getElementById('today-date').textContent=formatDate(displayDate,{month:'short',day:'numeric'});
-    var average=document.getElementById('today-average');
-    var tier=document.getElementById('today-tier');
-    var lockup=document.getElementById('average-lockup');
-    var heart=document.getElementById('daily-goal-heart');
-    var goal=document.getElementById('daily-goal-info');
-    document.getElementById('today-empty').textContent=noMeasurementCopy(displayDate);
-    average.className='';tier.className='';lockup.hidden=!(record&&record.measured);
-    if(record&&record.displayDailyFatUse!==null){
-      var score=Number(record.displayDailyFatUse);
-      average.hidden=false;
-      average.textContent=String(record.displayDailyFatUse);
-      tier.textContent=record.tierLabel+(record.dayState==='provisional'?' so far':'');
-      average.classList.add(tierClass(record));
-      tier.classList.add(tierClass(record));
-      heart.textContent=score>=120?'♥':'♡';
-      goal.classList.toggle('is-earned',score>=120);
-    }else{
-      average.hidden=true;
-      average.textContent='';
-      tier.textContent='';
-      heart.textContent='♡';
-      goal.classList.remove('is-earned');
-    }
-    renderDayChart(record,displayDate);
+    var card=document.querySelector('[data-day-slot="current"] .timeline-card');
+    var populated=populateTimelineCard(card,displayDate);
+    var currentScore=card.querySelector('.timeline-score-button.is-current .timeline-score-value');
+    var animation=timelineSyncAnimation(record,displayDate,currentScore);
+    renderDayChart(record,displayDate,card.querySelector('.day-chart'),populated.empty,animation);
     refreshDayPager();
   }
 
@@ -874,6 +942,13 @@
     setActiveView(view);
   }
 
+  function moveTodayFocus(direction){
+    var neighbors=todayDateNeighbors(selectedTodayDate||localToday);
+    var next=direction<0?neighbors.previous:neighbors.next;
+    if(!next) return;
+    selectedTodayDate=next;renderToday();
+  }
+
   function bindDayPager(){
     var viewport=document.getElementById('day-card-viewport'),track=document.getElementById('day-card-track');
     if(!viewport||!track||viewport.dataset.pagerBound) return;viewport.dataset.pagerBound='true';
@@ -932,27 +1007,18 @@
     document.getElementById('tracking-info-dialog').showModal();
   }
 
-  function openMetricInfo(kind){
-    var record=recordForDate(selectedTodayDate||localToday);
+  function openMetricInfo(kind,date){
+    date=date||selectedTodayDate||localToday;
+    var record=recordForDate(date);
     if(!record||record.displayDailyFatUse===null) return;
     var dialog=document.getElementById('metric-info-dialog');
     var eyebrow=document.getElementById('metric-info-eyebrow');
     var title=document.getElementById('metric-info-title');
     var copy=document.getElementById('metric-info-copy');
-    if(kind==='goal'){
-      eyebrow.textContent='Daily goal';
-      title.textContent='120 Daily Fat Use';
-      copy.textContent='The heart celebrates reaching 120. It is a useful goal, not a grade. A lower day is still useful information.';
-    }else if(kind==='tier'){
-      eyebrow.textContent='Daily Fat Use range';
-      title.textContent=record.tierLabel;
-      copy.textContent='This label gives quick context for today’s accumulated Daily Fat Use. The graph still shows how your measurements changed during the day.';
-    }else{
-      eyebrow.textContent=record.dayState==='provisional'?'Today so far':'Completed day';
-      title.textContent=record.displayDailyFatUse+' Daily Fat Use';
-      copy.textContent='This number grows as FOX2 adds your measurements to the filled graph. Today’s result is still taking shape until the day ends.';
-      if(record.dayState!=='provisional') copy.textContent='This is the completed Daily Fat Use for that day. It comes from the filled pattern of measurements in the graph.';
-    }
+    eyebrow.textContent=record.dayState==='provisional'?'Today so far':'Completed day';
+    title.textContent=record.displayDailyFatUse+' / 120';
+    copy.textContent='Daily Fat Use comes from the orange area under this day’s curve. The 120 beside it is a reference number, not a grade.';
+    if(record.dayState==='provisional') copy.textContent+=' Today’s number can still change as you add measurements.';
     dialog.showModal();
   }
 
@@ -1139,9 +1205,12 @@
       });
     });
     bindDayPager();
-    document.getElementById('daily-fat-use-info').addEventListener('click',function(){openMetricInfo('score');});
-    document.getElementById('daily-goal-info').addEventListener('click',function(){openMetricInfo('goal');});
-    document.getElementById('daily-tier-info').addEventListener('click',function(){openMetricInfo('tier');});
+    document.getElementById('day-card-viewport').addEventListener('click',function(event){
+      var score=event.target.closest('.timeline-score-button');
+      if(score&&!score.closest('.is-ghost')) openMetricInfo('score',score.dataset.scoreDate);
+    });
+    document.getElementById('timeline-previous').addEventListener('click',function(){moveTodayFocus(-1);});
+    document.getElementById('timeline-next').addEventListener('click',function(){moveTodayFocus(1);});
     document.getElementById('start-tracking-shortcut').addEventListener('click',function(){switchView('tracking');if(!trackingState.tracking.active) openStartDialog();});
     document.getElementById('start-dialog').addEventListener('close',function(){if(this.returnValue==='start') saveStartForm();});
     document.getElementById('tracking-info-dialog').addEventListener('close',function(){var action=this.returnValue;if(action&&action!=='cancel') handleInfoAction(action);});

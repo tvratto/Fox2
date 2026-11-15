@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#050505">
   <title>FOX2</title>
-  <link rel="stylesheet" href="app.css?v=20261113-01">
+  <link rel="stylesheet" href="app.css?v=20261115-01">
 </head>
 <body>
   <div class="app-shell">
@@ -29,34 +29,34 @@
         </div>
 
         <div id="today-content" hidden>
-          <div class="day-rail" id="day-rail" aria-label="Choose a day"></div>
-
           <div class="day-card-viewport" id="day-card-viewport">
             <div class="day-card-track" id="day-card-track">
               <div class="day-card-panel" data-day-slot="previous"></div>
               <div class="day-card-panel" data-day-slot="current">
-                <section class="card graph-card" aria-labelledby="graph-title">
-                  <header class="daily-card-header">
-                    <p class="daily-day" id="today-day">Today</p>
-                    <h1 id="today-date">Today</h1>
-                  </header>
+                <section class="timeline-card" aria-labelledby="graph-title">
                   <h2 class="sr-only" id="graph-title">Daily Fat Use Zone graph</h2>
+                  <div class="timeline-day-heading is-previous">
+                    <strong class="timeline-day-name">Yesterday</strong>
+                    <span class="timeline-day-date">—</span>
+                  </div>
+                  <div class="timeline-day-heading is-current">
+                    <strong class="timeline-day-name">Today</strong>
+                    <span class="timeline-day-date">—</span>
+                  </div>
+                  <button class="timeline-score-button is-previous" type="button" aria-label="Explain the previous day's Daily Fat Use">
+                    <span>Daily Fat Use</span>
+                    <strong><b class="timeline-score-value">—</b><small><i>/</i>120</small></strong>
+                    <em class="timeline-score-state"></em>
+                  </button>
+                  <button class="timeline-score-button is-current" id="daily-fat-use-info" type="button" aria-label="Explain Daily Fat Use and its reference number">
+                    <span>Daily Fat Use</span>
+                    <strong><b class="timeline-score-value" id="today-average">—</b><small><i>/</i>120</small></strong>
+                    <em class="timeline-score-state">so far</em>
+                  </button>
+                  <button class="timeline-caret is-previous" id="timeline-previous" type="button" aria-label="Show the previous measured day">‹</button>
+                  <button class="timeline-caret is-next" id="timeline-next" type="button" aria-label="Show the next measured day" hidden>›</button>
                   <div class="day-chart" id="day-chart" role="img" aria-label="Today's Fat Use Zone measurements"></div>
                   <p class="empty-copy" id="today-empty">Take a measurement, then tap your phone to see it here.</p>
-                  <div class="daily-score-row" id="average-lockup" hidden>
-                    <button class="daily-score-button" id="daily-fat-use-info" type="button" aria-label="Explain Daily Fat Use">
-                      <span>Daily Fat Use</span>
-                      <strong id="today-average">—</strong>
-                    </button>
-                    <span class="daily-goal-slash" aria-hidden="true">/</span>
-                    <button class="daily-goal-button" id="daily-goal-info" type="button" aria-label="Explain the Daily Fat Use goal">
-                      <span class="daily-goal-heart" id="daily-goal-heart" aria-hidden="true">♡</span>
-                      <strong>120</strong>
-                    </button>
-                    <button class="daily-tier-button" id="daily-tier-info" type="button" aria-label="Explain this Daily Fat Use range">
-                      <small id="today-tier">Not enough data yet</small>
-                    </button>
-                  </div>
                 </section>
               </div>
               <div class="day-card-panel" data-day-slot="next"></div>
@@ -170,6 +170,6 @@
   <script src="payload-codec.js?v=20261112-03"></script>
   <script src="daily-record.js?v=20261113-01"></script>
   <script src="time-codec.js?v=20261110-01"></script>
-  <script src="app.js?v=20261113-04"></script>
+  <script src="app.js?v=20261115-01"></script>
 </body>
 </html>

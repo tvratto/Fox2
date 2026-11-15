@@ -25,19 +25,23 @@ assert.ok(app.includes("status='completed'"),'Day 30 should complete into Log');
 assert.ok(app.includes("select=local_date,local_minute,ppm"),'History should load the complete measurement series');
 assert.ok(app.includes('function renderHistory()'),'History should render the measurement graph');
 assert.ok(app.includes("record.displayDailyFatUse!==null?String(record.displayDailyFatUse):'—'"),'History should show Daily Fat Use under each day');
-assert.ok(html.includes('id="day-rail"'),'Today should preserve the established date rail');
-assert.ok(css.includes('.day-pill.is-selected'),'Today should preserve the selected-day treatment');
-assert.ok(html.indexOf('id="day-chart"')<html.indexOf('id="average-lockup"'),
-  'Today should lead with the graph and place Daily Fat Use beneath it');
-['daily-fat-use-info','daily-goal-info','daily-tier-info','metric-info-dialog'].forEach(id=>{
+assert.ok(!html.includes('id="day-rail"')&&!css.includes('.day-pill.is-selected'),
+  'Today should use swipe navigation without a separate date ribbon');
+assert.ok(html.includes('timeline-score-button is-previous')&&html.includes('timeline-score-button is-current'),
+  'Daily Fat Use should be integrated into both visible day bands');
+assert.ok(css.includes('width:33.333%')&&css.includes('width:66.667%'),
+  'yesterday should use one third of the timeline and the focused day two thirds');
+assert.ok(html.includes('<i>/</i>120'),
+  'Daily Fat Use should show the compact 120 reference beside the score');
+['daily-fat-use-info','metric-info-dialog'].forEach(id=>{
   assert.ok(html.includes(`id="${id}"`),`${id} should remain available for plain-language context`);
 });
 assert.ok(app.includes('This shows your fat use at that moment.'),
   'tapping a measurement should explain what the point represents');
-assert.ok(app.includes('It is a useful goal, not a grade.'),
-  'the 120 goal should be explained without making it a judgment');
-assert.ok(app.includes("openMetricInfo('score')")&&app.includes("openMetricInfo('goal')")&&app.includes("openMetricInfo('tier')"),
-  'the Daily Fat Use score, goal, and range should all remain tappable');
+assert.ok(app.includes('The 120 beside it is a reference number, not a grade.'),
+  '120 should be explained as a reference rather than a goal');
+assert.ok(app.includes("openMetricInfo('score',score.dataset.scoreDate)"),
+  'either visible Daily Fat Use score should remain tappable');
 assert.ok(app.includes("ctx.fillText('3 WEEKS'")&&app.includes('pillW=220'),
   'History should preserve the established centered three-week range pill');
 assert.ok(app.includes('historyPage'),'all History weeks should remain reachable through paging');
@@ -73,8 +77,8 @@ assert.ok(app.indexOf('panel.appendChild(card)')<app.indexOf('renderDayChart(rec
   'neighbor graphs should render only after their phone-width panels are mounted');
 assert.ok(app.includes("date===localToday?'Take a measurement, then tap your phone to see it here.':'No measurements'"),
   'past empty days should use a neutral no-measurements message');
-assert.ok(app.includes('average.classList.add(tierClass(record))'),
-  'the Daily Fat Use number should use its own tier color');
+assert.ok(css.includes('.timeline-score-button')&&css.includes('color:var(--orange)'),
+  'Daily Fat Use should share the orange data color with its filled area');
 assert.ok(app.includes('record.dailyFatUse/240*100'),
   'Tracking bars should use cumulative Daily Fat Use');
 assert.ok(app.includes('before.map(function(record){return record.dailyFatUse;})'),
@@ -88,8 +92,10 @@ assert.ok(css.includes('.app-shell{height:100svh')&&css.includes('.day-card-view
 ['#22D3EE','#4ADE80','#A855F7','#FF8C00'].forEach(color=>{
   assert.ok(app.includes(color),`graphs should preserve established color ${color}`);
 });
+assert.ok(app.includes('function drawTodayArea(ctx,samples,baseline,x,y)')&&app.includes("ctx.strokeStyle='#FB923C'"),
+  'Today should use one calm orange area and line');
 assert.ok(app.includes('function continuousZoneGradient(ctx,baseline,top,ceiling,alpha)'),
-  'Today and History curves should share one continuous tier gradient');
+  'History should retain its established continuous tier gradient');
 assert.ok(app.includes('zoneBlendWidth=.55'),
   'tier transitions should blend across a controlled Zone-width');
 assert.ok(app.includes("var graphColorMode='level-bands'"),
