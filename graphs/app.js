@@ -729,6 +729,16 @@
     track.classList.add('is-dragging');track.style.transform='translateX(-100%)';void track.offsetWidth;track.classList.remove('is-dragging');
   }
 
+  function renderTodayInsight(date){
+    var target=document.getElementById('today-insight');
+    if(!target||typeof Fox2TodayInsights==='undefined') return;
+    var dates=Array.from(new Set(Object.keys(dailyByDate).concat(payloadDays.map(function(day){return day.localDate;}))));
+    var records=dates.map(recordForDate).filter(Boolean);
+    var insight=Fox2TodayInsights.chooseInsight({date:date,today:localToday,records:records});
+    target.hidden=!insight;
+    target.textContent=insight?insight.text:'';
+  }
+
   function renderToday(){
     document.getElementById('loading-card').hidden=true;
     document.getElementById('today-content').hidden=false;
@@ -745,6 +755,7 @@
     var currentScore=card.querySelector('.timeline-score-button.is-current .timeline-score-value');
     var animation=timelineSyncAnimation(record,displayDate,currentScore);
     renderDayChart(record,displayDate,card.querySelector('.day-chart'),populated.empty,animation);
+    renderTodayInsight(displayDate);
     refreshDayPager();
   }
 

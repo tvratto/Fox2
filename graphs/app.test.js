@@ -61,6 +61,12 @@ assert.ok(app.includes("downloadCsv('fox2-daily-fat-use.csv'"),'Daily Fat Use ex
 assert.ok(app.includes("new BroadcastChannel('fox2-sync-'"),'NFC sync should update an established results page');
 assert.ok(html.includes('id="utility-button"'),'share and export should use one quiet utility control');
 assert.ok(!html.includes('>Community</button>'),'deferred Community must not create an empty tab');
+assert.ok(html.includes('id="today-insight"')&&html.includes('today-insights.js'),
+  'Today should reserve one quiet line for a supported sync insight');
+assert.ok(app.includes('Fox2TodayInsights.chooseInsight')&&app.includes('target.hidden=!insight'),
+  'Today should show only the highest-priority supported insight');
+assert.ok(css.includes('.today-insight')&&css.includes('flex:1 1 auto'),
+  'the insight should use the space beside Start tracking without competing with the graph');
 
 assert.ok(css.includes('.average-line.before'));
 assert.ok(css.includes('border-top-style:dashed'));
