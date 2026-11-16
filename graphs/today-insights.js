@@ -58,7 +58,8 @@
     if(recentPrior.length>=3&&currentScore>Math.max.apply(null,recentPrior.map(score))){
       return {
         kind:'recent-high',
-        text:(provisional?'Already your highest':'Your highest')+' in the last '+recentPrior.length+' measured days.'
+        text:'Your Daily Fat Use is at a recent high.',
+        detail:(provisional?'Today is already':'This day was')+' higher than your last '+recentPrior.length+' measured days.'
       };
     }
 
@@ -70,14 +71,16 @@
     if(provisional&&previous&&dayChange!==null&&dayChange>=MIN_CHANGE_PERCENT){
       return {
         kind:'already-higher',
-        text:'Already '+roundedPercent(dayChange)+'% higher than your last measured day.'
+        text:'Your Daily Fat Use is higher today.',
+        detail:'Today is already '+roundedPercent(dayChange)+'% higher than your last measured day.'
       };
     }
 
     if(isComplete(current)&&previous&&dayChange!==null&&Math.abs(dayChange)>=MIN_CHANGE_PERCENT){
       return {
         kind:'day-change',
-        text:roundedPercent(dayChange)+'% '+(dayChange>0?'higher':'lower')+' than your previous measured day.'
+        text:'Your Daily Fat Use was '+(dayChange>0?'higher.':'lower.'),
+        detail:'It was '+roundedPercent(dayChange)+'% '+(dayChange>0?'higher':'lower')+' than your previous measured day.'
       };
     }
 
@@ -89,7 +92,8 @@
       if(trendChange!==null&&Math.abs(trendChange)>=MIN_CHANGE_PERCENT){
         return {
           kind:'recent-trend',
-          text:'Your last 3 measured days averaged '+roundedPercent(trendChange)+'% '+(trendChange>0?'higher':'lower')+' than the 3 before.'
+          text:trendChange>0?'Your Daily Fat Use is increasing.':'Your Daily Fat Use has been lower lately.',
+          detail:'Your last 3 measured days averaged '+roundedPercent(trendChange)+'% '+(trendChange>0?'higher':'lower')+' than the 3 before.'
         };
       }
     }

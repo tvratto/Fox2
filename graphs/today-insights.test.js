@@ -23,14 +23,15 @@ let result=insights.chooseInsight({
   records:[day('2026-11-15',100),day('2026-11-16',112,'provisional')]
 });
 assert.equal(result.kind,'already-higher');
-assert.equal(result.text,'Already 12% higher than your last measured day.');
+assert.equal(result.text,'Your Daily Fat Use is higher today.');
+assert.equal(result.detail,'Today is already 12% higher than your last measured day.');
 
 result=insights.chooseInsight({
   date:'2026-11-16',today:'2026-11-16',
   records:[day('2026-11-12',80),day('2026-11-13',105),day('2026-11-14',95),day('2026-11-16',121,'provisional')]
 });
 assert.equal(result.kind,'recent-high');
-assert.ok(result.text.startsWith('Already your highest'));
+assert.equal(result.text,'Your Daily Fat Use is at a recent high.');
 
 result=insights.chooseInsight({
   date:'2026-11-16',today:'2026-11-16',
@@ -43,7 +44,8 @@ result=insights.chooseInsight({
   records:[day('2026-11-14',100),day('2026-11-15',82)]
 });
 assert.equal(result.kind,'day-change');
-assert.equal(result.text,'18% lower than your previous measured day.');
+assert.equal(result.text,'Your Daily Fat Use was lower.');
+assert.equal(result.detail,'It was 18% lower than your previous measured day.');
 
 result=insights.chooseInsight({
   date:'2026-11-16',today:'2026-11-16',
@@ -54,6 +56,7 @@ result=insights.chooseInsight({
   ]
 });
 assert.equal(result.kind,'recent-trend');
-assert.equal(result.text,'Your last 3 measured days averaged 23% higher than the 3 before.');
+assert.equal(result.text,'Your Daily Fat Use is increasing.');
+assert.equal(result.detail,'Your last 3 measured days averaged 23% higher than the 3 before.');
 
 console.log('Today insight tests passed');
