@@ -31,15 +31,17 @@ assert.ok(html.includes('timeline-score-button is-previous')&&html.includes('tim
   'Daily Fat Use should be integrated into both visible day bands');
 assert.ok(css.includes('width:33.333%')&&css.includes('width:66.667%'),
   'yesterday should use one third of the timeline and the focused day two thirds');
-assert.ok(html.includes('<i>/</i>120'),
-  'Daily Fat Use should show the compact 120 reference beside the score');
+assert.ok(html.includes('timeline-score-ring')&&!html.includes('<i>/</i>120'),
+  'Daily Fat Use should use progress rings instead of an inline reference');
+assert.ok(css.includes('width:82px')&&css.includes('width:58px'),
+  'the focused-day ring should be larger than the past-day ring');
 ['daily-fat-use-info','metric-info-dialog'].forEach(id=>{
   assert.ok(html.includes(`id="${id}"`),`${id} should remain available for plain-language context`);
 });
 assert.ok(app.includes('This shows your fat use at that moment.'),
   'tapping a measurement should explain what the point represents');
-assert.ok(app.includes('The 120 beside it is a reference number, not a grade.'),
-  '120 should be explained as a reference rather than a goal');
+assert.ok(app.includes('The ring fills toward 120, which is a reference number, not a grade.'),
+  'the ring should explain 120 as a reference rather than a goal');
 assert.ok(app.includes("openMetricInfo('score',score.dataset.scoreDate)"),
   'either visible Daily Fat Use score should remain tappable');
 assert.ok(app.includes("ctx.fillText('3 WEEKS'")&&app.includes('pillW=220'),

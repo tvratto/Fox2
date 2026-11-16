@@ -596,7 +596,7 @@
     var canvas=target.querySelector('canvas'),width=Math.max(320,target.clientWidth||640),height=Math.max(360,target.clientHeight||520),dpr=window.devicePixelRatio||1;
     canvas.width=width*dpr;canvas.height=height*dpr;canvas.style.width=width+'px';canvas.style.height=height+'px';
     var ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
-    var split=width/3,padT=148,padB=40,base=height-padB,ceiling=curve.ceiling;
+    var split=width/3,padT=190,padB=40,base=height-padB,ceiling=curve.ceiling;
     var x=function(minute){
       minute=Math.max(-1440,Math.min(1440,minute));
       return minute<=0?(minute+1440)/1440*split:split+minute/1440*(width-split);
@@ -637,7 +637,9 @@
       [[-1080,'6a'],[-720,'12p'],[-360,'6p'],[360,'6a'],[720,'12p'],[1080,'6p']].forEach(function(pair){ctx.fillText(pair[1],x(pair[0]),height-12);});
       ctx.fillStyle='rgba(255,255,255,.62)';ctx.font='650 11px -apple-system,BlinkMacSystemFont,sans-serif';ctx.fillText('midnight',split,height-2);
       if(animation&&animation.scoreElement){
-        animation.scoreElement.textContent=String(Math.round(animation.fromScore+(animation.toScore-animation.fromScore)*progress));
+        var animatedScore=Math.round(animation.fromScore+(animation.toScore-animation.fromScore)*progress);
+        animation.scoreElement.textContent=String(animatedScore);
+        animation.scoreElement.closest('.timeline-score-button').style.setProperty('--score-progress',Math.min(1,Math.max(0,animatedScore/120))+'turn');
       }
     }
 
@@ -674,7 +676,9 @@
     button.hidden=!available;
     button.dataset.scoreDate=date;
     var value=button.querySelector('.timeline-score-value'),state=button.querySelector('.timeline-score-state');
+    var score=available?Number(record.displayDailyFatUse):0;
     value.textContent=available?String(record.displayDailyFatUse):'—';
+    button.style.setProperty('--score-progress',Math.min(1,Math.max(0,score/120))+'turn');
     state.textContent=available&&record.dayState==='provisional'?'so far':'';
   }
 
@@ -1016,8 +1020,8 @@
     var title=document.getElementById('metric-info-title');
     var copy=document.getElementById('metric-info-copy');
     eyebrow.textContent=record.dayState==='provisional'?'Today so far':'Completed day';
-    title.textContent=record.displayDailyFatUse+' / 120';
-    copy.textContent='Daily Fat Use comes from the orange area under this day’s curve. The 120 beside it is a reference number, not a grade.';
+    title.textContent=record.displayDailyFatUse+' Daily Fat Use';
+    copy.textContent='Daily Fat Use comes from the orange area under this day’s curve. The ring fills toward 120, which is a reference number, not a grade.';
     if(record.dayState==='provisional') copy.textContent+=' Today’s number can still change as you add measurements.';
     dialog.showModal();
   }
