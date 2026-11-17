@@ -328,6 +328,16 @@
     ctx.strokeStyle=graphColorGradient(ctx,samples,todayX,baseline,y(ceiling),ceiling,1);ctx.lineWidth=3.5;ctx.lineCap='round';ctx.lineJoin='round';ctx.setLineDash([9,7]);ctx.shadowColor='rgba(255,255,255,.24)';ctx.shadowBlur=10;ctx.stroke();ctx.setLineDash([]);ctx.shadowBlur=0;
   }
 
+  function modeledMidnightAnchor(date){
+    var previous=recordForDate(addDays(date,-1));
+    var readings=previous&&Array.isArray(previous.readings)?previous.readings.filter(function(reading){
+      return Number.isFinite(Number(reading.minute))&&Number.isFinite(Number(reading.value));
+    }).slice().sort(function(a,b){return Number(a.minute)-Number(b.minute);}):[];
+    if(!readings.length) return 0;
+    var lastValue=Number(readings[readings.length-1].value);
+    return Math.max(0,1.03+.714*lastValue);
+  }
+
   function buildTodayCurve(displayDate,visibleStart,visibleEnd){
     visibleStart=Number.isFinite(visibleStart)?visibleStart:-144;
     visibleEnd=Number.isFinite(visibleEnd)?visibleEnd:1584;
@@ -338,9 +348,19 @@
       record.readings.forEach(function(reading){actual.push({date:date,localMinute:Number(reading.minute),minute:offset*1440+Number(reading.minute),value:Number(reading.value)});});
     }
     actual.sort(function(a,b){return a.minute-b.minute;});
+    var curvePoints=actual.slice();
+    for(var boundaryOffset=-1;boundaryOffset<=1;boundaryOffset++){
+      var boundaryDate=addDays(displayDate,boundaryOffset);
+      if(boundaryDate>localToday) continue;
+      var boundaryMinute=boundaryOffset*1440;
+      if(!curvePoints.some(function(point){return point.minute===boundaryMinute;})){
+        curvePoints.push({date:boundaryDate,localMinute:0,minute:boundaryMinute,value:modeledMidnightAnchor(boundaryDate),synthetic:true});
+      }
+    }
+    curvePoints.sort(function(a,b){return a.minute-b.minute;});
     var rawMax=Math.max.apply(null,actual.filter(function(point){return point.minute>=visibleStart&&point.minute<=visibleEnd;}).map(function(point){return point.value;}).concat([0]));
     var ceiling=todayCurveCeiling(rawMax),rawSegments=[],current=[];
-    actual.forEach(function(point){if(current.length&&point.minute-current[current.length-1].minute>1440){rawSegments.push(current);current=[];}current.push(point);});
+    curvePoints.forEach(function(point){if(current.length&&point.minute-current[current.length-1].minute>1440){rawSegments.push(current);current=[];}current.push(point);});
     if(current.length) rawSegments.push(current);
     var sampled=[];
     rawSegments.forEach(function(segment,index){

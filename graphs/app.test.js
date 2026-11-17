@@ -110,6 +110,10 @@ assert.ok(app.includes('ctx.setLineDash([9,7])')&&app.includes('ctx.setLineDash(
   'the inferred Today curve between measurements should be dashed');
 assert.ok(app.includes('point.minute>=visibleStart&&point.minute<=visibleEnd'),
   'Today auto-scaling should use only the two days currently on screen');
+assert.ok(app.includes('function modeledMidnightAnchor(date)')&&app.includes('1.03+.714*lastValue'),
+  'Today should use the firmware midnight-anchor formula when the prior day was measured');
+assert.ok(app.includes('synthetic:true')&&app.includes('curvePoints=actual.slice()'),
+  'modeled midnight anchors should shape the curve without becoming measurement markers');
 assert.ok(app.includes('function continuousZoneGradient(ctx,baseline,top,ceiling,alpha)'),
   'History should retain its established continuous tier gradient');
 assert.ok(app.includes('zoneBlendWidth=.55'),
