@@ -311,21 +311,21 @@
     ctx.shadowBlur=0;
   }
 
-  function drawTodayArea(ctx,samples,baseline,x,y){
+  function drawTodayArea(ctx,samples,baseline,x,y,ceiling){
     if(samples.length<2) return;
     ctx.beginPath();ctx.moveTo(x(samples[0].minute),baseline);ctx.lineTo(x(samples[0].minute),y(samples[0].value));
     for(var index=1;index<samples.length;index++) ctx.lineTo(x(samples[index].minute),y(samples[index].value));
     ctx.lineTo(x(samples[samples.length-1].minute),baseline);ctx.closePath();
-    var gradient=ctx.createLinearGradient(0,y(10),0,baseline);
-    gradient.addColorStop(0,'rgba(251,146,60,.34)');gradient.addColorStop(1,'rgba(251,146,60,.10)');
-    ctx.fillStyle=gradient;ctx.fill();
+    var todayX=function(sample){return x(sample.minute);};
+    ctx.fillStyle=graphColorGradient(ctx,samples,todayX,baseline,y(ceiling),ceiling,.38);ctx.fill();
   }
 
-  function drawTodayLine(ctx,samples,x,y){
+  function drawTodayLine(ctx,samples,x,y,baseline,ceiling){
     if(samples.length<2) return;
     ctx.beginPath();ctx.moveTo(x(samples[0].minute),y(samples[0].value));
     for(var index=1;index<samples.length;index++) ctx.lineTo(x(samples[index].minute),y(samples[index].value));
-    ctx.strokeStyle='#FB923C';ctx.lineWidth=3.5;ctx.lineCap='round';ctx.lineJoin='round';ctx.setLineDash([9,7]);ctx.shadowColor='rgba(251,146,60,.26)';ctx.shadowBlur=10;ctx.stroke();ctx.setLineDash([]);ctx.shadowBlur=0;
+    var todayX=function(sample){return x(sample.minute);};
+    ctx.strokeStyle=graphColorGradient(ctx,samples,todayX,baseline,y(ceiling),ceiling,1);ctx.lineWidth=3.5;ctx.lineCap='round';ctx.lineJoin='round';ctx.setLineDash([9,7]);ctx.shadowColor='rgba(255,255,255,.24)';ctx.shadowBlur=10;ctx.stroke();ctx.setLineDash([]);ctx.shadowBlur=0;
   }
 
   function buildTodayCurve(displayDate,visibleStart,visibleEnd){
@@ -615,7 +615,7 @@
       ctx.fillStyle='#111214';ctx.fillRect(split,0,width-split,height);
 
       ctx.save();ctx.beginPath();ctx.rect(0,padT,width,base-padT);ctx.clip();
-      curve.segments.forEach(function(samples){drawTodayArea(ctx,samples,base,x,y);});
+      curve.segments.forEach(function(samples){drawTodayArea(ctx,samples,base,x,y,ceiling);});
       if(animation&&progress<1){
         var reveal=animation.fromMinute+(animation.toMinute-animation.fromMinute)*progress;
         ctx.fillStyle='#111214';ctx.fillRect(x(reveal),padT,width-x(reveal),base-padT);
@@ -628,7 +628,7 @@
       ctx.strokeStyle='rgba(255,255,255,.30)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(split,56);ctx.lineTo(split,base+16);ctx.stroke();
 
       ctx.save();ctx.beginPath();ctx.rect(0,padT,width,base-padT);ctx.clip();
-      curve.segments.forEach(function(samples){drawTodayLine(ctx,samples,x,y);});ctx.restore();
+      curve.segments.forEach(function(samples){drawTodayLine(ctx,samples,x,y,base,ceiling);});ctx.restore();
 
       dots=[];
       curve.actual.forEach(function(item){

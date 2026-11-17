@@ -96,8 +96,10 @@ assert.ok(css.includes('.app-shell{height:100svh')&&css.includes('.day-card-view
 ['#22D3EE','#4ADE80','#A855F7','#FF8C00'].forEach(color=>{
   assert.ok(app.includes(color),`graphs should preserve established color ${color}`);
 });
-assert.ok(app.includes('function drawTodayArea(ctx,samples,baseline,x,y)')&&app.includes("ctx.strokeStyle='#FB923C'"),
-  'Today should use one calm orange area and line');
+assert.ok(app.includes('function drawTodayArea(ctx,samples,baseline,x,y,ceiling)')&&app.includes('function drawTodayLine(ctx,samples,x,y,baseline,ceiling)'),
+  'Today should keep its own constrained area and dashed-line renderer');
+assert.ok(app.includes('drawTodayArea(ctx,samples,base,x,y,ceiling)')&&app.includes('drawTodayLine(ctx,samples,x,y,base,ceiling)'),
+  'Today should apply the shared History color scale to its visible graph');
 assert.ok(app.includes('function todayCurveCeiling(rawMax)')&&app.includes('Math.round(rawMax)+3'),
   'Today should scale to the highest visible measurement plus three');
 assert.ok(app.includes('padT=190+(base-190)*.15'),
