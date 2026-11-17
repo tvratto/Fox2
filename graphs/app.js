@@ -696,15 +696,33 @@
     return date===localToday?'Take a measurement, then tap your phone to see it here.':'No measurements';
   }
 
+  function scoreRingAppearance(date,progress){
+    var curve=buildTodayCurve(date,0,1440),peak=0;
+    curve.segments.forEach(function(samples){samples.forEach(function(sample){peak=Math.max(peak,Number(sample.value)||0);});});
+    var values=[0,peak];
+    zoneThresholds.forEach(function(threshold){values.push(threshold-zoneBlendWidth,threshold+zoneBlendWidth);});
+    values=values.filter(function(value){return value>=0&&value<=peak;}).sort(function(a,b){return a-b;});
+    values=values.filter(function(value,index){return !index||Math.abs(value-values[index-1])>.0001;});
+    if(peak<=0) values=[0];
+    var stops=values.map(function(value){
+      var turn=peak?value/peak*progress:0;
+      return zoneRgba(value,1)+' '+turn.toFixed(4)+'turn';
+    });
+    if(stops.length===1) stops.push(stops[0].replace(/ 0\.0000turn$/,' '+progress.toFixed(4)+'turn'));
+    return {color:zoneRgba(peak,1),gradient:'conic-gradient(from -90deg,'+stops.join(',')+')'};
+  }
+
   function setTimelineScore(button,record,date){
     var available=record&&record.measured&&record.displayDailyFatUse!==null;
     button.hidden=!available;
     button.dataset.scoreDate=date;
     var value=button.querySelector('.timeline-score-value'),state=button.querySelector('.timeline-score-state');
     var score=available?Number(record.displayDailyFatUse):0;
+    var progress=Math.min(1,Math.max(0,score/120)),appearance=scoreRingAppearance(date,progress);
     value.textContent=available?String(record.displayDailyFatUse):'—';
-    button.style.setProperty('--score-progress',Math.min(1,Math.max(0,score/120))+'turn');
-    button.style.setProperty('--score-color',available?zoneRgba(Math.min(10,score/12),1):'var(--orange)');
+    button.style.setProperty('--score-progress',progress+'turn');
+    button.style.setProperty('--score-color',available?appearance.color:'var(--orange)');
+    button.style.setProperty('--score-gradient',appearance.gradient);
     state.textContent=available&&record.dayState==='provisional'?'so far':'';
   }
 
