@@ -102,8 +102,12 @@ assert.ok(app.includes('function todayCurveCeiling(rawMax)')&&app.includes('if(r
   'Today should use guarded tier-aware scaling so low values remain readable');
 assert.ok(app.includes('padT=190+(base-190)*.15'),
   'Today should use a slightly shorter vertical plotting area');
-assert.ok(app.includes('ctx.arc(xx,yy,14')&&app.includes("font='800 28px"),
-  'Today measurement markers and labels should be twice their earlier size');
+assert.ok(app.includes('ctx.arc(xx,yy,20')&&app.includes("font='800 22px"),
+  'Today measurement values should sit inside large, readable markers');
+assert.ok(app.includes('ctx.setLineDash([9,7])')&&app.includes('ctx.setLineDash([])'),
+  'the inferred Today curve between measurements should be dashed');
+assert.ok(app.includes('point.minute>=visibleStart&&point.minute<=visibleEnd'),
+  'Today auto-scaling should use only the two days currently on screen');
 assert.ok(app.includes('function continuousZoneGradient(ctx,baseline,top,ceiling,alpha)'),
   'History should retain its established continuous tier gradient');
 assert.ok(app.includes('zoneBlendWidth=.55'),

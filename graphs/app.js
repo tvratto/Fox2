@@ -325,7 +325,7 @@
     if(samples.length<2) return;
     ctx.beginPath();ctx.moveTo(x(samples[0].minute),y(samples[0].value));
     for(var index=1;index<samples.length;index++) ctx.lineTo(x(samples[index].minute),y(samples[index].value));
-    ctx.strokeStyle='#FB923C';ctx.lineWidth=3.5;ctx.lineCap='round';ctx.lineJoin='round';ctx.shadowColor='rgba(251,146,60,.26)';ctx.shadowBlur=10;ctx.stroke();ctx.shadowBlur=0;
+    ctx.strokeStyle='#FB923C';ctx.lineWidth=3.5;ctx.lineCap='round';ctx.lineJoin='round';ctx.setLineDash([9,7]);ctx.shadowColor='rgba(251,146,60,.26)';ctx.shadowBlur=10;ctx.stroke();ctx.setLineDash([]);ctx.shadowBlur=0;
   }
 
   function buildTodayCurve(displayDate,visibleStart,visibleEnd){
@@ -338,7 +338,7 @@
       record.readings.forEach(function(reading){actual.push({date:date,localMinute:Number(reading.minute),minute:offset*1440+Number(reading.minute),value:Number(reading.value)});});
     }
     actual.sort(function(a,b){return a.minute-b.minute;});
-    var rawMax=Math.max.apply(null,actual.filter(function(point){return point.minute>=visibleStart-1440&&point.minute<=visibleEnd+1440;}).map(function(point){return point.value;}).concat([0]));
+    var rawMax=Math.max.apply(null,actual.filter(function(point){return point.minute>=visibleStart&&point.minute<=visibleEnd;}).map(function(point){return point.value;}).concat([0]));
     var ceiling=todayCurveCeiling(rawMax),rawSegments=[],current=[];
     actual.forEach(function(point){if(current.length&&point.minute-current[current.length-1].minute>1440){rawSegments.push(current);current=[];}current.push(point);});
     if(current.length) rawSegments.push(current);
@@ -637,8 +637,8 @@
       curve.actual.forEach(function(item){
         var xx=x(item.minute),yy=y(item.value),color=tierColor(item.value);
         dots.push({x:xx,y:yy,value:item.value,minute:item.localMinute,date:item.date});
-        ctx.beginPath();ctx.arc(xx,yy,14,0,Math.PI*2);ctx.fillStyle=color;ctx.shadowColor=color;ctx.shadowBlur=20;ctx.fill();ctx.shadowBlur=0;
-        ctx.fillStyle='#f5f5f2';ctx.font='800 28px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(Math.round(item.value),xx,yy-18);
+        ctx.beginPath();ctx.arc(xx,yy,20,0,Math.PI*2);ctx.fillStyle=color;ctx.shadowColor=color;ctx.shadowBlur=22;ctx.fill();ctx.shadowBlur=0;
+        ctx.fillStyle='#fff';ctx.font='800 22px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.shadowColor='rgba(0,0,0,.58)';ctx.shadowBlur=3;ctx.fillText(Math.round(item.value),xx,yy+1);ctx.shadowBlur=0;
       });
 
       ctx.fillStyle='rgba(255,255,255,.42)';ctx.font='650 12px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textAlign='center';ctx.textBaseline='alphabetic';
