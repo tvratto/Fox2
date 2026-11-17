@@ -338,8 +338,8 @@
       record.readings.forEach(function(reading){actual.push({date:date,localMinute:Number(reading.minute),minute:offset*1440+Number(reading.minute),value:Number(reading.value)});});
     }
     actual.sort(function(a,b){return a.minute-b.minute;});
-    var rawMax=Math.max.apply(null,actual.filter(function(point){return point.minute>=visibleStart-1440&&point.minute<=visibleEnd+1440;}).map(function(point){return point.value;}).concat([4]));
-    var ceiling=Math.max(4.5,Math.ceil(rawMax*1.28)),rawSegments=[],current=[];
+    var rawMax=Math.max.apply(null,actual.filter(function(point){return point.minute>=visibleStart-1440&&point.minute<=visibleEnd+1440;}).map(function(point){return point.value;}).concat([0]));
+    var ceiling=todayCurveCeiling(rawMax),rawSegments=[],current=[];
     actual.forEach(function(point){if(current.length&&point.minute-current[current.length-1].minute>1440){rawSegments.push(current);current=[];}current.push(point);});
     if(current.length) rawSegments.push(current);
     var sampled=[];
@@ -353,6 +353,14 @@
       var segmentSamples=sampleConstrainedKnots(knots,from,to);if(segmentSamples.length>=2) sampled.push(segmentSamples);
     });
     return {start:visibleStart,end:visibleEnd,ceiling:ceiling,segments:sampled,actual:actual.filter(function(point){return point.minute>=visibleStart&&point.minute<=visibleEnd;})};
+  }
+
+  function todayCurveCeiling(rawMax){
+    rawMax=Math.max(0,Number(rawMax)||0);
+    if(rawMax<=2) return 3;
+    if(rawMax<=4) return 5;
+    if(rawMax<=7) return 8;
+    return Math.max(10,Math.ceil(rawMax*1.18));
   }
 
   async function restoreLatestPayload(){
@@ -596,7 +604,7 @@
     var canvas=target.querySelector('canvas'),width=Math.max(320,target.clientWidth||640),height=Math.max(360,target.clientHeight||520),dpr=window.devicePixelRatio||1;
     canvas.width=width*dpr;canvas.height=height*dpr;canvas.style.width=width+'px';canvas.style.height=height+'px';
     var ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
-    var split=width/3,padT=190,padB=40,base=height-padB,ceiling=curve.ceiling;
+    var split=width/3,padB=40,base=height-padB,padT=190+(base-190)*.15,ceiling=curve.ceiling;
     var x=function(minute){
       minute=Math.max(-1440,Math.min(1440,minute));
       return minute<=0?(minute+1440)/1440*split:split+minute/1440*(width-split);
@@ -629,8 +637,8 @@
       curve.actual.forEach(function(item){
         var xx=x(item.minute),yy=y(item.value),color=tierColor(item.value);
         dots.push({x:xx,y:yy,value:item.value,minute:item.localMinute,date:item.date});
-        ctx.beginPath();ctx.arc(xx,yy,7,0,Math.PI*2);ctx.fillStyle=color;ctx.shadowColor=color;ctx.shadowBlur=13;ctx.fill();ctx.shadowBlur=0;
-        ctx.fillStyle='#f5f5f2';ctx.font='800 14px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(Math.round(item.value),xx,yy-10);
+        ctx.beginPath();ctx.arc(xx,yy,14,0,Math.PI*2);ctx.fillStyle=color;ctx.shadowColor=color;ctx.shadowBlur=20;ctx.fill();ctx.shadowBlur=0;
+        ctx.fillStyle='#f5f5f2';ctx.font='800 28px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(Math.round(item.value),xx,yy-18);
       });
 
       ctx.fillStyle='rgba(255,255,255,.42)';ctx.font='650 12px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textAlign='center';ctx.textBaseline='alphabetic';

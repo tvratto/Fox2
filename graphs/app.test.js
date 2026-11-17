@@ -98,6 +98,12 @@ assert.ok(css.includes('.app-shell{height:100svh')&&css.includes('.day-card-view
 });
 assert.ok(app.includes('function drawTodayArea(ctx,samples,baseline,x,y)')&&app.includes("ctx.strokeStyle='#FB923C'"),
   'Today should use one calm orange area and line');
+assert.ok(app.includes('function todayCurveCeiling(rawMax)')&&app.includes('if(rawMax<=2) return 3'),
+  'Today should use guarded tier-aware scaling so low values remain readable');
+assert.ok(app.includes('padT=190+(base-190)*.15'),
+  'Today should use a slightly shorter vertical plotting area');
+assert.ok(app.includes('ctx.arc(xx,yy,14')&&app.includes("font='800 28px"),
+  'Today measurement markers and labels should be twice their earlier size');
 assert.ok(app.includes('function continuousZoneGradient(ctx,baseline,top,ceiling,alpha)'),
   'History should retain its established continuous tier gradient');
 assert.ok(app.includes('zoneBlendWidth=.55'),
