@@ -59,4 +59,23 @@ assert.equal(result.kind,'recent-trend');
 assert.equal(result.text,'Your Daily Fat Use is increasing.');
 assert.equal(result.detail,'Your last 3 measured days averaged 23% higher than the 3 before.');
 
+result=insights.chooseInsight({
+  date:'2026-11-16',today:'2026-11-16',
+  records:[Object.assign(day('2026-11-16',12,'provisional'),{readings:[{minute:480,value:6}]})]
+});
+assert.equal(result.kind,'first-reading-zone');
+assert.equal(result.text,'Your first reading today is High.');
+assert.equal(result.detail,'Your first Fat Use Zone today was 6.');
+
+result=insights.chooseInsight({
+  date:'2026-11-16',today:'2026-11-16',
+  records:[
+    Object.assign(day('2026-11-15',95),{readings:[{minute:450,value:4}]}),
+    Object.assign(day('2026-11-16',12,'provisional'),{readings:[{minute:480,value:6}]})
+  ]
+});
+assert.equal(result.kind,'first-reading-change');
+assert.equal(result.text,'Today started higher.');
+assert.equal(result.detail,'Your first Fat Use Zone today was 6. Your previous measured day started at 4.');
+
 console.log('Today insight tests passed');

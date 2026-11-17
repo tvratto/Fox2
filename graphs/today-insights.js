@@ -34,6 +34,22 @@
     return values.length?values.reduce(function(total,value){return total+value;},0)/values.length:null;
   }
 
+  function readings(record){
+    return (record&&Array.isArray(record.readings)?record.readings:[]).map(function(reading){
+      return {minute:Number(reading.minute),value:Number(reading.value)};
+    }).filter(function(reading){
+      return Number.isFinite(reading.minute)&&Number.isFinite(reading.value);
+    }).sort(function(a,b){return a.minute-b.minute;});
+  }
+
+  function zoneLabel(value){
+    value=Math.round(Number(value)||0);
+    if(value<=2) return 'Low';
+    if(value<=4) return 'Medium';
+    if(value<=7) return 'High';
+    return 'Very High';
+  }
+
   function uniqueRecords(records){
     var byDate={};
     (records||[]).forEach(function(record){
@@ -96,6 +112,39 @@
           detail:'Your last 3 measured days averaged '+roundedPercent(trendChange)+'% '+(trendChange>0?'higher':'lower')+' than the 3 before.'
         };
       }
+    }
+
+    // Daily Fat Use is intentionally not compared with a completed day while
+    // today's total is still small. The first Zone can still provide useful
+    // context immediately after the first sync.
+    var currentReadings=readings(current);
+    if(provisional&&currentReadings.length){
+      var first=currentReadings[0];
+      var previousWithReadings=records.filter(function(record){
+        return record.localDate<date&&readings(record).length;
+      }).pop();
+      var previousReadings=readings(previousWithReadings);
+      if(previousReadings.length&&Math.abs(first.minute-previousReadings[0].minute)<=180){
+        var previousFirst=previousReadings[0];
+        var difference=Math.round(first.value)-Math.round(previousFirst.value);
+        if(Math.abs(difference)>=1){
+          return {
+            kind:'first-reading-change',
+            text:'Today started '+(difference>0?'higher.':'lower.'),
+            detail:'Your first Fat Use Zone today was '+Math.round(first.value)+'. Your previous measured day started at '+Math.round(previousFirst.value)+'.'
+          };
+        }
+        return {
+          kind:'first-reading-similar',
+          text:'Today started about the same.',
+          detail:'Your first Fat Use Zone today was '+Math.round(first.value)+'. Your previous measured day started at '+Math.round(previousFirst.value)+'.'
+        };
+      }
+      return {
+        kind:'first-reading-zone',
+        text:'Your first reading today is '+zoneLabel(first.value)+'.',
+        detail:'Your first Fat Use Zone today was '+Math.round(first.value)+'.'
+      };
     }
 
     return null;

@@ -69,6 +69,10 @@ assert.ok(css.includes('.today-insight')&&css.includes('flex:1 1 auto'),
   'the insight should use the space beside Start tracking without competing with the graph');
 assert.ok(html.includes('id="today-insight-info"')&&app.includes('openTodayInsightInfo'),
   'the visible conclusion should keep its supporting calculation behind an info button');
+assert.ok(css.includes('.today-actions::before')&&css.includes('left:33.333%'),
+  'the day divider should continue through the insight area');
+assert.ok(css.includes('grid-column:2')&&app.includes('group.hidden=!insight'),
+  'the insight should sit inside the focused right-hand day');
 
 assert.ok(css.includes('.average-line.before'));
 assert.ok(css.includes('border-top-style:dashed'));
