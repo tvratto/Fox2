@@ -664,7 +664,7 @@
       if(animation&&animation.scoreElement){
         var animatedScore=Math.round(animation.fromScore+(animation.toScore-animation.fromScore)*progress);
         animation.scoreElement.textContent=String(animatedScore);
-        animation.scoreElement.closest('.timeline-score-button').style.setProperty('--score-progress',Math.min(1,Math.max(0,animatedScore/120))+'turn');
+        setScoreRingProgress(animation.scoreElement.closest('.timeline-score-button'),animatedScore);
       }
     }
 
@@ -709,7 +709,17 @@
       return zoneRgba(value,1)+' '+turn.toFixed(4)+'turn';
     });
     if(stops.length===1) stops.push(stops[0].replace(/ 0\.0000turn$/,' '+progress.toFixed(4)+'turn'));
-    return {color:zoneRgba(peak,1),gradient:'conic-gradient(from -90deg,'+stops.join(',')+')'};
+    var rgb=blendedZoneRgb(peak),light=rgb.map(function(channel){return Math.round(channel+(255-channel)*.55);});
+    return {color:zoneRgba(peak,1),overflowColor:'rgb('+light.join(',')+')',gradient:'conic-gradient(from -90deg,'+stops.join(',')+')'};
+  }
+
+  function setScoreRingProgress(button,score){
+    var progress=Math.min(1,Math.max(0,score/120));
+    var overflow=Math.min(1,Math.max(0,(score-120)/120));
+    button.style.setProperty('--score-progress',progress+'turn');
+    button.style.setProperty('--score-overflow',overflow+'turn');
+    button.style.setProperty('--score-overflow-visible',overflow>0?'1':'0');
+    button.style.setProperty('--base-dim',overflow>0?'rgba(0,0,0,.52)':'rgba(0,0,0,0)');
   }
 
   function setTimelineScore(button,record,date){
@@ -720,8 +730,9 @@
     var score=available?Number(record.displayDailyFatUse):0;
     var progress=Math.min(1,Math.max(0,score/120)),appearance=scoreRingAppearance(date,progress);
     value.textContent=available?String(record.displayDailyFatUse):'—';
-    button.style.setProperty('--score-progress',progress+'turn');
+    setScoreRingProgress(button,score);
     button.style.setProperty('--score-color',available?appearance.color:'var(--orange)');
+    button.style.setProperty('--score-overflow-color',appearance.overflowColor);
     button.style.setProperty('--score-gradient',appearance.gradient);
     state.textContent=available&&record.dayState==='provisional'?'so far':'';
   }

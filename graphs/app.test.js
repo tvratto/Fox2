@@ -85,6 +85,10 @@ assert.ok(css.includes('transparent 0 var(--score-progress),#303132 0')&&css.inc
   'Daily Fat Use ring should reveal a day-specific graph gradient over gray');
 assert.ok(app.includes('function scoreRingAppearance(date,progress)')&&app.includes("gradient:'conic-gradient(from -90deg,'")&&app.includes('color:zoneRgba(peak,1)'),
   'Daily Fat Use ring colors should stop at the highest tier actually present in that day’s curve');
+assert.ok(html.includes('class="timeline-score-overflow"')&&css.includes('var(--score-overflow-color) 0 var(--score-overflow)')&&css.includes('opacity:var(--score-overflow-visible)'),
+  'scores above 120 should draw a brighter second lap over the completed ring');
+assert.ok(app.includes('function setScoreRingProgress(button,score)')&&app.includes('(score-120)/120')&&app.includes("'rgba(0,0,0,.52)'"),
+  'the first lap should dim while the overflow lap animates');
 assert.ok(app.includes('record.dailyFatUse/240*100'),
   'Tracking bars should use cumulative Daily Fat Use');
 assert.ok(app.includes('before.map(function(record){return record.dailyFatUse;})'),
