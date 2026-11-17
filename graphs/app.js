@@ -357,10 +357,7 @@
 
   function todayCurveCeiling(rawMax){
     rawMax=Math.max(0,Number(rawMax)||0);
-    if(rawMax<=2) return 3;
-    if(rawMax<=4) return 5;
-    if(rawMax<=7) return 8;
-    return Math.max(10,Math.ceil(rawMax*1.18));
+    return Math.max(3,Math.round(rawMax)+3);
   }
 
   async function restoreLatestPayload(){
