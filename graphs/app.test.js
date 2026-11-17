@@ -77,6 +77,8 @@ assert.ok(!html.includes('id="panel-track"')&&!css.includes('.panel-track'),
   'primary tabs should not be horizontally swipeable pages');
 assert.ok(app.includes('function bindDayPager()')&&css.includes('.day-card-track.is-dragging'),
   'Today should preserve the finger-following day-card pager');
+assert.ok(app.includes("if(localToday&&!dates.includes(localToday)) dates.push(localToday)"),
+  'an empty current day should remain reachable after swiping through measured days');
 assert.ok(app.indexOf('panel.appendChild(card)')<app.indexOf('renderDayChart(recordForDate(pair[1])'),
   'neighbor graphs should render only after their phone-width panels are mounted');
 assert.ok(app.includes("date===localToday?'Take a measurement, then tap your phone to see it here.':'No measurements'"),
@@ -122,8 +124,10 @@ assert.ok(app.includes('ctx.setLineDash([9,7])')&&app.includes('ctx.setLineDash(
   'the inferred Today curve between measurements should be dashed');
 assert.ok(app.includes('point.minute>=visibleStart&&point.minute<=visibleEnd'),
   'Today auto-scaling should use only the two days currently on screen');
-assert.ok(app.includes('padT=80,ceiling=curve.ceiling')&&app.includes('ctx.moveTo(xx,padT);ctx.lineTo(xx,base)'),
+assert.ok(app.includes('padB=64,base=height-padB,padT=80')&&app.includes('ctx.moveTo(xx,padT);ctx.lineTo(xx,base)'),
   'Today should apply its max-plus-three scale across the full visible plot height');
+assert.ok(app.includes("ctx.fillStyle='#0c0d0e';ctx.fillRect(0,base,width,height-base)")&&app.includes("ctx.fillText(pair[1],x(pair[0]),base+18)"),
+  'Today should reserve a thicker X-axis band with time labels directly below the graph');
 assert.ok(app.includes('function modeledMidnightAnchor(date)')&&app.includes('1.03+.714*lastValue'),
   'Today should use the firmware midnight-anchor formula when the prior day was measured');
 assert.ok(app.includes('synthetic:true')&&app.includes('curvePoints=actual.slice()'),

@@ -572,7 +572,7 @@
     });
     var selected=selectedTodayDate||localToday;
     if(selected&&selected<=localToday&&!dates.includes(selected)) dates.push(selected);
-    if(!dates.length&&localToday) dates.push(localToday);
+    if(localToday&&!dates.includes(localToday)) dates.push(localToday);
     return Array.from(new Set(dates)).sort();
   }
 
@@ -621,7 +621,7 @@
     var canvas=target.querySelector('canvas'),width=Math.max(320,target.clientWidth||640),height=Math.max(360,target.clientHeight||520),dpr=window.devicePixelRatio||1;
     canvas.width=width*dpr;canvas.height=height*dpr;canvas.style.width=width+'px';canvas.style.height=height+'px';
     var ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
-    var split=width/3,padB=40,base=height-padB,padT=80,ceiling=curve.ceiling;
+    var split=width/3,padB=64,base=height-padB,padT=80,ceiling=curve.ceiling;
     var x=function(minute){
       minute=Math.max(-1440,Math.min(1440,minute));
       return minute<=0?(minute+1440)/1440*split:split+minute/1440*(width-split);
@@ -642,10 +642,12 @@
       }
       ctx.restore();
 
+      ctx.fillStyle='#0c0d0e';ctx.fillRect(0,base,width,height-base);
+
       ctx.strokeStyle='rgba(255,255,255,.08)';ctx.lineWidth=1;
       [-1080,-720,-360,360,720,1080].forEach(function(minute){var xx=x(minute);ctx.beginPath();ctx.moveTo(xx,padT);ctx.lineTo(xx,base);ctx.stroke();});
-      ctx.strokeStyle='rgba(255,255,255,.18)';ctx.beginPath();ctx.moveTo(0,base);ctx.lineTo(width,base);ctx.stroke();
-      ctx.strokeStyle='rgba(255,255,255,.30)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(split,56);ctx.lineTo(split,base+16);ctx.stroke();
+      ctx.strokeStyle='rgba(255,255,255,.22)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(0,base);ctx.lineTo(width,base);ctx.stroke();
+      ctx.strokeStyle='rgba(255,255,255,.30)';ctx.beginPath();ctx.moveTo(split,56);ctx.lineTo(split,base+22);ctx.stroke();
 
       ctx.save();ctx.beginPath();ctx.rect(0,padT,width,base-padT);ctx.clip();
       curve.segments.forEach(function(samples){drawTodayLine(ctx,samples,x,y,base,ceiling);});ctx.restore();
@@ -659,7 +661,7 @@
       });
 
       ctx.fillStyle='rgba(255,255,255,.42)';ctx.font='650 12px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textAlign='center';ctx.textBaseline='alphabetic';
-      [[-1080,'6a'],[-720,'12p'],[-360,'6p'],[360,'6a'],[720,'12p'],[1080,'6p']].forEach(function(pair){ctx.fillText(pair[1],x(pair[0]),height-12);});
+      [[-1080,'6a'],[-720,'12p'],[-360,'6p'],[360,'6a'],[720,'12p'],[1080,'6p']].forEach(function(pair){ctx.fillText(pair[1],x(pair[0]),base+18);});
       ctx.fillStyle='rgba(255,255,255,.62)';ctx.font='650 11px -apple-system,BlinkMacSystemFont,sans-serif';ctx.fillText('midnight',split,height-2);
       if(animation&&animation.scoreElement){
         var animatedScore=Math.round(animation.fromScore+(animation.toScore-animation.fromScore)*progress);
