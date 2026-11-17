@@ -81,8 +81,10 @@ assert.ok(app.indexOf('panel.appendChild(card)')<app.indexOf('renderDayChart(rec
   'neighbor graphs should render only after their phone-width panels are mounted');
 assert.ok(app.includes("date===localToday?'Take a measurement, then tap your phone to see it here.':'No measurements'"),
   'past empty days should use a neutral no-measurements message');
-assert.ok(css.includes('.timeline-score-button')&&css.includes('color:var(--orange)'),
-  'Daily Fat Use should share the orange data color with its filled area');
+assert.ok(css.includes('--score-color:var(--orange)')&&css.includes('color:var(--score-color)')&&css.includes('var(--score-color) var(--score-progress)'),
+  'Daily Fat Use rings should use their continuously blended zone color');
+assert.ok(app.includes("record.dailyAverage),1):'var(--orange)'")&&app.includes("button.style.setProperty('--score-color'"),
+  'Daily Fat Use ring color should use the same weighted-average color function as the graph');
 assert.ok(app.includes('record.dailyFatUse/240*100'),
   'Tracking bars should use cumulative Daily Fat Use');
 assert.ok(app.includes('before.map(function(record){return record.dailyFatUse;})'),

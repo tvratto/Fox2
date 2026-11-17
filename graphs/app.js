@@ -704,6 +704,7 @@
     var score=available?Number(record.displayDailyFatUse):0;
     value.textContent=available?String(record.displayDailyFatUse):'—';
     button.style.setProperty('--score-progress',Math.min(1,Math.max(0,score/120))+'turn');
+    button.style.setProperty('--score-color',available&&Number.isFinite(Number(record.dailyAverage))?zoneRgba(Number(record.dailyAverage),1):'var(--orange)');
     state.textContent=available&&record.dayState==='provisional'?'so far':'';
   }
 
