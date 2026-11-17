@@ -102,14 +102,14 @@ assert.ok(app.includes('drawTodayArea(ctx,samples,base,x,y,ceiling)')&&app.inclu
   'Today should apply the shared History color scale to its visible graph');
 assert.ok(app.includes('function todayCurveCeiling(rawMax)')&&app.includes('Math.round(rawMax)+3'),
   'Today should scale to the highest visible measurement plus three');
-assert.ok(app.includes('padT=190+(base-190)*.15'),
-  'Today should use a slightly shorter vertical plotting area');
 assert.ok(app.includes('ctx.arc(xx,yy,20')&&app.includes("font='800 22px"),
   'Today measurement values should sit inside large, readable markers');
 assert.ok(app.includes('ctx.setLineDash([9,7])')&&app.includes('ctx.setLineDash([])'),
   'the inferred Today curve between measurements should be dashed');
 assert.ok(app.includes('point.minute>=visibleStart&&point.minute<=visibleEnd'),
   'Today auto-scaling should use only the two days currently on screen');
+assert.ok(app.includes('padT=80,ceiling=curve.ceiling')&&app.includes('ctx.moveTo(xx,padT);ctx.lineTo(xx,base)'),
+  'Today should apply its max-plus-three scale across the full visible plot height');
 assert.ok(app.includes('function modeledMidnightAnchor(date)')&&app.includes('1.03+.714*lastValue'),
   'Today should use the firmware midnight-anchor formula when the prior day was measured');
 assert.ok(app.includes('synthetic:true')&&app.includes('curvePoints=actual.slice()'),
