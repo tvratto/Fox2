@@ -81,10 +81,10 @@ assert.ok(app.indexOf('panel.appendChild(card)')<app.indexOf('renderDayChart(rec
   'neighbor graphs should render only after their phone-width panels are mounted');
 assert.ok(app.includes("date===localToday?'Take a measurement, then tap your phone to see it here.':'No measurements'"),
   'past empty days should use a neutral no-measurements message');
-assert.ok(css.includes('--score-color:var(--orange)')&&css.includes('color:var(--score-color)')&&css.includes('var(--score-color) var(--score-progress)'),
-  'Daily Fat Use rings should use their continuously blended zone color');
-assert.ok(app.includes("record.dailyAverage),1):'var(--orange)'")&&app.includes("button.style.setProperty('--score-color'"),
-  'Daily Fat Use ring color should use the same weighted-average color function as the graph');
+assert.ok(css.includes('transparent 0 var(--score-progress),#303132 0')&&css.includes('#22D3EE 0 .195turn')&&css.includes('#4ADE80 .305turn .395turn')&&css.includes('#A855F7 .505turn .695turn')&&css.includes('#FF8C00 .805turn 1turn'),
+  'Daily Fat Use ring fill should retain the graph’s complete blended tier gradient');
+assert.ok(app.includes('zoneRgba(Math.min(10,score/12),1)'),
+  'Daily Fat Use number should match the leading edge of the gradient ring');
 assert.ok(app.includes('record.dailyFatUse/240*100'),
   'Tracking bars should use cumulative Daily Fat Use');
 assert.ok(app.includes('before.map(function(record){return record.dailyFatUse;})'),
