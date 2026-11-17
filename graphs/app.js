@@ -698,28 +698,75 @@
 
   var scoreRingSpan=.985;
 
+  function scoreRingBandAreas(curve){
+    var areas=[0,0,0,0],edges=[0].concat(zoneThresholds).concat([Infinity]);
+    curve.segments.forEach(function(samples){
+      for(var index=1;index<samples.length;index++){
+        var previous=samples[index-1],current=samples[index];
+        var minutes=Math.max(0,Number(current.minute)-Number(previous.minute));
+        var height=Math.max(0,(Number(previous.value)+Number(current.value))/2);
+        if(!minutes||!Number.isFinite(height)) continue;
+        for(var band=0;band<areas.length;band++){
+          var thickness=Math.max(0,Math.min(height,edges[band+1])-edges[band]);
+          areas[band]+=thickness*minutes;
+        }
+      }
+    });
+    return areas;
+  }
+
+  function scoreRingColorStops(curve,totalSpan){
+    var areas=scoreRingBandAreas(curve),total=areas.reduce(function(sum,area){return sum+area;},0);
+    if(!total||!totalSpan) return [{position:0,rgb:zoneRgb[0]},{position:totalSpan,rgb:zoneRgb[0]}];
+    var lastBand=areas.reduce(function(last,area,index){return area>0?index:last;},0);
+    var stops=[{position:0,rgb:zoneRgb[0]}],cumulative=0;
+    for(var band=0;band<lastBand;band++){
+      cumulative+=areas[band];
+      var boundary=cumulative/total*totalSpan;
+      var previousSpan=areas[band]/total*totalSpan,nextSpan=areas[band+1]/total*totalSpan;
+      var blend=Math.min(totalSpan*.02,previousSpan*.35,nextSpan*.35);
+      stops.push({position:Math.max(0,boundary-blend),rgb:zoneRgb[band]});
+      stops.push({position:Math.min(totalSpan,boundary+blend),rgb:zoneRgb[band+1]});
+    }
+    stops.push({position:totalSpan,rgb:zoneRgb[lastBand]});
+    return stops;
+  }
+
+  function scoreRingColorAt(stops,position){
+    if(position<=stops[0].position) return stops[0].rgb;
+    for(var index=1;index<stops.length;index++){
+      if(position<=stops[index].position){
+        var previous=stops[index-1],next=stops[index];
+        var span=next.position-previous.position;
+        var ratio=span?Math.max(0,Math.min(1,(position-previous.position)/span)):1;
+        return previous.rgb.map(function(channel,channelIndex){return Math.round(channel+(next.rgb[channelIndex]-channel)*ratio);});
+      }
+    }
+    return stops[stops.length-1].rgb;
+  }
+
+  function scoreRingSlice(stops,start,end){
+    var sliced=[{position:0,rgb:scoreRingColorAt(stops,start)}];
+    stops.forEach(function(stop){
+      if(stop.position>start&&stop.position<end) sliced.push({position:stop.position-start,rgb:stop.rgb});
+    });
+    sliced.push({position:Math.max(0,end-start),rgb:scoreRingColorAt(stops,end)});
+    return sliced;
+  }
+
+  function scoreRingCssStops(stops){
+    return stops.map(function(stop){
+      return 'rgb('+stop.rgb.join(',')+') '+stop.position.toFixed(4)+'turn';
+    }).join(',');
+  }
+
   function scoreRingAppearance(date,progress,overflow){
-    var curve=buildTodayCurve(date,0,1440),peak=0;
-    curve.segments.forEach(function(samples){samples.forEach(function(sample){peak=Math.max(peak,Number(sample.value)||0);});});
-    var values=[0,peak];
-    zoneThresholds.forEach(function(threshold){values.push(threshold-zoneBlendWidth,threshold+zoneBlendWidth);});
-    values=values.filter(function(value){return value>=0&&value<=peak;}).sort(function(a,b){return a-b;});
-    values=values.filter(function(value,index){return !index||Math.abs(value-values[index-1])>.0001;});
-    if(peak<=0) values=[0];
-    var stops=values.map(function(value){
-      var turn=peak?value/peak*progress:0;
-      return zoneRgba(value,1)+' '+turn.toFixed(4)+'turn';
-    });
-    if(stops.length===1) stops.push(stops[0].replace(/ 0\.0000turn$/,' '+progress.toFixed(4)+'turn'));
-    var overflowStart=peak;
-    zoneThresholds.forEach(function(threshold){
-      var transitionStart=threshold-zoneBlendWidth,transitionEnd=threshold+zoneBlendWidth;
-      if(peak>transitionStart&&peak<transitionEnd) overflowStart=transitionStart;
-    });
-    var overflowStartColor=zoneRgba(overflowStart,1),overflowEndColor=zoneRgba(peak,1);
-    var overflowTurn=Math.max(0,Number(overflow)||0).toFixed(4)+'turn';
-    var overflowGradient='conic-gradient(from 0deg,'+overflowStartColor+' 0turn,'+overflowEndColor+' '+overflowTurn+',#303132 '+overflowTurn+' var(--ring-span),#101112 var(--ring-span) 1turn)';
-    return {color:zoneRgba(peak,1),overflowStartColor:overflowStartColor,overflowEndColor:overflowEndColor,overflowGradient:overflowGradient,gradient:'conic-gradient(from 0deg,'+stops.join(',')+')'};
+    var curve=buildTodayCurve(date,0,1440),totalSpan=progress+overflow;
+    var stops=scoreRingColorStops(curve,totalSpan),inner=scoreRingSlice(stops,0,progress);
+    var outer=scoreRingSlice(stops,progress,totalSpan),overflowTurn=overflow.toFixed(4)+'turn';
+    var endColor='rgb('+scoreRingColorAt(stops,totalSpan).join(',')+')';
+    var overflowGradient='conic-gradient(from 0deg,'+scoreRingCssStops(outer)+',#303132 '+overflowTurn+' var(--ring-span),#101112 var(--ring-span) 1turn)';
+    return {color:endColor,overflowStartColor:'rgb('+outer[0].rgb.join(',')+')',overflowEndColor:endColor,overflowGradient:overflowGradient,gradient:'conic-gradient(from 0deg,'+scoreRingCssStops(inner)+')'};
   }
 
   function setScoreRingProgress(button,score){
