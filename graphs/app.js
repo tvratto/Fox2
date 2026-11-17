@@ -696,6 +696,8 @@
     return date===localToday?'Take a measurement, then tap your phone to see it here.':'No measurements';
   }
 
+  var scoreRingSpan=.985;
+
   function scoreRingAppearance(date,progress){
     var curve=buildTodayCurve(date,0,1440),peak=0;
     curve.segments.forEach(function(samples){samples.forEach(function(sample){peak=Math.max(peak,Number(sample.value)||0);});});
@@ -710,16 +712,16 @@
     });
     if(stops.length===1) stops.push(stops[0].replace(/ 0\.0000turn$/,' '+progress.toFixed(4)+'turn'));
     var rgb=blendedZoneRgb(peak),light=rgb.map(function(channel){return Math.round(channel+(255-channel)*.55);});
-    return {color:zoneRgba(peak,1),overflowColor:'rgb('+light.join(',')+')',gradient:'conic-gradient(from -90deg,'+stops.join(',')+')'};
+    return {color:zoneRgba(peak,1),overflowColor:'rgb('+light.join(',')+')',gradient:'conic-gradient(from 0deg,'+stops.join(',')+')'};
   }
 
   function setScoreRingProgress(button,score){
-    var progress=Math.min(1,Math.max(0,score/120));
-    var overflow=Math.min(1,Math.max(0,(score-120)/120));
+    var progress=Math.min(1,Math.max(0,score/120))*scoreRingSpan;
+    var overflow=Math.min(1,Math.max(0,(score-120)/120))*scoreRingSpan;
     button.style.setProperty('--score-progress',progress+'turn');
     button.style.setProperty('--score-overflow',overflow+'turn');
     button.style.setProperty('--score-overflow-visible',overflow>0?'1':'0');
-    button.style.setProperty('--base-dim',overflow>0?'rgba(0,0,0,.52)':'rgba(0,0,0,0)');
+    button.classList.toggle('has-overflow',overflow>0);
   }
 
   function setTimelineScore(button,record,date){
@@ -728,7 +730,7 @@
     button.dataset.scoreDate=date;
     var value=button.querySelector('.timeline-score-value'),state=button.querySelector('.timeline-score-state');
     var score=available?Number(record.displayDailyFatUse):0;
-    var progress=Math.min(1,Math.max(0,score/120)),appearance=scoreRingAppearance(date,progress);
+    var progress=Math.min(1,Math.max(0,score/120))*scoreRingSpan,appearance=scoreRingAppearance(date,progress);
     value.textContent=available?String(record.displayDailyFatUse):'—';
     setScoreRingProgress(button,score);
     button.style.setProperty('--score-color',available?appearance.color:'var(--orange)');
