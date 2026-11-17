@@ -698,7 +698,7 @@
 
   var scoreRingSpan=.985;
 
-  function scoreRingAppearance(date,progress){
+  function scoreRingAppearance(date,progress,overflow){
     var curve=buildTodayCurve(date,0,1440),peak=0;
     curve.segments.forEach(function(samples){samples.forEach(function(sample){peak=Math.max(peak,Number(sample.value)||0);});});
     var values=[0,peak];
@@ -711,8 +711,15 @@
       return zoneRgba(value,1)+' '+turn.toFixed(4)+'turn';
     });
     if(stops.length===1) stops.push(stops[0].replace(/ 0\.0000turn$/,' '+progress.toFixed(4)+'turn'));
-    var rgb=blendedZoneRgb(peak),light=rgb.map(function(channel){return Math.round(channel+(255-channel)*.55);});
-    return {color:zoneRgba(peak,1),overflowColor:'rgb('+light.join(',')+')',gradient:'conic-gradient(from 0deg,'+stops.join(',')+')'};
+    var overflowStart=peak;
+    zoneThresholds.forEach(function(threshold){
+      var transitionStart=threshold-zoneBlendWidth,transitionEnd=threshold+zoneBlendWidth;
+      if(peak>transitionStart&&peak<transitionEnd) overflowStart=transitionStart;
+    });
+    var overflowStartColor=zoneRgba(overflowStart,1),overflowEndColor=zoneRgba(peak,1);
+    var overflowTurn=Math.max(0,Number(overflow)||0).toFixed(4)+'turn';
+    var overflowGradient='conic-gradient(from 0deg,'+overflowStartColor+' 0turn,'+overflowEndColor+' '+overflowTurn+',#303132 '+overflowTurn+' var(--ring-span),#101112 var(--ring-span) 1turn)';
+    return {color:zoneRgba(peak,1),overflowStartColor:overflowStartColor,overflowEndColor:overflowEndColor,overflowGradient:overflowGradient,gradient:'conic-gradient(from 0deg,'+stops.join(',')+')'};
   }
 
   function setScoreRingProgress(button,score){
@@ -730,11 +737,15 @@
     button.dataset.scoreDate=date;
     var value=button.querySelector('.timeline-score-value'),state=button.querySelector('.timeline-score-state');
     var score=available?Number(record.displayDailyFatUse):0;
-    var progress=Math.min(1,Math.max(0,score/120))*scoreRingSpan,appearance=scoreRingAppearance(date,progress);
+    var progress=Math.min(1,Math.max(0,score/120))*scoreRingSpan;
+    var overflow=Math.min(1,Math.max(0,(score-120)/120))*scoreRingSpan;
+    var appearance=scoreRingAppearance(date,progress,overflow);
     value.textContent=available?String(record.displayDailyFatUse):'—';
     setScoreRingProgress(button,score);
     button.style.setProperty('--score-color',available?appearance.color:'var(--orange)');
-    button.style.setProperty('--score-overflow-color',appearance.overflowColor);
+    button.style.setProperty('--score-overflow-start-color',appearance.overflowStartColor);
+    button.style.setProperty('--score-overflow-end-color',appearance.overflowEndColor);
+    button.style.setProperty('--score-overflow-gradient',appearance.overflowGradient);
     button.style.setProperty('--score-gradient',appearance.gradient);
     state.textContent=available&&record.dayState==='provisional'?'so far':'';
   }

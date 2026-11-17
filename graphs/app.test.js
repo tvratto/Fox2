@@ -83,10 +83,12 @@ assert.ok(app.includes("date===localToday?'Take a measurement, then tap your pho
   'past empty days should use a neutral no-measurements message');
 assert.ok(css.includes('transparent 0 var(--score-progress),#303132 0')&&css.includes('var(--score-gradient'),
   'Daily Fat Use ring should reveal a day-specific graph gradient over gray');
-assert.ok(app.includes('function scoreRingAppearance(date,progress)')&&app.includes("gradient:'conic-gradient(from 0deg,'")&&app.includes('color:zoneRgba(peak,1)'),
+assert.ok(app.includes('function scoreRingAppearance(date,progress,overflow)')&&app.includes("gradient:'conic-gradient(from 0deg,'")&&app.includes('color:zoneRgba(peak,1)'),
   'Daily Fat Use ring colors should stop at the highest tier actually present in that day’s curve');
-assert.ok(html.includes('class="timeline-score-base"')&&html.includes('class="timeline-score-overflow"')&&css.includes('var(--score-overflow-color) 0 var(--score-overflow),#303132 0'),
+assert.ok(html.includes('class="timeline-score-base"')&&html.includes('class="timeline-score-overflow"')&&css.includes('var(--score-overflow-gradient'),
   'scores above 120 should move the completed ring inward and fill a new outer loop');
+assert.ok(app.includes('if(peak>transitionStart&&peak<transitionEnd) overflowStart=transitionStart')&&app.includes("overflowGradient='conic-gradient(from 0deg,'+overflowStartColor"),
+  'the outer loop should stay in the current tier or blend only when the graph itself crosses a tier boundary');
 assert.ok(app.includes("button.classList.toggle('has-overflow',overflow>0)")&&css.includes('.timeline-score-button.has-overflow{--base-inset:8px')&&css.includes('.timeline-score-button.is-previous.has-overflow{--base-inset:6px'),
   'the current and past-day rings should contract their completed loops independently');
 assert.ok(app.includes('var scoreRingSpan=.985')&&css.includes('--ring-span:.985turn')&&css.includes('transform:rotate(var(--score-overflow))'),
