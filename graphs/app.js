@@ -729,29 +729,6 @@
     track.classList.add('is-dragging');track.style.transform='translateX(-100%)';void track.offsetWidth;track.classList.remove('is-dragging');
   }
 
-  function renderTodayInsight(date){
-    var target=document.getElementById('today-insight');
-    var group=document.getElementById('today-insight-group');
-    var info=document.getElementById('today-insight-info');
-    if(!target||typeof Fox2TodayInsights==='undefined') return;
-    var dates=Array.from(new Set(Object.keys(dailyByDate).concat(payloadDays.map(function(day){return day.localDate;}))));
-    var records=dates.map(recordForDate).filter(Boolean);
-    var insight=Fox2TodayInsights.chooseInsight({date:date,today:localToday,records:records});
-    target.textContent=insight?insight.text:'';
-    info.dataset.detail=insight&&insight.detail?insight.detail:'';
-    group.hidden=!insight;
-  }
-
-  function openTodayInsightInfo(){
-    var info=document.getElementById('today-insight-info');
-    var detail=info.dataset.detail||'';
-    if(!detail) return;
-    document.getElementById('metric-info-eyebrow').textContent='How FOX2 knows';
-    document.getElementById('metric-info-title').textContent=document.getElementById('today-insight').textContent;
-    document.getElementById('metric-info-copy').textContent=detail;
-    document.getElementById('metric-info-dialog').showModal();
-  }
-
   function renderToday(){
     document.getElementById('loading-card').hidden=true;
     document.getElementById('today-content').hidden=false;
@@ -768,7 +745,6 @@
     var currentScore=card.querySelector('.timeline-score-button.is-current .timeline-score-value');
     var animation=timelineSyncAnimation(record,displayDate,currentScore);
     renderDayChart(record,displayDate,card.querySelector('.day-chart'),populated.empty,animation);
-    renderTodayInsight(displayDate);
     refreshDayPager();
   }
 
@@ -1239,7 +1215,6 @@
     });
     document.getElementById('timeline-previous').addEventListener('click',function(){moveTodayFocus(-1);});
     document.getElementById('timeline-next').addEventListener('click',function(){moveTodayFocus(1);});
-    document.getElementById('today-insight-info').addEventListener('click',openTodayInsightInfo);
     document.getElementById('start-tracking-shortcut').addEventListener('click',function(){switchView('tracking');if(!trackingState.tracking.active) openStartDialog();});
     document.getElementById('start-dialog').addEventListener('close',function(){if(this.returnValue==='start') saveStartForm();});
     document.getElementById('tracking-info-dialog').addEventListener('close',function(){var action=this.returnValue;if(action&&action!=='cancel') handleInfoAction(action);});
