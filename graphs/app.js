@@ -354,7 +354,8 @@
       if(boundaryDate>localToday) continue;
       var boundaryMinute=boundaryOffset*1440;
       if(!curvePoints.some(function(point){return point.minute===boundaryMinute;})){
-        curvePoints.push({date:boundaryDate,localMinute:0,minute:boundaryMinute,value:modeledMidnightAnchor(boundaryDate),synthetic:true});
+        var anchorValue=modeledMidnightAnchor(boundaryDate);
+        if(anchorValue>0) curvePoints.push({date:boundaryDate,localMinute:0,minute:boundaryMinute,value:anchorValue,synthetic:true});
       }
     }
     curvePoints.sort(function(a,b){return a.minute-b.minute;});

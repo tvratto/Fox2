@@ -132,6 +132,8 @@ assert.ok(app.includes('function modeledMidnightAnchor(date)')&&app.includes('1.
   'Today should use the firmware midnight-anchor formula when the prior day was measured');
 assert.ok(app.includes('synthetic:true')&&app.includes('curvePoints=actual.slice()'),
   'modeled midnight anchors should shape the curve without becoming measurement markers');
+assert.ok(app.includes('var anchorValue=modeledMidnightAnchor(boundaryDate)')&&app.includes('if(anchorValue>0) curvePoints.push'),
+  'a modeled anchor should end a measured day without drawing a synthetic curve across an empty day');
 assert.ok(app.includes('function continuousZoneGradient(ctx,baseline,top,ceiling,alpha)'),
   'History should retain its established continuous tier gradient');
 assert.ok(app.includes('zoneBlendWidth=.55'),
