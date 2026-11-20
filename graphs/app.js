@@ -577,6 +577,38 @@
     return Array.from(new Set(dates)).sort();
   }
 
+  function calendarWeekDates(date){
+    var parsed=new Date(date+'T12:00:00Z'),daysFromMonday=(parsed.getUTCDay()+6)%7;
+    var monday=addDays(date,-daysFromMonday);
+    return Array.from({length:7},function(_,index){return addDays(monday,index);});
+  }
+
+  function shouldCelebrateWeekDay(date,measured){
+    if(date!==localToday) return false;
+    var key='fox2-week-day-seen:'+(deviceId||'demo')+':'+date;
+    try{
+      if(!measured){localStorage.removeItem(key);return false;}
+      if(localStorage.getItem(key)) return false;
+      localStorage.setItem(key,'1');return true;
+    }catch(error){return false;}
+  }
+
+  function renderWeekNav(){
+    var nav=document.getElementById('week-nav');if(!nav||!localToday) return;
+    nav.innerHTML=calendarWeekDates(localToday).map(function(date){
+      var record=recordForDate(date),measured=!!(record&&record.measured),today=date===localToday,future=date>localToday,selected=date===selectedTodayDate;
+      var classes=['week-day'];
+      if(measured) classes.push('is-measured');
+      if(today) classes.push('is-today');
+      if(future) classes.push('is-future');
+      if(selected) classes.push('is-selected');
+      if(shouldCelebrateWeekDay(date,measured)) classes.push('is-celebrating');
+      var weekday=new Intl.DateTimeFormat(undefined,{weekday:'narrow'}).format(new Date(date+'T12:00:00Z'));
+      var label=formatDate(date,{weekday:'long',month:'long',day:'numeric'})+(today?', today':'')+(measured?', measured':', no measurements');
+      return '<button class="'+classes.join(' ')+'" type="button" data-week-date="'+date+'" aria-label="'+label+'" aria-pressed="'+(selected?'true':'false')+'"'+(future?' disabled':'')+'><span>'+weekday+'</span><i aria-hidden="true"></i></button>';
+    }).join('');
+  }
+
   function todayDateNeighbors(date){
     var dates=availableTodayDates(),index=dates.indexOf(date);
     return {dates:dates,index:index,previous:index>0?dates[index-1]:null,next:index>=0&&index<dates.length-1?dates[index+1]:null};
@@ -864,6 +896,7 @@
     var animation=timelineSyncAnimation(record,displayDate,currentScore);
     renderDayChart(record,displayDate,card.querySelector('.day-chart'),populated.empty,animation);
     refreshDayPager();
+    renderWeekNav();
   }
 
   function completedRecords(){
@@ -1333,6 +1366,10 @@
     });
     document.getElementById('timeline-previous').addEventListener('click',function(){moveTodayFocus(-1);});
     document.getElementById('timeline-next').addEventListener('click',function(){moveTodayFocus(1);});
+    document.getElementById('week-nav').addEventListener('click',function(event){
+      var day=event.target.closest('[data-week-date]');if(!day||day.disabled) return;
+      selectedTodayDate=day.dataset.weekDate;renderToday();
+    });
     document.getElementById('start-tracking-shortcut').addEventListener('click',function(){switchView('tracking');if(!trackingState.tracking.active) openStartDialog();});
     document.getElementById('start-dialog').addEventListener('close',function(){if(this.returnValue==='start') saveStartForm();});
     document.getElementById('tracking-info-dialog').addEventListener('close',function(){var action=this.returnValue;if(action&&action!=='cancel') handleInfoAction(action);});

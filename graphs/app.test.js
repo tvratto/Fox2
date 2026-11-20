@@ -79,6 +79,12 @@ assert.ok(app.includes('function bindDayPager()')&&css.includes('.day-card-track
   'Today should preserve the finger-following day-card pager');
 assert.ok(app.includes("if(localToday&&!dates.includes(localToday)) dates.push(localToday)"),
   'an empty current day should remain reachable after swiping through measured days');
+assert.ok(html.includes('id="week-nav"')&&app.includes('function calendarWeekDates(date)')&&app.includes('daysFromMonday'),
+  'Today should show the actual Monday-through-Sunday calendar week');
+assert.ok(app.includes('function renderWeekNav()')&&app.includes('data-week-date')&&app.includes('selectedTodayDate=day.dataset.weekDate;renderToday()'),
+  'calendar-week days should open their corresponding daily graph');
+assert.ok(app.includes('function shouldCelebrateWeekDay(date,measured)')&&css.includes('@keyframes week-day-pulse'),
+  'the first measured state for Today should receive one quiet pulse');
 assert.ok(app.indexOf('panel.appendChild(card)')<app.indexOf('renderDayChart(recordForDate(pair[1])'),
   'neighbor graphs should render only after their phone-width panels are mounted');
 assert.ok(app.includes("date===localToday?'Take a measurement, then tap your phone to see it here.':'No measurements'"),
