@@ -177,8 +177,8 @@
   function tierColor(value){ return zoneStroke[zoneIndex(value)]; }
   function measurementMarkerStyle(value,compact){
     var tier=zoneIndex(value);
-    if(compact) return {radius:[3,4,5,6][tier],fontSize:[12,13,14,15][tier],glow:[0,4,7,10][tier]};
-    return {radius:[16,18,20,22][tier],fontSize:[18,20,22,23][tier],glow:[12,16,22,28][tier]};
+    if(compact) return {radius:[2.5,4,5.5,7][tier],fontSize:[11,13,15,17][tier],glow:[0,4,9,15][tier]};
+    return {radius:[13,17,21,25][tier],fontSize:[15,19,22,25][tier],glow:[6,14,24,36][tier]};
   }
 
   function blendedZoneRgb(value){
