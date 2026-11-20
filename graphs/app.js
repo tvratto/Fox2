@@ -23,6 +23,7 @@
   var handoffNonce=String(Date.now())+Math.random();
   var selectedTodayDate='';
   var historyPage=0;
+  var historyMode='measurements';
 
   function headers(extra){
     return Object.assign({
@@ -177,7 +178,7 @@
   function tierColor(value){ return zoneStroke[zoneIndex(value)]; }
   function measurementMarkerStyle(value,compact){
     var tier=zoneIndex(value);
-    if(compact) return {radius:[2.5,4,5.5,7][tier],fontSize:[11,13,15,17][tier],glow:[0,4,9,15][tier]};
+    if(compact) return {radius:[2.5,3.5,4.5,5.5][tier],fontSize:[11,12,14,15][tier],glow:[0,3,6,10][tier]};
     return {radius:[13,17,21,25][tier],fontSize:[15,19,22,25][tier],glow:[6,14,24,36][tier]};
   }
 
@@ -1016,6 +1017,20 @@
     return isoDate(date);
   }
 
+  function bindHistoryModeSwipe(graph){
+    if(!graph) return;
+    var active=false,startX=0,startY=0;
+    graph.addEventListener('pointerdown',function(event){active=true;startX=event.clientX;startY=event.clientY;});
+    graph.addEventListener('pointerup',function(event){
+      if(!active) return;active=false;
+      var dx=event.clientX-startX,dy=event.clientY-startY;
+      if(Math.abs(dx)<54||Math.abs(dx)<=Math.abs(dy)*1.1) return;
+      if(dx<0&&historyMode==='measurements'){historyMode='daily';renderHistory();}
+      else if(dx>0&&historyMode==='daily'){historyMode='measurements';renderHistory();}
+    });
+    graph.addEventListener('pointercancel',function(){active=false;});
+  }
+
   function renderHistory(){
     var target=document.getElementById('history-content');
     if(!measurementHistory.length){target.innerHTML='<div class="card history-empty">Your measurements will appear here after you sync.</div>';return;}
@@ -1029,8 +1044,11 @@
     var visiblePoints=[];visibleWeeks.forEach(function(start){visiblePoints=visiblePoints.concat(pointsByWeek[start]||[]);});
     var maxValue=Math.max.apply(null,visiblePoints.map(function(point){return point.value;}).concat([8]));
     var ceiling=maxValue<=8?8:maxValue<=10?10:maxValue<=20?20:Math.ceil(maxValue/5)*5;
+    var visibleScores=[];visibleWeeks.forEach(function(start){for(var scoreDay=0;scoreDay<7;scoreDay++){var scoreRecord=dailyByDate[addDays(start,scoreDay)];if(scoreRecord&&scoreRecord.displayDailyFatUse!==null) visibleScores.push(Number(scoreRecord.displayDailyFatUse));}});
+    var maxScore=Math.max.apply(null,visibleScores.concat([120])),scoreCeiling=Math.ceil(maxScore/20)*20;
     var rangeStart=visibleWeeks[0],rangeEnd=addDays(visibleWeeks[visibleWeeks.length-1],6);
-    target.innerHTML='<div class="history-graph"><canvas class="history-canvas" width="400" height="510" role="img" aria-label="Fat Use Zone measurements from '+escapeHtml(rangeStart)+' through '+escapeHtml(rangeEnd)+'"></canvas></div><div class="history-pager"><button id="history-earlier" type="button" '+(historyPage>=maxPage?'disabled':'')+'>Earlier</button><button id="history-later" type="button" '+(historyPage===0?'disabled':'')+'>Later</button></div>';
+    var historyLabel=(historyMode==='daily'?'Daily Fat Use bars':'Fat Use Zone measurements')+' from '+rangeStart+' through '+rangeEnd;
+    target.innerHTML='<div class="history-graph" data-history-mode="'+historyMode+'"><canvas class="history-canvas" width="400" height="510" role="img" aria-label="'+escapeHtml(historyLabel)+'"></canvas><div class="history-view-indicator" aria-hidden="true"><i class="'+(historyMode==='measurements'?'is-active':'')+'"></i><i class="'+(historyMode==='daily'?'is-active':'')+'"></i></div></div><div class="history-pager"><button id="history-earlier" type="button" '+(historyPage>=maxPage?'disabled':'')+'>Earlier</button><button id="history-later" type="button" '+(historyPage===0?'disabled':'')+'>Later</button></div>';
     var canvas=target.querySelector('.history-canvas'),dpr=window.devicePixelRatio||1,CW=400,CH=510;
     canvas.width=CW*dpr;canvas.height=CH*dpr;var ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
     ctx.fillStyle='#111';ctx.fillRect(0,0,CW,CH);
@@ -1050,6 +1068,16 @@
         var bandX=gLeft+day*bandWidth;if(day%2===1){ctx.fillStyle='rgba(255,255,255,.04)';ctx.fillRect(bandX,gTop,bandWidth,GRAPH_H);}if(day>0){ctx.strokeStyle='rgba(255,255,255,.15)';ctx.lineWidth=.75;ctx.beginPath();ctx.moveTo(bandX,gTop);ctx.lineTo(bandX,gBottom);ctx.stroke();}
       }
       ctx.strokeStyle='rgba(255,255,255,.5)';ctx.lineWidth=.75;ctx.beginPath();ctx.moveTo(gLeft,gBottom);ctx.lineTo(gRight,gBottom);ctx.stroke();
+      if(historyMode==='daily'){
+        for(var barDay=0;barDay<7;barDay++){
+          var barDate=addDays(start,barDay),barRecord=dailyByDate[barDate]||null,barScore=barRecord&&barRecord.displayDailyFatUse!==null?Number(barRecord.displayDailyFatUse):null;
+          if(barScore===null||!Number.isFinite(barScore)) continue;
+          var barHeight=Math.max(3,Math.min(GRAPH_H,barScore/scoreCeiling*GRAPH_H)),barWidth=Math.min(28,bandWidth*.52),barX=gLeft+(barDay+.5)*bandWidth-barWidth/2,barY=gBottom-barHeight;
+          var barCurve=buildTodayCurve(barDate,0,1440),barStops=scoreRingColorStops(barCurve,1),barGradient=ctx.createLinearGradient(0,gBottom,0,barY);
+          barStops.forEach(function(stop){barGradient.addColorStop(Math.max(0,Math.min(1,stop.position)),'rgb('+stop.rgb.join(',')+')');});
+          ctx.fillStyle=barGradient;ctx.shadowColor='rgba(255,255,255,.12)';ctx.shadowBlur=6;ctx.beginPath();ctx.roundRect(barX,barY,barWidth,barHeight,[5,5,1,1]);ctx.fill();ctx.shadowBlur=0;
+        }
+      }else{
       var segments=[];
       if(points.length){var segment=[points[0]];for(var p=1;p<points.length;p++){var previousAbs=absoluteMinute(points[p-1]),currentAbs=absoluteMinute(points[p]);if(currentAbs-previousAbs>1440){segments.push(segment);segment=[];}segment.push(points[p]);}segments.push(segment);}
       ctx.save();ctx.beginPath();ctx.rect(gLeft,gTop,plotWidth,GRAPH_H);ctx.clip();
@@ -1066,6 +1094,7 @@
       });
       ctx.restore();
       points.forEach(function(point,index){var xx=xMinute(absoluteMinute(point)),yy=yValue(point.value),color=tierColor(point.value),marker=measurementMarkerStyle(point.value,true);ctx.beginPath();ctx.arc(xx,yy,marker.radius,0,Math.PI*2);ctx.fillStyle=color;ctx.shadowColor=color;ctx.shadowBlur=marker.glow;ctx.fill();ctx.shadowBlur=0;if(index%2===1||index===points.length-1){ctx.fillStyle='#fff';ctx.font='bold '+marker.fontSize+'px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(Math.round(point.value),xx,yy-marker.radius-2);}});
+      }
       for(var labelIndex=0;labelIndex<7;labelIndex++){
         var center=gLeft+(labelIndex+.5)*bandWidth,date=addDays(start,labelIndex),record=dailyByDate[date]||null,average=record&&record.displayDailyFatUse!==null?String(record.displayDailyFatUse):'—';
         ctx.fillStyle='rgba(255,255,255,.55)';ctx.font='12px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText(dayLetters[labelIndex],center,gBottom+3);
@@ -1077,6 +1106,7 @@
     var earlier=document.getElementById('history-earlier'),later=document.getElementById('history-later');
     if(earlier) earlier.addEventListener('click',function(){historyPage++;renderHistory();});
     if(later) later.addEventListener('click',function(){historyPage--;renderHistory();});
+    bindHistoryModeSwipe(target.querySelector('.history-graph'));
   }
 
   function historyMetrics(item){ return activeMetrics(item); }
