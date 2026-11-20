@@ -970,7 +970,7 @@
 
   function renderTrackingIntro(){
     if(readOnlyShare) return '<article class="card tracking-intro"><p class="eyebrow">Shared snapshot</p><h1>No Tracking period</h1><p class="tracking-intro-copy">This frozen snapshot does not include a Tracking comparison.</p></article>';
-    return '<article class="card tracking-intro"><p class="eyebrow">Optional</p><h1>Track a change</h1><p class="tracking-intro-copy">See whether a change affects your daily fat use. Choose something you want to try. For the next 30 days, FOX2 will compare your Daily Fat Use with your earlier days.</p><div class="intro-diagram" aria-hidden="true"><i></i><i></i><i></i><span class="intro-start"><span>Start</span></span><i></i><i></i><i></i><i></i><i></i></div><button class="primary-button" id="start-tracking-main" type="button">Start tracking</button></article>';
+    return '<article class="card tracking-intro"><p class="eyebrow">Optional</p><h1>Track a change</h1><p class="tracking-intro-copy">See whether a change affects your daily fat use. Choose something you want to try. For the next 30 days, FOX2 will compare your Daily Fat Use with your earlier days.</p><div class="intro-diagram" aria-hidden="true"><i></i><i></i><i></i><span class="intro-start"><span>Start</span></span><i></i><i></i><i></i><i></i><i></i></div><button class="primary-button" id="start-tracking-main" type="button">Add tracking</button></article>';
   }
 
   function barHtml(record,isToday){
@@ -1140,7 +1140,7 @@
 
   function openStartDialog(){
     startMode='new';
-    configureStartDialog('What change do you want to track?','Start tracking',true,true,true);
+    configureStartDialog('What change do you want to track?','Add tracking',true,true,true);
     document.getElementById('tracking-name').value='';
     document.getElementById('tracking-start').value=localToday;
     document.getElementById('start-dialog').showModal();

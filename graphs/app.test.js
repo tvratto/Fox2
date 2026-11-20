@@ -10,6 +10,8 @@ assert.ok(html.includes('>Today</button>'));
 assert.ok(html.includes('>Tracking</button>'));
 assert.ok(html.includes('>History</button>'));
 assert.ok(html.includes('>Log</button>'));
+assert.ok(html.includes('id="start-tracking-shortcut" type="button">Add tracking</button>')&&app.includes('id="start-tracking-main" type="button">Add tracking</button>'),
+  'optional tracking actions should use the lighter Add tracking label');
 ['>Progress</button>','>Data</button>','>Analysis</button>','Squad','Fat Use Score'].forEach(oldCopy=>{
   assert.ok(!html.includes(oldCopy),`production shell should not contain ${oldCopy}`);
 });
