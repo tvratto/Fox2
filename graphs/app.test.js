@@ -89,6 +89,8 @@ assert.ok(app.includes('function renderWeekNav()')&&app.includes('data-week-date
   'calendar-week days should open their corresponding daily graph');
 assert.ok(css.includes('.week-day.is-selected i{box-shadow:0 0 0 3px #050505,0 0 0 5px rgba(255,255,255,.38)}'),
   'the day shown in the large panel should retain a visible dim selection ring');
+assert.ok(css.includes('.week-day.is-measured:not(.is-today):not(.is-future){color:rgba(255,255,255,.34)}'),
+  'measured days should use their bright dot, not a bright weekday label, to show data');
 assert.ok(app.includes("tab.dataset.view==='today'&&tab.classList.contains('is-active')")&&app.includes('selectedTodayDate=localToday;renderToday()'),
   'tapping the active Today tab should return directly to the current day');
 assert.ok(app.includes('function shouldCelebrateWeekDay(date,measured)')&&css.includes('@keyframes week-day-pulse'),
