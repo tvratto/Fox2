@@ -149,8 +149,8 @@ assert.ok(app.includes('history-mode-track')&&app.includes('history-mode-panel')
   'both History views should remain mounted side by side for a real snapping transition');
 assert.ok(app.includes('barStops=scoreRingColorStops(barCurve,1)')&&app.includes('barGradient.addColorStop'),
   'Daily Fat Use bars should reuse each day’s area-weighted graph colors');
-assert.ok(css.includes('.history-view-indicator')&&css.includes('left:calc(22.5% - 26px)')&&css.includes('touch-action:pan-y')&&!css.includes('.history-pager'),
-  'History should show a quiet two-page indicator left of the three-week title while preserving vertical scrolling');
+assert.ok(css.includes('.history-view-indicator')&&css.includes('top:21px;right:13px')&&css.includes('touch-action:pan-y')&&!css.includes('.history-pager'),
+  'History should show a quiet upper-right two-page indicator while preserving vertical scrolling');
 assert.ok(app.includes('ctx.setLineDash([9,7])')&&app.includes('ctx.setLineDash([])'),
   'the inferred Today curve between measurements should be dashed');
 assert.ok(app.includes('point.minute>=visibleStart&&point.minute<=visibleEnd'),
