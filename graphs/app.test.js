@@ -141,12 +141,16 @@ assert.ok(app.includes('radius:[2.5,3.5,4.5,5.5]')&&app.includes('fontSize:[11,1
   'History markers should use the same restrained tier-size hierarchy at compact scale');
 assert.ok(app.includes("historyMode='measurements'")&&app.includes("next='daily'")&&app.includes('function bindHistoryModeSwipe(graph)')&&app.includes("track.style.transform='translateX(calc("),
   'History should use a finger-following horizontal swipe between its two views');
+assert.ok(app.includes("Math.abs(dx)>Math.abs(dy)*.7?'x':'y'")&&app.includes("graph.addEventListener('touchmove'")&&app.includes("graph.addEventListener('touchend'"),
+  'History should accept diagonal phone swipes through a dedicated touch path');
+assert.ok(app.includes("dx<-threshold||(fast&&velocity<0))&&historyMode==='measurements') next='daily'")&&app.includes("dx>threshold||(fast&&velocity>0))&&historyMode==='daily') next='measurements'"),
+  'a left swipe should open Daily Fat Use bars and a right swipe should return to measurements');
 assert.ok(app.includes('history-mode-track')&&app.includes('history-mode-panel')&&css.includes('.history-mode-track.is-dragging{transition:none}'),
   'both History views should remain mounted side by side for a real snapping transition');
 assert.ok(app.includes('barStops=scoreRingColorStops(barCurve,1)')&&app.includes('barGradient.addColorStop'),
   'Daily Fat Use bars should reuse each day’s area-weighted graph colors');
-assert.ok(css.includes('.history-view-indicator')&&css.includes('touch-action:pan-y')&&!css.includes('.history-pager'),
-  'History should show a quiet two-page indicator while preserving vertical scrolling');
+assert.ok(css.includes('.history-view-indicator')&&css.includes('left:calc(22.5% - 26px)')&&css.includes('touch-action:pan-y')&&!css.includes('.history-pager'),
+  'History should show a quiet two-page indicator left of the three-week title while preserving vertical scrolling');
 assert.ok(app.includes('ctx.setLineDash([9,7])')&&app.includes('ctx.setLineDash([])'),
   'the inferred Today curve between measurements should be dashed');
 assert.ok(app.includes('point.minute>=visibleStart&&point.minute<=visibleEnd'),

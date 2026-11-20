@@ -1028,27 +1028,31 @@
   function bindHistoryModeSwipe(graph){
     if(!graph) return;
     var track=graph.querySelector('.history-mode-track'),active=false,startX=0,startY=0,lastX=0,lastAt=0,velocity=0,locked='';
-    function begin(event){active=true;startX=lastX=event.clientX;startY=event.clientY;lastAt=performance.now();velocity=0;locked='';track.classList.add('is-dragging');}
-    function move(event){
-      if(!active) return;var dx=event.clientX-startX,dy=event.clientY-startY;
-      if(!locked&&Math.max(Math.abs(dx),Math.abs(dy))>8) locked=Math.abs(dx)>Math.abs(dy)*1.08?'x':'y';
+    function begin(x,y){active=true;startX=lastX=x;startY=y;lastAt=performance.now();velocity=0;locked='';track.classList.add('is-dragging');}
+    function move(x,y,event){
+      if(!active) return;var dx=x-startX,dy=y-startY;
+      if(!locked&&Math.max(Math.abs(dx),Math.abs(dy))>6) locked=Math.abs(dx)>Math.abs(dy)*.7?'x':'y';
       if(locked!=='x') return;if(event.cancelable) event.preventDefault();
-      var now=performance.now(),elapsed=Math.max(1,now-lastAt);velocity=(event.clientX-lastX)/elapsed*16.7;lastX=event.clientX;lastAt=now;
+      var now=performance.now(),elapsed=Math.max(1,now-lastAt);velocity=(x-lastX)/elapsed*16.7;lastX=x;lastAt=now;
       if((historyMode==='measurements'&&dx>0)||(historyMode==='daily'&&dx<0)) dx*=.28;
       track.style.transform='translateX(calc('+(historyMode==='daily'?'-50%':'0%')+' + '+dx+'px))';
     }
-    function finish(event){
+    function finish(x){
       if(!active) return;active=false;track.classList.remove('is-dragging');
-      var dx=event.clientX-startX,threshold=Math.min(110,Math.max(50,graph.clientWidth*.22)),fast=Math.abs(velocity)>.8&&Math.abs(dx)>24,next=historyMode;
+      var dx=x-startX,threshold=Math.min(110,Math.max(50,graph.clientWidth*.22)),fast=Math.abs(velocity)>.8&&Math.abs(dx)>24,next=historyMode;
       if(locked==='x'&&(dx<-threshold||(fast&&velocity<0))&&historyMode==='measurements') next='daily';
       else if(locked==='x'&&(dx>threshold||(fast&&velocity>0))&&historyMode==='daily') next='measurements';
       setHistoryMode(graph,next);locked='';
     }
     function cancel(){active=false;locked='';track.classList.remove('is-dragging');setHistoryMode(graph,historyMode);}
-    graph.addEventListener('pointerdown',begin,{passive:true});
-    graph.addEventListener('pointermove',move,{passive:false});
-    graph.addEventListener('pointerup',finish,{passive:true});
-    graph.addEventListener('pointercancel',cancel,{passive:true});
+    graph.addEventListener('pointerdown',function(event){if(event.pointerType==='touch'||event.button!==0) return;begin(event.clientX,event.clientY);},{passive:true});
+    window.addEventListener('pointermove',function(event){if(event.pointerType==='touch') return;move(event.clientX,event.clientY,event);},{passive:false});
+    window.addEventListener('pointerup',function(event){if(event.pointerType==='touch') return;finish(event.clientX);},{passive:true});
+    window.addEventListener('pointercancel',cancel,{passive:true});
+    graph.addEventListener('touchstart',function(event){if(event.touches.length!==1) return;var touch=event.touches[0];begin(touch.clientX,touch.clientY);},{passive:true});
+    graph.addEventListener('touchmove',function(event){if(event.touches.length!==1) return;var touch=event.touches[0];move(touch.clientX,touch.clientY,event);},{passive:false});
+    graph.addEventListener('touchend',function(event){var touch=event.changedTouches[0];finish(touch?touch.clientX:lastX);},{passive:true});
+    graph.addEventListener('touchcancel',cancel,{passive:true});
   }
 
   function renderHistory(){
