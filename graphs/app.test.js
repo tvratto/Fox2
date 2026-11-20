@@ -132,8 +132,10 @@ assert.ok(app.includes('drawTodayArea(ctx,samples,base,x,y,ceiling)')&&app.inclu
   'Today should apply the shared History color scale to its visible graph');
 assert.ok(app.includes('function todayCurveCeiling(rawMax)')&&app.includes('Math.round(rawMax)+3'),
   'Today should scale to the highest visible measurement plus three');
-assert.ok(app.includes('ctx.arc(xx,yy,20')&&app.includes("font='800 22px"),
-  'Today measurement values should sit inside large, readable markers');
+assert.ok(app.includes('function measurementMarkerStyle(value,compact)')&&app.includes('radius:[16,18,20,22]')&&app.includes('fontSize:[18,20,22,23]'),
+  'Today markers and their values should grow modestly with the measurement tier');
+assert.ok(app.includes('radius:[3,4,5,6]')&&app.includes('measurementMarkerStyle(point.value,true)'),
+  'History markers should use the same restrained tier-size hierarchy at compact scale');
 assert.ok(app.includes('ctx.setLineDash([9,7])')&&app.includes('ctx.setLineDash([])'),
   'the inferred Today curve between measurements should be dashed');
 assert.ok(app.includes('point.minute>=visibleStart&&point.minute<=visibleEnd'),

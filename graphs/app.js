@@ -175,6 +175,11 @@
   var graphColorMode='level-bands';
   function zoneIndex(value){var rounded=Math.round(Number(value)||0);return rounded<=2?0:rounded<=4?1:rounded<=7?2:3;}
   function tierColor(value){ return zoneStroke[zoneIndex(value)]; }
+  function measurementMarkerStyle(value,compact){
+    var tier=zoneIndex(value);
+    if(compact) return {radius:[3,4,5,6][tier],fontSize:[12,13,14,15][tier],glow:[0,4,7,10][tier]};
+    return {radius:[16,18,20,22][tier],fontSize:[18,20,22,23][tier],glow:[12,16,22,28][tier]};
+  }
 
   function blendedZoneRgb(value){
     value=Math.max(0,Number(value)||0);
@@ -688,10 +693,10 @@
 
       dots=[];
       curve.actual.forEach(function(item){
-        var xx=x(item.minute),yy=y(item.value),color=tierColor(item.value);
+        var xx=x(item.minute),yy=y(item.value),color=tierColor(item.value),marker=measurementMarkerStyle(item.value,false);
         dots.push({x:xx,y:yy,value:item.value,minute:item.localMinute,date:item.date});
-        ctx.beginPath();ctx.arc(xx,yy,20,0,Math.PI*2);ctx.fillStyle=color;ctx.shadowColor=color;ctx.shadowBlur=22;ctx.fill();ctx.shadowBlur=0;
-        ctx.fillStyle='#fff';ctx.font='800 22px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.shadowColor='rgba(0,0,0,.58)';ctx.shadowBlur=3;ctx.fillText(Math.round(item.value),xx,yy+1);ctx.shadowBlur=0;
+        ctx.beginPath();ctx.arc(xx,yy,marker.radius,0,Math.PI*2);ctx.fillStyle=color;ctx.shadowColor=color;ctx.shadowBlur=marker.glow;ctx.fill();ctx.shadowBlur=0;
+        ctx.fillStyle='#fff';ctx.font='800 '+marker.fontSize+'px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.shadowColor='rgba(0,0,0,.58)';ctx.shadowBlur=3;ctx.fillText(Math.round(item.value),xx,yy+1);ctx.shadowBlur=0;
       });
 
       ctx.fillStyle='rgba(255,255,255,.42)';ctx.font='650 12px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textAlign='center';ctx.textBaseline='alphabetic';
@@ -1060,7 +1065,7 @@
         drawZoneCurve(ctx,knots.map(function(knot){return {x:xMinute(knot.minute),y:yValue(knot.value),value:knot.value};}),gBottom,1.5,0,gTop,ceiling);
       });
       ctx.restore();
-      points.forEach(function(point,index){var xx=xMinute(absoluteMinute(point)),yy=yValue(point.value),color=tierColor(point.value);ctx.beginPath();ctx.arc(xx,yy,3,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();if(index%2===1||index===points.length-1){ctx.fillStyle='#fff';ctx.font='bold 14px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(Math.round(point.value),xx,yy-4);}});
+      points.forEach(function(point,index){var xx=xMinute(absoluteMinute(point)),yy=yValue(point.value),color=tierColor(point.value),marker=measurementMarkerStyle(point.value,true);ctx.beginPath();ctx.arc(xx,yy,marker.radius,0,Math.PI*2);ctx.fillStyle=color;ctx.shadowColor=color;ctx.shadowBlur=marker.glow;ctx.fill();ctx.shadowBlur=0;if(index%2===1||index===points.length-1){ctx.fillStyle='#fff';ctx.font='bold '+marker.fontSize+'px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(Math.round(point.value),xx,yy-marker.radius-2);}});
       for(var labelIndex=0;labelIndex<7;labelIndex++){
         var center=gLeft+(labelIndex+.5)*bandWidth,date=addDays(start,labelIndex),record=dailyByDate[date]||null,average=record&&record.displayDailyFatUse!==null?String(record.displayDailyFatUse):'—';
         ctx.fillStyle='rgba(255,255,255,.55)';ctx.font='12px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText(dayLetters[labelIndex],center,gBottom+3);
