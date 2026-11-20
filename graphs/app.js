@@ -595,7 +595,8 @@
 
   function renderWeekNav(){
     var nav=document.getElementById('week-nav');if(!nav||!localToday) return;
-    nav.innerHTML=calendarWeekDates(localToday).map(function(date){
+    var displayedDate=selectedTodayDate||localToday;
+    nav.innerHTML=calendarWeekDates(displayedDate).map(function(date){
       var record=recordForDate(date),measured=!!(record&&record.measured),today=date===localToday,future=date>localToday,selected=date===selectedTodayDate;
       var classes=['week-day'];
       if(measured) classes.push('is-measured');
@@ -1348,7 +1349,12 @@
   function bindUi(){
     var tabs=Array.from(document.querySelectorAll('.tab'));
     tabs.forEach(function(tab,index){
-      tab.addEventListener('click',function(){switchView(tab.dataset.view);});
+      tab.addEventListener('click',function(){
+        if(tab.dataset.view==='today'&&tab.classList.contains('is-active')&&selectedTodayDate!==localToday){
+          selectedTodayDate=localToday;renderToday();
+        }
+        switchView(tab.dataset.view);
+      });
       tab.addEventListener('keydown',function(event){
         var next=index;
         if(event.key==='ArrowLeft') next=(index+tabs.length-1)%tabs.length;

@@ -81,8 +81,12 @@ assert.ok(app.includes("if(localToday&&!dates.includes(localToday)) dates.push(l
   'an empty current day should remain reachable after swiping through measured days');
 assert.ok(html.includes('id="week-nav"')&&app.includes('function calendarWeekDates(date)')&&app.includes('daysFromMonday'),
   'Today should show the actual Monday-through-Sunday calendar week');
+assert.ok(app.includes('calendarWeekDates(displayedDate)')&&app.includes('var displayedDate=selectedTodayDate||localToday'),
+  'the calendar-week row should follow the day currently shown');
 assert.ok(app.includes('function renderWeekNav()')&&app.includes('data-week-date')&&app.includes('selectedTodayDate=day.dataset.weekDate;renderToday()'),
   'calendar-week days should open their corresponding daily graph');
+assert.ok(app.includes("tab.dataset.view==='today'&&tab.classList.contains('is-active')")&&app.includes('selectedTodayDate=localToday;renderToday()'),
+  'tapping the active Today tab should return directly to the current day');
 assert.ok(app.includes('function shouldCelebrateWeekDay(date,measured)')&&css.includes('@keyframes week-day-pulse'),
   'the first measured state for Today should receive one quiet pulse');
 assert.ok(app.indexOf('panel.appendChild(card)')<app.indexOf('renderDayChart(recordForDate(pair[1])'),
