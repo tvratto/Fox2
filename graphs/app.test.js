@@ -48,7 +48,8 @@ assert.ok(app.includes("openMetricInfo('score',score.dataset.scoreDate)"),
   'either visible Daily Fat Use score should remain tappable');
 assert.ok(app.includes("ctx.fillText('3 WEEKS'")&&app.includes('pillW=220'),
   'History should preserve the established centered three-week range pill');
-assert.ok(app.includes('historyPage'),'all History weeks should remain reachable through paging');
+assert.ok(!app.includes('historyPage')&&!app.includes('history-earlier')&&!app.includes('history-later'),
+  'History should stay focused on the latest three weeks without Earlier/Later controls');
 assert.ok(app.includes("document.getElementById('log-content')"),'Log should render Tracking results separately');
 assert.ok(app.includes("p_expected_revision:trackingRevision"),
   'Tracking saves should remain protected from stale tabs');
@@ -138,11 +139,13 @@ assert.ok(app.includes('function measurementMarkerStyle(value,compact)')&&app.in
   'Today markers and their values should grow modestly with the measurement tier');
 assert.ok(app.includes('radius:[2.5,3.5,4.5,5.5]')&&app.includes('fontSize:[11,12,14,15]')&&app.includes('measurementMarkerStyle(point.value,true)'),
   'History markers should use the same restrained tier-size hierarchy at compact scale');
-assert.ok(app.includes("historyMode='measurements'")&&app.includes("historyMode='daily'")&&app.includes('function bindHistoryModeSwipe(graph)'),
-  'History should swipe between measurement curves and Daily Fat Use bars');
+assert.ok(app.includes("historyMode='measurements'")&&app.includes("next='daily'")&&app.includes('function bindHistoryModeSwipe(graph)')&&app.includes("track.style.transform='translateX(calc("),
+  'History should use a finger-following horizontal swipe between its two views');
+assert.ok(app.includes('history-mode-track')&&app.includes('history-mode-panel')&&css.includes('.history-mode-track.is-dragging{transition:none}'),
+  'both History views should remain mounted side by side for a real snapping transition');
 assert.ok(app.includes('barStops=scoreRingColorStops(barCurve,1)')&&app.includes('barGradient.addColorStop'),
   'Daily Fat Use bars should reuse each day’s area-weighted graph colors');
-assert.ok(css.includes('.history-view-indicator')&&css.includes('touch-action:pan-y'),
+assert.ok(css.includes('.history-view-indicator')&&css.includes('touch-action:pan-y')&&!css.includes('.history-pager'),
   'History should show a quiet two-page indicator while preserving vertical scrolling');
 assert.ok(app.includes('ctx.setLineDash([9,7])')&&app.includes('ctx.setLineDash([])'),
   'the inferred Today curve between measurements should be dashed');

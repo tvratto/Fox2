@@ -22,7 +22,6 @@
   var handoffExisting=false;
   var handoffNonce=String(Date.now())+Math.random();
   var selectedTodayDate='';
-  var historyPage=0;
   var historyMode='measurements';
 
   function headers(extra){
@@ -1017,18 +1016,39 @@
     return isoDate(date);
   }
 
+  function setHistoryMode(graph,mode){
+    historyMode=mode;
+    var track=graph.querySelector('.history-mode-track');
+    track.style.transform=mode==='daily'?'translateX(-50%)':'translateX(0%)';
+    graph.dataset.historyMode=mode;
+    graph.querySelectorAll('.history-mode-panel').forEach(function(panel){panel.setAttribute('aria-hidden',panel.dataset.mode===mode?'false':'true');});
+    graph.querySelectorAll('.history-view-indicator i').forEach(function(dot,index){dot.classList.toggle('is-active',index===(mode==='daily'?1:0));});
+  }
+
   function bindHistoryModeSwipe(graph){
     if(!graph) return;
-    var active=false,startX=0,startY=0;
-    graph.addEventListener('pointerdown',function(event){active=true;startX=event.clientX;startY=event.clientY;});
-    graph.addEventListener('pointerup',function(event){
-      if(!active) return;active=false;
-      var dx=event.clientX-startX,dy=event.clientY-startY;
-      if(Math.abs(dx)<54||Math.abs(dx)<=Math.abs(dy)*1.1) return;
-      if(dx<0&&historyMode==='measurements'){historyMode='daily';renderHistory();}
-      else if(dx>0&&historyMode==='daily'){historyMode='measurements';renderHistory();}
-    });
-    graph.addEventListener('pointercancel',function(){active=false;});
+    var track=graph.querySelector('.history-mode-track'),active=false,startX=0,startY=0,lastX=0,lastAt=0,velocity=0,locked='';
+    function begin(event){active=true;startX=lastX=event.clientX;startY=event.clientY;lastAt=performance.now();velocity=0;locked='';track.classList.add('is-dragging');}
+    function move(event){
+      if(!active) return;var dx=event.clientX-startX,dy=event.clientY-startY;
+      if(!locked&&Math.max(Math.abs(dx),Math.abs(dy))>8) locked=Math.abs(dx)>Math.abs(dy)*1.08?'x':'y';
+      if(locked!=='x') return;if(event.cancelable) event.preventDefault();
+      var now=performance.now(),elapsed=Math.max(1,now-lastAt);velocity=(event.clientX-lastX)/elapsed*16.7;lastX=event.clientX;lastAt=now;
+      if((historyMode==='measurements'&&dx>0)||(historyMode==='daily'&&dx<0)) dx*=.28;
+      track.style.transform='translateX(calc('+(historyMode==='daily'?'-50%':'0%')+' + '+dx+'px))';
+    }
+    function finish(event){
+      if(!active) return;active=false;track.classList.remove('is-dragging');
+      var dx=event.clientX-startX,threshold=Math.min(110,Math.max(50,graph.clientWidth*.22)),fast=Math.abs(velocity)>.8&&Math.abs(dx)>24,next=historyMode;
+      if(locked==='x'&&(dx<-threshold||(fast&&velocity<0))&&historyMode==='measurements') next='daily';
+      else if(locked==='x'&&(dx>threshold||(fast&&velocity>0))&&historyMode==='daily') next='measurements';
+      setHistoryMode(graph,next);locked='';
+    }
+    function cancel(){active=false;locked='';track.classList.remove('is-dragging');setHistoryMode(graph,historyMode);}
+    graph.addEventListener('pointerdown',begin,{passive:true});
+    graph.addEventListener('pointermove',move,{passive:false});
+    graph.addEventListener('pointerup',finish,{passive:true});
+    graph.addEventListener('pointercancel',cancel,{passive:true});
   }
 
   function renderHistory(){
@@ -1038,8 +1058,7 @@
     measurementHistory.forEach(function(point){var week=mondayFor(point.date);(pointsByWeek[week]||(pointsByWeek[week]=[])).push(point);});
     var firstWeek=mondayFor(measurementHistory[0].date),lastWeek=mondayFor(measurementHistory[measurementHistory.length-1].date),allWeeks=[];
     for(var week=firstWeek;week<=lastWeek;week=addDays(week,7)) allWeeks.push(week);
-    var maxPage=Math.max(0,Math.ceil(allWeeks.length/3)-1);historyPage=Math.max(0,Math.min(historyPage,maxPage));
-    var endIndex=allWeeks.length-historyPage*3,startIndex=Math.max(0,endIndex-3),visibleWeeks=allWeeks.slice(startIndex,endIndex);
+    var endIndex=allWeeks.length,startIndex=Math.max(0,endIndex-3),visibleWeeks=allWeeks.slice(startIndex,endIndex);
     while(visibleWeeks.length<3) visibleWeeks.unshift(addDays(visibleWeeks[0]||lastWeek,-7));
     var visiblePoints=[];visibleWeeks.forEach(function(start){visiblePoints=visiblePoints.concat(pointsByWeek[start]||[]);});
     var maxValue=Math.max.apply(null,visiblePoints.map(function(point){return point.value;}).concat([8]));
@@ -1047,9 +1066,9 @@
     var visibleScores=[];visibleWeeks.forEach(function(start){for(var scoreDay=0;scoreDay<7;scoreDay++){var scoreRecord=dailyByDate[addDays(start,scoreDay)];if(scoreRecord&&scoreRecord.displayDailyFatUse!==null) visibleScores.push(Number(scoreRecord.displayDailyFatUse));}});
     var maxScore=Math.max.apply(null,visibleScores.concat([120])),scoreCeiling=Math.ceil(maxScore/20)*20;
     var rangeStart=visibleWeeks[0],rangeEnd=addDays(visibleWeeks[visibleWeeks.length-1],6);
-    var historyLabel=(historyMode==='daily'?'Daily Fat Use bars':'Fat Use Zone measurements')+' from '+rangeStart+' through '+rangeEnd;
-    target.innerHTML='<div class="history-graph" data-history-mode="'+historyMode+'"><canvas class="history-canvas" width="400" height="510" role="img" aria-label="'+escapeHtml(historyLabel)+'"></canvas><div class="history-view-indicator" aria-hidden="true"><i class="'+(historyMode==='measurements'?'is-active':'')+'"></i><i class="'+(historyMode==='daily'?'is-active':'')+'"></i></div></div><div class="history-pager"><button id="history-earlier" type="button" '+(historyPage>=maxPage?'disabled':'')+'>Earlier</button><button id="history-later" type="button" '+(historyPage===0?'disabled':'')+'>Later</button></div>';
-    var canvas=target.querySelector('.history-canvas'),dpr=window.devicePixelRatio||1,CW=400,CH=510;
+    target.innerHTML='<div class="history-graph" data-history-mode="'+historyMode+'"><div class="history-mode-track"><div class="history-mode-panel" data-mode="measurements"><canvas class="history-canvas" width="400" height="510" role="img" aria-label="Fat Use Zone measurements from '+escapeHtml(rangeStart)+' through '+escapeHtml(rangeEnd)+'"></canvas></div><div class="history-mode-panel" data-mode="daily"><canvas class="history-canvas" width="400" height="510" role="img" aria-label="Daily Fat Use bars from '+escapeHtml(rangeStart)+' through '+escapeHtml(rangeEnd)+'"></canvas></div></div><div class="history-view-indicator" aria-hidden="true"><i></i><i></i></div></div>';
+    var dpr=window.devicePixelRatio||1,CW=400,CH=510;
+    function drawHistoryCanvas(canvas,mode){
     canvas.width=CW*dpr;canvas.height=CH*dpr;var ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
     ctx.fillStyle='#111';ctx.fillRect(0,0,CW,CH);
     var PAD=14,PILL_H=28,PILL_PAD=8,GRAPH_H=90,LABEL_H=14,AVG_H=36,ROW_GAP=12,gLeft=20,gRight=382,plotWidth=gRight-gLeft;
@@ -1068,7 +1087,7 @@
         var bandX=gLeft+day*bandWidth;if(day%2===1){ctx.fillStyle='rgba(255,255,255,.04)';ctx.fillRect(bandX,gTop,bandWidth,GRAPH_H);}if(day>0){ctx.strokeStyle='rgba(255,255,255,.15)';ctx.lineWidth=.75;ctx.beginPath();ctx.moveTo(bandX,gTop);ctx.lineTo(bandX,gBottom);ctx.stroke();}
       }
       ctx.strokeStyle='rgba(255,255,255,.5)';ctx.lineWidth=.75;ctx.beginPath();ctx.moveTo(gLeft,gBottom);ctx.lineTo(gRight,gBottom);ctx.stroke();
-      if(historyMode==='daily'){
+      if(mode==='daily'){
         for(var barDay=0;barDay<7;barDay++){
           var barDate=addDays(start,barDay),barRecord=dailyByDate[barDate]||null,barScore=barRecord&&barRecord.displayDailyFatUse!==null?Number(barRecord.displayDailyFatUse):null;
           if(barScore===null||!Number.isFinite(barScore)) continue;
@@ -1103,10 +1122,9 @@
       rowTop+=GRAPH_H+LABEL_H+AVG_H+ROW_GAP;
     });
     ctx.fillStyle='#f5c842';ctx.font='bold 12px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.fillText('DAILY FAT USE',20,CH-5);
-    var earlier=document.getElementById('history-earlier'),later=document.getElementById('history-later');
-    if(earlier) earlier.addEventListener('click',function(){historyPage++;renderHistory();});
-    if(later) later.addEventListener('click',function(){historyPage--;renderHistory();});
-    bindHistoryModeSwipe(target.querySelector('.history-graph'));
+    }
+    target.querySelectorAll('.history-mode-panel').forEach(function(panel){drawHistoryCanvas(panel.querySelector('canvas'),panel.dataset.mode);});
+    var graph=target.querySelector('.history-graph');setHistoryMode(graph,historyMode);bindHistoryModeSwipe(graph);
   }
 
   function historyMetrics(item){ return activeMetrics(item); }
