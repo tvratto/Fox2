@@ -80,6 +80,14 @@ assert.ok(!html.includes('id="panel-track"')&&!css.includes('.panel-track'),
   'primary tabs should not be horizontally swipeable pages');
 assert.ok(app.includes('function bindDayPager()')&&css.includes('.day-card-track.is-dragging'),
   'Today should preserve the finger-following day-card pager');
+assert.ok(app.includes('var todayZoomDays=[2,3,7]')&&app.includes('pinchRatio<.82')&&app.includes('pinchRatio>1.18'),
+  'Today should snap pinch gestures between its current, three-day, and seven-day scales');
+assert.ok(app.includes("viewport.addEventListener('wheel'")&&app.includes('event.ctrlKey'),
+  'trackpad pinch should use the same Today zoom levels as a phone pinch');
+assert.ok(app.includes("params.get('zoom')==='7'?2:params.get('zoom')==='3'?1:0"),
+  'Today zoom layouts should remain directly previewable for regression testing');
+assert.ok(app.includes('var markerScale=zoomDays===3?.67:zoomDays===7?.42:1')&&css.includes('.timeline-card:not([data-zoom-days="2"])'),
+  'zoomed-out Today views should reduce markers and simplify the daily overlays');
 assert.ok(app.includes("if(localToday&&!dates.includes(localToday)) dates.push(localToday)"),
   'an empty current day should remain reachable after swiping through measured days');
 assert.ok(html.includes('id="week-nav"')&&app.includes('function calendarWeekDates(date)')&&app.includes('daysFromMonday'),
@@ -155,7 +163,7 @@ assert.ok(app.includes('ctx.setLineDash([9,7])')&&app.includes('ctx.setLineDash(
   'the inferred Today curve between measurements should be dashed');
 assert.ok(app.includes('point.minute>=visibleStart&&point.minute<=visibleEnd'),
   'Today auto-scaling should use only the two days currently on screen');
-assert.ok(app.includes('padB=64,base=height-padB,padT=80')&&app.includes('ctx.moveTo(xx,padT);ctx.lineTo(xx,base)'),
+assert.ok(app.includes('padB=64,base=height-padB,padT=zoomed?58:80')&&app.includes('ctx.moveTo(xx,padT);ctx.lineTo(xx,base)'),
   'Today should apply its max-plus-three scale across the full visible plot height');
 assert.ok(app.includes("ctx.fillStyle='#0c0d0e';ctx.fillRect(0,base,width,height-base)")&&app.includes("ctx.fillText(pair[1],x(pair[0]),base+18)"),
   'Today should reserve a thicker X-axis band with time labels directly below the graph');
